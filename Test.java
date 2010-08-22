@@ -33,6 +33,8 @@ public class Test
          assertEquals("output(null) is a bad arg",JhwScm.BAD_ARG,code);
       }
 
+      selfTest(new JhwScm());
+
       // empty args are OK
       {
          final int code = new JhwScm().input("");
@@ -56,7 +58,7 @@ public class Test
       // some content-free end-to-ends
       {
          final StringBuilder output = new StringBuilder();
-         final JhwScm         scm    = new JhwScm();
+         final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("");
          final int           dcode  = scm.drive(-1);
          final int           ocode  = scm.output(output);
@@ -64,10 +66,11 @@ public class Test
          assertEquals(JhwScm.SUCCESS,dcode);
          assertEquals(JhwScm.SUCCESS,ocode);
          assertEquals(0,output.length());
+         selfTest(scm);
       }
       {
          final StringBuilder output = new StringBuilder();
-         final JhwScm         scm    = new JhwScm();
+         final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("");
          final int           dcode  = scm.drive(0);
          final int           ocode  = scm.output(output);
@@ -75,10 +78,11 @@ public class Test
          assertEquals(JhwScm.SUCCESS,dcode);
          assertEquals(JhwScm.SUCCESS,ocode);
          assertEquals(0,output.length());
+         selfTest(scm);
       }
       {
          final StringBuilder output = new StringBuilder();
-         final JhwScm         scm    = new JhwScm();
+         final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("");
          final int           dcode  = scm.drive(10);
          final int           ocode  = scm.output(output);
@@ -86,13 +90,14 @@ public class Test
          assertEquals(JhwScm.SUCCESS,dcode);
          assertEquals(JhwScm.SUCCESS,ocode);
          assertEquals(0,output.length());
+         selfTest(scm);
       }
 
       // first content: simple integer expressions are self-evaluating
       // (but take some time).
       {
          final StringBuilder output = new StringBuilder();
-         final JhwScm         scm    = new JhwScm();
+         final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("0");
          final int           dcode  = scm.drive(-1);
          final int           ocode  = scm.output(output);
@@ -100,12 +105,13 @@ public class Test
          assertEquals(JhwScm.SUCCESS,dcode);
          assertEquals(JhwScm.SUCCESS,ocode);
          assertEquals("0",output);
+         selfTest(scm);
       }
 
       // first computation: even simple integer take nonzero cycles
       {
          final StringBuilder output = new StringBuilder();
-         final JhwScm         scm    = new JhwScm();
+         final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("0");
          final int           dcode1 = scm.drive(0);
          final int           dcode2 = scm.drive(0);
@@ -119,6 +125,7 @@ public class Test
          assertEquals(JhwScm.SUCCESS,   dcode4);
          assertEquals(JhwScm.SUCCESS,   ocode);
          assertEquals("0",output);
+         selfTest(scm);
       }
 
       // several valid, simple computations:
@@ -171,6 +178,7 @@ public class Test
          final JhwScm scm = new JhwScm();
          expectSuccess("(define a 100)","",scm);
          expectSuccess("a","100",scm);
+         selfTest(scm);
       }
       {
          final JhwScm scm = new JhwScm();
@@ -178,19 +186,27 @@ public class Test
          expectSuccess("(define b   2)","",   scm);
          expectSuccess("(+ a b)",       "102",scm);
          expectFailure("(+ a c)",             scm);
+         selfTest(scm);
       }
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define foo +)","",  scm);
          expectSuccess("(foo 13 18)",   "31",scm);
          expectFailure("(foo 13 '())",       scm);
+         selfTest(scm);
       }
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
          expectSuccess("(foo 13 18)",               "31",scm);
          expectFailure("(foo 13 '())",                   scm);
+         selfTest(scm);
       }
+   }
+
+   private static void selfTest ( final JhwScm scm )
+   {
+      assertEquals("self-test",JhwScm.SUCCESS,scm.selfTest());
    }
 
    private static void expectSuccess ( final String expr, final String expect )
