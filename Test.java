@@ -131,10 +131,10 @@ public class Test
          final int           dcode4 = scm.drive(0);
          final int           ocode  = scm.output(output);
          assertEquals(JhwScm.SUCCESS,   icode);
-         assertEquals(JhwScm.INCOMPLETE,dcode1);
-         assertEquals(JhwScm.INCOMPLETE,dcode2);
-         assertEquals(JhwScm.SUCCESS,   dcode3);
-         assertEquals(JhwScm.SUCCESS,   dcode4);
+         assertEquals("should be incomplete so far",JhwScm.INCOMPLETE,dcode1);
+         assertEquals("should be incomplete so far",JhwScm.INCOMPLETE,dcode2);
+         assertEquals("should be successful",       JhwScm.SUCCESS,   dcode3);
+         assertEquals("should still be successful", JhwScm.SUCCESS,   dcode4);
          assertEquals(JhwScm.SUCCESS,   ocode);
          assertEquals("0",output.toString());
          selfTest(scm);
@@ -223,7 +223,6 @@ public class Test
                                        final String expect,
                                        JhwScm       scm )
    {
-      System.out.println("trying: " + expr);
       final StringBuilder output = new StringBuilder();
       if ( null == scm )
       {
