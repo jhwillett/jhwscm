@@ -41,7 +41,8 @@ public class JhwScm
    public static final int SUCCESS    = 0;
    public static final int BAD_ARG    = 1;
    public static final int INCOMPLETE = 2;
-   public static final int FAILURE    = 3;
+
+   public static final int FAILURE    = 300;
 
    public JhwScm ()
    {
@@ -109,13 +110,32 @@ public class JhwScm
       return SUCCESS;
    }
 
+   // Notes:
+   // 
+   // A slot is a 32 bit unsigned quantity.  
+   //
+   // Each register is an independent slot.
+   //
+   // The heap is an array of slots organized into adjacent pairs.
+   // Each pair constitutes a cell.  
+   // 
+   // I have deliberately chosen for the bit pattern 0x00000000 to
+   // always be invalid in any slot: it doesn't mean 0, NIL, the empty
+   // list, false, or anything else.  Although I rule out some cute
+   // optimizations this way, I also enforce an extra discipline which
+   // prevents me from from relying on the Java runtime to initialize
+   // things cleanly.
+   //
+   // This decision may be subject to change if I ever run out of
+   // critical bandwidth or come to care about performance here.
+   
    private static final int MASK_TYPE    = 0xF0000000;
    private static final int MASK_VALUE   = ~MASK_TYPE;
 
-   private static final int TYPE_NIL     = 0x00000000;
-   private static final int TYPE_FIXINT  = 0x10000000;
-   private static final int TYPE_CELL    = 0x20000000;
-   private static final int TYPE_CHAR    = 0x30000000;
+   private static final int TYPE_NIL     = 0x10000000;
+   private static final int TYPE_FIXINT  = 0x20000000;
+   private static final int TYPE_CELL    = 0x30000000;
+   private static final int TYPE_CHAR    = 0x40000000;
 
    private static final int NIL          = code(TYPE_NIL,0);
 
@@ -147,7 +167,7 @@ public class JhwScm
     * Checks that the VM is internally consistent, that all internal
     * invariants are still true.
     *
-    * @returns SUCCESS on success, else FAILURE
+    * @returns SUCCESS on success, else (FAILURE+code)
     */
    public int selfTest ()
    {
@@ -157,19 +177,19 @@ public class JhwScm
       final int c = code(t,v);
       if ( t != type(c) )
       {
-         return FAILURE;
+         return FAILURE + 1;
       }
       if ( v != value(c) )
       {
-         return FAILURE;
+         return FAILURE + 2;
       }
 
-      int i = 0;
+      int numFree = 0;
       for ( int p = reg[regFreeCellList]; NIL != p; p = cdr(p) )
       {
          // just loop over the free cell list to see we don't freak
          // out, such as in an infinite loop or something
-         i++;
+         numFree++;
       }
       // if this is a just-created selfTest(), we should see i = heap.length/
 
@@ -181,34 +201,42 @@ public class JhwScm
       final int i1    = code(TYPE_FIXINT,0x07654321);
       final int i2    = code(TYPE_FIXINT,0x01514926);
       final int cell0 = cons(i0,i1); 
+      if ( (NIL == cell0) != (numFree <= 0) )
+      {
+         return FAILURE + 5;
+      }
       if ( NIL != cell0 )
       {
          if ( i0 != car(cell0) )
          {
-            return FAILURE;
+            return FAILURE + 10;
          }
          if ( i1 != cdr(cell0) )
          {
-            return FAILURE;
+            return FAILURE + 20;
          }
          final int cell1 = cons(i2,cell0); 
+         if ( (NIL == cell1) != (numFree <= 1) )
+         {
+            return FAILURE + 6;
+         }
          if ( NIL != cell1 )
          {
             if ( i2 != car(cell1) )
             {
-               return FAILURE;
+               return FAILURE + 30;
             }
             if ( cell0 != cdr(cell1) )
             {
-               return FAILURE;
+               return FAILURE + 40;
             }
             if ( i0 != car(cdr(cell1)) )
             {
-               return FAILURE;
+               return FAILURE + 50;
             }
             if ( i1 != cdr(cdr(cell1)) )
             {
-               return FAILURE;
+               return FAILURE + 60;
             }
          }
       }
@@ -225,63 +253,43 @@ public class JhwScm
     */
    private int cons ( final int car, final int cdr )
    {
-      final int cell = reg[regFreeCellList];
-      if ( NIL == cell )
+      final int cell       = reg[regFreeCellList];
+      final int t          = type(cell);
+      if ( TYPE_CELL != t )
       {
          return NIL;
       }
-      final int ar = ar(cell);
-      if ( NIL == ar )
-      {
-         return NIL;
-      }
-      final int dr = dr(cell);
-      if ( NIL == dr )
-      {
-         return NIL;
-      }
-      reg[regFreeCellList] = dr;
-      heap[ar] = car;
-      heap[dr] = cdr;
+      final int v          = value(cell);
+      final int ar         = 2*v;
+      final int dr         = ar+1;
+      reg[regFreeCellList] = heap[dr];
+      heap[ar]             = car;
+      heap[dr]             = cdr;
       return cell;
    }
    private int car ( final int cell )
    {
-      final int ar = ar(cell);
-      if ( NIL == ar )
+      final int t  = type(cell);
+      if ( TYPE_CELL != t )
       {
          return NIL;
       }
+      final int v  = value(cell);
+      final int ar = 2*v;
+      final int dr = ar+1;
       return heap[ar];
    }
    private int cdr ( final int cell )
    {
-      final int dr = dr(cell);
-      if ( NIL == dr )
+      final int t  = type(cell);
+      if ( TYPE_CELL != t )
       {
          return NIL;
       }
+      final int v  = value(cell);
+      final int ar = 2*v;
+      final int dr = ar+1;
       return heap[dr];
-   }
-   private int ar ( final int cell )
-   {
-      final int type = type(cell);
-      if ( TYPE_CELL != type )
-      {
-         return NIL;
-      }
-      final int value = value(cell);
-      return 2*value + 0;
-   }
-   private int dr ( final int cell )
-   {
-      final int type = type(cell);
-      if ( TYPE_CELL != type )
-      {
-         return NIL;
-      }
-      final int value = value(cell);
-      return 2*value + 1;
    }
 
    private static int type ( final int code )

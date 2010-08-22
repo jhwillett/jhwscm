@@ -12,12 +12,6 @@ public class Test
 {
    public static void main ( final String[] argv )
    {
-      System.out.println("Hello, World! - Test");
-      System.out.println("  argv.length: " + argv.length);
-      for ( int i = 0; i < argv.length; ++i )
-      {
-         System.out.println("  " + i + ": " + argv[i]);
-      }
 
       // bogus args to entry points result in BAD_ARG, not an exception
       {
