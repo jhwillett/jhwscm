@@ -20,6 +20,11 @@
  * overly resource-hungry Scheme code to this class, this class is
  * responsible for handling it without raising a Java exception.
  *
+ * Also, although I'm implementing the canoncial recursive language,
+ * I'm avoiding recursive functions in the implementation: I would
+ * like the resultant engine to us only a shallow stack of definite
+ * size.
+ *
  * Why this draconian and even unweildy general contract which is
  * non-idomatic for Java? 
  *
@@ -38,11 +43,14 @@
 
 public class JhwScm
 {
-   public static final int SUCCESS    = 0;
-   public static final int BAD_ARG    = 1;
-   public static final int INCOMPLETE = 2;
+   public static final int SUCCESS       = 0;
+   public static final int INCOMPLETE    = 1;
 
-   public static final int FAILURE    = 300;
+   public static final int BAD_ARG       = 1000; // often added to a specifier
+
+   public static final int OUT_OF_MEMORY = 2000; // often added to a specifier
+
+   public static final int FAILURE       = 3000; // often added to a specifier
 
    public JhwScm ()
    {
@@ -51,17 +59,45 @@ public class JhwScm
    /**
     * Places all characters into the VM's input queue.
     *
+    * On failure, the VM's input queue is left unchanged: input() is
+    * all-or-nothing.
+    *
     * @param input characters to be copied into the VM's input queue.
     * @throws nothing, not ever
     * @returns SUCCESS on success, otherwise an error code.
     */
-   public int input ( final CharSequence input )
+   public int input ( final CharSequence input ) 
    {
       if ( null == input )
       {
          return BAD_ARG;
       }
-      return SUCCESS;
+      final int tmpQueue = cons(NIL,NIL);
+      if ( NIL == tmpQueue )
+      {
+         return OUT_OF_MEMORY + 1;
+      }
+      for ( int i = 0; i < input.length(); ++i )
+      {
+         final char c    = input.charAt(i);
+         System.out.println("  INPUTTING: " + c + " " + (int)c);
+         final int  code = code(TYPE_CHAR,c);
+         if ( !queuePushBack(tmpQueue,code) )
+         {
+            // TODO: could recycle the cell at tmpQueue here.
+            return OUT_OF_MEMORY + 2;
+         }
+      }
+      System.out.println("  OUT");
+      if ( NIL == reg[regInputQueue] )
+      {
+         reg[regInputQueue] = cons(NIL,NIL);
+      }
+      System.out.println("  SPLICING");
+      final int err = queueSpliceBack(reg[regInputQueue],car(tmpQueue));
+      // TODO: could recycle the cell at tmpQueue here.
+      System.out.println("  DONE");
+      return err;
    }
 
    /**
@@ -72,11 +108,37 @@ public class JhwScm
     * @throws nothing, not ever
     * @returns SUCCESS on success, otherwise an error code.
     */
-   public int output ( final Appendable output )
+   public int output ( final Appendable output ) 
    {
       if ( null == output )
       {
          return BAD_ARG;
+      }
+      System.out.println("QUEUE: " + reg[regOutputQueue]);
+      if ( NIL == reg[regOutputQueue] )
+      {
+         reg[regOutputQueue] = cons(NIL,NIL);
+         System.out.println("REQUEUE: " + reg[regOutputQueue]);
+      }
+      while ( !queueEmpty(reg[regOutputQueue]) )
+      {
+         final int  f = queuePopFront(reg[regOutputQueue]);
+         final int  v = value(f);
+         final char c = (char)(MASK_VALUE & v);
+         System.out.println("f " + f + " v " + v + " " + (int)c);
+
+         // TODO: change signature so we don't need this guard here?
+         // 
+         // TODO: make this all-or-nothing, like input()?
+         try
+         {
+            Thread.sleep(100);
+            output.append(c);
+         }
+         catch ( Throwable e )
+         {
+            return FAILURE;
+         }
       }
       return SUCCESS;
    }
@@ -117,7 +179,21 @@ public class JhwScm
    // Each register is an independent slot.
    //
    // The heap is an array of slots organized into adjacent pairs.
-   // Each pair constitutes a cell.  
+   // Each pair constitutes a cell, which is referred to by the offset
+   // of the first slot.  As these offsets are always even, for
+   // bandwidth in cell pointers they are generally encoded by
+   // shifting them right 1 bit.
+   // 
+   // A list is a chain of cells, with the second slot in each cell
+   // containing a pointer to the next cell.  NIL is used to indicate
+   // the empty list.
+   // 
+   // A queue is implemented as a cell.  If the queue is empty, both
+   // slots in the cell are NIL.  Otherwise, the first slot points to
+   // the first cell of a list, and the second slot points to the last
+   // cell of the same list.  While more complex than a simple list,
+   // this makes it easier to extend the queue either at the front or
+   // at the back.
    // 
    // I have deliberately chosen for the bit pattern 0x00000000 to
    // always be invalid in any slot: it doesn't mean 0, NIL, the empty
@@ -142,8 +218,8 @@ public class JhwScm
    private static final int regFreeCellList = 0; // unused cells
    private static final int regStackList    = 1; // stack frames
    private static final int regEnvList      = 2; // environment frames
-   private static final int regInputList    = 3; // pending input chars
-   private static final int regOutputList   = 4; // pending output chars
+   private static final int regInputQueue   = 3; // pending input chars
+   private static final int regOutputQueue  = 4; // pending output chars
 
    private final int[] heap = new int[1024];
    private final int[] reg  = new int[16];
@@ -171,6 +247,12 @@ public class JhwScm
     */
    public int selfTest ()
    {
+      final boolean verbose = true;
+      if ( verbose )
+      {
+         System.out.println("JhwScm.selfTest()");
+      }
+
       // consistency check
       final int t = 0x12345678 & TYPE_FIXINT;
       final int v = 0x12345678 & MASK_VALUE;
@@ -184,14 +266,21 @@ public class JhwScm
          return FAILURE + 2;
       }
 
-      int numFree = 0;
-      for ( int p = reg[regFreeCellList]; NIL != p; p = cdr(p) )
+      final int numFree   = listLength(reg[regFreeCellList]);
+      final int numStack  = listLength(reg[regStackList]);
+      final int numEnv    = listLength(reg[regEnvList]);
+      final int numInput  = queueLength(reg[regInputQueue]);
+      final int numOutput = queueLength(reg[regOutputQueue]);
+      if ( verbose )
       {
-         // just loop over the free cell list to see we don't freak
-         // out, such as in an infinite loop or something
-         numFree++;
+         System.out.println("  numFree:   " + numFree);
+         System.out.println("  numStack:  " + numStack);
+         System.out.println("  numEnv:    " + numEnv);
+         System.out.println("  numInput:  " + numInput);
+         System.out.println("  numOutput: " + numOutput);
       }
-      // if this is a just-created selfTest(), we should see i = heap.length/
+
+      // if this is a just-created selfTest(), we should see i = heap.length/2
 
       // Now a test which burns a free cell.
       //
@@ -238,14 +327,52 @@ public class JhwScm
             {
                return FAILURE + 60;
             }
+            if ( listLength(reg[regFreeCellList]) != numFree-2 )
+            {
+               return FAILURE + 70;
+            }
          }
+      }
+
+      final int newNumFree = listLength(reg[regFreeCellList]);
+      if ( verbose )
+      {
+         System.out.println("  newNumFree: " + newNumFree);
       }
 
       return SUCCESS;
    }
 
+
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding slots
+   //
+   ////////////////////////////////////////////////////////////////////
+
+   private static int type ( final int code )
+   {
+      return MASK_TYPE  & code;
+   }
+   private static int value ( final int code )
+   {
+      return MASK_VALUE & code;
+   }
+   private static int code ( final int type, final int value )
+   {
+      return (MASK_TYPE & type) | (MASK_VALUE & value);
+   }
+   
+
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding cells
+   //
+   ////////////////////////////////////////////////////////////////////
+
    // TODO: do we want an ERROR code distinct from NIL in many of
    // these places?
+
 
    /**
     * @returns NIL on allocation failure, else a newly allocated and
@@ -260,8 +387,8 @@ public class JhwScm
          return NIL;
       }
       final int v          = value(cell);
-      final int ar         = 2*v;
-      final int dr         = ar+1;
+      final int ar         = v << 1;
+      final int dr         = ar + 1;
       reg[regFreeCellList] = heap[dr];
       heap[ar]             = car;
       heap[dr]             = cdr;
@@ -269,41 +396,212 @@ public class JhwScm
    }
    private int car ( final int cell )
    {
-      final int t  = type(cell);
-      if ( TYPE_CELL != t )
+      if ( TYPE_CELL != type(cell) )
       {
          return NIL;
       }
-      final int v  = value(cell);
-      final int ar = 2*v;
-      final int dr = ar+1;
-      return heap[ar];
+      return heap[(value(cell) << 1) + 0];
    }
    private int cdr ( final int cell )
    {
-      final int t  = type(cell);
-      if ( TYPE_CELL != t )
+      if ( TYPE_CELL != type(cell) )
       {
          return NIL;
       }
-      final int v  = value(cell);
-      final int ar = 2*v;
-      final int dr = ar+1;
-      return heap[dr];
+      return heap[(value(cell) << 1) + 1];
+   }
+   private int setcar ( final int cell, final int value )
+   {
+      if ( TYPE_CELL != type(cell) )
+      {
+         return NIL;
+      }
+      heap[(value(cell) << 1) + 0] = value;
+      return NIL;
+   }
+   private int setcdr ( final int cell, final int value )
+   {
+      if ( TYPE_CELL != type(cell) )
+      {
+         return NIL;
+      }
+      heap[(value(cell) << 1) + 1] = value;
+      return NIL;
    }
 
-   private static int type ( final int code )
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding lists (mostly same as w/ cons)
+   //
+   ////////////////////////////////////////////////////////////////////
+
+   /**
+    * @returns the length of the list rooted at cell: as a regular
+    * int, not as a TYPE_FIXINT!  Is unsafe about cycles!
+    */
+   private int listLength ( final int cell )
    {
-      return MASK_TYPE  & code;
-   }
-   private static int value ( final int code )
-   {
-      return MASK_VALUE & code;
-   }
-   private static int code ( final int type, final int value )
-   {
-      return (MASK_TYPE & type) | (MASK_VALUE & value);
+      int len = 0;
+      for ( int p = cell; NIL != p; p = cdr(p) )
+      {
+         len++;
+      }   
+      return len;
    }
 
-   
+
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding queues (over laps a lot w/ cons and list)
+   //
+   ////////////////////////////////////////////////////////////////////
+
+   /**
+    * @returns the length of the queue rooted at cell: as a regular
+    * int, not as a TYPE_FIXINT!  Is unsafe about cycles!
+    */
+   private int queueLength ( final int queue )
+   {
+      final int queue_t = type(queue);
+      if ( TYPE_CELL != queue_t ) return 0;
+      final int car     = car(queue);
+      final int car_t   = type(car);
+      if ( TYPE_CELL != car_t ) return 0;
+      return listLength(car);
+   }
+
+   private boolean queueEmpty ( final int queue )
+   {
+      final int queue_t = type(queue);
+      if ( TYPE_CELL != queue_t ) 
+      {
+         return false;
+      }
+      final int head = car(queue);
+      final int tail = cdr(queue);
+      return ( NIL == head && NIL == tail );
+   }
+
+   private boolean queuePushBack ( final int queue, final int value )
+   {
+      final int queue_t = type(queue);
+      if ( TYPE_CELL != queue_t ) 
+      {
+         return false;
+      }
+
+      final int new_cell = cons(value,NIL);
+      if ( NIL == new_cell )
+      {
+         // TODO: or return OUT_OF_MEMORY?
+         return false;
+      }
+
+      // INVARIANT: head and tail are both NIL (e.g. empty) or they
+      // are both cells!
+      final int head = car(queue);
+      final int tail = cdr(queue);
+
+      if ( NIL == head || NIL == tail )
+      {
+         if ( NIL != head || NIL != tail )
+         {
+            // TODO: corrupt queue!
+            //
+            // TODO: recycle new_cell?
+            return false;
+         }
+         setcar(queue,new_cell);
+         setcdr(queue,new_cell);
+         return true;
+      }
+
+      if ( (TYPE_CELL != type(head)) || (TYPE_CELL != type(tail)) )
+      {
+         // TODO: corrupt queue!
+         //
+         // TODO: recycle new_cell?
+         return false;
+      }
+      setcdr(tail,new_cell);
+      setcdr(queue,new_cell);
+      return true;
+   }
+
+   private int queueSpliceBack ( final int queue, final int list )
+   {
+      if ( TYPE_CELL != type(queue) ) 
+      {
+         return BAD_ARG;
+      }
+
+      // INVARIANT: head and tail are both NIL (e.g. empty) or they
+      // are both cells!
+      final int head = car(queue);
+      final int tail = cdr(queue);
+
+      if ( NIL == head || NIL == tail )
+      {
+         if ( NIL != head || NIL != tail )
+         {
+            // TODO: corrupt queue!
+            return FAILURE + 900;
+         }
+         setcar(queue,list);
+         setcdr(queue,list);
+      }
+      else
+      {
+         if ( (TYPE_CELL != type(head)) || (TYPE_CELL != type(tail)) )
+         {
+            // TODO: corrupt queue!
+            return FAILURE + 901;
+         }
+         setcdr(tail,list);
+      }
+
+      while ( NIL != cdr(queue) )
+      {
+         setcdr(queue,cdr(cdr(queue)));
+      }
+
+      return SUCCESS;
+   }
+
+   private int queuePopFront ( final int queue )
+   {
+      System.out.println("DEQUEUE: " + reg[regOutputQueue]);
+
+      final int queue_t = type(queue);
+      if ( TYPE_CELL != queue_t ) 
+      {
+         System.out.println("not a queue");
+         return NIL;
+      }
+
+      final int head = car(queue);
+      if ( NIL == head )
+      {
+         // empty queue
+         System.out.println("empty queue");
+         return NIL;
+      }
+      if ( TYPE_CELL != type(head) ) 
+      {
+         // TODO: corrupt queue
+         System.out.println("corrupt queue");
+         return NIL;
+      }
+      final int value = car(head);
+      // TODO: recycle head
+      setcar(queue,cdr(head));
+      if ( NIL == car(queue) )
+      {
+         setcdr(queue,NIL);
+      }
+      System.out.println("happy pop");
+      return value;
+   }
+
+
 }

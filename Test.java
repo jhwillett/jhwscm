@@ -32,20 +32,20 @@ public class Test
       // empty args are OK
       {
          final int code = new JhwScm().input("");
-         assertEquals("input(\"\") is ok",JhwScm.SUCCESS,code);
+         assertEquals("input(\"\")",JhwScm.SUCCESS,code);
       }
       {
          final int code = new JhwScm().drive(0);
-         assertEquals("drive(0) is ok",JhwScm.SUCCESS,code);
+         assertEquals("drive(0)",JhwScm.SUCCESS,code);
       }
       {
          final int code = new JhwScm().drive(-1);
-         assertEquals("drive(-1) is ok (w/ empty input)",JhwScm.SUCCESS,code);
+         assertEquals("drive(-1) (w/ empty input)",JhwScm.SUCCESS,code);
       }
       {
          final StringBuilder output = new StringBuilder();
          final int           code   = new JhwScm().output(output);
-         assertEquals("output() is ok",JhwScm.SUCCESS,code);
+         assertEquals("output()",JhwScm.SUCCESS,code);
          assertEquals("output is empty",0,output.length());
       }
 
@@ -90,11 +90,15 @@ public class Test
       // first content: simple integer expressions are self-evaluating
       // (but take some time).
       {
+         System.out.println("TRYING THE O");
          final StringBuilder output = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("0");
+         System.out.println("  IN");
          final int           dcode  = scm.drive(-1);
+         System.out.println("  DRIVEN");
          final int           ocode  = scm.output(output);
+         System.out.println("  OUT");
          assertEquals(JhwScm.SUCCESS,icode);
          assertEquals(JhwScm.SUCCESS,dcode);
          assertEquals(JhwScm.SUCCESS,ocode);
@@ -210,8 +214,9 @@ public class Test
 
    private static void expectSuccess ( final String expr, 
                                        final String expect,
-                                       JhwScm        scm )
+                                       JhwScm       scm )
    {
+      System.out.println("trying: " + expr);
       final StringBuilder output = new StringBuilder();
       if ( null == scm )
       {
