@@ -102,7 +102,7 @@ public class Test
          assertEquals(JhwScm.SUCCESS,icode);
          assertEquals(JhwScm.SUCCESS,dcode);
          assertEquals(JhwScm.SUCCESS,ocode);
-         assertEquals("0",output);
+         assertEquals("0",output.toString());
          selfTest(scm);
       }
 
@@ -122,7 +122,7 @@ public class Test
          assertEquals(JhwScm.SUCCESS,   dcode3);
          assertEquals(JhwScm.SUCCESS,   dcode4);
          assertEquals(JhwScm.SUCCESS,   ocode);
-         assertEquals("0",output);
+         assertEquals("0",output.toString());
          selfTest(scm);
       }
 
@@ -228,7 +228,7 @@ public class Test
       assertEquals("should succeed evaluating: " + expr, JhwScm.SUCCESS, dcode);
       final int ocode = scm.output(output);
       assertEquals(JhwScm.SUCCESS,ocode);
-      assertEquals(expect,output);
+      assertEquals(expect,output.toString());
    }
 
    private static void expectFailure ( final String expr )

@@ -114,11 +114,9 @@ public class JhwScm
       {
          return BAD_ARG;
       }
-      System.out.println("QUEUE: " + reg[regOutputQueue]);
       if ( NIL == reg[regOutputQueue] )
       {
-         reg[regOutputQueue] = cons(NIL,NIL);
-         System.out.println("REQUEUE: " + reg[regOutputQueue]);
+         return SUCCESS;
       }
       while ( !queueEmpty(reg[regOutputQueue]) )
       {
@@ -168,6 +166,25 @@ public class JhwScm
       if ( numSteps < -1 )
       {
          return BAD_ARG;
+      }
+      // Fiddling around: just move input to output...
+      {
+         if ( NIL == reg[regInputQueue] )
+         {
+            return SUCCESS;
+         }
+         if ( NIL == reg[regOutputQueue] )
+         {
+            reg[regOutputQueue] = cons(NIL,NIL);
+         }
+         final int err = queueSpliceBack(reg[regOutputQueue],
+                                         car(reg[regInputQueue]));
+         if ( SUCCESS != err )
+         {
+           return err;
+         }
+         setcar(reg[regInputQueue],NIL);
+         setcdr(reg[regInputQueue],NIL);
       }
       return SUCCESS;
    }
