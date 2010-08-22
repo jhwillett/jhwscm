@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-public class MyScm
+public class JhwScm
 {
    public static final int SUCCESS    = 0;
 
@@ -16,7 +16,7 @@ public class MyScm
 
    public static final int FAILURE    = 3;
 
-   public MyScm ()
+   public JhwScm ()
    {
    }
 
