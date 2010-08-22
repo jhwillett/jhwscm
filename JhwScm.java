@@ -52,8 +52,25 @@ public class JhwScm
 
    public static final int FAILURE       = 3000; // often added to a specifier
 
+   public static final int UNIMPLEMENTED = 4000; // often added to a specifier
+
    public JhwScm ()
    {
+      for ( int i = 0; i < reg.length; i++ )
+      {
+         reg[i] = NIL;
+      }
+
+      reg[regFreeCellList] = NIL;
+      for ( int i = 0; i < heap.length; i += 2 )
+      {
+         // TODO: is the car of free list, e.g. heap[i+0], superfluous here?
+         heap[i+0]            = NIL;
+         heap[i+1]            = reg[regFreeCellList];
+         reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
+      }
+
+      reg[regPc] = func_rep;
    }
 
    /**
@@ -161,8 +178,9 @@ public class JhwScm
       {
          return BAD_ARG;
       }
-      // Fiddling around: just move input to output...
+      if ( false )
       {
+         // Fiddling around: just move input to output...
          if ( NIL == reg[regInputQueue] )
          {
             return SUCCESS;
@@ -179,7 +197,82 @@ public class JhwScm
          }
          setcar(reg[regInputQueue],NIL);
          setcdr(reg[regInputQueue],NIL);
+         return SUCCESS;
       }
+      
+      // Top level program: 
+      //
+      //   (while (has-some-input) (print (eval (read) global-env)))
+      // 
+      int err = SUCCESS;
+      for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
+      {
+         switch ( reg[regPc] )
+         {
+         case func_rep:
+            System.out.println("func_rep:");
+            // The top level read-eval-print loop:
+            //
+            //   (while #t (print (eval (read) global-env)))
+            //
+            if ( queueEmpty(reg[regInputQueue]) )
+            {
+               return SUCCESS;
+            }
+            err = callsub(func_read,func_rep_after_read);
+            if ( SUCCESS != err ) return err;
+            break;
+         case func_rep_after_read:
+            System.out.println("func_rep_after_read:");
+            reg[regArg0] = reg[regRetval];
+            reg[regArg1] = reg[regGlobalEnv];
+            callsub(func_eval,func_rep_after_eval);
+            err = callsub(func_read,func_rep_after_read);
+            if ( SUCCESS != err ) return err;
+            break;
+         case func_rep_after_eval:
+            System.out.println("func_rep_after_eval:");
+            reg[regArg0] = reg[regRetval];
+            callsub(func_print,func_rep);
+            err = callsub(func_read,func_rep_after_read);
+            if ( SUCCESS != err ) return err;
+            break;
+
+         case func_read:
+            System.out.println("func_read:");
+            // Parses the next sexpr from reg[regInputQueue], and
+            // leaves the results in reg[regRetval].
+            //
+            reg[regRetval] = NIL;
+            err = returnsub();
+            if ( SUCCESS != err ) return err;
+            return UNIMPLEMENTED + 1;
+
+         case func_eval:
+            System.out.println("func_eval:");
+            // Evaluates the expr in reg[regArg0] in the env in
+            // reg[regArg1], and leaves the results in reg[regRetval].
+            //
+            reg[regRetval] = NIL;
+            err = returnsub();
+            if ( SUCCESS != err ) return err;
+            return UNIMPLEMENTED + 2;
+
+         case func_print:
+            System.out.println("func_print:");
+            // Prints the expr in reg[regArg0] to reg[regOutputQueue].
+            //
+            reg[regRetval] = NIL;
+            err = returnsub();
+            if ( SUCCESS != err ) return err;
+            return UNIMPLEMENTED + 3;
+
+         default:
+            System.out.println("bogus opcode: " + reg[regPc]);
+            return FAILURE;
+         }
+      }
+
       return SUCCESS;
    }
 
@@ -223,32 +316,60 @@ public class JhwScm
    private static final int TYPE_FIXINT  = 0x20000000;
    private static final int TYPE_CELL    = 0x30000000;
    private static final int TYPE_CHAR    = 0x40000000;
+   private static final int TYPE_OPCODE  = 0x50000000;
 
    private static final int NIL          = code(TYPE_NIL,0);
 
-   private static final int regFreeCellList = 0; // unused cells
-   private static final int regStackList    = 1; // stack frames
-   private static final int regEnvList      = 2; // environment frames
-   private static final int regInputQueue   = 3; // pending input chars
-   private static final int regOutputQueue  = 4; // pending output chars
+   private static final int regFreeCellList   =  0; // unused cells
+   private static final int regStack          =  1; // the runtime stack
+   private static final int regGlobalEnv      =  2; // environment frames
+   private static final int regInputQueue     =  3; // pending input chars
+   private static final int regOutputQueue    =  4; // pending output chars
+
+   private static final int regArg0           =  5; // argument
+   private static final int regArg1           =  6; // argument
+   private static final int regRetval         =  7; // return value
+
+   private static final int regOpNext         =  8; // next opcode to run
+   private static final int regOpContinuation =  9; // opcode to return to
+
+   private static final int regPc             = 10; // opcode to return to
+
+
+   private static final int func_rep            = TYPE_OPCODE | 10;
+   private static final int func_rep_after_eval = TYPE_OPCODE | 11;
+   private static final int func_rep_after_read = TYPE_OPCODE | 12;
+
+   private static final int func_read           = TYPE_OPCODE | 20;
+
+   private static final int func_eval           = TYPE_OPCODE | 30;
+
+   private static final int func_print          = TYPE_OPCODE | 40;
+
+
+   private int callsub ( final int nextOp, final int continuationOp )
+   {
+      final int oldStack = reg[regStack];
+      reg[regStack] = cons(continuationOp,reg[regStack]);
+      if ( NIL == reg[regStack] )
+      {
+         reg[regStack] = oldStack;
+         return OUT_OF_MEMORY;
+      }
+      reg[regPc] = nextOp;
+      return SUCCESS;
+   }
+
+   private int returnsub ()
+   {
+      final int continuationOp = car(reg[regStack]);
+      // TODO: recycle regStack
+      reg[regStack] = cdr(reg[regStack]);
+      return SUCCESS;
+   }
 
    private final int[] heap = new int[1024];
    private final int[] reg  = new int[16];
-
-   {
-      for ( int i = 0; i < reg.length; i++ )
-      {
-         reg[i] = NIL;
-      }
-      reg[regFreeCellList] = NIL;
-      for ( int i = 0; i < heap.length; i += 2 )
-      {
-         // TODO: is the car of free list, e.g. heap[i+0], superfluous here?
-         heap[i+0]            = NIL;
-         heap[i+1]            = reg[regFreeCellList];
-         reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
-      }
-   }
 
    /**
     * Checks that the VM is internally consistent, that all internal
@@ -277,18 +398,18 @@ public class JhwScm
          return FAILURE + 2;
       }
 
-      final int numFree   = listLength(reg[regFreeCellList]);
-      final int numStack  = listLength(reg[regStackList]);
-      final int numEnv    = listLength(reg[regEnvList]);
-      final int numInput  = queueLength(reg[regInputQueue]);
-      final int numOutput = queueLength(reg[regOutputQueue]);
+      final int numFree      = listLength(reg[regFreeCellList]);
+      final int numStack     = listLength(reg[regStack]);
+      final int numGlobalEnv = listLength(reg[regGlobalEnv]);
+      final int numInput     = queueLength(reg[regInputQueue]);
+      final int numOutput    = queueLength(reg[regOutputQueue]);
       if ( verbose )
       {
-         System.out.println("  numFree:   " + numFree);
-         System.out.println("  numStack:  " + numStack);
-         System.out.println("  numEnv:    " + numEnv);
-         System.out.println("  numInput:  " + numInput);
-         System.out.println("  numOutput: " + numOutput);
+         System.out.println("  numFree:      " + numFree);
+         System.out.println("  numStack:     " + numStack);
+         System.out.println("  numGlobalEnv: " + numGlobalEnv);
+         System.out.println("  numInput:     " + numInput);
+         System.out.println("  numOutput:    " + numOutput);
       }
 
       // if this is a just-created selfTest(), we should see i = heap.length/2
