@@ -6,7 +6,7 @@ SHELL     := bash
 DESTDIR   ?= build
 SRC       := *.java
 MAIN      := Test
-MAIN_ARGS := alif baa taa thah del gim
+MAIN_ARGS := 
 
 
 LIBS                 += junit-4.8.2.jar

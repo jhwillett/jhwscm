@@ -90,21 +90,35 @@ public class Test
       // first content: simple integer expressions are self-evaluating
       // (but take some time).
       {
-         System.out.println("TRYING THE O");
          final StringBuilder output = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("0");
-         System.out.println("  IN");
          final int           dcode  = scm.drive(-1);
-         System.out.println("  DRIVEN");
          final int           ocode  = scm.output(output);
-         System.out.println("  OUT");
          assertEquals(JhwScm.SUCCESS,icode);
          assertEquals(JhwScm.SUCCESS,dcode);
          assertEquals(JhwScm.SUCCESS,ocode);
          assertEquals("0",output.toString());
          selfTest(scm);
       }
+      {
+         final StringBuilder output = new StringBuilder();
+         final JhwScm        scm    = new JhwScm();
+         final int           icode  = scm.input("1234");
+         final int           dcode  = scm.drive(-1);
+         final int           ocode  = scm.output(output);
+         assertEquals(JhwScm.SUCCESS,icode);
+         assertEquals(JhwScm.SUCCESS,dcode);
+         assertEquals(JhwScm.SUCCESS,ocode);
+         assertEquals("1234",output.toString());
+         selfTest(scm);
+      }
+
+      // several valid, simple computations:
+      expectSuccess("","");
+      expectSuccess("0","0");
+      expectSuccess("1","1");
+      expectSuccess("-1","-1");
 
       // first computation: even simple integer take nonzero cycles
       {
@@ -125,13 +139,6 @@ public class Test
          assertEquals("0",output.toString());
          selfTest(scm);
       }
-
-      // several valid, simple computations:
-      expectSuccess("","");
-      expectSuccess("0","0");
-      expectSuccess("1","1");
-      expectSuccess("-1","-1");
-
 
       expectFailure("a");
       expectFailure("a1");

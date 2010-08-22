@@ -80,7 +80,6 @@ public class JhwScm
       for ( int i = 0; i < input.length(); ++i )
       {
          final char c    = input.charAt(i);
-         System.out.println("  INPUTTING: " + c + " " + (int)c);
          final int  code = code(TYPE_CHAR,c);
          if ( !queuePushBack(tmpQueue,code) )
          {
@@ -88,15 +87,12 @@ public class JhwScm
             return OUT_OF_MEMORY + 2;
          }
       }
-      System.out.println("  OUT");
       if ( NIL == reg[regInputQueue] )
       {
          reg[regInputQueue] = cons(NIL,NIL);
       }
-      System.out.println("  SPLICING");
       final int err = queueSpliceBack(reg[regInputQueue],car(tmpQueue));
       // TODO: could recycle the cell at tmpQueue here.
-      System.out.println("  DONE");
       return err;
    }
 
@@ -123,8 +119,6 @@ public class JhwScm
          final int  f = queuePopFront(reg[regOutputQueue]);
          final int  v = value(f);
          final char c = (char)(MASK_VALUE & v);
-         System.out.println("f " + f + " v " + v + " " + (int)c);
-
          // TODO: change signature so we don't need this guard here?
          // 
          // TODO: make this all-or-nothing, like input()?
@@ -264,7 +258,7 @@ public class JhwScm
     */
    public int selfTest ()
    {
-      final boolean verbose = true;
+      final boolean verbose = false;
       if ( verbose )
       {
          System.out.println("JhwScm.selfTest()");
@@ -587,12 +581,19 @@ public class JhwScm
 
    private int queuePopFront ( final int queue )
    {
-      System.out.println("DEQUEUE: " + reg[regOutputQueue]);
+      final boolean verbose = false;
+      if ( verbose )
+      {
+         System.out.println("DEQUEUE: " + reg[regOutputQueue]);
+      }
 
       final int queue_t = type(queue);
       if ( TYPE_CELL != queue_t ) 
       {
-         System.out.println("not a queue");
+         if ( verbose )
+         {
+            System.out.println("not a queue");
+         }
          return NIL;
       }
 
@@ -600,13 +601,19 @@ public class JhwScm
       if ( NIL == head )
       {
          // empty queue
-         System.out.println("empty queue");
+         if ( verbose )
+         {
+            System.out.println("empty queue");
+         }
          return NIL;
       }
       if ( TYPE_CELL != type(head) ) 
       {
          // TODO: corrupt queue
-         System.out.println("corrupt queue");
+         if ( verbose )
+         {
+            System.out.println("corrupt queue");
+         }
          return NIL;
       }
       final int value = car(head);
@@ -616,7 +623,10 @@ public class JhwScm
       {
          setcdr(queue,NIL);
       }
-      System.out.println("happy pop");
+      if ( verbose )
+      {
+         System.out.println("happy pop");
+      }
       return value;
    }
 
