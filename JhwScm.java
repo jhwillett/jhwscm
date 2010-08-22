@@ -152,8 +152,8 @@ public class JhwScm
    public int selfTest ()
    {
       // consistency check
-      final int t = 0x50000000;
-      final int v = 0x01234567;
+      final int t = 0x12345678 & TYPE_FIXINT;
+      final int v = 0x12345678 & MASK_VALUE;
       final int c = code(t,v);
       if ( t != type(c) )
       {
@@ -164,14 +164,65 @@ public class JhwScm
          return FAILURE;
       }
 
+      int i = 0;
       for ( int p = reg[regFreeCellList]; NIL != p; p = cdr(p) )
       {
-         // just loop over the free cell list to see we don't freak out
+         // just loop over the free cell list to see we don't freak
+         // out, such as in an infinite loop or something
+         i++;
+      }
+      // if this is a just-created selfTest(), we should see i = heap.length/
+
+      // Now a test which burns a free cell.
+      //
+      // TODO: find a way to make this a non-mutating test?
+      //
+      final int i0    = code(TYPE_FIXINT,0x01234567);
+      final int i1    = code(TYPE_FIXINT,0x07654321);
+      final int i2    = code(TYPE_FIXINT,0x01514926);
+      final int cell0 = cons(i0,i1); 
+      if ( NIL != cell0 )
+      {
+         if ( i0 != car(cell0) )
+         {
+            return FAILURE;
+         }
+         if ( i1 != cdr(cell0) )
+         {
+            return FAILURE;
+         }
+         final int cell1 = cons(i2,cell0); 
+         if ( NIL != cell1 )
+         {
+            if ( i2 != car(cell1) )
+            {
+               return FAILURE;
+            }
+            if ( cell0 != cdr(cell1) )
+            {
+               return FAILURE;
+            }
+            if ( i0 != car(cdr(cell1)) )
+            {
+               return FAILURE;
+            }
+            if ( i1 != cdr(cdr(cell1)) )
+            {
+               return FAILURE;
+            }
+         }
       }
 
       return SUCCESS;
    }
 
+   // TODO: do we want an ERROR code distinct from NIL in many of
+   // these places?
+
+   /**
+    * @returns NIL on allocation failure, else a newly allocated and
+    * initialize cons cell.
+    */
    private int cons ( final int car, final int cdr )
    {
       final int cell = reg[regFreeCellList];
