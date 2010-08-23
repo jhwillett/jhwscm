@@ -85,6 +85,7 @@ public class JhwScm
     */
    public int input ( final CharSequence input ) 
    {
+      log("input():  \"" + input + "\"");
       if ( null == input )
       {
          return BAD_ARG;
@@ -103,6 +104,7 @@ public class JhwScm
             // TODO: could recycle the cell at tmpQueue here.
             return OUT_OF_MEMORY + 2;
          }
+         log("  pushed: " + c);
       }
       if ( NIL == reg[regInputQueue] )
       {
@@ -110,6 +112,7 @@ public class JhwScm
       }
       final int err = queueSpliceBack(reg[regInputQueue],car(tmpQueue));
       // TODO: could recycle the cell at tmpQueue here.
+      log("  err:    " + err);
       return err;
    }
 
@@ -199,6 +202,14 @@ public class JhwScm
          setcdr(reg[regInputQueue],NIL);
          return SUCCESS;
       }
+
+      // Temp variables: note, any block can overwrite any of these.
+      // Any data which must survive a block transition should be
+      // saved in registers and on the stack instead.
+      //
+      int code = 0;
+      int t    = 0;
+      int v    = 0;
       
       // Top level program: 
       //
@@ -210,11 +221,11 @@ public class JhwScm
          switch ( reg[regPc] )
          {
          case func_rep:
-            log("func_rep:");
             // The top level read-eval-print loop:
             //
             //   (while #t (print (eval (read) global-env)))
             //
+            log("func_rep:");
             if ( queueIsEmpty(reg[regInputQueue]) )
             {
                return SUCCESS;
@@ -240,22 +251,59 @@ public class JhwScm
             break;
 
          case func_read:
-            log("func_read:");
             // Parses the next sexpr from reg[regInputQueue], and
             // leaves the results in reg[regRetval].
             //
-            reg[regRetval] = NIL;
+            log("func_read:");
+            code = queuePopFront(reg[regInputQueue]);
+            t    = type(code);
+            v    = value(code);
+            if ( TYPE_CHAR != t )
+            {
+               log("non-char in input: " + code + " " + t + " " + (int)v);
+               return FAILURE;
+            }
+            if ( '0' <= v && v <= '9' )
+            {
+               reg[regArg0] = code;
+               // TODO: could tail-recurse here
+               callsub(func_read_number,func_read_after_sub);
+               break;
+            }
+            else
+            {
+               return UNIMPLEMENTED + 1;
+            }
+         case func_read_after_sub:
+            // just returns whatever return value left behind by the
+            // subroutine which came back to here.
             err = returnsub();
             if ( SUCCESS != err ) return err;
+            break;
+
+         case func_read_number:
+            // Parses the next number from reg[regInputQueue], given
+            // that the first digit/char is in reg[regArg0].
+            //
+            log("func_read_number:");
+            code = reg[regArg0];
+            t    = type(code);
+            v    = value(code);
+            if ( TYPE_CHAR != t )
+            {
+               log("non-char in arg: " + code + " " + t + " " + (char)v);
+               return FAILURE;
+            }
+            log("  first char: " + (char)v);
             return UNIMPLEMENTED + 1;
 
          case func_eval:
-            log("func_eval:");
             // Evaluates the expr in reg[regArg0] in the env in
             // reg[regArg1], and leaves the results in reg[regRetval].
             //
             // TODO: implement properly.
             //
+            log("func_eval:");
             if ( true )
             {
                // Treats all exprs as self-evaluating.
@@ -279,9 +327,9 @@ public class JhwScm
             }
 
          case func_print:
-            log("func_print:");
             // Prints the expr in reg[regArg0] to reg[regOutputQueue].
             //
+            log("func_print:");
             reg[regRetval] = NIL;
             err = returnsub();
             if ( SUCCESS != err ) return err;
@@ -356,15 +404,17 @@ public class JhwScm
    private static final int regPc             = 10; // opcode to return to
 
 
-   private static final int func_rep            = TYPE_OPCODE | 10;
-   private static final int func_rep_after_eval = TYPE_OPCODE | 11;
-   private static final int func_rep_after_read = TYPE_OPCODE | 12;
+   private static final int func_rep            = TYPE_OPCODE | 10; // func
+   private static final int func_rep_after_eval = TYPE_OPCODE | 11; // helper
+   private static final int func_rep_after_read = TYPE_OPCODE | 12; // helper
 
-   private static final int func_read           = TYPE_OPCODE | 20;
+   private static final int func_read           = TYPE_OPCODE | 20; // func
+   private static final int func_read_after_sub = TYPE_OPCODE | 21; // helper
+   private static final int func_read_number    = TYPE_OPCODE | 22; // func
 
-   private static final int func_eval           = TYPE_OPCODE | 30;
+   private static final int func_eval           = TYPE_OPCODE | 30; // func
 
-   private static final int func_print          = TYPE_OPCODE | 40;
+   private static final int func_print          = TYPE_OPCODE | 40; // func
 
 
    private int callsub ( final int nextOp, final int continuationOp )
