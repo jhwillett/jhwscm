@@ -131,7 +131,7 @@ public class JhwScm
       {
          return SUCCESS;
       }
-      while ( !queueEmpty(reg[regOutputQueue]) )
+      while ( !queueIsEmpty(reg[regOutputQueue]) )
       {
          final int  f = queuePopFront(reg[regOutputQueue]);
          final int  v = value(f);
@@ -210,20 +210,21 @@ public class JhwScm
          switch ( reg[regPc] )
          {
          case func_rep:
-            System.out.println("func_rep:");
+            log("func_rep:");
             // The top level read-eval-print loop:
             //
             //   (while #t (print (eval (read) global-env)))
             //
-            if ( queueEmpty(reg[regInputQueue]) )
+            if ( queueIsEmpty(reg[regInputQueue]) )
             {
                return SUCCESS;
             }
+            log("queue not empty");
             err = callsub(func_read,func_rep_after_read);
             if ( SUCCESS != err ) return err;
             break;
          case func_rep_after_read:
-            System.out.println("func_rep_after_read:");
+            log("func_rep_after_read:");
             reg[regArg0] = reg[regRetval];
             reg[regArg1] = reg[regGlobalEnv];
             callsub(func_eval,func_rep_after_eval);
@@ -231,7 +232,7 @@ public class JhwScm
             if ( SUCCESS != err ) return err;
             break;
          case func_rep_after_eval:
-            System.out.println("func_rep_after_eval:");
+            log("func_rep_after_eval:");
             reg[regArg0] = reg[regRetval];
             callsub(func_print,func_rep);
             err = callsub(func_read,func_rep_after_read);
@@ -239,7 +240,7 @@ public class JhwScm
             break;
 
          case func_read:
-            System.out.println("func_read:");
+            log("func_read:");
             // Parses the next sexpr from reg[regInputQueue], and
             // leaves the results in reg[regRetval].
             //
@@ -249,17 +250,36 @@ public class JhwScm
             return UNIMPLEMENTED + 1;
 
          case func_eval:
-            System.out.println("func_eval:");
+            log("func_eval:");
             // Evaluates the expr in reg[regArg0] in the env in
             // reg[regArg1], and leaves the results in reg[regRetval].
             //
-            reg[regRetval] = NIL;
-            err = returnsub();
-            if ( SUCCESS != err ) return err;
-            return UNIMPLEMENTED + 2;
+            // TODO: implement properly.
+            //
+            if ( true )
+            {
+               // Treats all exprs as self-evaluating.
+               //
+               // Handy, b/c we can pass all the self-evaluating unit
+               // tests and know something about func_rep, func_read
+               // and func_print.
+               // 
+               reg[regRetval] = reg[regArg0];
+               err = returnsub();
+               if ( SUCCESS != err ) return err;
+               break;
+            }
+            else
+            {
+               // Treats all exprs as evaluating to NIL.
+               reg[regRetval] = NIL;
+               err = returnsub();
+               if ( SUCCESS != err ) return err;
+               return UNIMPLEMENTED + 2;
+            }
 
          case func_print:
-            System.out.println("func_print:");
+            log("func_print:");
             // Prints the expr in reg[regArg0] to reg[regOutputQueue].
             //
             reg[regRetval] = NIL;
@@ -268,7 +288,7 @@ public class JhwScm
             return UNIMPLEMENTED + 3;
 
          default:
-            System.out.println("bogus opcode: " + reg[regPc]);
+            log("bogus opcode: " + reg[regPc]);
             return FAILURE;
          }
       }
@@ -382,7 +402,7 @@ public class JhwScm
       final boolean verbose = false;
       if ( verbose )
       {
-         System.out.println("JhwScm.selfTest()");
+         log("JhwScm.selfTest()");
       }
 
       // consistency check
@@ -401,15 +421,11 @@ public class JhwScm
       final int numFree      = listLength(reg[regFreeCellList]);
       final int numStack     = listLength(reg[regStack]);
       final int numGlobalEnv = listLength(reg[regGlobalEnv]);
-      final int numInput     = queueLength(reg[regInputQueue]);
-      final int numOutput    = queueLength(reg[regOutputQueue]);
       if ( verbose )
       {
-         System.out.println("  numFree:      " + numFree);
-         System.out.println("  numStack:     " + numStack);
-         System.out.println("  numGlobalEnv: " + numGlobalEnv);
-         System.out.println("  numInput:     " + numInput);
-         System.out.println("  numOutput:    " + numOutput);
+         log("  numFree:      " + numFree);
+         log("  numStack:     " + numStack);
+         log("  numGlobalEnv: " + numGlobalEnv);
       }
 
       // if this is a just-created selfTest(), we should see i = heap.length/2
@@ -469,7 +485,7 @@ public class JhwScm
       final int newNumFree = listLength(reg[regFreeCellList]);
       if ( verbose )
       {
-         System.out.println("  newNumFree: " + newNumFree);
+         log("  newNumFree: " + newNumFree);
       }
 
       return SUCCESS;
@@ -588,22 +604,12 @@ public class JhwScm
    //
    ////////////////////////////////////////////////////////////////////
 
-   /**
-    * @returns the length of the queue rooted at cell: as a regular
-    * int, not as a TYPE_FIXINT!  Is unsafe about cycles!
-    */
-   private int queueLength ( final int queue )
+   private boolean queueIsEmpty ( final int queue )
    {
-      final int queue_t = type(queue);
-      if ( TYPE_CELL != queue_t ) return 0;
-      final int car     = car(queue);
-      final int car_t   = type(car);
-      if ( TYPE_CELL != car_t ) return 0;
-      return listLength(car);
-   }
-
-   private boolean queueEmpty ( final int queue )
-   {
+      if ( NIL == queue ) 
+      {
+         return true;
+      }
       final int queue_t = type(queue);
       if ( TYPE_CELL != queue_t ) 
       {
@@ -705,7 +711,7 @@ public class JhwScm
       final boolean verbose = false;
       if ( verbose )
       {
-         System.out.println("DEQUEUE: " + reg[regOutputQueue]);
+         log("DEQUEUE: " + reg[regOutputQueue]);
       }
 
       final int queue_t = type(queue);
@@ -713,7 +719,7 @@ public class JhwScm
       {
          if ( verbose )
          {
-            System.out.println("not a queue");
+            log("not a queue");
          }
          return NIL;
       }
@@ -724,7 +730,7 @@ public class JhwScm
          // empty queue
          if ( verbose )
          {
-            System.out.println("empty queue");
+            log("empty queue");
          }
          return NIL;
       }
@@ -733,7 +739,7 @@ public class JhwScm
          // TODO: corrupt queue
          if ( verbose )
          {
-            System.out.println("corrupt queue");
+            log("corrupt queue");
          }
          return NIL;
       }
@@ -746,9 +752,14 @@ public class JhwScm
       }
       if ( verbose )
       {
-         System.out.println("happy pop");
+         log("happy pop");
       }
       return value;
+   }
+
+   private static void log ( final Object msg )
+   {
+      System.out.println(msg);
    }
 
 

@@ -50,75 +50,40 @@ public class Test
       }
 
       // some content-free end-to-ends
+      final int[] variousNumCyclesEnoughForEmptyExpr = { -1, 5, 10 };
+      for ( int numCycles : variousNumCyclesEnoughForEmptyExpr )
       {
+         final String        msg    = "cycles: " + numCycles;
          final StringBuilder output = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("");
-         final int           dcode  = scm.drive(-1);
+         final int           dcode  = scm.drive(numCycles);
          final int           ocode  = scm.output(output);
-         assertEquals(JhwScm.SUCCESS,icode);
-         assertEquals(JhwScm.SUCCESS,dcode);
-         assertEquals(JhwScm.SUCCESS,ocode);
-         assertEquals(0,output.length());
-         selfTest(scm);
-      }
-      {
-         final StringBuilder output = new StringBuilder();
-         final JhwScm        scm    = new JhwScm();
-         final int           icode  = scm.input("");
-         final int           dcode  = scm.drive(0);
-         final int           ocode  = scm.output(output);
-         assertEquals(JhwScm.SUCCESS,icode);
-         assertEquals(JhwScm.SUCCESS,dcode);
-         assertEquals(JhwScm.SUCCESS,ocode);
-         assertEquals(0,output.length());
-         selfTest(scm);
-      }
-      {
-         final StringBuilder output = new StringBuilder();
-         final JhwScm        scm    = new JhwScm();
-         final int           icode  = scm.input("");
-         final int           dcode  = scm.drive(10);
-         final int           ocode  = scm.output(output);
-         assertEquals(JhwScm.SUCCESS,icode);
-         assertEquals(JhwScm.SUCCESS,dcode);
-         assertEquals(JhwScm.SUCCESS,ocode);
-         assertEquals(0,output.length());
+         assertEquals(msg,JhwScm.SUCCESS,icode);
+         assertEquals(msg,JhwScm.SUCCESS,dcode);
+         assertEquals(msg,JhwScm.SUCCESS,ocode);
+         assertEquals(msg,0,output.length());
          selfTest(scm);
       }
 
       // first content: simple integer expressions are self-evaluating
       // (but take some time).
+      final String[] variousFixnumExprs = { "0", "1", "1234", "-1", "-4321" };
+      for ( String fixnumExpr : variousFixnumExprs )
       {
+         final String        msg    = "fixnum self-evaluating: " + fixnumExpr;
          final StringBuilder output = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
-         final int           icode  = scm.input("0");
+         final int           icode  = scm.input(fixnumExpr);
          final int           dcode  = scm.drive(-1);
          final int           ocode  = scm.output(output);
-         assertEquals(JhwScm.SUCCESS,icode);
-         assertEquals(JhwScm.SUCCESS,dcode);
-         assertEquals(JhwScm.SUCCESS,ocode);
-         assertEquals("0",output.toString());
+         assertEquals(msg,JhwScm.SUCCESS,icode);
+         assertEquals(msg,JhwScm.SUCCESS,dcode);
+         assertEquals(msg,JhwScm.SUCCESS,ocode);
+         assertEquals(msg,fixnumExpr,output.toString());
          selfTest(scm);
+         expectSuccess(fixnumExpr,fixnumExpr); // validate expectSuccess();
       }
-      {
-         final StringBuilder output = new StringBuilder();
-         final JhwScm        scm    = new JhwScm();
-         final int           icode  = scm.input("1234");
-         final int           dcode  = scm.drive(-1);
-         final int           ocode  = scm.output(output);
-         assertEquals(JhwScm.SUCCESS,icode);
-         assertEquals(JhwScm.SUCCESS,dcode);
-         assertEquals(JhwScm.SUCCESS,ocode);
-         assertEquals("1234",output.toString());
-         selfTest(scm);
-      }
-
-      // several valid, simple computations:
-      expectSuccess("","");
-      expectSuccess("0","0");
-      expectSuccess("1","1");
-      expectSuccess("-1","-1");
 
       // first computation: even simple integer take nonzero cycles
       {
@@ -140,12 +105,15 @@ public class Test
          selfTest(scm);
       }
 
-      expectFailure("a");
-      expectFailure("a1");
-
+      // #t and #f are self-evaluating
       expectSuccess("#t","#t");
       expectSuccess("#f","#f");
 
+      // unbound variables fail
+      expectFailure("a");
+      expectFailure("a1");
+
+      // simple arithmetic
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
       expectSuccess("(+ 0 1)","1");
@@ -153,13 +121,6 @@ public class Test
       expectSuccess("(* 97 2)","184");
       expectSuccess("(* 2 3 5)","30");
       expectFailure("(+ a b)");
-
-      expectSuccess("(if #f 2 5)","5");
-      expectSuccess("(if #t 2 5)","2");
-
-      // in Scheme, only #f is false
-      expectSuccess("(if '() 2 5)","2"); 
-      expectSuccess("(if 0 2 5)","2");
 
       // cons and list have a particular relationship
       expectSuccess("(cons 1 2)","(1 . 2)");
@@ -174,6 +135,22 @@ public class Test
       expectSuccess("(cons 1 '())","(1)");
       expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
 
+      // simple conditionals: in Scheme, only #f is false
+      expectSuccess("(if #f 2 5)","5");
+      expectSuccess("(if #t 2 5)","2");
+      expectSuccess("(if '() 2 5)","2"); 
+      expectSuccess("(if 0 2 5)","2");
+
+      // TODO: when you do mutators, be sure to check that only one
+      // alternative in an (if) is executed.
+
+      // simple special form
+      expectSuccess("(quote ())","()");
+      expectSuccess("(quote (1 2))","(1 2)");
+      expectSuccess("(quote (a b))","(a b)");
+      expectFailure("(+ 1 (quote ()))");
+
+      // simple quote sugar
       expectSuccess("'()","()");
       expectSuccess("'(1 2)","(1 2)");
       expectSuccess("'(a b)","(a b)");
