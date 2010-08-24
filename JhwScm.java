@@ -93,7 +93,8 @@ public class JhwScm
       {
          return BAD_ARG;
       }
-      final int tmpQueue = cons(NIL,NIL);
+      // TODO: this method is horribly inefficient :(
+      final int tmpQueue = queueCreate();
       if ( NIL == tmpQueue )
       {
          return OUT_OF_MEMORY + 1;
@@ -102,25 +103,23 @@ public class JhwScm
       {
          final char c    = input.charAt(i);
          final int  code = code(TYPE_CHAR,c);
-         if ( !queuePushBack(tmpQueue,code) )
-         {
-            // TODO: could recycle the cell at tmpQueue here.
-            return OUT_OF_MEMORY + 2;
-         }
+         queuePushBack(tmpQueue,code);
          log("  pushed: " + c);
       }
       if ( NIL == reg[regInputQueue] )
       {
-         reg[regInputQueue] = cons(NIL,NIL);
+         reg[regInputQueue] = queueCreate();
          if ( NIL == reg[regInputQueue] )
          {
             return OUT_OF_MEMORY + 1;
          }
       }
-      final int err = queueSpliceBack(reg[regInputQueue],car(tmpQueue));
+      queueSpliceBack(reg[regInputQueue],car(tmpQueue));
       // TODO: could recycle the cell at tmpQueue here.
-      log("  err:    " + err);
-      return err;
+      //
+      // TODO: check did we get in an error state before reporting
+      // success?
+      return SUCCESS;
    }
 
    /**
@@ -141,7 +140,7 @@ public class JhwScm
       {
          return SUCCESS;
       }
-      while ( !queueIsEmpty(reg[regOutputQueue]) )
+      while ( FALSE == queueIsEmpty(reg[regOutputQueue]) )
       {
          final int  f = queuePopFront(reg[regOutputQueue]);
          final int  v = value(f);
@@ -216,20 +215,18 @@ public class JhwScm
             //   (while (has-some-input) (print (eval (read) global-env)))
             //
             log("sub_rep:");
-            if ( queueIsEmpty(reg[regInputQueue]) )
+            if ( TRUE == queueIsEmpty(reg[regInputQueue]) )
             {
                return SUCCESS;
             }
             log("queue not empty");
-            err = gosub(sub_read,blk_rep_after_read);
-            if ( SUCCESS != err ) return err;
+            gosub(sub_read,blk_rep_after_read);
             break;
          case blk_rep_after_read:
             log("blk_rep_after_read:");
             reg[regArg0] = reg[regRetval];
             reg[regArg1] = reg[regGlobalEnv];
-            err = gosub(sub_eval,blk_rep_after_eval);
-            if ( SUCCESS != err ) return err;
+            gosub(sub_eval,blk_rep_after_eval);
             break;
          case blk_rep_after_eval:
             log("blk_rep_after_eval:");
@@ -239,13 +236,11 @@ public class JhwScm
             //
             // Going with the extra blk for now to take it easy on the
             // subtlety.
-            err = gosub(sub_print,sub_rep);
-            if ( SUCCESS != err ) return err;
+            gosub(sub_print,sub_rep);
             break;
          case blk_rep_after_print:
             log("blk_rep_after_print:");
-            err = jump(sub_rep);
-            if ( SUCCESS != err ) return err;
+            jump(sub_rep);
             break;
 
          case sub_read:
@@ -305,16 +300,14 @@ public class JhwScm
                // and sub_print.
                // 
                reg[regRetval] = reg[regArg0];
-               err = returnsub();
-               if ( SUCCESS != err ) return err;
+               returnsub();
                break;
             }
             else
             {
                // Treats all exprs as evaluating to NIL.
                reg[regRetval] = NIL;
-               err = returnsub();
-               if ( SUCCESS != err ) return err;
+               returnsub();
                return UNIMPLEMENTED + 2;
             }
 
@@ -323,8 +316,7 @@ public class JhwScm
             //
             log("sub_print:");
             reg[regRetval] = NIL;
-            err = returnsub();
-            if ( SUCCESS != err ) return err;
+            returnsub();
             return UNIMPLEMENTED + 3;
 
          case blk_re_return:
@@ -332,8 +324,7 @@ public class JhwScm
             // subroutine which continued to here.
             //
             log("blk_re_return:");
-            err = returnsub();
-            if ( SUCCESS != err ) return err;
+            returnsub();
             break;
 
          case blk_error:
@@ -394,11 +385,15 @@ public class JhwScm
    private static final int TYPE_SUB     = 0x50000000;
    private static final int TYPE_BLK     = 0x60000000;
    private static final int TYPE_ERR     = 0x70000000;
+   private static final int TYPE_BOOL    = 0x80000000;
 
    private static final int NIL          = code(TYPE_NIL,0);
 
    private static final int ERR_OOM      = code(TYPE_ERR,0);
    private static final int ERR_INTERNAL = code(TYPE_NIL,0);
+
+   private static final int TRUE         = code(TYPE_BOOL,1);
+   private static final int FALSE        = code(TYPE_BOOL,0);
 
    private static final int regFreeCellList   =  0; // unused cells
    private static final int regStack          =  1; // the runtime stack
@@ -436,62 +431,57 @@ public class JhwScm
    private static final int blk_error           = TYPE_SUB | 101;
 
 
-   // TODO: get externally-visible error codes out of here, this is
-   // not a public method!
-   private int jump ( final int nextOp )
+   private void jump ( final int nextOp )
    {
       if ( DEBUG )
       {
          final int t = type(nextOp);
          if ( TYPE_SUB != t && TYPE_BLK != t )
          {
-            return INTERNAL_ERROR;
+            raiseError(ERR_INTERNAL);
+            return;
          }
       }
       reg[regPc] = nextOp;
-      return SUCCESS;
    }
 
-   // TODO: get externally-visible error codes out of here, this is
-   // not a public method!
-   private int gosub ( final int nextOp, final int continuationOp )
+   private void gosub ( final int nextOp, final int continuationOp )
    {
       if ( DEBUG )
       {
          final int nt = type(nextOp);
          if ( TYPE_SUB != nt )
          {
-            return INTERNAL_ERROR;
+            raiseError(ERR_INTERNAL);
+            return;
          }
          final int ct = type(nextOp);
          if ( TYPE_SUB != ct && TYPE_BLK != ct )
          {
-            return INTERNAL_ERROR;
+            raiseError(ERR_INTERNAL);
+            return;
          }
       }
       final int newStack = cons(continuationOp,reg[regStack]);
       if ( NIL == newStack )
       {
-         return OUT_OF_MEMORY;
+         raiseError(ERR_OOM);
+         return;
       }
       reg[regStack] = newStack;
       reg[regPc]    = nextOp;
-      return SUCCESS;
    }
 
-   // TODO: get externally-visible error codes out of here, this is
-   // not a public method!
-   private int returnsub ()
+   private void returnsub ()
    {
       if ( DEBUG && TYPE_CELL != reg[regStack] )
       {
          raiseError(ERR_INTERNAL);
-         return FAILURE;
+         return;
       }
       final int continuationOp = car(reg[regStack]);
-      // TODO: recycle regStack
+      // TODO: recycle regStack?
       reg[regStack] = cdr(reg[regStack]);
-      return SUCCESS;
    }
 
    /**
@@ -647,9 +637,6 @@ public class JhwScm
    //
    ////////////////////////////////////////////////////////////////////
 
-   // TODO: do we want an ERROR code distinct from NIL in many of
-   // these places?
-
    /**
     * @returns NIL in event of error (in which case an error is
     * raised), else a newly allocated and initialize cons cell.
@@ -740,35 +727,57 @@ public class JhwScm
    //
    ////////////////////////////////////////////////////////////////////
 
-   private boolean queueIsEmpty ( final int queue )
+   // returns NIL on failure, else a new empty queue
+   private int queueCreate ()
    {
-      if ( NIL == queue ) 
+      return cons(NIL,NIL);
+   }
+
+   // returns TRUE or FALSE
+   private int queueIsEmpty ( final int queue )
+   {
+      if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         return true;
-      }
-      final int queue_t = type(queue);
-      if ( TYPE_CELL != queue_t ) 
-      {
-         return false;
+         raiseError(ERR_INTERNAL);
+         return FALSE;
       }
       final int head = car(queue);
       final int tail = cdr(queue);
-      return ( NIL == head && NIL == tail );
+      if ( DEBUG && ( (NIL == head) != (NIL == tail) ) ) 
+      {
+         raiseError(ERR_INTERNAL);
+         return FALSE;
+      }
+      if ( NIL == head )
+      {
+         return TRUE;
+      }
+      if ( DEBUG && TYPE_CELL != type(head) )
+      {
+         raiseError(ERR_INTERNAL);
+         return FALSE;
+      }
+      if ( DEBUG && TYPE_CELL != type(tail) )
+      {
+         raiseError(ERR_INTERNAL);
+         return FALSE;
+      }
+      return FALSE;
    }
 
-   private boolean queuePushBack ( final int queue, final int value )
+   private void queuePushBack ( final int queue, final int value )
    {
       final int queue_t = type(queue);
-      if ( TYPE_CELL != queue_t ) 
+      if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         return false;
+         raiseError(ERR_INTERNAL);
+         return;
       }
 
       final int new_cell = cons(value,NIL);
       if ( NIL == new_cell )
       {
-         // TODO: or return OUT_OF_MEMORY?
-         return false;
+         return;
       }
 
       // INVARIANT: head and tail are both NIL (e.g. empty) or they
@@ -780,35 +789,30 @@ public class JhwScm
       {
          if ( NIL != head || NIL != tail )
          {
-            // TODO: corrupt queue!
-            //
-            // TODO: recycle new_cell?
-            return false;
+            raiseError(ERR_INTERNAL); // corrupt queue
+            return;
          }
          setcar(queue,new_cell);
          setcdr(queue,new_cell);
-         return true;
+         return;
       }
 
       if ( (TYPE_CELL != type(head)) || (TYPE_CELL != type(tail)) )
       {
-         // TODO: corrupt queue!
-         //
-         // TODO: recycle new_cell?
-         return false;
+         raiseError(ERR_INTERNAL); // corrupt queue
+         return;
       }
+
       setcdr(tail,new_cell);
       setcdr(queue,new_cell);
-      return true;
    }
 
-   // TODO: get externally-visible error codes out of here, this is
-   // not a public method!
-   private int queueSpliceBack ( final int queue, final int list )
+   private void queueSpliceBack ( final int queue, final int list )
    {
-      if ( TYPE_CELL != type(queue) ) 
+      if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         return BAD_ARG;
+         raiseError(ERR_INTERNAL);
+         return;
       }
 
       // INVARIANT: head and tail are both NIL (e.g. empty) or they
@@ -820,8 +824,8 @@ public class JhwScm
       {
          if ( NIL != head || NIL != tail )
          {
-            // TODO: corrupt queue!
-            return FAILURE + 900;
+            raiseError(ERR_INTERNAL); // corrupt queue
+            return;
          }
          setcar(queue,list);
          setcdr(queue,list);
@@ -830,8 +834,8 @@ public class JhwScm
       {
          if ( (TYPE_CELL != type(head)) || (TYPE_CELL != type(tail)) )
          {
-            // TODO: corrupt queue!
-            return FAILURE + 901;
+            raiseError(ERR_INTERNAL); // corrupt queue
+            return;
          }
          setcdr(tail,list);
       }
@@ -840,8 +844,6 @@ public class JhwScm
       {
          setcdr(queue,cdr(cdr(queue)));
       }
-
-      return SUCCESS;
    }
 
    // TODO: get externally-visible error codes out of here, this is
