@@ -112,6 +112,10 @@ public class JhwScm
       if ( NIL == reg[regInputQueue] )
       {
          reg[regInputQueue] = cons(NIL,NIL);
+         if ( NIL == reg[regInputQueue] )
+         {
+            return OUT_OF_MEMORY + 1;
+         }
       }
       final int err = queueSpliceBack(reg[regInputQueue],car(tmpQueue));
       // TODO: could recycle the cell at tmpQueue here.
@@ -432,6 +436,8 @@ public class JhwScm
    private static final int blk_error           = TYPE_SUB | 101;
 
 
+   // TODO: get externally-visible error codes out of here, this is
+   // not a public method!
    private int jump ( final int nextOp )
    {
       if ( DEBUG )
@@ -446,6 +452,8 @@ public class JhwScm
       return SUCCESS;
    }
 
+   // TODO: get externally-visible error codes out of here, this is
+   // not a public method!
    private int gosub ( final int nextOp, final int continuationOp )
    {
       if ( DEBUG )
@@ -461,19 +469,25 @@ public class JhwScm
             return INTERNAL_ERROR;
          }
       }
-      final int oldStack = reg[regStack];
-      reg[regStack] = cons(continuationOp,reg[regStack]);
-      if ( NIL == reg[regStack] )
+      final int newStack = cons(continuationOp,reg[regStack]);
+      if ( NIL == newStack )
       {
-         reg[regStack] = oldStack;
          return OUT_OF_MEMORY;
       }
-      reg[regPc] = nextOp;
+      reg[regStack] = newStack;
+      reg[regPc]    = nextOp;
       return SUCCESS;
    }
 
+   // TODO: get externally-visible error codes out of here, this is
+   // not a public method!
    private int returnsub ()
    {
+      if ( DEBUG && TYPE_CELL != reg[regStack] )
+      {
+         raiseError(ERR_INTERNAL);
+         return FAILURE;
+      }
       final int continuationOp = car(reg[regStack]);
       // TODO: recycle regStack
       reg[regStack] = cdr(reg[regStack]);
@@ -636,22 +650,23 @@ public class JhwScm
    // TODO: do we want an ERROR code distinct from NIL in many of
    // these places?
 
-
    /**
-    * @returns OUT_OF_MEMORY on allocation failure, else a newly
-    * allocated and initialize cons cell.
+    * @returns NIL in event of error (in which case an error is
+    * raised), else a newly allocated and initialize cons cell.
     */
    private int cons ( final int car, final int cdr )
    {
       final int cell       = reg[regFreeCellList];
       if ( NIL == cell )
       {
-         return OUT_OF_MEMORY;
+         raiseError(ERR_OOM);
+         return NIL;
       }
       final int t          = type(cell);
       if ( DEBUG && TYPE_CELL != t )
       {
-         return INTERNAL_ERROR;
+         raiseError(ERR_INTERNAL);
+         return NIL;
       }
       final int v          = value(cell);
       final int ar         = v << 1;
@@ -665,7 +680,8 @@ public class JhwScm
    {
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return INTERNAL_ERROR;
+         raiseError(ERR_INTERNAL);
+         return NIL;
       }
       return heap[(value(cell) << 1) + 0];
    }
@@ -673,27 +689,28 @@ public class JhwScm
    {
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return INTERNAL_ERROR;
+         raiseError(ERR_INTERNAL);
+         return NIL;
       }
       return heap[(value(cell) << 1) + 1];
    }
-   private int setcar ( final int cell, final int value )
+   private void setcar ( final int cell, final int value )
    {
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return INTERNAL_ERROR;
+         raiseError(ERR_INTERNAL);
+         return;
       }
       heap[(value(cell) << 1) + 0] = value;
-      return NIL;
    }
-   private int setcdr ( final int cell, final int value )
+   private void setcdr ( final int cell, final int value )
    {
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return INTERNAL_ERROR;
+         raiseError(ERR_INTERNAL);
+         return;
       }
       heap[(value(cell) << 1) + 1] = value;
-      return NIL;
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -785,6 +802,8 @@ public class JhwScm
       return true;
    }
 
+   // TODO: get externally-visible error codes out of here, this is
+   // not a public method!
    private int queueSpliceBack ( final int queue, final int list )
    {
       if ( TYPE_CELL != type(queue) ) 
@@ -825,6 +844,8 @@ public class JhwScm
       return SUCCESS;
    }
 
+   // TODO: get externally-visible error codes out of here, this is
+   // not a public method!
    private int queuePopFront ( final int queue )
    {
       final boolean verbose = false;
