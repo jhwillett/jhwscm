@@ -43,16 +43,19 @@
 
 public class JhwScm
 {
-   public static final int SUCCESS       = 0;
-   public static final int INCOMPLETE    = 1;
+   // DEBUG instruments checks of things which ought *never* happen
+   // e.g. errors which theoretically can only arise due to bugs in
+   // JhwScm, not user errors or JVM resource exhaustion.
+   //
+   public static final boolean DEBUG          = true;
 
-   public static final int BAD_ARG       = 1000; // often added to a specifier
-
-   public static final int OUT_OF_MEMORY = 2000; // often added to a specifier
-
-   public static final int FAILURE       = 3000; // often added to a specifier
-
-   public static final int UNIMPLEMENTED = 4000; // often added to a specifier
+   public static final int     SUCCESS        = 0;
+   public static final int     INCOMPLETE     = 1000;
+   public static final int     BAD_ARG        = 2000; // often + specifier
+   public static final int     OUT_OF_MEMORY  = 3000; // often + specifier
+   public static final int     FAILURE        = 4000; // often + specifier
+   public static final int     UNIMPLEMENTED  = 5000; // often + specifier
+   public static final int     INTERNAL_ERROR = 6000; // often + specifier
 
    public JhwScm ()
    {
@@ -70,7 +73,7 @@ public class JhwScm
          reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
       }
 
-      reg[regPc] = func_rep;
+      reg[regPc] = sub_rep;
    }
 
    /**
@@ -181,27 +184,6 @@ public class JhwScm
       {
          return BAD_ARG;
       }
-      if ( false )
-      {
-         // Fiddling around: just move input to output...
-         if ( NIL == reg[regInputQueue] )
-         {
-            return SUCCESS;
-         }
-         if ( NIL == reg[regOutputQueue] )
-         {
-            reg[regOutputQueue] = cons(NIL,NIL);
-         }
-         final int err = queueSpliceBack(reg[regOutputQueue],
-                                         car(reg[regInputQueue]));
-         if ( SUCCESS != err )
-         {
-           return err;
-         }
-         setcar(reg[regInputQueue],NIL);
-         setcdr(reg[regInputQueue],NIL);
-         return SUCCESS;
-      }
 
       // Temp variables: note, any block can overwrite any of these.
       // Any data which must survive a block transition should be
@@ -210,51 +192,63 @@ public class JhwScm
       int code = 0;
       int t    = 0;
       int v    = 0;
-      
-      // Top level program: 
-      //
-      //   (while (has-some-input) (print (eval (read) global-env)))
-      // 
-      int err = SUCCESS;
+      int err  = SUCCESS;
+
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
+         if ( DEBUG )
+         {
+            t = type(reg[regPc]);
+            if ( TYPE_SUB != t && TYPE_BLK != t )
+            {
+               return INTERNAL_ERROR;
+            }
+         }
          switch ( reg[regPc] )
          {
-         case func_rep:
+         case sub_rep:
             // The top level read-eval-print loop:
             //
-            //   (while #t (print (eval (read) global-env)))
+            //   (while (has-some-input) (print (eval (read) global-env)))
             //
-            log("func_rep:");
+            log("sub_rep:");
             if ( queueIsEmpty(reg[regInputQueue]) )
             {
                return SUCCESS;
             }
             log("queue not empty");
-            err = callsub(func_read,func_rep_after_read);
+            err = gosub(sub_read,blk_rep_after_read);
             if ( SUCCESS != err ) return err;
             break;
-         case func_rep_after_read:
-            log("func_rep_after_read:");
+         case blk_rep_after_read:
+            log("blk_rep_after_read:");
             reg[regArg0] = reg[regRetval];
             reg[regArg1] = reg[regGlobalEnv];
-            callsub(func_eval,func_rep_after_eval);
-            err = callsub(func_read,func_rep_after_read);
+            err = gosub(sub_eval,blk_rep_after_eval);
             if ( SUCCESS != err ) return err;
             break;
-         case func_rep_after_eval:
-            log("func_rep_after_eval:");
+         case blk_rep_after_eval:
+            log("blk_rep_after_eval:");
             reg[regArg0] = reg[regRetval];
-            callsub(func_print,func_rep);
-            err = callsub(func_read,func_rep_after_read);
+            // Note: we could probably tighten up rep by just going
+            // right to sub_rep on return from sub_print.
+            //
+            // Going with the extra blk for now to take it easy on the
+            // subtlety.
+            err = gosub(sub_print,sub_rep);
+            if ( SUCCESS != err ) return err;
+            break;
+         case blk_rep_after_print:
+            log("blk_rep_after_print:");
+            err = jump(sub_rep);
             if ( SUCCESS != err ) return err;
             break;
 
-         case func_read:
+         case sub_read:
             // Parses the next sexpr from reg[regInputQueue], and
             // leaves the results in reg[regRetval].
             //
-            log("func_read:");
+            log("sub_read:");
             code = queuePopFront(reg[regInputQueue]);
             t    = type(code);
             v    = value(code);
@@ -267,25 +261,19 @@ public class JhwScm
             {
                reg[regArg0] = code;
                // TODO: could tail-recurse here
-               callsub(func_read_number,func_read_after_sub);
+               gosub(sub_read_number,blk_re_return);
                break;
             }
             else
             {
                return UNIMPLEMENTED + 1;
             }
-         case func_read_after_sub:
-            // just returns whatever return value left behind by the
-            // subroutine which came back to here.
-            err = returnsub();
-            if ( SUCCESS != err ) return err;
-            break;
 
-         case func_read_number:
+         case sub_read_number:
             // Parses the next number from reg[regInputQueue], given
             // that the first digit/char is in reg[regArg0].
             //
-            log("func_read_number:");
+            log("sub_read_number:");
             code = reg[regArg0];
             t    = type(code);
             v    = value(code);
@@ -297,20 +285,20 @@ public class JhwScm
             log("  first char: " + (char)v);
             return UNIMPLEMENTED + 1;
 
-         case func_eval:
+         case sub_eval:
             // Evaluates the expr in reg[regArg0] in the env in
             // reg[regArg1], and leaves the results in reg[regRetval].
             //
             // TODO: implement properly.
             //
-            log("func_eval:");
+            log("sub_eval:");
             if ( true )
             {
                // Treats all exprs as self-evaluating.
                //
                // Handy, b/c we can pass all the self-evaluating unit
-               // tests and know something about func_rep, func_read
-               // and func_print.
+               // tests and know something about sub_rep, sub_read
+               // and sub_print.
                // 
                reg[regRetval] = reg[regArg0];
                err = returnsub();
@@ -326,14 +314,29 @@ public class JhwScm
                return UNIMPLEMENTED + 2;
             }
 
-         case func_print:
+         case sub_print:
             // Prints the expr in reg[regArg0] to reg[regOutputQueue].
             //
-            log("func_print:");
+            log("sub_print:");
             reg[regRetval] = NIL;
             err = returnsub();
             if ( SUCCESS != err ) return err;
             return UNIMPLEMENTED + 3;
+
+         case blk_re_return:
+            // Just returns whatever return value left behind by the
+            // subroutine which continued to here.
+            //
+            log("blk_re_return:");
+            err = returnsub();
+            if ( SUCCESS != err ) return err;
+            break;
+
+         case blk_error:
+            // TODO: print stack trace? ;)
+            //
+            log("blk_error:");
+            return FAILURE;
 
          default:
             log("bogus opcode: " + reg[regPc]);
@@ -384,9 +387,14 @@ public class JhwScm
    private static final int TYPE_FIXINT  = 0x20000000;
    private static final int TYPE_CELL    = 0x30000000;
    private static final int TYPE_CHAR    = 0x40000000;
-   private static final int TYPE_OPCODE  = 0x50000000;
+   private static final int TYPE_SUB     = 0x50000000;
+   private static final int TYPE_BLK     = 0x60000000;
+   private static final int TYPE_ERR     = 0x70000000;
 
    private static final int NIL          = code(TYPE_NIL,0);
+
+   private static final int ERR_OOM      = code(TYPE_ERR,0);
+   private static final int ERR_INTERNAL = code(TYPE_NIL,0);
 
    private static final int regFreeCellList   =  0; // unused cells
    private static final int regStack          =  1; // the runtime stack
@@ -403,22 +411,56 @@ public class JhwScm
 
    private static final int regPc             = 10; // opcode to return to
 
+   private static final int regError          = 11; // NIL or a TYPE_ERR
+   private static final int regErrorPc        = 12; // reg[regPc] of err
+   private static final int regErrorStack     = 13; // reg[regStack] of err
 
-   private static final int func_rep            = TYPE_OPCODE | 10; // func
-   private static final int func_rep_after_eval = TYPE_OPCODE | 11; // helper
-   private static final int func_rep_after_read = TYPE_OPCODE | 12; // helper
+   private static final int sub_rep             = TYPE_SUB |  10;
+   private static final int blk_rep_after_eval  = TYPE_BLK |  11;
+   private static final int blk_rep_after_read  = TYPE_BLK |  12;
+   private static final int blk_rep_after_print = TYPE_BLK |  13;
 
-   private static final int func_read           = TYPE_OPCODE | 20; // func
-   private static final int func_read_after_sub = TYPE_OPCODE | 21; // helper
-   private static final int func_read_number    = TYPE_OPCODE | 22; // func
+   private static final int sub_read            = TYPE_SUB |  20;
+   private static final int sub_read_number     = TYPE_SUB |  22;
 
-   private static final int func_eval           = TYPE_OPCODE | 30; // func
+   private static final int sub_eval            = TYPE_SUB |  30;
 
-   private static final int func_print          = TYPE_OPCODE | 40; // func
+   private static final int sub_print           = TYPE_SUB |  40;
+
+   private static final int blk_re_return       = TYPE_SUB | 100;
+
+   private static final int blk_error           = TYPE_SUB | 101;
 
 
-   private int callsub ( final int nextOp, final int continuationOp )
+   private int jump ( final int nextOp )
    {
+      if ( DEBUG )
+      {
+         final int t = type(nextOp);
+         if ( TYPE_SUB != t && TYPE_BLK != t )
+         {
+            return INTERNAL_ERROR;
+         }
+      }
+      reg[regPc] = nextOp;
+      return SUCCESS;
+   }
+
+   private int gosub ( final int nextOp, final int continuationOp )
+   {
+      if ( DEBUG )
+      {
+         final int nt = type(nextOp);
+         if ( TYPE_SUB != nt )
+         {
+            return INTERNAL_ERROR;
+         }
+         final int ct = type(nextOp);
+         if ( TYPE_SUB != ct && TYPE_BLK != ct )
+         {
+            return INTERNAL_ERROR;
+         }
+      }
       final int oldStack = reg[regStack];
       reg[regStack] = cons(continuationOp,reg[regStack]);
       if ( NIL == reg[regStack] )
@@ -436,6 +478,29 @@ public class JhwScm
       // TODO: recycle regStack
       reg[regStack] = cdr(reg[regStack]);
       return SUCCESS;
+   }
+
+   /**
+    * Documents an error and pushes the VM into an error-trap state.
+    *
+    * If an error is already documented, raiseError() reasserts the
+    * error-trap state but does not document the new error.  This on
+    * the principle that we care more about the first error and the
+    * subsequent error is more likely a side-effect of the first.
+    */
+   private void raiseError ( final int err )
+   {
+      if ( DEBUG && TYPE_ERR != type(err) )
+      {
+         // TODO: Bad call to raiseError()? Are we out of tricks?
+      }
+      if ( NIL == reg[regError] ) 
+      {
+         reg[regError]      = err;
+         reg[regErrorPc]    = reg[regPc];
+         reg[regErrorStack] = reg[regStack];
+      }
+      reg[regPc]         = blk_error;
    }
 
    private final int[] heap = new int[1024];
@@ -573,16 +638,20 @@ public class JhwScm
 
 
    /**
-    * @returns NIL on allocation failure, else a newly allocated and
-    * initialize cons cell.
+    * @returns OUT_OF_MEMORY on allocation failure, else a newly
+    * allocated and initialize cons cell.
     */
    private int cons ( final int car, final int cdr )
    {
       final int cell       = reg[regFreeCellList];
-      final int t          = type(cell);
-      if ( TYPE_CELL != t )
+      if ( NIL == cell )
       {
-         return NIL;
+         return OUT_OF_MEMORY;
+      }
+      final int t          = type(cell);
+      if ( DEBUG && TYPE_CELL != t )
+      {
+         return INTERNAL_ERROR;
       }
       final int v          = value(cell);
       final int ar         = v << 1;
@@ -594,34 +663,34 @@ public class JhwScm
    }
    private int car ( final int cell )
    {
-      if ( TYPE_CELL != type(cell) )
+      if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return NIL;
+         return INTERNAL_ERROR;
       }
       return heap[(value(cell) << 1) + 0];
    }
    private int cdr ( final int cell )
    {
-      if ( TYPE_CELL != type(cell) )
+      if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return NIL;
+         return INTERNAL_ERROR;
       }
       return heap[(value(cell) << 1) + 1];
    }
    private int setcar ( final int cell, final int value )
    {
-      if ( TYPE_CELL != type(cell) )
+      if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return NIL;
+         return INTERNAL_ERROR;
       }
       heap[(value(cell) << 1) + 0] = value;
       return NIL;
    }
    private int setcdr ( final int cell, final int value )
    {
-      if ( TYPE_CELL != type(cell) )
+      if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         return NIL;
+         return INTERNAL_ERROR;
       }
       heap[(value(cell) << 1) + 1] = value;
       return NIL;
