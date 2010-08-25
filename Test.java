@@ -212,6 +212,12 @@ public class Test
       final int ocode = scm.output(output);
       assertEquals(JhwScm.SUCCESS,ocode);
       assertEquals(expect,output.toString());
+      System.out.print("pass: expr \"");
+      System.out.print(expr);
+      System.out.print("\" evaluated to \"");
+      System.out.print(expect);
+      System.out.print("\"");
+      System.out.println("\"");
    }
 
    private static void expectFailure ( final String expr )
