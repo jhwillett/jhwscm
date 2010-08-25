@@ -126,9 +126,7 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
-      queueIsEmpty(reg[regIn]);
       queueSpliceBack(reg[regIn],car(tmpQueue));
-      queueIsEmpty(reg[regIn]);
       // TODO: could recycle the cell at tmpQueue here.
       //
       // TODO: check did we get in an error state before reporting
