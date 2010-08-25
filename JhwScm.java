@@ -517,6 +517,7 @@ public class JhwScm
    private void gosub ( final int nextOp, final int continuationOp )
    {
       log("  gosub()");
+      log("    old stack: " + reg[regStack]);
       if ( DEBUG )
       {
          final int nt = type(nextOp);
@@ -540,13 +541,15 @@ public class JhwScm
       }
       reg[regStack]  = newStack;
       reg[regPc]     = nextOp;
+      log("    new stack: " + reg[regStack]);
       subDepth      += 1;
    }
 
    private void returnsub ()
    {
       log("  returnsub()");
-      if ( DEBUG && TYPE_CELL != reg[regStack] )
+      log("    old stack: " + reg[regStack]);
+      if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
       {
          raiseError(ERR_INTERNAL);
          return;
@@ -557,6 +560,7 @@ public class JhwScm
       // up in an error state or are otherwise "holding" old stacks)
       reg[regPc]     = head;
       reg[regStack]  = rest;
+      log("    new stack: " + reg[regStack]);
       subDepth      -= 1;
    }
 
