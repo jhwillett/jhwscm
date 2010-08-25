@@ -78,8 +78,8 @@ public class JhwScm
 
       reg[regPc] = sub_rep;
 
-      reg[regInputQueue]  = queueCreate();
-      reg[regOutputQueue] = queueCreate();
+      reg[regIn]  = queueCreate();
+      reg[regOut] = queueCreate();
    }
 
    /**
@@ -120,15 +120,15 @@ public class JhwScm
          queuePushBack(tmpQueue,code);
          log("  pushed: " + c);
       }
-      if ( NIL == reg[regInputQueue] )
+      if ( NIL == reg[regIn] )
       {
          log("  bogus");
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
-      queueIsEmpty(reg[regInputQueue]);
-      queueSpliceBack(reg[regInputQueue],car(tmpQueue));
-      queueIsEmpty(reg[regInputQueue]);
+      queueIsEmpty(reg[regIn]);
+      queueSpliceBack(reg[regIn],car(tmpQueue));
+      queueIsEmpty(reg[regIn]);
       // TODO: could recycle the cell at tmpQueue here.
       //
       // TODO: check did we get in an error state before reporting
@@ -150,14 +150,14 @@ public class JhwScm
       {
          return BAD_ARG;
       }
-      if ( NIL == reg[regOutputQueue] )
+      if ( NIL == reg[regOut] )
       {
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
-      while ( FALSE == queueIsEmpty(reg[regOutputQueue]) )
+      while ( FALSE == queueIsEmpty(reg[regOut]) )
       {
-         final int  f = queuePopFront(reg[regOutputQueue]);
+         final int  f = queuePopFront(reg[regOut]);
          final int  v = value(f);
          final char c = (char)(MASK_VALUE & v);
          // TODO: change signature so we don't need this guard here?
@@ -229,7 +229,7 @@ public class JhwScm
             //   (while (has-some-input) (print (eval (read) global-env)))
             //
             log("sub_rep:");
-            if ( TRUE == queueIsEmpty(reg[regInputQueue]) )
+            if ( TRUE == queueIsEmpty(reg[regIn]) )
             {
                log("  eof: done");
                return SUCCESS;
@@ -258,11 +258,11 @@ public class JhwScm
             break;
 
          case sub_read:
-            // Parses the next sexpr from reg[regInputQueue], and
+            // Parses the next sexpr from reg[regIn], and
             // leaves the results in reg[regRetval].
             //
             log("sub_read:");
-            c = queuePopFront(reg[regInputQueue]);
+            c = queuePopFront(reg[regIn]);
             t = type(c);
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
@@ -284,7 +284,7 @@ public class JhwScm
             break;
 
          case sub_read_number:
-            // Parses the next number from reg[regInputQueue], given
+            // Parses the next number from reg[regIn], given
             // the first digit/char in reg[regArg0] and the
             // accumulated value-so-far as a TYPE_FIXINT in
             // reg[regArg1].
@@ -318,14 +318,14 @@ public class JhwScm
             log("  first char: " + (char)v0);
             log("  old accum:  " +       v1);
             log("  new accum:  " +       tmp);
-            if ( TRUE == queueIsEmpty(reg[regInputQueue]) )
+            if ( TRUE == queueIsEmpty(reg[regIn]) )
             {
                log("  eof");
                reg[regRetval] = code(TYPE_FIXINT,tmp);
                returnsub();
                break;
             }
-            c = queuePopFront(reg[regInputQueue]);
+            c = queuePopFront(reg[regIn]);
             t = type(c);
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
@@ -344,7 +344,7 @@ public class JhwScm
             else
             {
                log("  end-of-token");
-               queuePushFront(reg[regInputQueue],c);
+               queuePushFront(reg[regIn],c);
                reg[regRetval] = code(TYPE_FIXINT,tmp);
                returnsub();
             }
@@ -375,9 +375,11 @@ public class JhwScm
             break;
 
          case sub_print:
-            // Prints the expr in reg[regArg0] to reg[regOutputQueue].
+            // Prints the expr in reg[regArg0] to reg[regOut].
             //
             log("sub_print:");
+            log("  reg[regArg0]: " + pp(reg[regArg0]));
+            log("  reg[regOut]:  " + pp(reg[regOut]));
             raiseError(ERR_NOT_IMPL);
             break;
 
@@ -468,8 +470,8 @@ public class JhwScm
    private static final int regFreeCellList   =  0; // unused cells
    private static final int regStack          =  1; // the runtime stack
    private static final int regGlobalEnv      =  2; // environment frames
-   private static final int regInputQueue     =  3; // pending input chars
-   private static final int regOutputQueue    =  4; // pending output chars
+   private static final int regIn             =  3; // input char queue
+   private static final int regOut            =  4; // output char queue
 
    private static final int regArg0           =  5; // argument
    private static final int regArg1           =  6; // argument
@@ -961,7 +963,7 @@ public class JhwScm
    {
       if ( verbose )
       {
-         log("DEQUEUE: " + reg[regOutputQueue]);
+         log("DEQUEUE: " + reg[regOut]);
       }
 
       if ( DEBUG && TYPE_CELL != type(queue) ) 
@@ -1038,6 +1040,28 @@ public class JhwScm
          System.out.print("  ");
       }
       System.out.println(msg);
+   }
+
+   private static String pp ( final int code )
+   {
+      final int t = type(code);
+      final int v = value(code);
+      final StringBuilder buf = new StringBuilder();
+      switch (t)
+      {
+      case TYPE_NIL:    buf.append("nil");  break;
+      case TYPE_FIXINT: buf.append("int");  break;
+      case TYPE_CELL:   buf.append("cel");  break;
+      case TYPE_CHAR:   buf.append("chr");  break;
+      case TYPE_SUB:    buf.append("sub");  break;
+      case TYPE_BLK:    buf.append("blk");  break;
+      case TYPE_ERR:    buf.append("err");  break;
+      case TYPE_BOOL:   buf.append("boo");  break;
+      default:          buf.append("???");  break;
+      }
+      buf.append("|");
+      buf.append(v);
+      return buf.toString();
    }
 
 
