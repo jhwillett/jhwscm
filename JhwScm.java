@@ -49,6 +49,8 @@ public class JhwScm
    //
    public static final boolean DEBUG          = true;
 
+   public static final boolean verbose        = false;
+
    public static final int     SUCCESS        = 0;
    public static final int     INCOMPLETE     = 1000;
    public static final int     BAD_ARG        = 2000; // often + specifier
@@ -516,8 +518,8 @@ public class JhwScm
 
    private void gosub ( final int nextOp, final int continuationOp )
    {
-      log("  gosub()");
-      log("    old stack: " + reg[regStack]);
+      if ( verbose ) log("  gosub()");
+      if ( verbose ) log("    old stack: " + reg[regStack]);
       if ( DEBUG )
       {
          final int nt = type(nextOp);
@@ -541,14 +543,14 @@ public class JhwScm
       }
       reg[regStack]  = newStack;
       reg[regPc]     = nextOp;
-      log("    new stack: " + reg[regStack]);
-      subDepth      += 1;
+      if ( verbose ) log("    new stack: " + reg[regStack]);
+      if ( DEBUG ) subDepth++;
    }
 
    private void returnsub ()
    {
-      log("  returnsub()");
-      log("    old stack: " + reg[regStack]);
+      if ( verbose ) log("  returnsub()");
+      if ( verbose ) log("    old stack: " + reg[regStack]);
       if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
       {
          raiseError(ERR_INTERNAL);
@@ -560,8 +562,8 @@ public class JhwScm
       // up in an error state or are otherwise "holding" old stacks)
       reg[regPc]     = head;
       reg[regStack]  = rest;
-      log("    new stack: " + reg[regStack]);
-      subDepth      -= 1;
+      if ( verbose ) log("    new stack: " + reg[regStack]);
+      if ( DEBUG ) subDepth--;
    }
 
    /**
@@ -600,11 +602,7 @@ public class JhwScm
     */
    public int selfTest ()
    {
-      final boolean verbose = false;
-      if ( verbose )
-      {
-         log("JhwScm.selfTest()");
-      }
+      if ( verbose ) log("selfTest()");
 
       // consistency check
       final int t = 0x12345678 & TYPE_FIXINT;
@@ -818,7 +816,6 @@ public class JhwScm
    // returns TRUE or FALSE
    private int queueIsEmpty ( final int queue )
    {
-      final boolean verbose = false;
       if ( verbose ) log("queueIsEmpty(): " + queue);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
@@ -902,7 +899,6 @@ public class JhwScm
 
    private void queueSpliceBack ( final int queue, final int list )
    {
-      final boolean verbose = false;
       if ( verbose ) log("queueSpliceBack()");
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
@@ -963,7 +959,6 @@ public class JhwScm
 
    private int queuePopFront ( final int queue )
    {
-      final boolean verbose = false;
       if ( verbose )
       {
          log("DEQUEUE: " + reg[regOutputQueue]);
@@ -1032,6 +1027,9 @@ public class JhwScm
       }
    }
 
+   // subDepth is ONLY used for debug cosmetics: it is not
+   // "sanctioned" piece of VM state.
+   //
    private int subDepth = 0;
    private void log ( final Object msg )
    {
