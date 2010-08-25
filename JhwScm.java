@@ -74,6 +74,9 @@ public class JhwScm
       }
 
       reg[regPc] = sub_rep;
+
+      reg[regInputQueue]  = queueCreate();
+      reg[regOutputQueue] = queueCreate();
    }
 
    /**
@@ -88,12 +91,20 @@ public class JhwScm
     */
    public int input ( final CharSequence input ) 
    {
-      log("input():  \"" + input + "\"");
       if ( null == input )
       {
+         log("input(): null");
          return BAD_ARG;
       }
+      log("input(): \"" + input + "\"");
       // TODO: this method is horribly inefficient :(
+      //
+      // Should reconsider our goal of leaving the input buffer
+      // unchanged, or should do a more clever cache-the-tail-cell to
+      // recover from failure in O(1).  In any case, we shouldn't have
+      // to wall all the input twice here, once into the temp queue
+      // and once in queueSpliceBack().
+      //
       final int tmpQueue = queueCreate();
       if ( NIL == tmpQueue )
       {
@@ -108,17 +119,19 @@ public class JhwScm
       }
       if ( NIL == reg[regInputQueue] )
       {
-         reg[regInputQueue] = queueCreate();
-         if ( NIL == reg[regInputQueue] )
-         {
-            return OUT_OF_MEMORY + 1;
-         }
+         log("  bogus");
+         raiseError(ERR_INTERNAL);
+         return INTERNAL_ERROR;
       }
       queueSpliceBack(reg[regInputQueue],car(tmpQueue));
       // TODO: could recycle the cell at tmpQueue here.
       //
       // TODO: check did we get in an error state before reporting
       // success?
+      log("  reg[regInputQueue]: " + reg[regInputQueue]);
+      log("  reg[regInputQueue]: " + car(reg[regInputQueue]));
+      log("  reg[regInputQueue]: " + cdr(reg[regInputQueue]));
+      log("  reg[regInputQueue]: " + NIL);
       return SUCCESS;
    }
 
@@ -138,7 +151,8 @@ public class JhwScm
       }
       if ( NIL == reg[regOutputQueue] )
       {
-         return SUCCESS;
+         raiseError(ERR_INTERNAL);
+         return INTERNAL_ERROR;
       }
       while ( FALSE == queueIsEmpty(reg[regOutputQueue]) )
       {
@@ -736,8 +750,10 @@ public class JhwScm
    // returns TRUE or FALSE
    private int queueIsEmpty ( final int queue )
    {
+      log("queueIsEmpty(): " + queue);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
+         log("  bogus A");
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
@@ -745,23 +761,28 @@ public class JhwScm
       final int tail = cdr(queue);
       if ( DEBUG && ( (NIL == head) != (NIL == tail) ) ) 
       {
+         log("  bogus B");
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
       if ( NIL == head )
       {
+         log("  nempty");
          return TRUE;
       }
       if ( DEBUG && TYPE_CELL != type(head) )
       {
+         log("  bogus C");
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
       if ( DEBUG && TYPE_CELL != type(tail) )
       {
+         log("  bogus D");
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
+      log("  nonempty");
       return FALSE;
    }
 
@@ -846,8 +867,6 @@ public class JhwScm
       }
    }
 
-   // TODO: get externally-visible error codes out of here, this is
-   // not a public method!
    private int queuePopFront ( final int queue )
    {
       final boolean verbose = false;
@@ -863,6 +882,7 @@ public class JhwScm
          {
             log("not a queue");
          }
+         raiseError(ERR_INTERNAL);
          return NIL;
       }
 
@@ -878,15 +898,14 @@ public class JhwScm
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         // TODO: corrupt queue
          if ( verbose )
          {
             log("corrupt queue");
          }
+         raiseError(ERR_INTERNAL); // corrupt queue
          return NIL;
       }
       final int value = car(head);
-      // TODO: recycle head
       setcar(queue,cdr(head));
       if ( NIL == car(queue) )
       {
