@@ -377,8 +377,17 @@ public class JhwScm
             //
             log("sub_print:");
             log("  reg[regArg0]: " + pp(reg[regArg0]));
-            log("  reg[regOut]:  " + pp(reg[regOut]));
-            raiseError(ERR_NOT_IMPL);
+            t = type(reg[regArg0]);
+            v = value(reg[regArg0]);
+            switch (t)
+            {
+            case TYPE_FIXINT:
+               raiseError(ERR_NOT_IMPL);
+               break;
+            default:
+               raiseError(ERR_INTERNAL);
+               break;
+            }
             break;
 
          case blk_re_return:
