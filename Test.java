@@ -68,7 +68,9 @@ public class Test
 
       // first content: simple integer expressions are self-evaluating
       // (but take some time).
-      final String[] variousFixnumExprs = { "0", "1", "1234", "-1", "-4321" };
+      final String[] variousFixnumExprs = { 
+         "0", "1", "1234", "-1", "-4321", "1001", "007", "-007",
+      };
       for ( String fixnumExpr : variousFixnumExprs )
       {
          final String        msg    = "fixnum self-evaluating: " + fixnumExpr;
