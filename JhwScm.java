@@ -163,7 +163,6 @@ public class JhwScm
          // TODO: make this all-or-nothing, like input()?
          try
          {
-            Thread.sleep(100);
             output.append(c);
          }
          catch ( Throwable e )
@@ -497,8 +496,8 @@ public class JhwScm
    private static final int ERR_LEX      = code(TYPE_ERR,2);
    private static final int ERR_NOT_IMPL = code(TYPE_ERR,3);
 
-   private static final int TRUE         = code(TYPE_BOOL,1);
-   private static final int FALSE        = code(TYPE_BOOL,0);
+   private static final int TRUE         = TYPE_BOOL | 37;
+   private static final int FALSE        = TYPE_BOOL | 91;
 
    private static final int regFreeCellList   =  0; // unused cells
    private static final int regStack          =  1; // the runtime stack
@@ -994,37 +993,23 @@ public class JhwScm
 
    private int queuePopFront ( final int queue )
    {
-      if ( verbose )
-      {
-         log("DEQUEUE: " + reg[regOut]);
-      }
-
+      final boolean verbose = true;
+      if ( verbose ) log("queuePopFront(): " + reg[regOut]);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose )
-         {
-            log("not a queue");
-         }
+         if ( verbose ) log("  not a queue");
          raiseError(ERR_INTERNAL);
          return NIL;
       }
-
       final int head = car(queue);
       if ( NIL == head )
       {
-         // empty queue
-         if ( verbose )
-         {
-            log("empty queue");
-         }
+         if ( verbose ) log("  empty queue");
          return NIL;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose )
-         {
-            log("corrupt queue");
-         }
+         if ( verbose ) log("  corrupt queue");
          raiseError(ERR_INTERNAL); // corrupt queue
          return NIL;
       }
@@ -1034,11 +1019,35 @@ public class JhwScm
       {
          setcdr(queue,NIL);
       }
-      if ( verbose )
-      {
-         log("happy pop");
-      }
+      if ( verbose ) log("  popped: " + pp(value));
       return value;
+   }
+
+   private int queuePeekFront ( final int queue )
+   {
+      final boolean verbose = true;
+      if ( verbose ) log("queuePeekFront(): " + reg[regOut]);
+      if ( DEBUG && TYPE_CELL != type(queue) ) 
+      {
+         if ( verbose ) log("  not a queue");
+         raiseError(ERR_INTERNAL);
+         return NIL;
+      }
+      final int head = car(queue);
+      if ( NIL == head )
+      {
+         if ( verbose ) log("  empty queue");
+         return NIL;
+      }
+      if ( TYPE_CELL != type(head) ) 
+      {
+         if ( verbose ) log("  corrupt queue");
+         raiseError(ERR_INTERNAL); // corrupt queue
+         return NIL;
+      }
+      final int value = car(head);
+      if ( verbose ) log("  peeked: " + pp(value));
+      return car(head);
    }
 
    private void queuePushFront ( final int queue, final int value )
@@ -1093,7 +1102,51 @@ public class JhwScm
       default:          buf.append("???");  break;
       }
       buf.append("|");
-      buf.append(v);
+      switch (t)
+      {
+      case TYPE_NIL:    
+         buf.append("nil");  
+         break;
+      case TYPE_CHAR:   
+         buf.append('\''); 
+         if ( ' ' <= v && v < '~' )
+         {
+            buf.append((char)v); 
+         }
+         else if ( 0 <= v && v <= 255 )
+         {
+            // TODO: I think R2R5 demands bigger characters than ASCII
+            buf.append(v); 
+         }
+         else
+         {
+            buf.append('?'); 
+            buf.append(v); 
+            buf.append('?'); 
+         }
+         buf.append('\''); 
+         break;
+      case TYPE_BOOL:   
+         buf.append('#'); 
+         switch (code)
+         {
+         case TRUE:  
+            buf.append('t'); 
+            break;
+         case FALSE: 
+            buf.append('f'); 
+            break;
+         default:    
+            buf.append('?'); 
+            buf.append(v); 
+            buf.append('?'); 
+            break;
+         }
+         break;
+      default:          
+         buf.append(v);       
+         break;
+      }
       return buf.toString();
    }
 
