@@ -215,6 +215,8 @@ public class JhwScm
       int t1   = 0;
       int v1   = 0;
       int tmp  = 0;
+      int tmp1 = 0;
+      int tmp2 = 0;
       int err  = SUCCESS;
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
@@ -382,12 +384,36 @@ public class JhwScm
             switch (t)
             {
             case TYPE_FIXINT:
-               raiseError(ERR_NOT_IMPL);
+               if ( 0 == v )
+               {
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'0'));
+               }
+               else
+               {
+                  if ( v < 0 )
+                  {
+                     queuePushBack(reg[regOut],code(TYPE_CHAR,'-'));
+                     v *= -1;
+                  }
+                  while ( v > 0 )
+                  {
+                     tmp1 = v;
+                     tmp2 = 1;
+                     while ( tmp1/10 > 0 )
+                     {
+                        tmp1 /= 10;
+                        tmp2 *= 10;
+                     }
+                     queuePushBack(reg[regOut],code(TYPE_CHAR,'0'+tmp1));
+                     v -= tmp1*tmp2;
+                  }
+               }
                break;
             default:
                raiseError(ERR_INTERNAL);
                break;
             }
+            returnsub();
             break;
 
          case blk_re_return:
