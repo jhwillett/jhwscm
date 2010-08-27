@@ -249,11 +249,29 @@ public class JhwScm
             // Note: we could probably tighten up rep by just jumping
             // back to sub_rep on return from sub_print.
             //
+            // But that would count as a specialized form of
+            // tail-recursion - not even regular tail recursion, and
+            // it might have funny stack-depth-tracking consequences.
+            //
             // Going with the extra blk for now to take it easy on the
             // subtlety.
-            gosub(sub_print,sub_rep);
+            //
+            gosub(sub_print,blk_rep_after_print);
             break;
          case blk_rep_after_print:
+            //
+            // Note: two choices here: we could do regular tail
+            // recursion, or implement as a loop with jump.  Both
+            // logically equivalent, but the tail recursion is much
+            // less efficient unless we have efficient tail recursion
+            // :) - but it would be an interesting experiment to see
+            // if we could eliminate the jump() operator altogether in
+            // that case.
+            //
+            // Also, the tail recursion decision would expose certain
+            // uncomfortable questions about what the return value of
+            // (print) is.  So for now, we just jump().
+            //
             log("blk_rep_after_print:");
             jump(sub_rep);
             break;
@@ -270,7 +288,7 @@ public class JhwScm
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
             {
-               log("non-char in input: " + c + " " + t + " " + (int)v);
+               log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -280,7 +298,7 @@ public class JhwScm
             case '\t':
             case '\r':
             case '\n':
-               jump(sub_read);
+               jump(sub_read); // or we could self-tail-recurse here
                break;
             case '(':
                gosub(sub_read_list,blk_re_return);
@@ -318,13 +336,13 @@ public class JhwScm
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
             {
-               log("non-char in input: " + c + " " + t + " " + (int)v);
+               log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
             if ( DEBUG && '(' != v )
             {
-               log("non-paren in input: " + c + " " + t + " " + (int)v);
+               log("non-paren in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -338,13 +356,13 @@ public class JhwScm
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
             {
-               log("non-char in input: " + c + " " + t + " " + (int)v);
+               log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
             if ( DEBUG && '(' != v )
             {
-               log("non-paren in input: " + c + " " + t + " " + (int)v);
+               log("non-paren in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -356,52 +374,93 @@ public class JhwScm
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
             {
-               log("non-char in input: " + c + " " + t + " " + (int)v);
+               log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
-            raiseError(ERR_NOT_IMPL);
-            if ( '0' <= v && v <= '9' )
+            if ( '-' == v )
             {
+               // The minus sign is special.  We need to look ahead
+               // *again* before we can decide whether it is part of a
+               // symbol or part of a number.
                queuePopFront(reg[regIn]);
-               reg[regArg0] = c;
-               reg[regArg1] = code(TYPE_FIXINT,0);
-               gosub(sub_read_number,blk_re_return);
+               c1 = queuePeekFront(reg[regIn]);
+               t1 = type(c);
+               v1 = value(c);
+               if ( DEBUG && TYPE_CHAR != t1 )
+               {
+                  raiseError(ERR_INTERNAL);
+                  break;
+               }
+               if ( '0' <= v1 || v1 >= '9' )
+               {
+                  gosub(sub_read_num,blk_read_token_neg);
+                  break;
+               }
+               else
+               {
+                  queuePushBack(reg[regIn],c1);
+                  gosub(sub_read_symbol,blk_re_return);
+                  break;
+               }
             }
-            else
+            if ( '0' <= v1 || v1 <= '9' )
             {
-               raiseError(ERR_NOT_IMPL);
+               gosub(sub_read_num,blk_re_return);
+               break;
             }
+            if ( '#' == v1 )
+            {
+               gosub(sub_read_boolean,blk_re_return);
+               break;
+            }
+            raiseError(ERR_NOT_IMPL);
             break;
 
-         case sub_read_number:
-            // Parses the next number from reg[regIn], given
-            // the first digit/char in reg[regArg0] and the
-            // accumulated value-so-far as a TYPE_FIXINT in
-            // reg[regArg1].
+         case sub_read_num:
+            // Parses the next number from reg[regIn].
             //
-            log("sub_read_number:");
-            c0 = reg[regArg0];
+            log("sub_read_num:");
+            reg[regArg0] = code(TYPE_FIXINT,0);
+            gosub(sub_read_num_loop,blk_re_return);
+            break;
+         case sub_read_num_loop:
+            // Parses the next number from reg[regIn], expecting the
+            // accumulated value-so-far as a TYPE_FIXINT in
+            // reg[regArg0].
+            //
+            // A helper for sub_read_num, but still a sub_ in its own
+            // right.
+            //
+            log("sub_read_num_loop:");
+            if ( TRUE == queueIsEmpty(reg[regIn]) )
+            {
+               log("  eof, returning: " + pp(reg[regArg0]));
+               reg[regRetval] = reg[regArg0];
+               returnsub();
+               break;
+            }
+            c0 = queuePopFront(reg[regIn]);
             t0 = type(c0);
             v0 = value(c0);
-            c1 = reg[regArg1];
-            t1 = type(c1);
-            v1 = value(c1);
             if ( TYPE_CHAR != t0 )
             {
-               log("  non-char in arg: " + c0 + " " + t0 + " " + (char)v0);
+               log("  non-char in arg: " + pp(c0));
                raiseError(ERR_LEX);
                break;
             }
             if ( v0 < '0' || v0 > '9' )
             {
-               log("  non-digit in arg: " + (char)v0);
+               log("  non-digit in arg: " + pp(c0));
                raiseError(ERR_LEX);
                break;
             }
+            c1 = reg[regArg0];
+            t1 = type(c1);
+            v1 = value(c1);
             if ( TYPE_FIXINT != t1 )
             {
-               log("  non-fixint in arg: " + c1 + " " + t1 + " " + v1);
+               log("  non-fixint in arg: " + pp(c1));
                raiseError(ERR_LEX);
                break;
             }
@@ -409,36 +468,8 @@ public class JhwScm
             log("  first char: " + (char)v0);
             log("  old accum:  " +       v1);
             log("  new accum:  " +       tmp);
-            if ( TRUE == queueIsEmpty(reg[regIn]) )
-            {
-               log("  eof");
-               reg[regRetval] = code(TYPE_FIXINT,tmp);
-               returnsub();
-               break;
-            }
-            c = queuePeekFront(reg[regIn]);
-            t = type(c);
-            v = value(c);
-            if ( DEBUG && TYPE_CHAR != t )
-            {
-               log("  non-char in input: " + c + " " + t + " " + (int)v);
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            if ( '0' <= v && v <= '9' )
-            {
-               log("  continuing");
-               queuePopFront(reg[regIn]);
-               reg[regArg0] = c;
-               reg[regArg1] = code(TYPE_FIXINT,tmp);
-               gosub(sub_read_number,blk_re_return);
-            }
-            else
-            {
-               log("  end-of-token");
-               reg[regRetval] = code(TYPE_FIXINT,tmp);
-               returnsub();
-            }
+            reg[regArg0] = code(TYPE_FIXINT,tmp);
+            gosub(sub_read_num_loop,blk_re_return);
             break;
 
          case sub_eval:
@@ -511,7 +542,7 @@ public class JhwScm
             // Just returns whatever retval left behind by the
             // subroutine which continued to here.
             //
-            log("blk_re_return:");
+            log("blk_re_return: " + pp(reg[regRetval]));
             returnsub();
             break;
 
@@ -569,7 +600,8 @@ public class JhwScm
    // This decision may be subject to change if I ever run out of
    // critical bandwidth or come to care about performance here.
    
-   private static final int MASK_TYPE    = 0xF0000000;
+   private static final int MASK_TYPE    = 0xF0000000; // matches SHIFT_TYPE
+   private static final int SHIFT_TYPE   = 28;         // matches MASK_TYPE
    private static final int MASK_VALUE   = ~MASK_TYPE;
 
    private static final int TYPE_NIL     = 0x10000000;
@@ -581,57 +613,72 @@ public class JhwScm
    private static final int TYPE_ERR     = 0x70000000;
    private static final int TYPE_BOOL    = 0x80000000;
 
-   private static final int NIL          = code(TYPE_NIL,0);
+   // In many of these constants, I would prefer to initialize them as
+   // code(TYPE_FOO,n) rather than TYPE_FOO|n, for consistency and to
+   // maintain the abstraction barrier.
+   //
+   // Unfortunately, even though code() is static, idempotent, and a
+   // matter of simple arithmetic, javac does not let me use the
+   // resultant names in switch statements.  In C, I'd just make
+   // code() a macro and be done with it.
 
-   private static final int ERR_OOM      = code(TYPE_ERR,0);
-   private static final int ERR_INTERNAL = code(TYPE_ERR,1);
-   private static final int ERR_LEX      = code(TYPE_ERR,2);
-   private static final int ERR_NOT_IMPL = code(TYPE_ERR,3);
+   private static final int NIL                 = TYPE_NIL  | 0;
 
-   private static final int TRUE         = TYPE_BOOL | 37;
-   private static final int FALSE        = TYPE_BOOL | 91;
+   private static final int ERR_OOM             = TYPE_ERR  | 0;
+   private static final int ERR_INTERNAL        = TYPE_ERR  | 1;
+   private static final int ERR_LEX             = TYPE_ERR  | 2;
+   private static final int ERR_NOT_IMPL        = TYPE_ERR  | 3;
 
-   private static final int regFreeCellList   =  0; // unused cells
-   private static final int regStack          =  1; // the runtime stack
-   private static final int regGlobalEnv      =  2; // environment frames
-   private static final int regIn             =  3; // input char queue
-   private static final int regOut            =  4; // output char queue
+   private static final int TRUE                = TYPE_BOOL | 37;
+   private static final int FALSE               = TYPE_BOOL | 91;
 
-   private static final int regArg0           =  5; // argument
-   private static final int regArg1           =  6; // argument
-   private static final int regRetval         =  7; // return value
+   private static final int regFreeCellList     =  0; // unused cells
+   private static final int regStack            =  1; // the runtime stack
+   private static final int regGlobalEnv        =  2; // environment frames
+   private static final int regIn               =  3; // input char queue
+   private static final int regOut              =  4; // output char queue
 
-   private static final int regOpNext         =  8; // next opcode to run
-   private static final int regOpContinuation =  9; // opcode to return to
+   private static final int regArg0             =  5; // argument
+   private static final int regArg1             =  6; // argument
+   private static final int regRetval           =  7; // return value
 
-   private static final int regPc             = 10; // opcode to return to
+   private static final int regOpNext           =  8; // next opcode to run
+   private static final int regOpContinuation   =  9; // opcode to return to
 
-   private static final int regError          = 11; // NIL or a TYPE_ERR
-   private static final int regErrorPc        = 12; // reg[regPc] of err
-   private static final int regErrorStack     = 13; // reg[regStack] of err
+   private static final int regPc               = 10; // opcode to return to
+
+   private static final int regError            = 11; // NIL or a TYPE_ERR
+   private static final int regErrorPc          = 12; // reg[regPc] of err
+   private static final int regErrorStack       = 13; // reg[regStack] of err
 
    private static final int sub_rep             = TYPE_SUB |   10;
    private static final int blk_rep_after_eval  = TYPE_BLK |   11;
    private static final int blk_rep_after_read  = TYPE_BLK |   12;
    private static final int blk_rep_after_print = TYPE_BLK |   13;
 
-   private static final int sub_read            = TYPE_SUB |   20;
-   private static final int blk_read_quote      = TYPE_SUB |   21;
+   private static final int sub_read            = TYPE_SUB |  100;
+   private static final int blk_read_quote      = TYPE_BLK |  101;
 
-   private static final int sub_read_list       = TYPE_SUB |   30;
-   private static final int blk_read_list_mid   = TYPE_SUB |   31;
+   private static final int sub_read_list       = TYPE_SUB |  110;
+   private static final int blk_read_list_mid   = TYPE_BLK |  111;
 
-   private static final int sub_read_token      = TYPE_SUB |   40;
+   private static final int sub_read_token      = TYPE_SUB |  120;
+   private static final int blk_read_token_neg  = TYPE_SUB |  121;
 
-   private static final int sub_read_number     = TYPE_SUB |   50;
+   private static final int sub_read_num        = TYPE_SUB |  130;
+   private static final int sub_read_num_loop   = TYPE_SUB |  131;
 
-   private static final int sub_eval            = TYPE_SUB |   60;
+   private static final int sub_read_boolean    = TYPE_SUB |  140;
 
-   private static final int sub_print           = TYPE_SUB |   70;
+   private static final int sub_read_symbol     = TYPE_SUB |  150;
+
+   private static final int sub_eval            = TYPE_SUB |  200;
+
+   private static final int sub_print           = TYPE_SUB |  300;
 
 
-   private static final int blk_re_return       = TYPE_SUB | 1000;
-   private static final int blk_error           = TYPE_SUB | 1001;
+   private static final int blk_re_return       = TYPE_BLK | 1000;
+   private static final int blk_error           = TYPE_BLK | 1001;
 
 
    private void jump ( final int nextOp )
@@ -710,7 +757,6 @@ public class JhwScm
    private void raiseError ( final int err )
    {
       log("  raiseError(): " + err);
-      new Throwable().printStackTrace();
       if ( DEBUG && TYPE_ERR != type(err) )
       {
          // TODO: Bad call to raiseError()? Are we out of tricks?
@@ -721,7 +767,16 @@ public class JhwScm
          reg[regErrorPc]    = reg[regPc];
          reg[regErrorStack] = reg[regStack];
       }
-      reg[regPc]         = blk_error;
+      reg[regPc] = blk_error;
+      if ( DEBUG )
+      {
+         new Throwable("raiseError()").printStackTrace();
+         for ( int c = reg[regErrorStack]; NIL != c; c = cdr(c) )
+         {
+            // TODO: hopefully the stack isn't corrupt....
+            log("    stack: " + pp(car(c)));
+         }
+      }
    }
 
    private final int[] heap = new int[1024];
@@ -1092,23 +1147,23 @@ public class JhwScm
 
    private int queuePopFront ( final int queue )
    {
-      final boolean verbose = true;
-      if ( verbose ) log("queuePopFront(): " + reg[regOut]);
+      final boolean verbose = false;
+      if ( verbose ) log("  queuePopFront(): " + reg[regOut]);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("  not a queue");
+         if ( verbose ) log("    not a queue");
          raiseError(ERR_INTERNAL);
          return NIL;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
-         if ( verbose ) log("  empty queue");
+         if ( verbose ) log("    empty queue");
          return NIL;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose ) log("  corrupt queue");
+         if ( verbose ) log("    corrupt queue");
          raiseError(ERR_INTERNAL); // corrupt queue
          return NIL;
       }
@@ -1118,7 +1173,7 @@ public class JhwScm
       {
          setcdr(queue,NIL);
       }
-      if ( verbose ) log("  popped: " + pp(value));
+      if ( verbose ) log("    popped: " + pp(value));
       return value;
    }
 
@@ -1185,6 +1240,33 @@ public class JhwScm
 
    private static String pp ( final int code )
    {
+      switch (code)
+      {
+      case sub_rep:             return "sub_rep";
+      case blk_rep_after_eval:  return "blk_rep_after_eval";
+      case blk_rep_after_read:  return "blk_rep_after_read";
+      case blk_rep_after_print: return "blk_rep_after_print";
+      case sub_read:            return "sub_read";
+      case blk_read_quote:      return "blk_read_quote";
+      case sub_read_list:       return "sub_read_list";
+      case blk_read_list_mid:   return "blk_read_list_mid";
+      case sub_read_token:      return "sub_read_token";
+      case blk_read_token_neg:  return "blk_read_token_neg";
+      case sub_read_num:        return "sub_read_num";
+      case sub_read_boolean:    return "sub_read_boolean";
+      case sub_read_symbol:     return "sub_read_symbol";
+      case sub_eval:            return "sub_eval";
+      case sub_print:           return "sub_print";
+      case blk_re_return:       return "blk_re_return";
+      case blk_error:           return "blk_error";
+      case NIL:                 return "NIL";
+      case TRUE:                return "TRUE";
+      case FALSE:               return "FALSE";
+      case ERR_OOM:             return "ERR_OOM";
+      case ERR_INTERNAL:        return "ERR_INTERNAL";
+      case ERR_LEX:             return "ERR_LEX";
+      case ERR_NOT_IMPL:        return "ERR_NOT_IMPL";
+      }
       final int t = type(code);
       final int v = value(code);
       final StringBuilder buf = new StringBuilder();
@@ -1198,7 +1280,11 @@ public class JhwScm
       case TYPE_BLK:    buf.append("blk");  break;
       case TYPE_ERR:    buf.append("err");  break;
       case TYPE_BOOL:   buf.append("boo");  break;
-      default:          buf.append("???");  break;
+      default:          
+         buf.append('?'); 
+         buf.append(t>>SHIFT_TYPE); 
+         buf.append('?'); 
+         break;
       }
       buf.append("|");
       switch (t)
@@ -1248,6 +1334,4 @@ public class JhwScm
       }
       return buf.toString();
    }
-
-
 }
