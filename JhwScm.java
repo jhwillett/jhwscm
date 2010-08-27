@@ -195,6 +195,9 @@ public class JhwScm
     */
    public int drive ( final int numSteps )
    {
+      log("drive():");
+      log("  numSteps: " + numSteps);
+
       if ( numSteps < -1 )
       {
          return BAD_ARG;
@@ -220,7 +223,8 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
-         log("pc: " + pp(reg[regPc]));
+         log("pc:   " + pp(reg[regPc]));
+         log("step: " + step + " / " + numSteps);
          switch ( reg[regPc] )
          {
          case sub_rep:
@@ -516,6 +520,16 @@ public class JhwScm
                // twos-complement FIXINTs to match Java's 32 bits
                // before proceeding.
                v = (v << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
+               if ( true )
+               {
+                  // TODO: this is a huge cop-out, implement it right
+                  final String str = "" + v;
+                  for ( tmp = 0; tmp < str.length(); ++tmp )
+                  {
+                     queuePushBack(reg[regOut],code(TYPE_CHAR,str.charAt(tmp)));
+                  }
+                  break;
+               }
                if ( 0 == v )
                {
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'0'));
@@ -567,7 +581,7 @@ public class JhwScm
          }
       }
 
-      return SUCCESS;
+      return INCOMPLETE;
    }
 
    // Notes:
@@ -1291,6 +1305,7 @@ public class JhwScm
       case sub_read_token:      return "sub_read_token";
       case blk_read_token_neg:  return "blk_read_token_neg";
       case sub_read_num:        return "sub_read_num";
+      case sub_read_num_loop:   return "sub_read_num_loop";
       case sub_read_boolean:    return "sub_read_boolean";
       case sub_read_symbol:     return "sub_read_symbol";
       case sub_eval:            return "sub_eval";

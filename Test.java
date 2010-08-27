@@ -36,7 +36,7 @@ public class Test
       }
       {
          final int code = new JhwScm().drive(0);
-         assertEquals("drive(0)",JhwScm.SUCCESS,code);
+         assertEquals("drive(0)",JhwScm.INCOMPLETE,code);
       }
       {
          final int code = new JhwScm().drive(-1);
@@ -57,23 +57,33 @@ public class Test
          final StringBuilder output = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("");
-         final int           dcode  = scm.drive(numCycles);
-         final int           ocode  = scm.output(output);
          assertEquals(msg,JhwScm.SUCCESS,icode);
+         final int           dcode  = scm.drive(numCycles);
          assertEquals(msg,JhwScm.SUCCESS,dcode);
+         final int           ocode  = scm.output(output);
          assertEquals(msg,JhwScm.SUCCESS,ocode);
          assertEquals(msg,0,output.length());
          selfTest(scm);
       }
 
       // first content: simple integer expressions are self-evaluating
-      // (but take some time).
-      final String[] variousFixnumExprs = { 
-         "0", "1", "1234", "-1", "-4321", "10", "1001", "007", "-007", "-070",
+      // and self-printing.
+      final String[] simpleInts = { 
+         "0", "1", "1234", "-1", "-4321", "10", "1001", 
       };
-      for ( String fixnumExpr : variousFixnumExprs )
+      for ( final String expr : simpleInts )
       {
-         expectSuccess(fixnumExpr,fixnumExpr);
+         expectSuccess(expr,expr);
+      }
+
+      // second content: tweakier integer expressions are
+      // self-evaluating but not self-printing.
+      final String[][] tweakyInts = { 
+         { "007", "7" }, { "-007", "-7" }, {"-070", "-70" },
+      };
+      for ( final String[] pair : tweakyInts )
+      {
+         expectSuccess(pair[0],pair[1]);
       }
 
       // first computation: even simple integer take nonzero cycles
@@ -81,17 +91,17 @@ public class Test
          final StringBuilder output = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("0");
+         assertEquals(JhwScm.SUCCESS, icode);
          final int           dcode1 = scm.drive(0);
-         final int           dcode2 = scm.drive(0);
-         final int           dcode3 = scm.drive(-1);
-         final int           dcode4 = scm.drive(0);
-         final int           ocode  = scm.output(output);
-         assertEquals(JhwScm.SUCCESS,   icode);
          assertEquals("should be incomplete so far",JhwScm.INCOMPLETE,dcode1);
+         final int           dcode2 = scm.drive(0);
          assertEquals("should be incomplete so far",JhwScm.INCOMPLETE,dcode2);
+         final int           dcode3 = scm.drive(-1);
          assertEquals("should be successful",       JhwScm.SUCCESS,   dcode3);
-         assertEquals("should still be successful", JhwScm.SUCCESS,   dcode4);
-         assertEquals(JhwScm.SUCCESS,   ocode);
+         final int           dcode4 = scm.drive(0);
+         assertEquals("should be incomplete again",JhwScm.INCOMPLETE, dcode4);
+         final int           ocode  = scm.output(output);
+         assertEquals(JhwScm.SUCCESS, ocode);
          assertEquals("0",output.toString());
          selfTest(scm);
       }
