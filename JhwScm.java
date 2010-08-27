@@ -223,9 +223,10 @@ public class JhwScm
          switch ( reg[regPc] )
          {
          case sub_rep:
-            // The top level read-eval-print loop:
+            // Reads the next sexpr from reg[regIn], evaluates it, and
+            // prints the result in reg[regOut].
             //
-            //   (while (has-some-input) (print (eval (read) global-env)))
+            // Top-level entry point for the interactive interpreter.
             //
             log("sub_rep:");
             if ( TRUE == queueIsEmpty(reg[regIn]) )
@@ -244,8 +245,9 @@ public class JhwScm
          case blk_rep_after_eval:
             log("blk_rep_after_eval:");
             reg[regArg0] = reg[regRetval];
-            // Note: we could probably tighten up rep by just going
-            // right to sub_rep on return from sub_print.
+            //
+            // Note: we could probably tighten up rep by just jumping
+            // back to sub_rep on return from sub_print.
             //
             // Going with the extra blk for now to take it easy on the
             // subtlety.
@@ -260,6 +262,8 @@ public class JhwScm
             // Parses the next sexpr from reg[regIn], and
             // leaves the results in reg[regRetval].
             //
+            // Top-level entry point for the parser.
+            //
             log("sub_read:");
             c = queuePeekFront(reg[regIn]);
             t = type(c);
@@ -270,6 +274,93 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
+            switch (v)
+            {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+               jump(sub_read);
+               break;
+            case '(':
+               gosub(sub_read_list,blk_re_return);
+               break;
+            case '\'':
+               gosub(sub_read,blk_read_quote);
+               break;
+            case '\"':
+               raiseError(ERR_NOT_IMPL);
+               break;
+            default:
+               gosub(sub_read_token,blk_re_return);
+               break;
+            }
+            break;
+         case blk_read_quote:
+            // TODO: return a quotation of reg[regRetval] e.g. something like:
+            //
+            // reg[regRetval] = cons(reg[regRetval],NIL);
+            // reg[regRetval] = cons(sub_quote,     NIL);
+            // returnsub();
+            //
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_read_list:
+            // Parses the next list of sexprs from reg[regIn], and
+            // leaves the results in reg[regRetval].
+            //
+            // On entry, expects the next char on input to be the open
+            // paren '(' which begins the list.
+            //
+            c = queuePeekFront(reg[regIn]);
+            t = type(c);
+            v = value(c);
+            if ( DEBUG && TYPE_CHAR != t )
+            {
+               log("non-char in input: " + c + " " + t + " " + (int)v);
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            if ( DEBUG && '(' != v )
+            {
+               log("non-paren in input: " + c + " " + t + " " + (int)v);
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            queuePopFront(reg[regIn]);
+            gosub(sub_read,blk_read_list_mid);
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case blk_read_list_mid:
+            c = queuePeekFront(reg[regIn]);
+            t = type(c);
+            v = value(c);
+            if ( DEBUG && TYPE_CHAR != t )
+            {
+               log("non-char in input: " + c + " " + t + " " + (int)v);
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            if ( DEBUG && '(' != v )
+            {
+               log("non-paren in input: " + c + " " + t + " " + (int)v);
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            break;
+
+         case sub_read_token:
+            c = queuePeekFront(reg[regIn]);
+            t = type(c);
+            v = value(c);
+            if ( DEBUG && TYPE_CHAR != t )
+            {
+               log("non-char in input: " + c + " " + t + " " + (int)v);
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            raiseError(ERR_NOT_IMPL);
             if ( '0' <= v && v <= '9' )
             {
                queuePopFront(reg[regIn]);
@@ -519,21 +610,28 @@ public class JhwScm
    private static final int regErrorPc        = 12; // reg[regPc] of err
    private static final int regErrorStack     = 13; // reg[regStack] of err
 
-   private static final int sub_rep             = TYPE_SUB |  10;
-   private static final int blk_rep_after_eval  = TYPE_BLK |  11;
-   private static final int blk_rep_after_read  = TYPE_BLK |  12;
-   private static final int blk_rep_after_print = TYPE_BLK |  13;
+   private static final int sub_rep             = TYPE_SUB |   10;
+   private static final int blk_rep_after_eval  = TYPE_BLK |   11;
+   private static final int blk_rep_after_read  = TYPE_BLK |   12;
+   private static final int blk_rep_after_print = TYPE_BLK |   13;
 
-   private static final int sub_read            = TYPE_SUB |  20;
-   private static final int sub_read_number     = TYPE_SUB |  22;
+   private static final int sub_read            = TYPE_SUB |   20;
+   private static final int blk_read_quote      = TYPE_SUB |   21;
 
-   private static final int sub_eval            = TYPE_SUB |  30;
+   private static final int sub_read_list       = TYPE_SUB |   30;
+   private static final int blk_read_list_mid   = TYPE_SUB |   31;
 
-   private static final int sub_print           = TYPE_SUB |  40;
+   private static final int sub_read_token      = TYPE_SUB |   40;
 
-   private static final int blk_re_return       = TYPE_SUB | 100;
+   private static final int sub_read_number     = TYPE_SUB |   50;
 
-   private static final int blk_error           = TYPE_SUB | 101;
+   private static final int sub_eval            = TYPE_SUB |   60;
+
+   private static final int sub_print           = TYPE_SUB |   70;
+
+
+   private static final int blk_re_return       = TYPE_SUB | 1000;
+   private static final int blk_error           = TYPE_SUB | 1001;
 
 
    private void jump ( final int nextOp )

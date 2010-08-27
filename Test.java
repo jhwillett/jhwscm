@@ -73,18 +73,7 @@ public class Test
       };
       for ( String fixnumExpr : variousFixnumExprs )
       {
-         final String        msg    = "fixnum self-evaluating: " + fixnumExpr;
-         final StringBuilder output = new StringBuilder();
-         final JhwScm        scm    = new JhwScm();
-         final int           icode  = scm.input(fixnumExpr);
-         final int           dcode  = scm.drive(-1);
-         final int           ocode  = scm.output(output);
-         assertEquals(msg,JhwScm.SUCCESS,icode);
-         assertEquals(msg,JhwScm.SUCCESS,dcode);
-         assertEquals(msg,JhwScm.SUCCESS,ocode);
-         assertEquals(msg,fixnumExpr,output.toString());
-         selfTest(scm);
-         expectSuccess(fixnumExpr,fixnumExpr); // validate expectSuccess();
+         expectSuccess(fixnumExpr,fixnumExpr);
       }
 
       // first computation: even simple integer take nonzero cycles
@@ -208,18 +197,19 @@ public class Test
          scm = new JhwScm();
       }
       final int icode = scm.input(expr);
-      assertEquals(JhwScm.SUCCESS,icode);
+      assertEquals("input failure on \"" + expr + "\":",JhwScm.SUCCESS,icode);
       final int dcode = scm.drive(-1);
-      assertEquals("should succeed evaluating: " + expr, JhwScm.SUCCESS, dcode);
+      assertEquals("drive failure on \"" + expr + "\":",JhwScm.SUCCESS,dcode);
       final int ocode = scm.output(output);
-      assertEquals(JhwScm.SUCCESS,ocode);
-      assertEquals(expect,output.toString());
+      assertEquals("output failure on \"" + expr + "\":",JhwScm.SUCCESS,ocode);
+      assertEquals("result failure:",expect,output.toString());
       System.out.print("pass: expr \"");
       System.out.print(expr);
       System.out.print("\" evaluated to \"");
       System.out.print(expect);
       System.out.print("\"");
       System.out.println("\"");
+      selfTest(scm);
    }
 
    private static void expectFailure ( final String expr )
