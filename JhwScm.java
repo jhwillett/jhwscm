@@ -378,41 +378,46 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
+            if ( '0' <= v && v <= '9' )
+            {
+               log("  non-negated number");
+               gosub(sub_read_num,blk_re_return);
+               break;
+            }
+            if ( '#' == v )
+            {
+               log("  octothorpe special");
+               gosub(sub_read_boolean,blk_re_return);
+               break;
+            }
             if ( '-' == v )
             {
+               log("  minus special case");
                // The minus sign is special.  We need to look ahead
                // *again* before we can decide whether it is part of a
                // symbol or part of a number.
                queuePopFront(reg[regIn]);
                c1 = queuePeekFront(reg[regIn]);
-               t1 = type(c);
-               v1 = value(c);
+               t1 = type(c1);
+               v1 = value(c1);
                if ( DEBUG && TYPE_CHAR != t1 )
                {
                   raiseError(ERR_INTERNAL);
                   break;
                }
-               if ( '0' <= v1 || v1 <= '9' )
+               if ( '0' <= v1 && v1 <= '9' )
                {
+                  log("    minus-in-negative");
                   gosub(sub_read_num,blk_read_token_neg);
                   break;
                }
                else
                {
+                  log("    minus-in-symbol");
                   queuePushBack(reg[regIn],c1);
                   gosub(sub_read_symbol,blk_re_return);
                   break;
                }
-            }
-            if ( '0' <= v1 || v1 <= '9' )
-            {
-               gosub(sub_read_num,blk_re_return);
-               break;
-            }
-            if ( '#' == v1 )
-            {
-               gosub(sub_read_boolean,blk_re_return);
-               break;
             }
             raiseError(ERR_NOT_IMPL);
             break;
@@ -1232,27 +1237,26 @@ public class JhwScm
    private int queuePeekFront ( final int queue )
    {
       final boolean verbose = true;
-      if ( verbose ) log("  queuePeekFront(): " + pp(reg[regOut]));
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("    not a queue");
+         if ( verbose ) log("  not a queue: " + pp(queue));
          raiseError(ERR_INTERNAL);
          return NIL;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
-         if ( verbose ) log("    empty queue");
+         if ( verbose ) log("  empty queue: " + pp(queue));
          return NIL;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose ) log("    corrupt queue");
+         if ( verbose ) log("  corrupt queue: " + pp(queue));
          raiseError(ERR_INTERNAL); // corrupt queue
          return NIL;
       }
       final int value = car(head);
-      if ( verbose ) log("    peeked: " + pp(value));
+      if ( verbose ) log("  peeked: " + pp(value));
       return car(head);
    }
 
@@ -1346,10 +1350,11 @@ public class JhwScm
          buf.append("nil");  
          break;
       case TYPE_CHAR:   
-         buf.append('\''); 
          if ( ' ' <= v && v < '~' )
          {
+            buf.append('\''); 
             buf.append((char)v); 
+            buf.append('\''); 
          }
          else if ( 0 <= v && v <= 255 )
          {
@@ -1362,7 +1367,6 @@ public class JhwScm
             buf.append(v); 
             buf.append('?'); 
          }
-         buf.append('\''); 
          break;
       case TYPE_BOOL:   
          buf.append('#'); 
