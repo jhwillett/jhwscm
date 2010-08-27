@@ -770,11 +770,24 @@ public class JhwScm
       reg[regPc] = blk_error;
       if ( DEBUG )
       {
-         new Throwable("raiseError()").printStackTrace();
+         final Thread              thread = Thread.currentThread();
+         final StackTraceElement[] stack  = thread.getStackTrace();
+         boolean                   active = false;
+         for ( int i = 0; i < stack.length; ++i )
+         {
+            final StackTraceElement elm = stack[i];
+            if ( !active )
+            {
+               if ( !"raiseError".equals(elm.getMethodName()))        continue;
+               if ( !getClass().getName().equals(elm.getClassName())) continue;
+               active = true;
+            }
+            log("    java:  " + elm);
+         }
          for ( int c = reg[regErrorStack]; NIL != c; c = cdr(c) )
          {
             // TODO: hopefully the stack isn't corrupt....
-            log("    stack: " + pp(car(c)));
+            log("    scm:   " + pp(car(c)));
          }
       }
    }
