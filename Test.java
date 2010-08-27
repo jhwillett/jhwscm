@@ -69,7 +69,7 @@ public class Test
       // first content: simple integer expressions are self-evaluating
       // (but take some time).
       final String[] variousFixnumExprs = { 
-         "0", "1", "1234", "-1", "-4321", "1001", "007", "-007",
+         "0", "1", "1234", "-1", "-4321", "10", "1001", "007", "-007", "-070",
       };
       for ( String fixnumExpr : variousFixnumExprs )
       {
@@ -197,12 +197,20 @@ public class Test
          scm = new JhwScm();
       }
       final int icode = scm.input(expr);
-      assertEquals("input failure on \"" + expr + "\":",JhwScm.SUCCESS,icode);
+      assertEquals("input failure on \"" + expr + "\":",
+                   JhwScm.SUCCESS,
+                   icode);
       final int dcode = scm.drive(-1);
-      assertEquals("drive failure on \"" + expr + "\":",JhwScm.SUCCESS,dcode);
+      assertEquals("drive failure on \"" + expr + "\":",
+                   JhwScm.SUCCESS,
+                   dcode);
       final int ocode = scm.output(output);
-      assertEquals("output failure on \"" + expr + "\":",JhwScm.SUCCESS,ocode);
-      assertEquals("result failure:",expect,output.toString());
+      assertEquals("output failure on \"" + expr + "\":",
+                   JhwScm.SUCCESS,
+                   ocode);
+      assertEquals("result failure on \"" + expr + "\":",
+                   expect,
+                   output.toString());
       System.out.print("pass: expr \"");
       System.out.print(expr);
       System.out.print("\" evaluated to \"");

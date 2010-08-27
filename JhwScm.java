@@ -220,6 +220,7 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
+         log("pc: " + pp(reg[regPc]));
          switch ( reg[regPc] )
          {
          case sub_rep:
@@ -228,7 +229,6 @@ public class JhwScm
             //
             // Top-level entry point for the interactive interpreter.
             //
-            log("sub_rep:");
             if ( TRUE == queueIsEmpty(reg[regIn]) )
             {
                log("  eof: done");
@@ -237,13 +237,11 @@ public class JhwScm
             gosub(sub_read,blk_rep_after_read);
             break;
          case blk_rep_after_read:
-            log("blk_rep_after_read:");
             reg[regArg0] = reg[regRetval];
             reg[regArg1] = reg[regGlobalEnv];
             gosub(sub_eval,blk_rep_after_eval);
             break;
          case blk_rep_after_eval:
-            log("blk_rep_after_eval:");
             reg[regArg0] = reg[regRetval];
             //
             // Note: we could probably tighten up rep by just jumping
@@ -272,7 +270,6 @@ public class JhwScm
             // uncomfortable questions about what the return value of
             // (print) is.  So for now, we just jump().
             //
-            log("blk_rep_after_print:");
             jump(sub_rep);
             break;
 
@@ -282,7 +279,6 @@ public class JhwScm
             //
             // Top-level entry point for the parser.
             //
-            log("sub_read:");
             c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
@@ -392,7 +388,7 @@ public class JhwScm
                   raiseError(ERR_INTERNAL);
                   break;
                }
-               if ( '0' <= v1 || v1 >= '9' )
+               if ( '0' <= v1 || v1 <= '9' )
                {
                   gosub(sub_read_num,blk_read_token_neg);
                   break;
@@ -416,11 +412,25 @@ public class JhwScm
             }
             raiseError(ERR_NOT_IMPL);
             break;
+         case blk_read_token_neg:
+            c = reg[regRetval];
+            t = type(c);
+            v = value(c);
+            if ( TYPE_FIXINT != t )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            log("  negating: " + pp(c));
+            v = -v;
+            reg[regRetval] = code(TYPE_FIXINT,v);
+            log("  to:       " + pp(reg[regRetval]));
+            returnsub();
+            break;
 
          case sub_read_num:
             // Parses the next number from reg[regIn].
             //
-            log("sub_read_num:");
             reg[regArg0] = code(TYPE_FIXINT,0);
             gosub(sub_read_num_loop,blk_re_return);
             break;
@@ -432,7 +442,6 @@ public class JhwScm
             // A helper for sub_read_num, but still a sub_ in its own
             // right.
             //
-            log("sub_read_num_loop:");
             if ( TRUE == queueIsEmpty(reg[regIn]) )
             {
                log("  eof, returning: " + pp(reg[regArg0]));
@@ -478,7 +487,6 @@ public class JhwScm
             //
             // TODO: implement properly.
             //
-            log("sub_eval:");
             if ( true )
             {
                // Treats all exprs as self-evaluating.
@@ -499,13 +507,15 @@ public class JhwScm
          case sub_print:
             // Prints the expr in reg[regArg0] to reg[regOut].
             //
-            log("sub_print:");
-            log("  reg[regArg0]: " + pp(reg[regArg0]));
             t = type(reg[regArg0]);
             v = value(reg[regArg0]);
             switch (t)
             {
             case TYPE_FIXINT:
+               // We trick out the sign extension of our 28-bit
+               // twos-complement FIXINTs to match Java's 32 bits
+               // before proceeding.
+               v = (v << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
                if ( 0 == v )
                {
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'0'));
@@ -542,23 +552,16 @@ public class JhwScm
             // Just returns whatever retval left behind by the
             // subroutine which continued to here.
             //
-            log("blk_re_return: " + pp(reg[regRetval]));
             returnsub();
             break;
 
          case blk_error:
-            // TODO: print stack trace? ;)
-            //
             // TODO: return various externally visible codes based on
             // the internal code in reg[regError]
-            log("blk_error:");
-            log("  reg[regError]      " + reg[regError]);
-            log("  reg[regErrorPc]    " + reg[regErrorPc]);
-            log("  reg[regErrorStack] " + reg[regErrorStack]);
             return FAILURE;
 
          default:
-            log("bogus opcode: " + reg[regPc]);
+            log("    bogus opcode: " + pp(reg[regPc]));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -683,7 +686,6 @@ public class JhwScm
 
    private void jump ( final int nextOp )
    {
-      log("  jump()");
       if ( DEBUG )
       {
          final int t = type(nextOp);
@@ -756,19 +758,22 @@ public class JhwScm
     */
    private void raiseError ( final int err )
    {
-      log("  raiseError(): " + err);
+      final boolean verbose = true;
+      if ( verbose )
+      {
+         log("  raiseError():");
+      }
       if ( DEBUG && TYPE_ERR != type(err) )
       {
          // TODO: Bad call to raiseError()? Are we out of tricks?
       }
-      if ( NIL == reg[regError] ) 
+      if ( verbose )
       {
-         reg[regError]      = err;
-         reg[regErrorPc]    = reg[regPc];
-         reg[regErrorStack] = reg[regStack];
+         log("    err:   " + pp(err));
+         log("    pc:    " + pp(reg[regPc]));
+         log("    stack: " + pp(reg[regStack]));
       }
-      reg[regPc] = blk_error;
-      if ( DEBUG )
+      if ( verbose )
       {
          final Thread              thread = Thread.currentThread();
          final StackTraceElement[] stack  = thread.getStackTrace();
@@ -781,15 +786,35 @@ public class JhwScm
                if ( !"raiseError".equals(elm.getMethodName()))        continue;
                if ( !getClass().getName().equals(elm.getClassName())) continue;
                active = true;
+               continue;
             }
             log("    java:  " + elm);
          }
-         for ( int c = reg[regErrorStack]; NIL != c; c = cdr(c) )
+         for ( int c = reg[regStack]; NIL != c; c = cdr(c) )
          {
             // TODO: hopefully the stack isn't corrupt....
             log("    scm:   " + pp(car(c)));
          }
       }
+      if ( NIL == reg[regError] ) 
+      {
+         if ( verbose )
+         {
+            log("    primary: documenting");
+         }
+         reg[regError]      = err;
+         reg[regErrorPc]    = reg[regPc];
+         reg[regErrorStack] = reg[regStack];
+      }
+      else
+      {
+         if ( verbose )
+         {
+            log("    secondary: supressing");
+         }
+      }
+      reg[regPc]    = blk_error;
+      reg[regStack] = NIL;
    }
 
    private final int[] heap = new int[1024];
@@ -1193,27 +1218,27 @@ public class JhwScm
    private int queuePeekFront ( final int queue )
    {
       final boolean verbose = true;
-      if ( verbose ) log("queuePeekFront(): " + reg[regOut]);
+      if ( verbose ) log("  queuePeekFront(): " + pp(reg[regOut]));
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("  not a queue");
+         if ( verbose ) log("    not a queue");
          raiseError(ERR_INTERNAL);
          return NIL;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
-         if ( verbose ) log("  empty queue");
+         if ( verbose ) log("    empty queue");
          return NIL;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose ) log("  corrupt queue");
+         if ( verbose ) log("    corrupt queue");
          raiseError(ERR_INTERNAL); // corrupt queue
          return NIL;
       }
       final int value = car(head);
-      if ( verbose ) log("  peeked: " + pp(value));
+      if ( verbose ) log("    peeked: " + pp(value));
       return car(head);
    }
 
