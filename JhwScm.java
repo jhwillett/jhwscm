@@ -261,7 +261,7 @@ public class JhwScm
             // leaves the results in reg[regRetval].
             //
             log("sub_read:");
-            c = queuePopFront(reg[regIn]);
+            c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
@@ -272,6 +272,7 @@ public class JhwScm
             }
             if ( '0' <= v && v <= '9' )
             {
+               queuePopFront(reg[regIn]);
                reg[regArg0] = c;
                reg[regArg1] = code(TYPE_FIXINT,0);
                gosub(sub_read_number,blk_re_return);
@@ -324,7 +325,7 @@ public class JhwScm
                returnsub();
                break;
             }
-            c = queuePopFront(reg[regIn]);
+            c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
@@ -336,6 +337,7 @@ public class JhwScm
             if ( '0' <= v && v <= '9' )
             {
                log("  continuing");
+               queuePopFront(reg[regIn]);
                reg[regArg0] = c;
                reg[regArg1] = code(TYPE_FIXINT,tmp);
                gosub(sub_read_number,blk_re_return);
@@ -343,7 +345,6 @@ public class JhwScm
             else
             {
                log("  end-of-token");
-               queuePushFront(reg[regIn],c);
                reg[regRetval] = code(TYPE_FIXINT,tmp);
                returnsub();
             }
