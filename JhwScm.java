@@ -223,8 +223,7 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
-         log("pc:   " + pp(reg[regPc]));
-         log("step: " + step + " / " + numSteps);
+         log("step: " + pp(reg[regPc]) + " (" + step + "/" + numSteps + ")");
          switch ( reg[regPc] )
          {
          case sub_rep:
@@ -490,6 +489,40 @@ public class JhwScm
             gosub(sub_read_num_loop,blk_re_return);
             break;
 
+         case sub_read_boolean:
+            queuePopFront(reg[regIn]);     // burn octothorpe
+            if ( TRUE == queueIsEmpty(reg[regIn]) )
+            {
+               log("  eof after octothorpe");
+               raiseError(ERR_NOT_IMPL);
+               break;
+            }
+            c0 = queuePopFront(reg[regIn]);
+            t0 = type(c0);
+            v0 = value(c0);
+            if ( TYPE_CHAR != t0 )
+            {
+               log("  non-char in arg: " + pp(c0));
+               raiseError(ERR_LEX);
+               break;
+            }
+            switch (v0)
+            {
+            case 't':
+               reg[regRetval] = TRUE;
+               returnsub();
+               break;
+            case 'f':
+               reg[regRetval] = FALSE;
+               returnsub();
+               break;
+            default:
+               log("  unexpected after octothorpe: " + pp(c0));
+               raiseError(ERR_LEX);
+               break;
+            }
+            break;
+
          case sub_eval:
             // Evaluates the expr in reg[regArg0] in the env in
             // reg[regArg1], and leaves the results in reg[regRetval].
@@ -516,10 +549,28 @@ public class JhwScm
          case sub_print:
             // Prints the expr in reg[regArg0] to reg[regOut].
             //
-            t = type(reg[regArg0]);
-            v = value(reg[regArg0]);
+            c = reg[regArg0];
+            t = type(c);
+            v = value(c);
             switch (t)
             {
+            case TYPE_BOOL:
+               queuePushBack(reg[regOut],'#');
+               switch (c)
+               {
+               case TRUE:
+                  queuePushBack(reg[regOut],'t');
+                  returnsub();
+                  break;
+               case FALSE:
+                  queuePushBack(reg[regOut],'f');
+                  returnsub();
+                  break;
+               default:
+                  raiseError(ERR_INTERNAL);
+                  break;
+               }
+               break;
             case TYPE_FIXINT:
                // We trick out the sign extension of our 28-bit
                // twos-complement FIXINTs to match Java's 32 bits
@@ -533,6 +584,7 @@ public class JhwScm
                   {
                      queuePushBack(reg[regOut],code(TYPE_CHAR,str.charAt(tmp)));
                   }
+                  returnsub();
                   break;
                }
                if ( 0 == v )
@@ -559,12 +611,12 @@ public class JhwScm
                      v -= tmp1*tmp2;
                   }
                }
+               returnsub();
                break;
             default:
                raiseError(ERR_INTERNAL);
                break;
             }
-            returnsub();
             break;
 
          case blk_re_return:
@@ -580,7 +632,7 @@ public class JhwScm
             return FAILURE;
 
          default:
-            log("    bogus opcode: " + pp(reg[regPc]));
+            log("  bogus: " + pp(reg[regPc]));
             raiseError(ERR_INTERNAL);
             break;
          }
