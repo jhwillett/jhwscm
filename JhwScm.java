@@ -347,7 +347,6 @@ public class JhwScm
             }
             queuePopFront(reg[regIn]);
             gosub(sub_read,blk_read_list_mid);
-            raiseError(ERR_NOT_IMPL);
             break;
          case blk_read_list_mid:
             c = queuePeekFront(reg[regIn]);
@@ -418,7 +417,9 @@ public class JhwScm
                   break;
                }
             }
-            raiseError(ERR_NOT_IMPL);
+            log("    symbol");
+            queuePushBack(reg[regIn],c1);
+            gosub(sub_read_symbol,blk_re_return);
             break;
          case blk_read_token_neg:
             c = reg[regRetval];
@@ -434,6 +435,10 @@ public class JhwScm
             reg[regRetval] = code(TYPE_FIXINT,v);
             log("  to:       " + pp(reg[regRetval]));
             returnsub();
+            break;
+
+         case sub_read_symbol:
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case sub_read_num:
