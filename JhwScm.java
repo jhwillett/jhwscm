@@ -61,7 +61,7 @@ public class JhwScm
 
    public JhwScm ()
    {
-      log("JhwScm()");
+      log("JhwScm.JhwScm()");
       for ( int i = 0; i < reg.length; i++ )
       {
          reg[i] = NIL;
@@ -364,6 +364,7 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case sub_read_token:
@@ -418,7 +419,6 @@ public class JhwScm
                }
             }
             log("    symbol");
-            queuePushBack(reg[regIn],c1);
             gosub(sub_read_sym,blk_re_return);
             break;
          case blk_read_token_neg:
@@ -463,13 +463,13 @@ public class JhwScm
             v0 = value(c0);
             if ( TYPE_CHAR != t0 )
             {
-               log("  non-char in arg: " + pp(c0));
-               raiseError(ERR_LEX);
+               log("  non-char in input: " + pp(c0));
+               raiseError(ERR_INTERNAL);
                break;
             }
             if ( v0 < '0' || v0 > '9' )
             {
-               log("  non-digit in arg: " + pp(c0));
+               log("  non-digit in input: " + pp(c0));
                raiseError(ERR_LEX);
                break;
             }
@@ -503,8 +503,8 @@ public class JhwScm
             v0 = value(c0);
             if ( TYPE_CHAR != t0 )
             {
-               log("  non-char in arg: " + pp(c0));
-               raiseError(ERR_LEX);
+               log("  non-char in input: " + pp(c0));
+               raiseError(ERR_INTERNAL);
                break;
             }
             switch (v0)
@@ -538,16 +538,13 @@ public class JhwScm
             // A helper for sub_read_sym, but still a sub_ in its own
             // right.
             //
-            c = reg[regArg0];
-            t = type(c);
-            v = value(c);
-            if ( DEBUG && TYPE_CELL != t )
+            if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
-               log("  non-queue in arg: " + pp(c));
+               log("  non-queue in arg: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            if ( TRUE == queueIsEmpty(c) )
+            if ( TRUE == queueIsEmpty(reg[regIn]) )
             {
                reg[regRetval] = car(reg[regArg0]);
                log("  eof, returning: " + pp(reg[regRetval]));
@@ -559,11 +556,11 @@ public class JhwScm
             v0 = value(c0);
             if ( TYPE_CHAR != t0 )
             {
-               log("  non-char in arg: " + pp(c0));
-               raiseError(ERR_LEX);
+               log("  non-char in input: " + pp(c0));
+               raiseError(ERR_INTERNAL);
                break;
             }
-            switch (c)
+            switch (v0)
             {
             case ' ':
             case '\t':
@@ -571,15 +568,14 @@ public class JhwScm
             case '\n':
             case '(':
             case ')':
-               queuePopFront(reg[regIn]);
                reg[regRetval] = car(reg[regArg0]);
                log("  eot, returning: " + pp(reg[regRetval]));
                returnsub();
                break;
             default:
-               log("  pushing: " + pp(c0));
                queuePushBack(reg[regArg0],c0);
-               returnsub();
+               queuePopFront(reg[regIn]);
+               log("  pushing: " + pp(c0));
                gosub(sub_read_num_loop,blk_re_return);
                break;
             }
@@ -616,16 +612,39 @@ public class JhwScm
             v = value(c);
             switch (t)
             {
+            case TYPE_NIL:
+               queuePushBack(reg[regOut],code(TYPE_CHAR,'('));
+               queuePushBack(reg[regOut],code(TYPE_CHAR,')'));
+               returnsub();
+               break;
+            case TYPE_CHAR:
+               queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
+               queuePushBack(reg[regOut],code(TYPE_CHAR,'\\'));
+               switch (v)
+               {
+               case ' ':
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'s'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'p'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'a'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'c'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'e'));
+                  break;
+               default:
+                  queuePushBack(reg[regOut],v);
+                  break;
+               }
+               returnsub();
+               break;
             case TYPE_BOOL:
-               queuePushBack(reg[regOut],'#');
+               queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
                switch (c)
                {
                case TRUE:
-                  queuePushBack(reg[regOut],'t');
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'t'));
                   returnsub();
                   break;
                case FALSE:
-                  queuePushBack(reg[regOut],'f');
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'f'));
                   returnsub();
                   break;
                default:
@@ -674,6 +693,12 @@ public class JhwScm
                   }
                }
                returnsub();
+               break;
+            case TYPE_CELL:
+            case TYPE_SUB:
+            case TYPE_BLK:
+            case TYPE_ERR:
+               raiseError(ERR_NOT_IMPL);
                break;
             default:
                raiseError(ERR_INTERNAL);
@@ -976,7 +1001,7 @@ public class JhwScm
       reg[regStack] = NIL;
    }
 
-   private final int[] heap = new int[1024];
+   private final int[] heap = new int[512];
    private final int[] reg  = new int[16];
 
    /**
@@ -1195,56 +1220,72 @@ public class JhwScm
    // returns NIL on failure, else a new empty queue
    private int queueCreate ()
    {
-      return cons(NIL,NIL);
+      final boolean verbose = true;
+      final int queue = cons(NIL,NIL);
+      if ( verbose ) log("  queueCreate(): returning " + pp(queue));
+      return queue;
    }
 
    // returns TRUE or FALSE
    private int queueIsEmpty ( final int queue )
    {
-      if ( verbose ) log("queueIsEmpty(): " + queue);
+      final boolean verbose = true;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("  bogus A");
+         if ( verbose ) log("  queueIsEmpty(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
-      final int head = car(queue);
-      final int tail = cdr(queue);
-      if ( DEBUG && ( (NIL == head) != (NIL == tail) ) ) 
+      final int h = car(queue);
+      final int t = cdr(queue);
+      if ( DEBUG && ( (NIL == h) != (NIL == t) ) ) 
       {
-         if ( verbose ) 
-         {
-            log("  bogus B: " + (NIL == head) + " " + (NIL == tail));
-         }
+         if ( verbose ) log("  queueIsEmpty(): bad h/t" + pp(h) + " " + pp(t));
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
-      if ( NIL == head )
+      if ( NIL == h )
       {
-         if ( verbose ) log("  empty");
+         if ( verbose ) log("  queueIsEmpty(): empty");
          return TRUE;
       }
-      if ( DEBUG && TYPE_CELL != type(head) )
+      if ( DEBUG && TYPE_CELL != type(h) )
       {
-         if ( verbose ) log("  bogus C");
+         if ( verbose ) log("  queueIsEmpty(): bad h" + pp(h));
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
-      if ( DEBUG && TYPE_CELL != type(tail) )
+      if ( DEBUG && TYPE_CELL != type(t) )
       {
-         if ( verbose ) log("  bogus D");
+         if ( verbose ) log("  queueIsEmpty(): bad t" + pp(t));
          raiseError(ERR_INTERNAL);
          return FALSE;
       }
-      if ( verbose ) log("  nonempty");
+      if ( verbose )
+      {
+         log("  queueIsEmpty(): nonempty ");
+         log("    queue: " + pp(queue));
+         log("    h:     " + pp(h));
+         log("    t:     " + pp(t));
+      }
       return FALSE;
    }
 
    private void queuePushBack ( final int queue, final int value )
    {
+      final boolean verbose = true;
       final int queue_t = type(queue);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
+         if ( verbose ) log("  queuePushBack(): non-queue " + pp(queue));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( DEBUG && TYPE_CHAR != type(value) ) 
+      {
+         // OK, this is BS: I haven't decided for queues to be only of
+         // characters.  But so far I'm only using them as such ...
+         if ( verbose ) log("  queuePushBack(): non-char " + pp(value));
          raiseError(ERR_INTERNAL);
          return;
       }
@@ -1252,38 +1293,44 @@ public class JhwScm
       final int new_cell = cons(value,NIL);
       if ( NIL == new_cell )
       {
-         return;
+         if ( verbose ) log("  queuePushBack(): oom");
+         return; // avoid further damage
       }
 
       // INVARIANT: head and tail are both NIL (e.g. empty) or they
       // are both cells!
-      final int head = car(queue);
-      final int tail = cdr(queue);
+      final int h = car(queue);
+      final int t = cdr(queue);
 
-      if ( NIL == head || NIL == tail )
+      if ( NIL == h || NIL == t )
       {
-         if ( NIL != head || NIL != tail )
+         if ( NIL != h || NIL != t )
          {
+            if ( verbose ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
             raiseError(ERR_INTERNAL); // corrupt queue
             return;
          }
+         if ( verbose ) log("  queuePushBack(): pushing to empty " + pp(value));
          setcar(queue,new_cell);
          setcdr(queue,new_cell);
          return;
       }
 
-      if ( (TYPE_CELL != type(head)) || (TYPE_CELL != type(tail)) )
+      if ( (TYPE_CELL != type(h)) || (TYPE_CELL != type(t)) )
       {
+         if ( verbose ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
          raiseError(ERR_INTERNAL); // corrupt queue
          return;
       }
 
-      setcdr(tail,new_cell);
+      if ( verbose ) log("  queuePushBack(): pushing to nonempty " + pp(value));
+      setcdr(t,    new_cell);
       setcdr(queue,new_cell);
    }
 
    private void queueSpliceBack ( final int queue, final int list )
    {
+      final boolean verbose = true;
       if ( verbose ) log("queueSpliceBack()");
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
@@ -1344,23 +1391,22 @@ public class JhwScm
 
    private int queuePopFront ( final int queue )
    {
-      final boolean verbose = false;
-      if ( verbose ) log("  queuePopFront(): " + reg[regOut]);
+      final boolean verbose = true;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("    not a queue");
+         if ( verbose ) log("  queuePopFront(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return NIL;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
-         if ( verbose ) log("    empty queue");
+         if ( verbose ) log("  queuePopFront(): empty " + pp(queue));
          return NIL;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose ) log("    corrupt queue");
+         if ( verbose ) log("  queuePopFront(): corrupt queue " + pp(head));
          raiseError(ERR_INTERNAL); // corrupt queue
          return NIL;
       }
@@ -1370,7 +1416,7 @@ public class JhwScm
       {
          setcdr(queue,NIL);
       }
-      if ( verbose ) log("    popped: " + pp(value));
+      if ( verbose ) log("  queuePopFront(): popped " + pp(value));
       return value;
    }
 
@@ -1379,31 +1425,33 @@ public class JhwScm
       final boolean verbose = true;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("  not a queue: " + pp(queue));
+         if ( verbose ) log("  queuePeekFront(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return NIL;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
-         if ( verbose ) log("  empty queue: " + pp(queue));
+         if ( verbose ) log("  queuePeekFront(): empty " + pp(queue));
          return NIL;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose ) log("  corrupt queue: " + pp(queue));
+         if ( verbose ) log("  queuePeekFront(): corrupt queue " + pp(head));
          raiseError(ERR_INTERNAL); // corrupt queue
          return NIL;
       }
       final int value = car(head);
-      if ( verbose ) log("  peeked: " + pp(value));
-      return car(head);
+      if ( verbose ) log("  queuePeekFront(): peeked " + pp(value));
+      return value;
    }
 
    private void queuePushFront ( final int queue, final int value )
    {
+      final boolean verbose = true;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
+         log("  queuePushFront(): bogus queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return;
       }
@@ -1411,8 +1459,10 @@ public class JhwScm
       final int tmp  = cons(value,head);
       if ( NIL == tmp )
       {
+         log("  queuePushFront(): oom");
          return; // avoid further damage
       }
+      log("  queuePushFront(): pushing " + pp(value));
       setcar(queue,tmp);
       if ( NIL == head )
       {

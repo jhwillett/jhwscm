@@ -237,14 +237,18 @@ public class Test
 
    private static void expectFailure ( final String expr, JhwScm scm )
    {
-      final StringBuilder output = new StringBuilder();
       if ( null == scm )
       {
          scm = new JhwScm();
       }
       final int icode = scm.input(expr);
-      assertEquals(JhwScm.SUCCESS,icode);
+      assertEquals("input failure on \"" + expr + "\":",
+                   JhwScm.SUCCESS,
+                   icode);
       final int dcode = scm.drive(-1);
-      assertEquals("should fail evaluating: " + expr, JhwScm.FAILURE, dcode);
+      assertEquals("should fail evaluating \"" + expr + "\":",
+                   JhwScm.FAILURE, 
+                   dcode);
+      selfTest(scm);
    }
 }
