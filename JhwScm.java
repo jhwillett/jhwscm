@@ -232,14 +232,13 @@ public class JhwScm
             //
             // Top-level entry point for the interactive interpreter.
             //
-            if ( TRUE == queueIsEmpty(reg[regIn]) )
-            {
-               log("  eof: done");
-               return SUCCESS;
-            }
             gosub(sub_read,blk_rep_after_read);
             break;
          case blk_rep_after_read:
+            if ( EOF == reg[regRetval] )
+            {
+               return SUCCESS;
+            }
             reg[regArg0] = reg[regRetval];
             reg[regArg1] = reg[regGlobalEnv];
             gosub(sub_eval,blk_rep_after_eval);
@@ -282,6 +281,24 @@ public class JhwScm
             //
             // Top-level entry point for the parser.
             //
+            // From RSR5 Sec 66:
+            //
+            //   If an end of file is encountered in the input before
+            //   any characters are found that can begin an object,
+            //   then an end of file object is returned. The port
+            //   remains open, and further attempts to read will also
+            //   return an end of file object. If an end of file is
+            //   encountered after the beginning of an object's
+            //   external representation, but the external
+            //   representation is incomplete and therefore not
+            //   parsable, an error is signalled.
+            //
+            if ( TRUE == queueIsEmpty( reg[regIn] ) )
+            {
+               reg[regRetval] = EOF;
+               returnsub();
+               break;
+            }
             c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
@@ -297,6 +314,7 @@ public class JhwScm
             case '\t':
             case '\r':
             case '\n':
+               queuePopFront(reg[regIn]);
                jump(sub_read); // or we could self-tail-recurse here
                break;
             case '(':
@@ -458,19 +476,13 @@ public class JhwScm
                returnsub();
                break;
             }
-            c0 = queuePopFront(reg[regIn]);
+            c0 = queuePeekFront(reg[regIn]);
             t0 = type(c0);
             v0 = value(c0);
             if ( TYPE_CHAR != t0 )
             {
                log("  non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
-               break;
-            }
-            if ( v0 < '0' || v0 > '9' )
-            {
-               log("  non-digit in input: " + pp(c0));
-               raiseError(ERR_LEX);
                break;
             }
             c1 = reg[regArg0];
@@ -482,12 +494,34 @@ public class JhwScm
                raiseError(ERR_LEX);
                break;
             }
-            tmp = 10*v1 + (v0-'0');
-            log("  first char: " + (char)v0);
-            log("  old accum:  " +       v1);
-            log("  new accum:  " +       tmp);
-            reg[regArg0] = code(TYPE_FIXINT,tmp);
-            gosub(sub_read_num_loop,blk_re_return);
+            switch (v0)
+            {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+            case '(':
+            case ')':
+               log("  terminator: " + pp(c0) + " return " + pp(reg[regArg0]));
+               reg[regRetval] = reg[regArg0];
+               returnsub();
+               break;
+            default:
+               if ( v0 < '0' || v0 > '9' )
+               {
+                  log("  non-digit in input: " + pp(c0));
+                  raiseError(ERR_LEX);
+                  break;
+               }
+               tmp = 10*v1 + (v0-'0');
+               log("  first char: " + (char)v0);
+               log("  old accum:  " +       v1);
+               log("  new accum:  " +       tmp);
+               queuePopFront(reg[regIn]);
+               reg[regArg0] = code(TYPE_FIXINT,tmp);
+               gosub(sub_read_num_loop,blk_re_return);
+               break;
+            }
             break;
 
          case sub_read_boolean:
@@ -610,6 +644,7 @@ public class JhwScm
             c = reg[regArg0];
             t = type(c);
             v = value(c);
+            log("  printing: " + pp(c));
             switch (t)
             {
             case TYPE_NIL:
@@ -700,6 +735,9 @@ public class JhwScm
             case TYPE_ERR:
                raiseError(ERR_NOT_IMPL);
                break;
+            case TYPE_SENTINEL:
+               // TYPE_SENTINEL is used by sub_print, true, but should
+               // not come up in a top-level argument to sub_print.
             default:
                raiseError(ERR_INTERNAL);
                break;
@@ -775,14 +813,15 @@ public class JhwScm
    private static final int SHIFT_TYPE   = 28;         // matches MASK_TYPE
    private static final int MASK_VALUE   = ~MASK_TYPE;
 
-   private static final int TYPE_NIL     = 0x10000000;
-   private static final int TYPE_FIXINT  = 0x20000000;
-   private static final int TYPE_CELL    = 0x30000000;
-   private static final int TYPE_CHAR    = 0x40000000;
-   private static final int TYPE_SUB     = 0x50000000;
-   private static final int TYPE_BLK     = 0x60000000;
-   private static final int TYPE_ERR     = 0x70000000;
-   private static final int TYPE_BOOL    = 0x80000000;
+   private static final int TYPE_NIL      = 0x10000000;
+   private static final int TYPE_FIXINT   = 0x20000000;
+   private static final int TYPE_CELL     = 0x30000000;
+   private static final int TYPE_CHAR     = 0x40000000;
+   private static final int TYPE_SUB      = 0x50000000;
+   private static final int TYPE_BLK      = 0x60000000;
+   private static final int TYPE_ERR      = 0x70000000;
+   private static final int TYPE_BOOL     = 0x80000000;
+   private static final int TYPE_SENTINEL = 0x90000000;
 
    // In many of these constants, I would prefer to initialize them as
    // code(TYPE_FOO,n) rather than TYPE_FOO|n, for consistency and to
@@ -793,15 +832,17 @@ public class JhwScm
    // resultant names in switch statements.  In C, I'd just make
    // code() a macro and be done with it.
 
-   private static final int NIL                 = TYPE_NIL  | 0;
+   private static final int NIL                 = TYPE_NIL      | 0;
 
-   private static final int ERR_OOM             = TYPE_ERR  | 0;
-   private static final int ERR_INTERNAL        = TYPE_ERR  | 1;
-   private static final int ERR_LEX             = TYPE_ERR  | 2;
-   private static final int ERR_NOT_IMPL        = TYPE_ERR  | 3;
+   private static final int EOF                 = TYPE_SENTINEL | 0;
 
-   private static final int TRUE                = TYPE_BOOL | 37;
-   private static final int FALSE               = TYPE_BOOL | 91;
+   private static final int TRUE                = TYPE_BOOL     | 37;
+   private static final int FALSE               = TYPE_BOOL     | 91;
+
+   private static final int ERR_OOM             = TYPE_ERR      | 0;
+   private static final int ERR_INTERNAL        = TYPE_ERR      | 1;
+   private static final int ERR_LEX             = TYPE_ERR      | 2;
+   private static final int ERR_NOT_IMPL        = TYPE_ERR      | 3;
 
    private static final int regFreeCellList     =  0; // unused cells
    private static final int regStack            =  1; // the runtime stack
@@ -1331,32 +1372,35 @@ public class JhwScm
    private void queueSpliceBack ( final int queue, final int list )
    {
       final boolean verbose = true;
-      if ( verbose ) log("queueSpliceBack()");
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
+         if ( verbose ) log("  queueSpliceBack(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( NIL == type(list) ) 
       {
+         if ( verbose ) log("  queueSpliceBack(): empty list");
          return; // empty list: nothing to do
       }
       if ( DEBUG && TYPE_CELL != type(list) ) 
       {
+         if ( verbose ) log("  queueSpliceBack(): non-list " + pp(list));
          raiseError(ERR_INTERNAL);
          return;
       }
 
       // INVARIANT: head and tail are both NIL (e.g. empty) or they
       // are both cells!
-      final int head = car(queue);
-      final int tail = cdr(queue);
+      final int h = car(queue);
+      final int t = cdr(queue);
 
-      if ( NIL == head || NIL == tail )
+      if ( NIL == h || NIL == t )
       {
          if ( verbose ) log("  empty");
-         if ( NIL != head || NIL != tail )
+         if ( NIL != h || NIL != t )
          {
+            if ( verbose ) log("  queueSpliceBack(): X " + pp(h) + " " + pp(t));
             raiseError(ERR_INTERNAL); // corrupt queue
             return;
          }
@@ -1365,28 +1409,27 @@ public class JhwScm
       }
       else
       {
-         if ( (TYPE_CELL != type(head)) || (TYPE_CELL != type(tail)) )
+         if ( (TYPE_CELL != type(h)) || (TYPE_CELL != type(t)) )
          {
+            if ( verbose ) log("  queueSpliceBack(): Y " + pp(h) + " " + pp(t));
             raiseError(ERR_INTERNAL); // corrupt queue
             return;
          }
-         if ( verbose ) log("  non empty");
-         setcdr(tail,list);
+         setcdr(t,list);
       }
 
-      int t = queue;
-      while ( NIL != cdr(t) )
+      int tmp = queue;
+      while ( NIL != cdr(tmp) )
       {
-         if ( verbose ) log("  advance tail");
-         t = cdr(t);
+         if ( verbose ) log("  queueSpliceBack(): advance tail");
+         tmp = cdr(tmp);
       }
-      if ( verbose ) log("  tail to " + t);
-      setcdr(queue,t);
-      if ( verbose ) log("  queue: " + queue);
-      if ( verbose ) log("  list:  " + list);
-      if ( verbose ) log("  head:  " + car(queue));
-      if ( verbose ) log("  tail:  " + cdr(queue));
-      if ( verbose ) log("  NIL:   " + NIL);
+      if ( verbose ) log("  tail to: " + pp(tmp));
+      setcdr(queue,tmp);
+      if ( verbose ) log("  queue:   " + pp(queue));
+      if ( verbose ) log("  list:    " + pp(list));
+      if ( verbose ) log("  head:    " + pp(car(queue)));
+      if ( verbose ) log("  tail:    " + pp(cdr(queue)));
    }
 
    private int queuePopFront ( final int queue )
@@ -1508,6 +1551,7 @@ public class JhwScm
       case blk_re_return:       return "blk_re_return";
       case blk_error:           return "blk_error";
       case NIL:                 return "NIL";
+      case EOF:                 return "EOF";
       case TRUE:                return "TRUE";
       case FALSE:               return "FALSE";
       case ERR_OOM:             return "ERR_OOM";
@@ -1520,14 +1564,15 @@ public class JhwScm
       final StringBuilder buf = new StringBuilder();
       switch (t)
       {
-      case TYPE_NIL:    buf.append("nil");  break;
-      case TYPE_FIXINT: buf.append("int");  break;
-      case TYPE_CELL:   buf.append("cel");  break;
-      case TYPE_CHAR:   buf.append("chr");  break;
-      case TYPE_SUB:    buf.append("sub");  break;
-      case TYPE_BLK:    buf.append("blk");  break;
-      case TYPE_ERR:    buf.append("err");  break;
-      case TYPE_BOOL:   buf.append("boo");  break;
+      case TYPE_NIL:      buf.append("nil");  break;
+      case TYPE_FIXINT:   buf.append("int");  break;
+      case TYPE_CELL:     buf.append("cel");  break;
+      case TYPE_CHAR:     buf.append("chr");  break;
+      case TYPE_SUB:      buf.append("sub");  break;
+      case TYPE_BLK:      buf.append("blk");  break;
+      case TYPE_ERR:      buf.append("err");  break;
+      case TYPE_BOOL:     buf.append("bol");  break;
+      case TYPE_SENTINEL: buf.append("snt");  break;
       default:          
          buf.append('?'); 
          buf.append(t>>SHIFT_TYPE); 

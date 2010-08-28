@@ -73,7 +73,13 @@ public class Test
       };
       for ( final String expr : simpleInts )
       {
-         expectSuccess(expr,expr);
+         expectSuccess(expr,                   expr);
+         expectSuccess(" " + expr,             expr);
+         expectSuccess(expr + " " ,            expr);
+         expectSuccess(" " + expr + " ",       expr);
+         expectSuccess("\n" + expr,            expr);
+         expectSuccess(expr + "\n" ,           expr);
+         expectSuccess("\t" + expr + "\t\r\n", expr);
       }
 
       // second content: tweakier integer expressions are
@@ -83,7 +89,10 @@ public class Test
       };
       for ( final String[] pair : tweakyInts )
       {
-         expectSuccess(pair[0],pair[1]);
+         expectSuccess(pair[0],             pair[1]);
+         expectSuccess(" " + pair[0],       pair[1]);
+         expectSuccess(pair[0] + " " ,      pair[1]);
+         expectSuccess(" " + pair[0] + " ", pair[1]);
       }
 
       // first computation: even simple integer take nonzero cycles
@@ -106,13 +115,46 @@ public class Test
          selfTest(scm);
       }
 
-      // #t and #f are self-evaluating
-      expectSuccess("#t","#t");
-      expectSuccess("#f","#f");
+      // boolean literals are self-evaluating
+      expectSuccess("#t",   "#t");
+      expectSuccess("#f",   "#f");
+      expectSuccess(" #t ", "#t");
+      expectSuccess("#f ",  "#f");
+      expectSuccess(" #f",  "#f");
 
       // unbound variables fail
       expectFailure("a");
       expectFailure("a1");
+
+      // character literals are self-evaluating - though some of them
+      // are tweaky (self-evaluate but don't self-print)
+      expectSuccess("#\\1",      "#\\1");
+      expectSuccess("#\\a",      "#\\a");
+      expectSuccess("#\\A",      "#\\A");
+      expectSuccess("#\\z",      "#\\z");
+      expectSuccess("#\\Z",      "#\\Z");
+      expectSuccess("#\\~",      "#\\~");
+      expectSuccess("#\\<",      "#\\<");
+      expectSuccess("#\\>",      "#\\>");
+      expectSuccess("#\\\\",     "#\\\\");
+      expectSuccess("#\\'",      "#\\'");
+      expectSuccess("#\\(",      "#\\(");
+      expectSuccess("#\\)",      "#\\)");
+      expectSuccess("#\\)",      "#\\)");
+      expectSuccess("#\\ ",      "#\\space");
+      expectSuccess("#\\\n",     "#\\newline");
+      if ( false )
+      {
+         // TODO: long-forms character literal inputs are deferred -
+         // lexer really has to look forward a long way to decide if
+         // it's valid.  Ditto for failure modes.
+         expectSuccess("#\\space",  "#\\space");
+         expectSuccess("#\\SPACE",  "#\\space");
+         expectSuccess("#\\newline","#\\newline");
+         expectSuccess("#\\NeWlInE","#\\newline");
+         expectFailure("#\\spac");
+         expectFailure("#\\asdf");
+      }
 
       // simple arithmetic
       expectSuccess("(+ 0)","0");
