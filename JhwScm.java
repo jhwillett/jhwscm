@@ -232,18 +232,18 @@ public class JhwScm
             //
             // Top-level entry point for the interactive interpreter.
             //
-            gosub(sub_read,blk_rep_after_read);
+            gosub(sub_read,sub_rep+0x1);
             break;
-         case blk_rep_after_read:
+         case sub_rep+0x1:
             if ( EOF == reg[regRetval] )
             {
                return SUCCESS;
             }
             reg[regArg0] = reg[regRetval];
             reg[regArg1] = reg[regGlobalEnv];
-            gosub(sub_eval,blk_rep_after_eval);
+            gosub(sub_eval,sub_rep+0x2);
             break;
-         case blk_rep_after_eval:
+         case sub_rep+0x2:
             reg[regArg0] = reg[regRetval];
             //
             // Note: we could probably tighten up rep by just jumping
@@ -256,9 +256,9 @@ public class JhwScm
             // Going with the extra blk for now to take it easy on the
             // subtlety.
             //
-            gosub(sub_print,blk_rep_after_print);
+            gosub(sub_print,sub_rep+0x3);
             break;
-         case blk_rep_after_print:
+         case sub_rep+0x3:
             //
             // Note: two choices here: we could do regular tail
             // recursion, or implement as a loop with jump.  Both
@@ -364,9 +364,9 @@ public class JhwScm
                break;
             }
             queuePopFront(reg[regIn]);
-            gosub(sub_read,blk_read_list_mid);
+            gosub(sub_read,sub_read_list+0x1);
             break;
-         case blk_read_list_mid:
+         case sub_read_list+0x1:
             c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
@@ -425,7 +425,7 @@ public class JhwScm
                if ( '0' <= v1 && v1 <= '9' )
                {
                   log("    minus-in-negative");
-                  gosub(sub_read_num,blk_read_token_neg);
+                  gosub(sub_read_num,sub_read_token+0x1);
                   break;
                }
                else
@@ -439,7 +439,7 @@ public class JhwScm
             log("    symbol");
             gosub(sub_read_sym,blk_re_return);
             break;
-         case blk_read_token_neg:
+         case sub_read_token+0x1:
             c = reg[regRetval];
             t = type(c);
             v = value(c);
@@ -759,9 +759,9 @@ public class JhwScm
             //
             // TODO: UNTESTED
             queuePushBack(reg[regOut],code(TYPE_CHAR,'('));
-            gosub(sub_print_list_elems,blk_print_list_after);
+            gosub(sub_print_list_elems,sub_print_list+0x1);
             break;
-         case blk_print_list_after:
+         case sub_print_list+0x1:
             //
             // TODO: UNTESTED
             queuePushBack(reg[regOut],code(TYPE_CHAR,')'));
@@ -772,41 +772,7 @@ public class JhwScm
             // Prints the elements in the list (NIL or a cell) in
             // reg[regArg0] to reg[regOut] with a space between each.
             //
-            // TODO: UNTESTED
-            c = reg[regArg0];
-            t = type(c);
-            if ( NIL == c )
-            {
-               returnsub();
-               break;
-            }
-            if ( TYPE_CELL != t )
-            {
-               log("  non-cell in arg: " + pp(reg[regArg0]));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            c0 = car(reg[regArg0]);
-            c1 = cdr(reg[regArg0]);
-            store(cdr(c1));           // keep tail of list for later
-            reg[regArg0] = c0;        // prep head of list for sub_print
-            gosub(sub_print,blk_print_list_elems_after);
-            break;
-         case blk_print_list_elems_after:
-            //
-            // TODO: UNTESTED
-            //
-            reg[regArg0] = restore(); // retrieve tail of list
-            c = reg[regArg0];
-            t = type(c);
-            if ( TYPE_CELL != t )
-            {
-               // TODO: dotted list
-               gosub(sub_print,NIL); // broken on purpose until testable
-               break;
-            }
-            // TODO: wtf w/ spaces?
-            gosub(sub_print_list_elems,blk_print_list_elems_after);
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case blk_re_return:
@@ -950,40 +916,33 @@ public class JhwScm
    // blk_error.  These are not proper subroutines, but instead they
    // are utility blocks used from many places.
 
-   private static final int MASK_BLOCKID        = 0x0000000F;
+   private static final int MASK_BLOCKID         =                0xF;
 
-   private static final int sub_rep             = TYPE_SUB |   0x100;
-   private static final int blk_rep_after_eval  = TYPE_SUB |   0x101;
-   private static final int blk_rep_after_read  = TYPE_SUB |   0x102;
-   private static final int blk_rep_after_print = TYPE_SUB |   0x103;
+   private static final int sub_rep              = TYPE_SUB |   0x100;
 
-   private static final int sub_read            = TYPE_SUB |  0x1000;
+   private static final int sub_read             = TYPE_SUB |  0x1000;
 
-   private static final int sub_read_list       = TYPE_SUB |  0x1100;
-   private static final int blk_read_list_mid   = TYPE_SUB |  0x1101;
+   private static final int sub_read_list        = TYPE_SUB |  0x1100;
 
-   private static final int sub_read_token      = TYPE_SUB |  0x1200;
-   private static final int blk_read_token_neg  = TYPE_SUB |  0x1201;
+   private static final int sub_read_token       = TYPE_SUB |  0x1200;
 
-   private static final int sub_read_num        = TYPE_SUB |  0x1300;
-   private static final int sub_read_num_loop   = TYPE_SUB |  0x1310;
+   private static final int sub_read_num         = TYPE_SUB |  0x1300;
+   private static final int sub_read_num_loop    = TYPE_SUB |  0x1310;
 
-   private static final int sub_read_boolean    = TYPE_SUB |  0x1400;
+   private static final int sub_read_boolean     = TYPE_SUB |  0x1400;
 
-   private static final int sub_read_sym        = TYPE_SUB |  0x1500;
-   private static final int sub_read_sym_loop   = TYPE_SUB |  0x1510;
+   private static final int sub_read_sym         = TYPE_SUB |  0x1500;
+   private static final int sub_read_sym_loop    = TYPE_SUB |  0x1510;
 
-   private static final int sub_eval            = TYPE_SUB |  0x2000;
+   private static final int sub_eval             = TYPE_SUB |  0x2000;
 
-   private static final int sub_print           = TYPE_SUB |  0x3000;
+   private static final int sub_print            = TYPE_SUB |  0x3000;
 
-   private static final int sub_print_list             = TYPE_SUB |  0x4000;
-   private static final int blk_print_list_after       = TYPE_SUB |  0x4001;
-   private static final int sub_print_list_elems       = TYPE_SUB |  0x5000;
-   private static final int blk_print_list_elems_after = TYPE_SUB |  0x5001;
+   private static final int sub_print_list       = TYPE_SUB |  0x4000;
+   private static final int sub_print_list_elems = TYPE_SUB |  0x5000;
 
-   private static final int blk_re_return       = TYPE_SUB | 0x10001;
-   private static final int blk_error           = TYPE_SUB | 0x10002;
+   private static final int blk_re_return        = TYPE_SUB | 0x10001;
+   private static final int blk_error            = TYPE_SUB | 0x10002;
 
    private void jump ( final int nextOp )
    {
