@@ -413,13 +413,13 @@ public class JhwScm
                {
                   log("    minus-in-symbol");
                   queuePushBack(reg[regIn],c1);
-                  gosub(sub_read_symbol,blk_re_return);
+                  gosub(sub_read_sym,blk_re_return);
                   break;
                }
             }
             log("    symbol");
             queuePushBack(reg[regIn],c1);
-            gosub(sub_read_symbol,blk_re_return);
+            gosub(sub_read_sym,blk_re_return);
             break;
          case blk_read_token_neg:
             c = reg[regRetval];
@@ -435,10 +435,6 @@ public class JhwScm
             reg[regRetval] = code(TYPE_FIXINT,v);
             log("  to:       " + pp(reg[regRetval]));
             returnsub();
-            break;
-
-         case sub_read_symbol:
-            raiseError(ERR_NOT_IMPL);
             break;
 
          case sub_read_num:
@@ -524,6 +520,67 @@ public class JhwScm
             default:
                log("  unexpected after octothorpe: " + pp(c0));
                raiseError(ERR_LEX);
+               break;
+            }
+            break;
+
+
+         case sub_read_sym:
+            // Parses the next symbol from reg[regIn].
+            //
+            reg[regArg0] = queueCreate();
+            gosub(sub_read_sym_loop,blk_re_return);
+            break;
+         case sub_read_sym_loop:
+            // Parses the next symbol from reg[regIn], expecting the
+            // accumulated value-so-far as a queue in reg[regArg0].
+            //
+            // A helper for sub_read_sym, but still a sub_ in its own
+            // right.
+            //
+            c = reg[regArg0];
+            t = type(c);
+            v = value(c);
+            if ( DEBUG && TYPE_CELL != t )
+            {
+               log("  non-queue in arg: " + pp(c));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            if ( TRUE == queueIsEmpty(c) )
+            {
+               reg[regRetval] = car(reg[regArg0]);
+               log("  eof, returning: " + pp(reg[regRetval]));
+               returnsub();
+               break;
+            }
+            c0 = queuePeekFront(reg[regIn]);
+            t0 = type(c0);
+            v0 = value(c0);
+            if ( TYPE_CHAR != t0 )
+            {
+               log("  non-char in arg: " + pp(c0));
+               raiseError(ERR_LEX);
+               break;
+            }
+            switch (c)
+            {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+            case '(':
+            case ')':
+               queuePopFront(reg[regIn]);
+               reg[regRetval] = car(reg[regArg0]);
+               log("  eot, returning: " + pp(reg[regRetval]));
+               returnsub();
+               break;
+            default:
+               log("  pushing: " + pp(c0));
+               queuePushBack(reg[regArg0],c0);
+               returnsub();
+               gosub(sub_read_num_loop,blk_re_return);
                break;
             }
             break;
@@ -632,9 +689,19 @@ public class JhwScm
             break;
 
          case blk_error:
-            // TODO: return various externally visible codes based on
-            // the internal code in reg[regError]
-            return FAILURE;
+            // Returns to outside control, translating the internally
+            // visible error codes into externally visible ones.
+            //
+            switch ( reg[regError] )
+            {
+            case ERR_OOM:       return OUT_OF_MEMORY;
+            case ERR_INTERNAL:  return INTERNAL_ERROR;
+            case ERR_LEX:       return FAILURE;
+            case ERR_NOT_IMPL:  return UNIMPLEMENTED;
+            default:            
+               log("  unknown error code: " + pp(reg[regError]));
+               return INTERNAL_ERROR;
+            }
 
          default:
             log("  bogus: " + pp(reg[regPc]));
@@ -749,7 +816,8 @@ public class JhwScm
 
    private static final int sub_read_boolean    = TYPE_SUB |  140;
 
-   private static final int sub_read_symbol     = TYPE_SUB |  150;
+   private static final int sub_read_sym        = TYPE_SUB |  150;
+   private static final int sub_read_sym_loop   = TYPE_SUB |  151;
 
    private static final int sub_eval            = TYPE_SUB |  200;
 
@@ -770,6 +838,11 @@ public class JhwScm
             raiseError(ERR_INTERNAL);
             return;
          }
+      }
+      if ( NIL != reg[regError] )
+      {
+         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
+         return;
       }
       reg[regPc] = nextOp;
    }
@@ -793,6 +866,11 @@ public class JhwScm
             return;
          }
       }
+      if ( NIL != reg[regError] )
+      {
+         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
+         return;
+      }
       final int newStack = cons(continuationOp,reg[regStack]);
       if ( NIL == newStack )
       {
@@ -809,6 +887,11 @@ public class JhwScm
    {
       if ( verbose ) log("  returnsub()");
       if ( verbose ) log("    old stack: " + reg[regStack]);
+      if ( NIL != reg[regError] )
+      {
+         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
+         return;
+      }
       if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
       {
          raiseError(ERR_INTERNAL);
@@ -1368,7 +1451,8 @@ public class JhwScm
       case sub_read_num:        return "sub_read_num";
       case sub_read_num_loop:   return "sub_read_num_loop";
       case sub_read_boolean:    return "sub_read_boolean";
-      case sub_read_symbol:     return "sub_read_symbol";
+      case sub_read_sym:        return "sub_read_sym";
+      case sub_read_sym_loop:   return "sub_read_sym_loop";
       case sub_eval:            return "sub_eval";
       case sub_print:           return "sub_print";
       case blk_re_return:       return "blk_re_return";
