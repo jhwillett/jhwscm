@@ -10,8 +10,11 @@ import static org.junit.Assert.assertEquals;
 
 public class Test
 {
+   private static final boolean verbose = false;
+
    public static void main ( final String[] argv )
    {
+      JhwScm.SILENT = true;
 
       // bogus args to entry points result in BAD_ARG, not an exception
       {
@@ -43,26 +46,26 @@ public class Test
          assertEquals("drive(-1) (w/ empty input)",JhwScm.SUCCESS,code);
       }
       {
-         final StringBuilder output = new StringBuilder();
-         final int           code   = new JhwScm().output(output);
+         final StringBuilder buf  = new StringBuilder();
+         final int           code = new JhwScm().output(buf);
          assertEquals("output()",JhwScm.SUCCESS,code);
-         assertEquals("output is empty",0,output.length());
+         assertEquals("output is empty",0,buf.length());
       }
 
       // some content-free end-to-ends
       final int[] variousNumCyclesEnoughForEmptyExpr = { -1, 5, 10 };
       for ( int numCycles : variousNumCyclesEnoughForEmptyExpr )
       {
-         final String        msg    = "cycles: " + numCycles;
-         final StringBuilder output = new StringBuilder();
-         final JhwScm        scm    = new JhwScm();
-         final int           icode  = scm.input("");
+         final String        msg   = "cycles: " + numCycles;
+         final StringBuilder buf   = new StringBuilder();
+         final JhwScm        scm   = new JhwScm();
+         final int           icode = scm.input("");
          assertEquals(msg,JhwScm.SUCCESS,icode);
-         final int           dcode  = scm.drive(numCycles);
+         final int           dcode = scm.drive(numCycles);
          assertEquals(msg,JhwScm.SUCCESS,dcode);
-         final int           ocode  = scm.output(output);
+         final int           ocode = scm.output(buf);
          assertEquals(msg,JhwScm.SUCCESS,ocode);
-         assertEquals(msg,0,output.length());
+         assertEquals(msg,0,buf.length());
          selfTest(scm);
       }
 
@@ -97,7 +100,7 @@ public class Test
 
       // first computation: even simple integer take nonzero cycles
       {
-         final StringBuilder output = new StringBuilder();
+         final StringBuilder buf    = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
          final int           icode  = scm.input("0");
          assertEquals(JhwScm.SUCCESS, icode);
@@ -109,9 +112,9 @@ public class Test
          assertEquals("should be successful",       JhwScm.SUCCESS,   dcode3);
          final int           dcode4 = scm.drive(0);
          assertEquals("should be incomplete again",JhwScm.INCOMPLETE, dcode4);
-         final int           ocode  = scm.output(output);
+         final int           ocode  = scm.output(buf);
          assertEquals(JhwScm.SUCCESS, ocode);
-         assertEquals("0",output.toString());
+         assertEquals("0",buf.toString());
          selfTest(scm);
       }
 
@@ -121,6 +124,8 @@ public class Test
       expectSuccess(" #t ", "#t");
       expectSuccess("#f ",  "#f");
       expectSuccess(" #f",  "#f");
+
+      JhwScm.SILENT = false;
 
       // unbound variables fail
       expectFailure("a");
@@ -243,7 +248,7 @@ public class Test
                                        final String expect,
                                        JhwScm       scm )
    {
-      final StringBuilder output = new StringBuilder();
+      final StringBuilder buf = new StringBuilder();
       if ( null == scm )
       {
          scm = new JhwScm();
@@ -256,19 +261,22 @@ public class Test
       assertEquals("drive failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    dcode);
-      final int ocode = scm.output(output);
+      final int ocode = scm.output(buf);
       assertEquals("output failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    ocode);
       assertEquals("result failure on \"" + expr + "\":",
                    expect,
-                   output.toString());
-      System.out.print("pass: expr \"");
-      System.out.print(expr);
-      System.out.print("\" evaluated to \"");
-      System.out.print(expect);
-      System.out.print("\"");
-      System.out.println("\"");
+                   buf.toString());
+      if ( verbose )
+      {
+         System.out.print("pass: expr \"");
+         System.out.print(expr);
+         System.out.print("\" evaluated to \"");
+         System.out.print(buf);
+         System.out.print("\"");
+         System.out.println("\"");
+      }
       selfTest(scm);
    }
 
@@ -288,6 +296,17 @@ public class Test
                    JhwScm.SUCCESS,
                    icode);
       final int dcode = scm.drive(-1);
+      if ( JhwScm.SUCCESS == dcode )
+      {
+         final StringBuilder buf = new StringBuilder();
+         final int ocode         = scm.output(buf);
+         System.out.print("unexpected success: expr \"");
+         System.out.print(expr);
+         System.out.print("\" evaluated to \"");
+         System.out.print(buf);
+         System.out.print("\"");
+         System.out.println("\"");
+      }
       assertEquals("should fail evaluating \"" + expr + "\":",
                    JhwScm.FAILURE, 
                    dcode);

@@ -479,7 +479,7 @@ public class JhwScm
             v0 = value(c0);
             if ( EOF == c0 )
             {
-               log("  eof, returning: " + pp(reg[regArg0]));
+               log("  eof: returning " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
@@ -582,7 +582,7 @@ public class JhwScm
             break;
          case sub_read_symbol+0x1:
             reg[regTmp]    = restore();
-            reg[regRetval] = cons(IS_SYMBOL,reg[regTmp]);
+            reg[regRetval] = cons(IS_SYMBOL,car(reg[regTmp]));
             returnsub();
             break;
 
@@ -605,7 +605,7 @@ public class JhwScm
             if ( EOF == c0 )
             {
                reg[regRetval] = car(reg[regArg0]);
-               log("  eof, returning: " + pp(reg[regRetval]));
+               log("  eof: returning " + pp(reg[regRetval]));
                returnsub();
                break;
             }
@@ -678,14 +678,17 @@ public class JhwScm
                switch (c0)
                {
                case IS_STRING:
+                  log("  IS_STRING: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
                   gosub(sub_print_string,blk_re_return);
                   break;
                case IS_SYMBOL:
+                  log("  IS_SYMBOL: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
                   gosub(sub_print_chars,blk_re_return);
                   break;
                default:
+                  log("  WHATEVER:  " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c;
                   gosub(sub_print_list,blk_re_return);
                   break;
@@ -813,10 +816,12 @@ public class JhwScm
             c1 = cdr(c);
             if ( TYPE_CHAR != type(c0) )
             {
+               log("  bogus: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
             queuePushBack(reg[regOut],c0);
+            reg[regArg0] = c1;
             jump(sub_print_chars); // TODO: jump() is icky!
             break;
 
@@ -1651,6 +1656,7 @@ public class JhwScm
    private int javaDepth = 0;
    private void log ( final Object msg )
    {
+      if ( SILENT ) return;
       final int lim = (scmDepth + javaDepth);
       for (int i = 0; i < lim; ++i)
       {
@@ -1658,6 +1664,9 @@ public class JhwScm
       }
       System.out.println(msg);
    }
+
+   // TODO: permeable abstraction barrier
+   public static boolean SILENT = false;
 
    private static String pp ( final int code )
    {
