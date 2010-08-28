@@ -918,28 +918,22 @@ public class JhwScm
 
    private static final int MASK_BLOCKID         =                0xF;
 
-   private static final int sub_rep              = TYPE_SUB |   0x100;
+   private static final int sub_rep              = TYPE_SUB |  0x1000;
 
-   private static final int sub_read             = TYPE_SUB |  0x1000;
+   private static final int sub_read             = TYPE_SUB |  0x2000;
+   private static final int sub_read_list        = TYPE_SUB |  0x2100;
+   private static final int sub_read_token       = TYPE_SUB |  0x2200;
+   private static final int sub_read_num         = TYPE_SUB |  0x2300;
+   private static final int sub_read_num_loop    = TYPE_SUB |  0x2310;
+   private static final int sub_read_boolean     = TYPE_SUB |  0x2400;
+   private static final int sub_read_sym         = TYPE_SUB |  0x2500;
+   private static final int sub_read_sym_loop    = TYPE_SUB |  0x2600;
 
-   private static final int sub_read_list        = TYPE_SUB |  0x1100;
+   private static final int sub_eval             = TYPE_SUB |  0x3000;
 
-   private static final int sub_read_token       = TYPE_SUB |  0x1200;
-
-   private static final int sub_read_num         = TYPE_SUB |  0x1300;
-   private static final int sub_read_num_loop    = TYPE_SUB |  0x1310;
-
-   private static final int sub_read_boolean     = TYPE_SUB |  0x1400;
-
-   private static final int sub_read_sym         = TYPE_SUB |  0x1500;
-   private static final int sub_read_sym_loop    = TYPE_SUB |  0x1510;
-
-   private static final int sub_eval             = TYPE_SUB |  0x2000;
-
-   private static final int sub_print            = TYPE_SUB |  0x3000;
-
-   private static final int sub_print_list       = TYPE_SUB |  0x4000;
-   private static final int sub_print_list_elems = TYPE_SUB |  0x5000;
+   private static final int sub_print            = TYPE_SUB |  0x4000;
+   private static final int sub_print_list       = TYPE_SUB |  0x4100;
+   private static final int sub_print_list_elems = TYPE_SUB |  0x4200;
 
    private static final int blk_re_return        = TYPE_SUB | 0x10001;
    private static final int blk_error            = TYPE_SUB | 0x10002;
