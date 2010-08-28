@@ -281,7 +281,7 @@ public class JhwScm
             //
             // Top-level entry point for the parser.
             //
-            // From RSR5 Sec 66:
+            // From R5RS Sec 66:
             //
             //   If an end of file is encountered in the input before
             //   any characters are found that can begin an object,
@@ -657,9 +657,11 @@ public class JhwScm
             switch (t)
             {
             case TYPE_NIL:
-               queuePushBack(reg[regOut],code(TYPE_CHAR,'('));
-               queuePushBack(reg[regOut],code(TYPE_CHAR,')'));
-               returnsub();
+               gosub(sub_print_list,blk_re_return);
+               break;
+            case TYPE_CELL:
+               // TODO: check for TYPE_SENTINEL in car(c)
+               gosub(sub_print_list,blk_re_return);
                break;
             case TYPE_CHAR:
                queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
@@ -738,7 +740,6 @@ public class JhwScm
                }
                returnsub();
                break;
-            case TYPE_CELL:
             case TYPE_SUB:
             case TYPE_BLK:
             case TYPE_ERR:
@@ -751,6 +752,62 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
+            break;
+
+         case sub_print_list:
+            // Prints the list (NIL or a cell) in reg[regArg0] to
+            // reg[regOut] in parens.
+            //
+            // TODO: UNTESTED
+            queuePushBack(reg[regOut],code(TYPE_CHAR,'('));
+            gosub(sub_print_list_elems,blk_print_list_after);
+            break;
+         case blk_print_list_after:
+            //
+            // TODO: UNTESTED
+            queuePushBack(reg[regOut],code(TYPE_CHAR,')'));
+            returnsub();
+            break;
+
+         case sub_print_list_elems:
+            // Prints the elements in the list (NIL or a cell) in
+            // reg[regArg0] to reg[regOut] with a space between each.
+            //
+            // TODO: UNTESTED
+            c = reg[regArg0];
+            t = type(c);
+            if ( NIL == c )
+            {
+               returnsub();
+               break;
+            }
+            if ( TYPE_CELL != t )
+            {
+               log("  non-cell in arg: " + pp(reg[regArg0]));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            c0 = car(reg[regArg0]);
+            c1 = cdr(reg[regArg0]);
+            store(cdr(c1));           // keep tail of list for later
+            reg[regArg0] = c0;        // prep head of list for sub_print
+            gosub(sub_print,blk_print_list_elems_after);
+            break;
+         case blk_print_list_elems_after:
+            //
+            // TODO: UNTESTED
+            //
+            reg[regArg0] = restore(); // retrieve tail of list
+            c = reg[regArg0];
+            t = type(c);
+            if ( TYPE_CELL != t )
+            {
+               // TODO: dotted list
+               gosub(sub_print,NIL); // broken on purpose until testable
+               break;
+            }
+            // TODO: wtf w/ spaces?
+            gosub(sub_print_list_elems,blk_print_list_elems_after);
             break;
 
          case blk_re_return:
@@ -844,6 +901,8 @@ public class JhwScm
    private static final int NIL                 = TYPE_NIL      | 0;
 
    private static final int EOF                 = TYPE_SENTINEL | 0;
+   private static final int IS_SYMBOL           = TYPE_SENTINEL | 1;
+   private static final int IS_STRING           = TYPE_SENTINEL | 2;
 
    private static final int TRUE                = TYPE_BOOL     | 37;
    private static final int FALSE               = TYPE_BOOL     | 91;
@@ -872,35 +931,44 @@ public class JhwScm
    private static final int regErrorPc          = 12; // reg[regPc] of err
    private static final int regErrorStack       = 13; // reg[regStack] of err
 
-   private static final int sub_rep             = TYPE_SUB |   10;
-   private static final int blk_rep_after_eval  = TYPE_BLK |   11;
-   private static final int blk_rep_after_read  = TYPE_BLK |   12;
-   private static final int blk_rep_after_print = TYPE_BLK |   13;
+   // With opcodes, proper subroutines entry points get names, and
+   // must be a multiple of 10.
+   //
+   // Helper opcodes use their parent's name plus 1..9.
 
-   private static final int sub_read            = TYPE_SUB |  100;
-   private static final int blk_read_quote      = TYPE_BLK |  101;
+   private static final int sub_rep             = TYPE_SUB |   100;
+   private static final int blk_rep_after_eval  = TYPE_BLK |   110;
+   private static final int blk_rep_after_read  = TYPE_BLK |   120;
+   private static final int blk_rep_after_print = TYPE_BLK |   130;
 
-   private static final int sub_read_list       = TYPE_SUB |  110;
-   private static final int blk_read_list_mid   = TYPE_BLK |  111;
+   private static final int sub_read            = TYPE_SUB |  1000;
+   private static final int blk_read_quote      = TYPE_BLK |  1010;
 
-   private static final int sub_read_token      = TYPE_SUB |  120;
-   private static final int blk_read_token_neg  = TYPE_SUB |  121;
+   private static final int sub_read_list       = TYPE_SUB |  1100;
+   private static final int blk_read_list_mid   = TYPE_BLK |  1110;
 
-   private static final int sub_read_num        = TYPE_SUB |  130;
-   private static final int sub_read_num_loop   = TYPE_SUB |  131;
+   private static final int sub_read_token      = TYPE_SUB |  1200;
+   private static final int blk_read_token_neg  = TYPE_SUB |  1210;
 
-   private static final int sub_read_boolean    = TYPE_SUB |  140;
+   private static final int sub_read_num        = TYPE_SUB |  1300;
+   private static final int sub_read_num_loop   = TYPE_SUB |  1310;
 
-   private static final int sub_read_sym        = TYPE_SUB |  150;
-   private static final int sub_read_sym_loop   = TYPE_SUB |  151;
+   private static final int sub_read_boolean    = TYPE_SUB |  1400;
 
-   private static final int sub_eval            = TYPE_SUB |  200;
+   private static final int sub_read_sym        = TYPE_SUB |  1500;
+   private static final int sub_read_sym_loop   = TYPE_SUB |  1510;
 
-   private static final int sub_print           = TYPE_SUB |  300;
+   private static final int sub_eval            = TYPE_SUB |  2000;
 
+   private static final int sub_print           = TYPE_SUB |  3000;
 
-   private static final int blk_re_return       = TYPE_BLK | 1000;
-   private static final int blk_error           = TYPE_BLK | 1001;
+   private static final int sub_print_list                = TYPE_SUB |  3001;
+   private static final int blk_print_list_after          = TYPE_SUB |  3002;
+   private static final int sub_print_list_elems          = TYPE_SUB |  3003;
+   private static final int blk_print_list_elems_after    = TYPE_SUB |  3004;
+
+   private static final int blk_re_return       = TYPE_BLK | 10000;
+   private static final int blk_error           = TYPE_BLK | 10010;
 
 
    private void jump ( final int nextOp )
@@ -934,7 +1002,7 @@ public class JhwScm
             raiseError(ERR_INTERNAL);
             return;
          }
-         final int ct = type(nextOp);
+         final int ct = type(continuationOp);
          if ( TYPE_SUB != ct && TYPE_BLK != ct )
          {
             raiseError(ERR_INTERNAL);
@@ -946,40 +1014,63 @@ public class JhwScm
          if ( verbose ) log("    flow suspended for error: " + reg[regError]);
          return;
       }
-      final int newStack = cons(continuationOp,reg[regStack]);
-      if ( NIL == newStack )
+      store(continuationOp);
+      if ( NIL != reg[regError] )
       {
-         raiseError(ERR_OOM);
+         // error already reported in store()
          return;
       }
-      reg[regStack]  = newStack;
-      reg[regPc]     = nextOp;
-      if ( verbose ) log("    new stack: " + reg[regStack]);
+      reg[regPc] = nextOp;
       if ( DEBUG ) subDepth++;
    }
 
    private void returnsub ()
    {
-      if ( verbose ) log("  returnsub()");
-      if ( verbose ) log("    old stack: " + reg[regStack]);
-      if ( NIL != reg[regError] )
-      {
-         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
-         return;
-      }
-      if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
+      final int c = restore();
+      final int t = type(c);
+      if ( TYPE_SUB != t && TYPE_BLK != t )
       {
          raiseError(ERR_INTERNAL);
          return;
       }
-      final int head = car(reg[regStack]);
-      final int rest = cdr(reg[regStack]);
-      // TODO: recycle reg[regStack]? (at least, if we haven't ended
-      // up in an error state or are otherwise "holding" old stacks)
-      reg[regPc]     = head;
-      reg[regStack]  = rest;
-      if ( verbose ) log("    new stack: " + reg[regStack]);
+      reg[regPc] = c;
       if ( DEBUG ) subDepth--;
+   }
+
+   private void store ( final int value )
+   {
+      if ( verbose ) log("  store()");
+      if ( verbose ) log("    old stack: " + reg[regStack]);
+      final int cell = cons(value,reg[regStack]);
+      if ( NIL == cell )
+      {
+         // error already raised in cons()
+         return;
+      }
+      reg[regStack] = cell;
+   }
+
+   private int restore ()
+   {
+      if ( verbose ) log("  restore()");
+      if ( verbose ) log("    old stack: " + reg[regStack]);
+      if ( NIL != reg[regError] )
+      {
+         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
+         return NIL; // TODO: don't like this use of NIL
+      }
+      if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
+      {
+         raiseError(ERR_INTERNAL);
+         return NIL; // TODO: don't like this use of NIL
+      }
+      final int cell = reg[regStack];
+      final int head = car(cell);
+      final int rest = cdr(cell);
+      // TODO: Recycle cell, at least, if we haven't ended up in an
+      // error state or are otherwise "holding" old stacks?
+      reg[regStack]  = rest;
+      return head;
    }
 
    /**
@@ -1517,10 +1608,16 @@ public class JhwScm
       case sub_read_sym_loop:   return "sub_read_sym_loop";
       case sub_eval:            return "sub_eval";
       case sub_print:           return "sub_print";
+      case sub_print_list:           return "sub_print_list";
+      case blk_print_list_after:           return "blk_print_list_after";
+      case sub_print_list_elems:           return "sub_print_list_elems";
+      case blk_print_list_elems_after:           return "blk_print_list_elems_after";
       case blk_re_return:       return "blk_re_return";
       case blk_error:           return "blk_error";
       case NIL:                 return "NIL";
       case EOF:                 return "EOF";
+      case IS_STRING:           return "IS_STRING";
+      case IS_SYMBOL:           return "IS_SYMBOL";
       case TRUE:                return "TRUE";
       case FALSE:               return "FALSE";
       case ERR_OOM:             return "ERR_OOM";
