@@ -681,7 +681,7 @@ public class JhwScm
                }
                returnsub();
                break;
-            case TYPE_BOOL:
+            case TYPE_BOOLEAN:
                queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
                switch (c)
                {
@@ -741,7 +741,7 @@ public class JhwScm
                returnsub();
                break;
             case TYPE_SUB:
-            case TYPE_ERR:
+            case TYPE_ERROR:
                raiseError(ERR_NOT_IMPL);
                break;
             case TYPE_SENTINEL:
@@ -883,8 +883,8 @@ public class JhwScm
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
    private static final int TYPE_SUB      = 0x50000000;
-   private static final int TYPE_ERR      = 0x60000000;
-   private static final int TYPE_BOOL     = 0x70000000;
+   private static final int TYPE_ERROR    = 0x60000000;
+   private static final int TYPE_BOOLEAN  = 0x70000000;
    private static final int TYPE_SENTINEL = 0x80000000;
 
    // In many of these constants, I would prefer to initialize them as
@@ -897,8 +897,9 @@ public class JhwScm
    // code() a macro and be done with it.
    //
    // Also, I'm using fairly random values for the differentiators
-   // among TYPE_NIL, TYPE_SENTINEL, TYPE_BOOL, and TYPE_ERR.  Since
-   // each of these has only a finite, definite number of valid
+   // among TYPE_NIL, TYPE_SENTINEL, TYPE_BOOLEAN, and TYPE_ERROR.
+   //
+   // Since each of these has only a finite, definite number of valid
    // values, using junk there is a good error-detection mechanism
    // which validates that my checks are precise and I'm not doing any
    // silly arithmetic or confusing, say, TYPE_NIL with the value NIL
@@ -907,17 +908,17 @@ public class JhwScm
 
    private static final int NIL                 = TYPE_NIL      | 37;
 
-   private static final int EOF                 = TYPE_SENTINEL | 0;
-   private static final int IS_SYMBOL           = TYPE_SENTINEL | 1;
-   private static final int IS_STRING           = TYPE_SENTINEL | 2;
+   private static final int EOF                 = TYPE_SENTINEL | 97;
+   private static final int IS_SYMBOL           = TYPE_SENTINEL | 79;
+   private static final int IS_STRING           = TYPE_SENTINEL | 32;
 
-   private static final int TRUE                = TYPE_BOOL     | 37;
-   private static final int FALSE               = TYPE_BOOL     | 91;
+   private static final int TRUE                = TYPE_BOOLEAN  | 37;
+   private static final int FALSE               = TYPE_BOOLEAN  | 91;
 
-   private static final int ERR_OOM             = TYPE_ERR      | 0;
-   private static final int ERR_INTERNAL        = TYPE_ERR      | 1;
-   private static final int ERR_LEX             = TYPE_ERR      | 2;
-   private static final int ERR_NOT_IMPL        = TYPE_ERR      | 3;
+   private static final int ERR_OOM             = TYPE_ERROR    | 42;
+   private static final int ERR_INTERNAL        = TYPE_ERROR    | 18;
+   private static final int ERR_LEX             = TYPE_ERROR    | 11;
+   private static final int ERR_NOT_IMPL        = TYPE_ERROR    | 87;
 
    private static final int regFreeCellList     =  0; // unused cells
    private static final int regStack            =  1; // the runtime stack
@@ -934,7 +935,7 @@ public class JhwScm
 
    private static final int regPc               = 10; // opcode to return to
 
-   private static final int regError            = 11; // NIL or a TYPE_ERR
+   private static final int regError            = 11; // NIL or a TYPE_ERROR
    private static final int regErrorPc          = 12; // reg[regPc] of err
    private static final int regErrorStack       = 13; // reg[regStack] of err
 
@@ -1119,7 +1120,7 @@ public class JhwScm
       {
          log("  raiseError():");
       }
-      if ( DEBUG && TYPE_ERR != type(err) )
+      if ( DEBUG && TYPE_ERROR != type(err) )
       {
          // TODO: Bad call to raiseError()? Are we out of tricks?
       }
@@ -1644,8 +1645,8 @@ public class JhwScm
       case TYPE_FIXINT:   buf.append("fixing");   break;
       case TYPE_CELL:     buf.append("cell");     break;
       case TYPE_CHAR:     buf.append("char");     break;
-      case TYPE_ERR:      buf.append("err");      break;
-      case TYPE_BOOL:     buf.append("bool");     break;
+      case TYPE_ERROR:    buf.append("error");    break;
+      case TYPE_BOOLEAN:  buf.append("boolean");  break;
       case TYPE_SENTINEL: buf.append("sentinel"); break;
       case TYPE_SUB:      
          switch (code & ~MASK_BLOCKID)
@@ -1699,7 +1700,7 @@ public class JhwScm
             buf.append('?'); 
          }
          break;
-      case TYPE_BOOL:   
+      case TYPE_BOOLEAN:   
          buf.append('#'); 
          switch (code)
          {
