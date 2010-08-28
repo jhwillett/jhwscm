@@ -131,36 +131,6 @@ public class Test
       expectFailure("a");
       expectFailure("a1");
 
-      // character literals are self-evaluating - though some of them
-      // are tweaky (self-evaluate but don't self-print)
-      expectSuccess("#\\1",      "#\\1");
-      expectSuccess("#\\a",      "#\\a");
-      expectSuccess("#\\A",      "#\\A");
-      expectSuccess("#\\z",      "#\\z");
-      expectSuccess("#\\Z",      "#\\Z");
-      expectSuccess("#\\~",      "#\\~");
-      expectSuccess("#\\<",      "#\\<");
-      expectSuccess("#\\>",      "#\\>");
-      expectSuccess("#\\\\",     "#\\\\");
-      expectSuccess("#\\'",      "#\\'");
-      expectSuccess("#\\(",      "#\\(");
-      expectSuccess("#\\)",      "#\\)");
-      expectSuccess("#\\)",      "#\\)");
-      expectSuccess("#\\ ",      "#\\space");
-      expectSuccess("#\\\n",     "#\\newline");
-      if ( false )
-      {
-         // TODO: long-forms character literal inputs are deferred -
-         // lexer really has to look forward a long way to decide if
-         // it's valid.  Ditto for failure modes.
-         expectSuccess("#\\space",  "#\\space");
-         expectSuccess("#\\SPACE",  "#\\space");
-         expectSuccess("#\\newline","#\\newline");
-         expectSuccess("#\\NeWlInE","#\\newline");
-         expectFailure("#\\spac");
-         expectFailure("#\\asdf");
-      }
-
       // simple arithmetic
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
@@ -231,6 +201,36 @@ public class Test
          expectSuccess("(foo 13 18)",               "31",scm);
          expectFailure("(foo 13 '())",                   scm);
          selfTest(scm);
+      }
+
+      // character literals are self-evaluating - though some of them
+      // are tweaky (self-evaluate but don't self-print)
+      expectSuccess("#\\1",      "#\\1");
+      expectSuccess("#\\a",      "#\\a");
+      expectSuccess("#\\A",      "#\\A");
+      expectSuccess("#\\z",      "#\\z");
+      expectSuccess("#\\Z",      "#\\Z");
+      expectSuccess("#\\~",      "#\\~");
+      expectSuccess("#\\<",      "#\\<");
+      expectSuccess("#\\>",      "#\\>");
+      expectSuccess("#\\\\",     "#\\\\");
+      expectSuccess("#\\'",      "#\\'");
+      expectSuccess("#\\(",      "#\\(");
+      expectSuccess("#\\)",      "#\\)");
+      expectSuccess("#\\)",      "#\\)");
+      expectSuccess("#\\ ",      "#\\space");
+      expectSuccess("#\\\n",     "#\\newline");
+      if ( false )
+      {
+         // TODO: long-forms character literal inputs are deferred -
+         // lexer really has to look forward a long way to decide if
+         // it's valid.  Ditto for failure modes.
+         expectSuccess("#\\space",  "#\\space");
+         expectSuccess("#\\SPACE",  "#\\space");
+         expectSuccess("#\\newline","#\\newline");
+         expectSuccess("#\\NeWlInE","#\\newline");
+         expectFailure("#\\spac");
+         expectFailure("#\\asdf");
       }
    }
 

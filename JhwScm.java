@@ -642,20 +642,23 @@ public class JhwScm
             //
             // TODO: implement properly.
             //
-            if ( true )
+            c0 = reg[regArg0];
+            t0 = type(c0);
+            switch (t0)
             {
-               // Treats all exprs as self-evaluating.
-               //
-               // Handy, b/c we can pass all the self-evaluating unit
-               // tests and know something about sub_rep, sub_read
-               // and sub_print.
-               // 
+            case TYPE_CHAR:
+            case TYPE_FIXINT:
+            case TYPE_BOOLEAN:
+               // these types are self-evaluating
                reg[regRetval] = reg[regArg0];
                returnsub();
-            }
-            else
-            {
+               break;
+            case TYPE_CELL:
                raiseError(ERR_NOT_IMPL);
+               break;
+            default:
+               raiseError(ERR_INTERNAL);
+               break;
             }
             break;
 
