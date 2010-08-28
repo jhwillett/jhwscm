@@ -94,12 +94,13 @@ public class JhwScm
     */
    public int input ( final CharSequence input ) 
    {
+      if ( DEBUG ) javaDepth = 0;
       if ( null == input )
       {
-         log("input(): null");
+         log("input():  null arg");
          return BAD_ARG;
       }
-      log("input(): \"" + input + "\"");
+      log("input():  \"" + input + "\"");
       // TODO: this method is horribly inefficient :(
       //
       // Should reconsider our goal of leaving the input buffer
@@ -118,11 +119,9 @@ public class JhwScm
          final char c    = input.charAt(i);
          final int  code = code(TYPE_CHAR,c);
          queuePushBack(tmpQueue,code);
-         log("  pushed: " + c);
       }
       if ( NIL == reg[regIn] )
       {
-         log("  bogus");
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
@@ -144,8 +143,10 @@ public class JhwScm
     */
    public int output ( final Appendable output ) 
    {
+      if ( DEBUG ) javaDepth = 0;
       if ( null == output )
       {
+         log("output(): null arg");
          return BAD_ARG;
       }
       if ( NIL == reg[regOut] )
@@ -170,6 +171,7 @@ public class JhwScm
          }
          queuePopFront(reg[regOut]);
       }
+      log("output(): \"" + output + "\"");
       return SUCCESS;
    }
 
@@ -195,8 +197,10 @@ public class JhwScm
     */
    public int drive ( final int numSteps )
    {
+      if ( DEBUG ) javaDepth = 0;
       log("drive():");
-      log("  numSteps: " + numSteps);
+      if ( DEBUG ) javaDepth = 1;
+      log("numSteps: " + numSteps);
 
       if ( numSteps < -1 )
       {
@@ -223,7 +227,8 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
-         log("step: " + pp(reg[regPc]) + " (" + step + "/" + numSteps + ")");
+         log("step: " + pp(reg[regPc]));
+         if ( DEBUG ) javaDepth = 2;
          switch ( reg[regPc] )
          {
          case sub_rep:
@@ -578,7 +583,7 @@ public class JhwScm
          case sub_read_symbol+0x1:
             reg[regTmp]    = restore();
             reg[regRetval] = cons(IS_SYMBOL,reg[regTmp]);
-            gosub(sub_read_symbol_loop,blk_re_return);
+            returnsub();
             break;
 
          case sub_read_symbol_loop:
@@ -1029,7 +1034,7 @@ public class JhwScm
 
    private void gosub ( final int nextOp, final int continuationOp )
    {
-      final boolean verbose = true;
+      final boolean verbose = false;
       if ( verbose ) log("  gosub()");
       if ( verbose ) log("    old stack: " + reg[regStack]);
       if ( DEBUG )
@@ -1076,11 +1081,12 @@ public class JhwScm
          return;
       }
       reg[regPc] = nextOp;
-      if ( DEBUG ) subDepth++;
+      if ( DEBUG ) scmDepth++;
    }
 
    private void returnsub ()
    {
+      if ( DEBUG ) scmDepth--;
       final int c = restore();
       final int t = type(c);
       if ( TYPE_SUB != t )
@@ -1089,33 +1095,44 @@ public class JhwScm
          return;
       }
       reg[regPc] = c;
-      if ( DEBUG ) subDepth--;
    }
 
    private void store ( final int value )
    {
-      if ( verbose ) log("  store()");
-      if ( verbose ) log("    old stack: " + reg[regStack]);
+      final boolean verbose = true;
+      if ( NIL != reg[regError] )
+      {
+         if ( verbose ) log("store(): flow suspended for error");
+         return;
+      }
       final int cell = cons(value,reg[regStack]);
       if ( NIL == cell )
       {
          // error already raised in cons()
+         if ( verbose ) log("store(): oom");
          return;
       }
+      if ( verbose ) log("stored:   " + pp(value));
       reg[regStack] = cell;
    }
 
    private int restore ()
    {
-      if ( verbose ) log("  restore()");
-      if ( verbose ) log("    old stack: " + reg[regStack]);
+      final boolean verbose = true;
       if ( NIL != reg[regError] )
       {
-         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
+         if ( verbose ) log("restore(): flow suspended for error");
+         return NIL; // TODO: don't like this use of NIL
+      }
+      if ( DEBUG && NIL == reg[regStack] )
+      {
+         if ( verbose ) log("restore(): stack underflow");
+         raiseError(ERR_INTERNAL);
          return NIL; // TODO: don't like this use of NIL
       }
       if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
       {
+         if ( verbose ) log("restore(): corrupt stack");
          raiseError(ERR_INTERNAL);
          return NIL; // TODO: don't like this use of NIL
       }
@@ -1125,6 +1142,7 @@ public class JhwScm
       // TODO: Recycle cell, at least, if we haven't ended up in an
       // error state or are otherwise "holding" old stacks?
       reg[regStack]  = rest;
+      if ( verbose ) log("restored: " + pp(head));
       return head;
    }
 
@@ -1419,7 +1437,7 @@ public class JhwScm
     */
    private int queueCreate ()
    {
-      final boolean verbose = true;
+      final boolean verbose = false;
       final int queue = cons(NIL,NIL);
       if ( verbose ) log("  queueCreate(): returning " + pp(queue));
       return queue;
@@ -1430,7 +1448,7 @@ public class JhwScm
     */
    private void queuePushBack ( final int queue, final int value )
    {
-      final boolean verbose = true;
+      final boolean verbose = false;
       final int queue_t = type(queue);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
@@ -1501,7 +1519,7 @@ public class JhwScm
     */
    private void queueSpliceBack ( final int queue, final int list )
    {
-      final boolean verbose = true;
+      final boolean verbose = false;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
          if ( verbose ) log("  queueSpliceBack(): non-queue " + pp(queue));
@@ -1568,7 +1586,7 @@ public class JhwScm
     */
    private int queuePopFront ( final int queue )
    {
-      final boolean verbose = true;
+      final boolean verbose = false;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
          if ( verbose ) log("  queuePopFront(): non-queue " + pp(queue));
@@ -1602,7 +1620,7 @@ public class JhwScm
     */
    private int queuePeekFront ( final int queue )
    {
-      final boolean verbose = true;
+      final boolean verbose = false;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
          if ( verbose ) log("  queuePeekFront(): non-queue " + pp(queue));
@@ -1626,13 +1644,15 @@ public class JhwScm
       return value;
    }
 
-   // subDepth is ONLY used for debug cosmetics: it is not
-   // "sanctioned" piece of VM state.
+   // scmDepth and javaDepth are ONLY used for debug cosmetics: they
+   // are *not* sanctioned VM state.
    //
-   private int subDepth = 0;
+   private int scmDepth  = 0;
+   private int javaDepth = 0;
    private void log ( final Object msg )
    {
-      for (int i = 0; i < subDepth; ++i)
+      final int lim = (scmDepth + javaDepth);
+      for (int i = 0; i < lim; ++i)
       {
          System.out.print("  ");
       }
@@ -1662,7 +1682,7 @@ public class JhwScm
       switch (t)
       {
       case TYPE_NIL:      buf.append("nil");      break;
-      case TYPE_FIXINT:   buf.append("fixing");   break;
+      case TYPE_FIXINT:   buf.append("fixint");   break;
       case TYPE_CELL:     buf.append("cell");     break;
       case TYPE_CHAR:     buf.append("char");     break;
       case TYPE_ERROR:    buf.append("error");    break;
