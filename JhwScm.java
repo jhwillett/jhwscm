@@ -741,7 +741,6 @@ public class JhwScm
                returnsub();
                break;
             case TYPE_SUB:
-            case TYPE_BLK:
             case TYPE_ERR:
                raiseError(ERR_NOT_IMPL);
                break;
@@ -884,7 +883,7 @@ public class JhwScm
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
    private static final int TYPE_SUB      = 0x50000000;
-   private static final int TYPE_BLK      = 0x60000000;
+   //private static final int TYPE_BLK      = 0x60000000;
    private static final int TYPE_ERR      = 0x70000000;
    private static final int TYPE_BOOL     = 0x80000000;
    private static final int TYPE_SENTINEL = 0x90000000;
@@ -931,52 +930,59 @@ public class JhwScm
    private static final int regErrorPc          = 12; // reg[regPc] of err
    private static final int regErrorStack       = 13; // reg[regStack] of err
 
-   // With opcodes, proper subroutines entry points get names, and
-   // must be a multiple of 10.
+   // With opcodes, proper subroutines entry points (entry points
+   // which can be expected to follow stack discipline and balance)
+   // get names, and must be a multiple of 0x10.
    //
-   // Helper opcodes use their parent's name plus 1..9.
+   // Helper opcodes do not get a name: they use their parent's name
+   // plus 0x0..0xF.
+   //
+   // An exception to the naming policy is blk_re_return and
+   // blk_error.  These are not proper subroutines, but instead they
+   // are utility blocks used from many places.
 
-   private static final int sub_rep             = TYPE_SUB |   100;
-   private static final int blk_rep_after_eval  = TYPE_BLK |   110;
-   private static final int blk_rep_after_read  = TYPE_BLK |   120;
-   private static final int blk_rep_after_print = TYPE_BLK |   130;
+   private static final int MASK_BLOCKID        = 0x0000000F;
 
-   private static final int sub_read            = TYPE_SUB |  1000;
-   private static final int blk_read_quote      = TYPE_BLK |  1010;
+   private static final int sub_rep             = TYPE_SUB |   0x100;
+   private static final int blk_rep_after_eval  = TYPE_SUB |   0x101;
+   private static final int blk_rep_after_read  = TYPE_SUB |   0x102;
+   private static final int blk_rep_after_print = TYPE_SUB |   0x103;
 
-   private static final int sub_read_list       = TYPE_SUB |  1100;
-   private static final int blk_read_list_mid   = TYPE_BLK |  1110;
+   private static final int sub_read            = TYPE_SUB |  0x1000;
+   private static final int blk_read_quote      = TYPE_SUB |  0x1001;
 
-   private static final int sub_read_token      = TYPE_SUB |  1200;
-   private static final int blk_read_token_neg  = TYPE_SUB |  1210;
+   private static final int sub_read_list       = TYPE_SUB |  0x1100;
+   private static final int blk_read_list_mid   = TYPE_SUB |  0x1101;
 
-   private static final int sub_read_num        = TYPE_SUB |  1300;
-   private static final int sub_read_num_loop   = TYPE_SUB |  1310;
+   private static final int sub_read_token      = TYPE_SUB |  0x1200;
+   private static final int blk_read_token_neg  = TYPE_SUB |  0x1201;
 
-   private static final int sub_read_boolean    = TYPE_SUB |  1400;
+   private static final int sub_read_num        = TYPE_SUB |  0x1300;
+   private static final int sub_read_num_loop   = TYPE_SUB |  0x1310;
 
-   private static final int sub_read_sym        = TYPE_SUB |  1500;
-   private static final int sub_read_sym_loop   = TYPE_SUB |  1510;
+   private static final int sub_read_boolean    = TYPE_SUB |  0x1400;
 
-   private static final int sub_eval            = TYPE_SUB |  2000;
+   private static final int sub_read_sym        = TYPE_SUB |  0x1500;
+   private static final int sub_read_sym_loop   = TYPE_SUB |  0x1510;
 
-   private static final int sub_print           = TYPE_SUB |  3000;
+   private static final int sub_eval            = TYPE_SUB |  0x2000;
 
-   private static final int sub_print_list                = TYPE_SUB |  3001;
-   private static final int blk_print_list_after          = TYPE_SUB |  3002;
-   private static final int sub_print_list_elems          = TYPE_SUB |  3003;
-   private static final int blk_print_list_elems_after    = TYPE_SUB |  3004;
+   private static final int sub_print           = TYPE_SUB |  0x3000;
 
-   private static final int blk_re_return       = TYPE_BLK | 10000;
-   private static final int blk_error           = TYPE_BLK | 10010;
+   private static final int sub_print_list             = TYPE_SUB |  0x4000;
+   private static final int blk_print_list_after       = TYPE_SUB |  0x4001;
+   private static final int sub_print_list_elems       = TYPE_SUB |  0x5000;
+   private static final int blk_print_list_elems_after = TYPE_SUB |  0x5001;
 
+   private static final int blk_re_return       = TYPE_SUB | 0x10001;
+   private static final int blk_error           = TYPE_SUB | 0x10002;
 
    private void jump ( final int nextOp )
    {
       if ( DEBUG )
       {
          final int t = type(nextOp);
-         if ( TYPE_SUB != t && TYPE_BLK != t )
+         if ( TYPE_SUB != t )
          {
             raiseError(ERR_INTERNAL);
             return;
@@ -992,19 +998,37 @@ public class JhwScm
 
    private void gosub ( final int nextOp, final int continuationOp )
    {
+      final boolean verbose = true;
       if ( verbose ) log("  gosub()");
       if ( verbose ) log("    old stack: " + reg[regStack]);
       if ( DEBUG )
       {
-         final int nt = type(nextOp);
-         if ( TYPE_SUB != nt )
+         if ( TYPE_SUB != type(nextOp) )
          {
+            if ( verbose ) log("    non-op: " + pp(nextOp) + " w/ type " + type(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
-         final int ct = type(continuationOp);
-         if ( TYPE_SUB != ct && TYPE_BLK != ct )
+         if ( 0 != ( MASK_BLOCKID & nextOp ) )
          {
+            if ( verbose ) log("    non-sub: " + pp(nextOp) + " " + ( MASK_BLOCKID & nextOp ));
+            raiseError(ERR_INTERNAL);
+            return;
+         }
+         if ( TYPE_SUB != type(continuationOp) )
+         {
+            if ( verbose ) log("    non-op: " + pp(continuationOp));
+            raiseError(ERR_INTERNAL);
+            return;
+         }
+         if ( 0 == ( MASK_BLOCKID & continuationOp ) )
+         {
+            // I believe, but am not certain, that due to the demands
+            // of maintaining stack discipline, it is always invalid
+            // to return to a subroutine entrypoint.
+            //
+            // I could be wrong about this being an error.
+            if ( verbose ) log("    full-sub: " + pp(continuationOp));
             raiseError(ERR_INTERNAL);
             return;
          }
@@ -1028,7 +1052,7 @@ public class JhwScm
    {
       final int c = restore();
       final int t = type(c);
-      if ( TYPE_SUB != t && TYPE_BLK != t )
+      if ( TYPE_SUB != t )
       {
          raiseError(ERR_INTERNAL);
          return;
@@ -1591,29 +1615,6 @@ public class JhwScm
    {
       switch (code)
       {
-      case sub_rep:             return "sub_rep";
-      case blk_rep_after_eval:  return "blk_rep_after_eval";
-      case blk_rep_after_read:  return "blk_rep_after_read";
-      case blk_rep_after_print: return "blk_rep_after_print";
-      case sub_read:            return "sub_read";
-      case blk_read_quote:      return "blk_read_quote";
-      case sub_read_list:       return "sub_read_list";
-      case blk_read_list_mid:   return "blk_read_list_mid";
-      case sub_read_token:      return "sub_read_token";
-      case blk_read_token_neg:  return "blk_read_token_neg";
-      case sub_read_num:        return "sub_read_num";
-      case sub_read_num_loop:   return "sub_read_num_loop";
-      case sub_read_boolean:    return "sub_read_boolean";
-      case sub_read_sym:        return "sub_read_sym";
-      case sub_read_sym_loop:   return "sub_read_sym_loop";
-      case sub_eval:            return "sub_eval";
-      case sub_print:           return "sub_print";
-      case sub_print_list:           return "sub_print_list";
-      case blk_print_list_after:           return "blk_print_list_after";
-      case sub_print_list_elems:           return "sub_print_list_elems";
-      case blk_print_list_elems_after:           return "blk_print_list_elems_after";
-      case blk_re_return:       return "blk_re_return";
-      case blk_error:           return "blk_error";
       case NIL:                 return "NIL";
       case EOF:                 return "EOF";
       case IS_STRING:           return "IS_STRING";
@@ -1624,6 +1625,8 @@ public class JhwScm
       case ERR_INTERNAL:        return "ERR_INTERNAL";
       case ERR_LEX:             return "ERR_LEX";
       case ERR_NOT_IMPL:        return "ERR_NOT_IMPL";
+      case blk_re_return:       return "blk_re_return";
+      case blk_error:           return "blk_error";
       }
       final int t = type(code);
       final int v = value(code);
@@ -1634,11 +1637,30 @@ public class JhwScm
       case TYPE_FIXINT:   buf.append("int");  break;
       case TYPE_CELL:     buf.append("cel");  break;
       case TYPE_CHAR:     buf.append("chr");  break;
-      case TYPE_SUB:      buf.append("sub");  break;
-      case TYPE_BLK:      buf.append("blk");  break;
       case TYPE_ERR:      buf.append("err");  break;
       case TYPE_BOOL:     buf.append("bol");  break;
       case TYPE_SENTINEL: buf.append("snt");  break;
+      case TYPE_SUB:      
+         switch (code & ~MASK_BLOCKID)
+         {
+         case sub_rep:             buf.append("sub_rep");           break;
+         case sub_read:            buf.append("sub_read");          break;
+         case sub_read_list:       buf.append("sub_read_list");     break;
+         case sub_read_token:      buf.append("sub_read_token");    break;
+         case sub_read_num:        buf.append("sub_read_num");      break;
+         case sub_read_num_loop:   buf.append("sub_read_num_loop"); break;
+         case sub_read_boolean:    buf.append("sub_read_boolean");  break;
+         case sub_read_sym:        buf.append("sub_read_sym");      break;
+         case sub_read_sym_loop:   buf.append("sub_read_sym_loop"); break;
+         case sub_eval:            buf.append("sub_eval");          break;
+         case sub_print:           buf.append("sub_print");         break;
+         case sub_print_list:      buf.append("sub_print_list");    break;
+         default:
+            buf.append("sub_"); 
+            hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
+            break;
+         }
+         break;
       default:          
          buf.append('?'); 
          buf.append(t>>SHIFT_TYPE); 
@@ -1687,10 +1709,35 @@ public class JhwScm
             break;
          }
          break;
+      case TYPE_SUB:   
+         hex(buf,v & MASK_BLOCKID,1);
+         buf.append('_'); 
+         hex(buf,code,8);
+         break;
       default:          
          buf.append(v);       
          break;
       }
       return buf.toString();
+   }
+
+   private static void hex ( final StringBuilder buf, int code, int nibbles )
+   {
+      buf.append('0');
+      buf.append('x');
+      for ( ; nibbles > 0; --nibbles )
+      {
+         final int  nib = 0xF & (code >>> ( (nibbles-1) * 4 ));
+         final char c;
+         if ( nib < 10 )
+         {
+            c = (char)(nib + (int)'0');
+         }
+         else
+         {
+            c = (char)(nib + (int)'A' - 10);
+         }
+         buf.append(c);
+      }
    }
 }
