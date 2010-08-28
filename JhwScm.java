@@ -432,12 +432,12 @@ public class JhwScm
                {
                   log("    minus-in-symbol");
                   queuePushBack(reg[regIn],c1);
-                  gosub(sub_read_sym,blk_re_return);
+                  gosub(sub_read_symbol,blk_re_return);
                   break;
                }
             }
             log("    symbol");
-            gosub(sub_read_sym,blk_re_return);
+            gosub(sub_read_symbol,blk_re_return);
             break;
          case sub_read_token+0x1:
             c = reg[regRetval];
@@ -568,13 +568,20 @@ public class JhwScm
             break;
 
 
-         case sub_read_sym:
+         case sub_read_symbol:
             // Parses the next symbol from reg[regIn].
             //
             reg[regArg0] = queueCreate();
-            gosub(sub_read_sym_loop,blk_re_return);
+            store(reg[regArg0]);
+            gosub(sub_read_symbol_loop,sub_read_symbol+0x1);
             break;
-         case sub_read_sym_loop:
+         case sub_read_symbol+0x1:
+            reg[regTmp]    = restore();
+            reg[regRetval] = cons(IS_SYMBOL,reg[regTmp]);
+            gosub(sub_read_symbol_loop,blk_re_return);
+            break;
+
+         case sub_read_symbol_loop:
             // Parses the next symbol from reg[regIn], expecting the
             // accumulated value-so-far as a queue in reg[regArg0].
             //
@@ -661,7 +668,23 @@ public class JhwScm
                break;
             case TYPE_CELL:
                // TODO: check for TYPE_SENTINEL in car(c)
-               gosub(sub_print_list,blk_re_return);
+               c0 = car(c);
+               c1 = cdr(c);
+               switch (c0)
+               {
+               case IS_STRING:
+                  reg[regArg0] = c1;
+                  gosub(sub_print_string,blk_re_return);
+                  break;
+               case IS_SYMBOL:
+                  reg[regArg0] = c1;
+                  gosub(sub_print_chars,blk_re_return);
+                  break;
+               default:
+                  reg[regArg0] = c;
+                  gosub(sub_print_list,blk_re_return);
+                  break;
+               }
                break;
             case TYPE_CHAR:
                queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
@@ -751,6 +774,45 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
+            break;
+            
+         case sub_print_string:
+            // Prints the list in reg[regArg0], whose elements are
+            // expected to all be TYPE_CHAR, to reg[regOut] in
+            // double-quotes.
+            //
+            queuePushBack(reg[regOut],code(TYPE_CHAR,'"'));
+            gosub(sub_print_chars,sub_print_string+0x1);
+            break;
+         case sub_print_string+0x1:
+            queuePushBack(reg[regOut],code(TYPE_CHAR,'"'));
+            returnsub();
+            break;
+
+         case sub_print_chars:
+            // Prints the list in reg[regArg0], whose elements are
+            // expected to all be TYPE_CHAR, to reg[regOut].
+            //
+            c = reg[regArg0];
+            if ( NIL == c )
+            {
+               returnsub();
+               break;
+            }
+            if ( TYPE_CELL != type(c) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            c0 = car(c);
+            c1 = cdr(c);
+            if ( TYPE_CHAR != type(c0) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            queuePushBack(reg[regOut],c0);
+            jump(sub_print_chars); // TODO: jump() is icky!
             break;
 
          case sub_print_list:
@@ -887,23 +949,29 @@ public class JhwScm
    private static final int ERR_NOT_IMPL        = TYPE_ERROR    | 87;
 
    private static final int regFreeCellList     =  0; // unused cells
+
    private static final int regStack            =  1; // the runtime stack
-   private static final int regGlobalEnv        =  2; // environment frames
-   private static final int regIn               =  3; // input char queue
-   private static final int regOut              =  4; // output char queue
+   private static final int regPc               =  2; // opcode to return to
 
-   private static final int regArg0             =  5; // argument
-   private static final int regArg1             =  6; // argument
-   private static final int regRetval           =  7; // return value
+   private static final int regError            =  3; // NIL or a TYPE_ERROR
+   private static final int regErrorPc          =  4; // reg[regPc] of err
+   private static final int regErrorStack       =  5; // reg[regStack] of err
 
-   private static final int regOpNext           =  8; // next opcode to run
-   private static final int regOpContinuation   =  9; // opcode to return to
+   private static final int regIn               =  6; // input char queue
+   private static final int regOut              =  7; // output char queue
 
-   private static final int regPc               = 10; // opcode to return to
+   private static final int regArg0             =  8; // argument
+   private static final int regArg1             =  9; // argument
+   private static final int regTmp              = 10; // argument
+   private static final int regRetval           = 11; // return value
 
-   private static final int regError            = 11; // NIL or a TYPE_ERROR
-   private static final int regErrorPc          = 12; // reg[regPc] of err
-   private static final int regErrorStack       = 13; // reg[regStack] of err
+   private static final int regGlobalEnv        = 12; // list of env frames
+
+   private static final int numRegisters        = 16;  // in slots
+   private static final int heapSize            = 512; // in cells
+
+   private final int[] heap = new int[2*heapSize];
+   private final int[] reg  = new int[numRegisters];
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -926,14 +994,16 @@ public class JhwScm
    private static final int sub_read_num         = TYPE_SUB |  0x2300;
    private static final int sub_read_num_loop    = TYPE_SUB |  0x2310;
    private static final int sub_read_boolean     = TYPE_SUB |  0x2400;
-   private static final int sub_read_sym         = TYPE_SUB |  0x2500;
-   private static final int sub_read_sym_loop    = TYPE_SUB |  0x2600;
+   private static final int sub_read_symbol      = TYPE_SUB |  0x2500;
+   private static final int sub_read_symbol_loop = TYPE_SUB |  0x2600;
 
    private static final int sub_eval             = TYPE_SUB |  0x3000;
 
    private static final int sub_print            = TYPE_SUB |  0x4000;
    private static final int sub_print_list       = TYPE_SUB |  0x4100;
    private static final int sub_print_list_elems = TYPE_SUB |  0x4200;
+   private static final int sub_print_string     = TYPE_SUB |  0x4300;
+   private static final int sub_print_chars      = TYPE_SUB |  0x4400;
 
    private static final int blk_re_return        = TYPE_SUB | 0x10001;
    private static final int blk_error            = TYPE_SUB | 0x10002;
@@ -1126,9 +1196,6 @@ public class JhwScm
       reg[regPc]    = blk_error;
       reg[regStack] = NIL;
    }
-
-   private final int[] heap = new int[512];
-   private final int[] reg  = new int[16];
 
    /**
     * Checks that the VM is internally consistent, that all internal
@@ -1604,18 +1671,21 @@ public class JhwScm
       case TYPE_SUB:      
          switch (code & ~MASK_BLOCKID)
          {
-         case sub_rep:             buf.append("sub_rep");           break;
-         case sub_read:            buf.append("sub_read");          break;
-         case sub_read_list:       buf.append("sub_read_list");     break;
-         case sub_read_token:      buf.append("sub_read_token");    break;
-         case sub_read_num:        buf.append("sub_read_num");      break;
-         case sub_read_num_loop:   buf.append("sub_read_num_loop"); break;
-         case sub_read_boolean:    buf.append("sub_read_boolean");  break;
-         case sub_read_sym:        buf.append("sub_read_sym");      break;
-         case sub_read_sym_loop:   buf.append("sub_read_sym_loop"); break;
-         case sub_eval:            buf.append("sub_eval");          break;
-         case sub_print:           buf.append("sub_print");         break;
-         case sub_print_list:      buf.append("sub_print_list");    break;
+         case sub_rep:              buf.append("sub_rep");              break;
+         case sub_read:             buf.append("sub_read");             break;
+         case sub_read_list:        buf.append("sub_read_list");        break;
+         case sub_read_token:       buf.append("sub_read_token");       break;
+         case sub_read_num:         buf.append("sub_read_num");         break;
+         case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;
+         case sub_read_boolean:     buf.append("sub_read_boolean");     break;
+         case sub_read_symbol:      buf.append("sub_read_symbol");      break;
+         case sub_read_symbol_loop: buf.append("sub_read_symbol_loop"); break;
+         case sub_eval:             buf.append("sub_eval");             break;
+         case sub_print:            buf.append("sub_print");            break;
+         case sub_print_list:       buf.append("sub_print_list");       break;
+         case sub_print_list_elems: buf.append("sub_print_list_elems"); break;
+         case sub_print_string:     buf.append("sub_print_string");     break;
+         case sub_print_chars:      buf.append("sub_print_chars");      break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
