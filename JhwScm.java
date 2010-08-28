@@ -105,7 +105,7 @@ public class JhwScm
       // Should reconsider our goal of leaving the input buffer
       // unchanged, or should do a more clever cache-the-tail-cell to
       // recover from failure in O(1).  In any case, we shouldn't have
-      // to wall all the input twice here, once into the temp queue
+      // to walk all the input twice here, once into the temp queue
       // and once in queueSpliceBack().
       //
       final int tmpQueue = queueCreate();
@@ -321,7 +321,7 @@ public class JhwScm
                gosub(sub_read_list,blk_re_return);
                break;
             case '\'':
-               gosub(sub_read,blk_read_quote);
+               gosub(sub_read,sub_read+0x1);
                break;
             case '\"':
                raiseError(ERR_NOT_IMPL);
@@ -331,7 +331,7 @@ public class JhwScm
                break;
             }
             break;
-         case blk_read_quote:
+         case sub_read+0x1:
             // TODO: return a quotation of reg[regRetval] e.g. something like:
             //
             // reg[regRetval] = cons(reg[regRetval],NIL);
@@ -883,10 +883,9 @@ public class JhwScm
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
    private static final int TYPE_SUB      = 0x50000000;
-   //private static final int TYPE_BLK      = 0x60000000;
-   private static final int TYPE_ERR      = 0x70000000;
-   private static final int TYPE_BOOL     = 0x80000000;
-   private static final int TYPE_SENTINEL = 0x90000000;
+   private static final int TYPE_ERR      = 0x60000000;
+   private static final int TYPE_BOOL     = 0x70000000;
+   private static final int TYPE_SENTINEL = 0x80000000;
 
    // In many of these constants, I would prefer to initialize them as
    // code(TYPE_FOO,n) rather than TYPE_FOO|n, for consistency and to
@@ -896,8 +895,17 @@ public class JhwScm
    // matter of simple arithmetic, javac does not let me use the
    // resultant names in switch statements.  In C, I'd just make
    // code() a macro and be done with it.
+   //
+   // Also, I'm using fairly random values for the differentiators
+   // among TYPE_NIL, TYPE_SENTINEL, TYPE_BOOL, and TYPE_ERR.  Since
+   // each of these has only a finite, definite number of valid
+   // values, using junk there is a good error-detection mechanism
+   // which validates that my checks are precise and I'm not doing any
+   // silly arithmetic or confusing, say, TYPE_NIL with the value NIL
+   // - although one imagines lower-level implementations where it
+   // would be more efficient to use 0, 1, 2, ...etc.
 
-   private static final int NIL                 = TYPE_NIL      | 0;
+   private static final int NIL                 = TYPE_NIL      | 37;
 
    private static final int EOF                 = TYPE_SENTINEL | 0;
    private static final int IS_SYMBOL           = TYPE_SENTINEL | 1;
@@ -949,7 +957,6 @@ public class JhwScm
    private static final int blk_rep_after_print = TYPE_SUB |   0x103;
 
    private static final int sub_read            = TYPE_SUB |  0x1000;
-   private static final int blk_read_quote      = TYPE_SUB |  0x1001;
 
    private static final int sub_read_list       = TYPE_SUB |  0x1100;
    private static final int blk_read_list_mid   = TYPE_SUB |  0x1101;
@@ -1480,7 +1487,7 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( NIL == type(list) ) 
+      if ( TYPE_NIL == type(list) ) 
       {
          if ( verbose ) log("  queueSpliceBack(): empty list");
          return; // empty list: nothing to do
@@ -1633,13 +1640,13 @@ public class JhwScm
       final StringBuilder buf = new StringBuilder();
       switch (t)
       {
-      case TYPE_NIL:      buf.append("nil");  break;
-      case TYPE_FIXINT:   buf.append("int");  break;
-      case TYPE_CELL:     buf.append("cel");  break;
-      case TYPE_CHAR:     buf.append("chr");  break;
-      case TYPE_ERR:      buf.append("err");  break;
-      case TYPE_BOOL:     buf.append("bol");  break;
-      case TYPE_SENTINEL: buf.append("snt");  break;
+      case TYPE_NIL:      buf.append("nil");      break;
+      case TYPE_FIXINT:   buf.append("fixing");   break;
+      case TYPE_CELL:     buf.append("cell");     break;
+      case TYPE_CHAR:     buf.append("char");     break;
+      case TYPE_ERR:      buf.append("err");      break;
+      case TYPE_BOOL:     buf.append("bool");     break;
+      case TYPE_SENTINEL: buf.append("sentinel"); break;
       case TYPE_SUB:      
          switch (code & ~MASK_BLOCKID)
          {
@@ -1711,8 +1718,6 @@ public class JhwScm
          break;
       case TYPE_SUB:   
          hex(buf,v & MASK_BLOCKID,1);
-         buf.append('_'); 
-         hex(buf,code,8);
          break;
       default:          
          buf.append(v);       
