@@ -153,9 +153,8 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
-      while ( FALSE == queueIsEmpty(reg[regOut]) )
+      for ( int f = 0; EOF != ( f = queuePeekFront(reg[regOut]) ); /*below*/ )
       {
-         final int  f = queuePopFront(reg[regOut]);
          final int  v = value(f);
          final char c = (char)(MASK_VALUE & v);
          // TODO: change signature so we don't need this guard here?
@@ -169,6 +168,7 @@ public class JhwScm
          {
             return FAILURE;
          }
+         queuePopFront(reg[regOut]);
       }
       return SUCCESS;
    }
@@ -293,15 +293,15 @@ public class JhwScm
             //   representation is incomplete and therefore not
             //   parsable, an error is signalled.
             //
-            if ( TRUE == queueIsEmpty( reg[regIn] ) )
+            c = queuePeekFront(reg[regIn]);
+            t = type(c);
+            v = value(c);
+            if ( EOF == c )
             {
                reg[regRetval] = EOF;
                returnsub();
                break;
             }
-            c = queuePeekFront(reg[regIn]);
-            t = type(c);
-            v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
             {
                log("non-char in input: " + pp(c));
@@ -469,16 +469,16 @@ public class JhwScm
             // A helper for sub_read_num, but still a sub_ in its own
             // right.
             //
-            if ( TRUE == queueIsEmpty(reg[regIn]) )
+            c0 = queuePeekFront(reg[regIn]);
+            t0 = type(c0);
+            v0 = value(c0);
+            if ( EOF == c0 )
             {
                log("  eof, returning: " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             }
-            c0 = queuePeekFront(reg[regIn]);
-            t0 = type(c0);
-            v0 = value(c0);
             if ( TYPE_CHAR != t0 )
             {
                log("  non-char in input: " + pp(c0));
@@ -525,16 +525,25 @@ public class JhwScm
             break;
 
          case sub_read_boolean:
-            queuePopFront(reg[regIn]);     // burn octothorpe
-            if ( TRUE == queueIsEmpty(reg[regIn]) )
+            // Parses the next boolean literal reg[regIn].
+            //
+            c = queuePeekFront(reg[regIn]);
+            if ( c != code(TYPE_CHAR,'#') )
             {
-               log("  eof after octothorpe");
-               raiseError(ERR_NOT_IMPL);
+               raiseError(ERR_INTERNAL);
                break;
             }
-            c0 = queuePopFront(reg[regIn]);
+            queuePopFront(reg[regIn]);
+            c0 = queuePeekFront(reg[regIn]);
             t0 = type(c0);
             v0 = value(c0);
+            if ( TRUE == c0 )
+            {
+               log("  eof after octothorpe");
+               raiseError(ERR_LEX);
+               break;
+            }
+            queuePopFront(reg[regIn]);
             if ( TYPE_CHAR != t0 )
             {
                log("  non-char in input: " + pp(c0));
@@ -578,16 +587,16 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            if ( TRUE == queueIsEmpty(reg[regIn]) )
+            c0 = queuePeekFront(reg[regIn]);
+            t0 = type(c0);
+            v0 = value(c0);
+            if ( EOF == c0 )
             {
                reg[regRetval] = car(reg[regArg0]);
                log("  eof, returning: " + pp(reg[regRetval]));
                returnsub();
                break;
             }
-            c0 = queuePeekFront(reg[regIn]);
-            t0 = type(c0);
-            v0 = value(c0);
             if ( TYPE_CHAR != t0 )
             {
                log("  non-char in input: " + pp(c0));
@@ -1171,6 +1180,8 @@ public class JhwScm
    /**
     * @returns NIL in event of error (in which case an error is
     * raised), else a newly allocated and initialize cons cell.
+    *
+    * TODO: I feel funny about using NIL this way
     */
    private int cons ( final int car, final int cdr )
    {
@@ -1258,7 +1269,11 @@ public class JhwScm
    //
    ////////////////////////////////////////////////////////////////////
 
-   // returns NIL on failure, else a new empty queue
+   /**
+    * @returns a new, empty queue, or NIL on failure
+    *
+    * TODO: I feel funny about using NIL this way
+    */
    private int queueCreate ()
    {
       final boolean verbose = true;
@@ -1267,51 +1282,9 @@ public class JhwScm
       return queue;
    }
 
-   // returns TRUE or FALSE
-   private int queueIsEmpty ( final int queue )
-   {
-      final boolean verbose = true;
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verbose ) log("  queueIsEmpty(): non-queue " + pp(queue));
-         raiseError(ERR_INTERNAL);
-         return FALSE;
-      }
-      final int h = car(queue);
-      final int t = cdr(queue);
-      if ( DEBUG && ( (NIL == h) != (NIL == t) ) ) 
-      {
-         if ( verbose ) log("  queueIsEmpty(): bad h/t" + pp(h) + " " + pp(t));
-         raiseError(ERR_INTERNAL);
-         return FALSE;
-      }
-      if ( NIL == h )
-      {
-         if ( verbose ) log("  queueIsEmpty(): empty");
-         return TRUE;
-      }
-      if ( DEBUG && TYPE_CELL != type(h) )
-      {
-         if ( verbose ) log("  queueIsEmpty(): bad h" + pp(h));
-         raiseError(ERR_INTERNAL);
-         return FALSE;
-      }
-      if ( DEBUG && TYPE_CELL != type(t) )
-      {
-         if ( verbose ) log("  queueIsEmpty(): bad t" + pp(t));
-         raiseError(ERR_INTERNAL);
-         return FALSE;
-      }
-      if ( verbose )
-      {
-         log("  queueIsEmpty(): nonempty ");
-         log("    queue: " + pp(queue));
-         log("    h:     " + pp(h));
-         log("    t:     " + pp(t));
-      }
-      return FALSE;
-   }
-
+   /**
+    * Pushes value onto the back of the queue.
+    */
    private void queuePushBack ( final int queue, final int value )
    {
       final boolean verbose = true;
@@ -1319,6 +1292,14 @@ public class JhwScm
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
          if ( verbose ) log("  queuePushBack(): non-queue " + pp(queue));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( DEBUG && EOF == value ) 
+      {
+         // EOF cannot go in queues, lest it confuse the return value
+         // channel in one of the peeks or pops.
+         if ( verbose ) log("  queuePushBack(): EOF");
          raiseError(ERR_INTERNAL);
          return;
       }
@@ -1369,6 +1350,12 @@ public class JhwScm
       setcdr(queue,new_cell);
    }
 
+   /**
+    * Splices the list onto the back of the queue: splices, not
+    * copies.  the cells in list become cells in the queue.
+    *
+    * TODO: DEPRECATED
+    */
    private void queueSpliceBack ( final int queue, final int list )
    {
       final boolean verbose = true;
@@ -1432,6 +1419,10 @@ public class JhwScm
       if ( verbose ) log("  tail:    " + pp(cdr(queue)));
    }
 
+   /**
+    * @returns the object at the front of the queue (in which case the
+    * queue is mutated to remove the object), or EOF if empty
+    */
    private int queuePopFront ( final int queue )
    {
       final boolean verbose = true;
@@ -1439,19 +1430,19 @@ public class JhwScm
       {
          if ( verbose ) log("  queuePopFront(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
-         return NIL;
+         return EOF;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
          if ( verbose ) log("  queuePopFront(): empty " + pp(queue));
-         return NIL;
+         return EOF;
       }
       if ( TYPE_CELL != type(head) ) 
       {
          if ( verbose ) log("  queuePopFront(): corrupt queue " + pp(head));
          raiseError(ERR_INTERNAL); // corrupt queue
-         return NIL;
+         return EOF;
       }
       final int value = car(head);
       setcar(queue,cdr(head));
@@ -1463,6 +1454,9 @@ public class JhwScm
       return value;
    }
 
+   /**
+    * @returns the object at the front of the queue, or EOF if empty
+    */
    private int queuePeekFront ( final int queue )
    {
       final boolean verbose = true;
@@ -1470,48 +1464,23 @@ public class JhwScm
       {
          if ( verbose ) log("  queuePeekFront(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
-         return NIL;
+         return EOF;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
          if ( verbose ) log("  queuePeekFront(): empty " + pp(queue));
-         return NIL;
+         return EOF;
       }
       if ( TYPE_CELL != type(head) ) 
       {
          if ( verbose ) log("  queuePeekFront(): corrupt queue " + pp(head));
          raiseError(ERR_INTERNAL); // corrupt queue
-         return NIL;
+         return EOF;
       }
       final int value = car(head);
       if ( verbose ) log("  queuePeekFront(): peeked " + pp(value));
       return value;
-   }
-
-   private void queuePushFront ( final int queue, final int value )
-   {
-      final boolean verbose = true;
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         log("  queuePushFront(): bogus queue " + pp(queue));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      final int head = car(queue);
-      final int tmp  = cons(value,head);
-      if ( NIL == tmp )
-      {
-         log("  queuePushFront(): oom");
-         return; // avoid further damage
-      }
-      log("  queuePushFront(): pushing " + pp(value));
-      setcar(queue,tmp);
-      if ( NIL == head )
-      {
-         // queue w/ 1 entry, head needs to equal tail
-         setcdr(queue,tmp);
-      }
    }
 
    // subDepth is ONLY used for debug cosmetics: it is not
