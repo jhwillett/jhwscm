@@ -667,10 +667,10 @@ public class JhwScm
                   returnsub();
                   break;
                case IS_SYMBOL:
-                  log("  going to sub_eval_lookup");
+                  log("  going to sub_eval_look");
                   reg[regArg0] = reg[regArg0]; // forward the symbol
                   reg[regArg1] = reg[regArg1]; // forward the env
-                  gosub(sub_eval_lookup,blk_re_return);
+                  gosub(sub_eval_look_env,blk_re_return);
                   break;
                default:
                   store(reg[regTmp1]);         // store the args
@@ -726,11 +726,69 @@ public class JhwScm
             raiseError(ERR_NOT_IMPL);
             break;
 
-         case sub_eval_lookup:
+         case sub_eval_look_env:
             // Looks up the symbol in reg[regArg0] in the env in
             // reg[regArg1].
             //
             raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_eval_look_frame:
+            // Looks up the symbol in reg[regArg0] in the env in
+            // reg[regArg1].
+            //
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_eqv_p:
+            // Compares the objects in reg[regArg0] and reg[regArg1].
+            //
+            // Returns TRUE in reg[regRetval] if they are equivalent,
+            // being identical or having the same shape and same value
+            // everywhere, FALSE otherwise.
+            //
+            // Does not handle cycles gracefully - and it may not be
+            // necessary that it do so if we don't expose this to
+            // users and ensure that it can only be called on objects
+            // (like symbols) that are known to be cycle-free.
+            //
+            if ( reg[regArg0] == reg[regArg1] )
+            {
+               reg[regRetval] = TRUE;
+               returnsub();
+               break;
+            }
+            t0 = type(reg[regArg0]);
+            t1 = type(reg[regArg1]);
+            if ( t0 != t1 )
+            {
+               reg[regRetval] = FALSE;
+               returnsub();
+               break;
+            }
+            if ( t0 != TYPE_CELL )
+            {
+               reg[regRetval] = FALSE;
+               returnsub();
+               break;
+            }
+            store(reg[regArg0]);
+            store(reg[regArg1]);
+            reg[regArg0] = car(reg[regArg0]);
+            reg[regArg1] = car(reg[regArg1]);
+            gosub(sub_eqv_p,sub_eqv_p+0x1);
+            break;
+         case sub_eqv_p+0x1:
+            reg[regArg1] = restore();
+            reg[regArg0] = restore();
+            if ( FALSE == reg[regRetval] )
+            {
+               returnsub();
+               break;
+            }
+            reg[regArg0] = cdr(reg[regArg0]);
+            reg[regArg1] = cdr(reg[regArg1]);
+            gosub(sub_eqv_p,blk_re_return);
             break;
 
          case sub_apply:
@@ -1092,7 +1150,8 @@ public class JhwScm
    private static final int sub_read_symbol_loop = TYPE_SUB |  0x2600;
 
    private static final int sub_eval             = TYPE_SUB |  0x3000;
-   private static final int sub_eval_lookup      = TYPE_SUB |  0x3100;
+   private static final int sub_eval_look_env    = TYPE_SUB |  0x3100;
+   private static final int sub_eval_look_frame  = TYPE_SUB |  0x3110;
    private static final int sub_eval_list        = TYPE_SUB |  0x3200;
 
    private static final int sub_apply            = TYPE_SUB |  0x4000;
@@ -1102,6 +1161,8 @@ public class JhwScm
    private static final int sub_print_list_elems = TYPE_SUB |  0x5200;
    private static final int sub_print_string     = TYPE_SUB |  0x5300;
    private static final int sub_print_chars      = TYPE_SUB |  0x5400;
+
+   private static final int sub_eqv_p            = TYPE_SUB |  0x6000;
 
    private static final int blk_re_return        = TYPE_SUB | 0x10001;
    private static final int blk_error            = TYPE_SUB | 0x10002;
@@ -1800,13 +1861,15 @@ public class JhwScm
          case sub_read_symbol_loop: buf.append("sub_read_symbol_loop"); break;
          case sub_eval:             buf.append("sub_eval");             break;
          case sub_eval_list:        buf.append("sub_eval_list");        break;
-         case sub_eval_lookup:      buf.append("sub_eval_lookup");      break;
+         case sub_eval_look_env:    buf.append("sub_eval_look_env");    break;
+         case sub_eval_look_frame:  buf.append("sub_eval_look_frame");  break;
          case sub_apply:            buf.append("sub_apply");            break;
          case sub_print:            buf.append("sub_print");            break;
          case sub_print_list:       buf.append("sub_print_list");       break;
          case sub_print_list_elems: buf.append("sub_print_list_elems"); break;
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
+         case sub_eqv_p:            buf.append("sub_eqv_p");            break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
