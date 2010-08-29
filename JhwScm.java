@@ -233,7 +233,7 @@ public class JhwScm
          switch ( reg[regPc] )
          {
          case sub_rep:
-            // Reads the next sexpr from reg[regIn], evaluates it, and
+            // Reads the next expr from reg[regIn], evaluates it, and
             // prints the result in reg[regOut].
             //
             // Top-level entry point for the interactive interpreter.
@@ -282,10 +282,12 @@ public class JhwScm
             break;
 
          case sub_read:
-            // Parses the next sexpr from reg[regIn], and
+            // Parses the next expr from reg[regIn], and
             // leaves the results in reg[regRetval].
             //
             // Top-level entry point for the parser.
+            //
+            // Returns EOF if nothing was found, else the next expr.
             //
             // From R5RS Sec 66:
             //
@@ -326,10 +328,17 @@ public class JhwScm
             case '(':
                gosub(sub_read_list,blk_re_return);
                break;
+            case ')':
+               log("mismatch close paren");
+               raiseError(ERR_LEXICAL);
+               break;
             case '\'':
-               gosub(sub_read,sub_read+0x1);
+               raiseError(ERR_NOT_IMPL);
                break;
             case '\"':
+               raiseError(ERR_NOT_IMPL);
+               break;
+            case '#':
                raiseError(ERR_NOT_IMPL);
                break;
             default:
@@ -337,43 +346,53 @@ public class JhwScm
                break;
             }
             break;
-         case sub_read+0x1:
-            // TODO: return a quotation of reg[regRetval] e.g. something like:
-            //
-            // reg[regRetval] = cons(reg[regRetval],NIL);
-            // reg[regRetval] = cons(sub_quote,     NIL);
-            // returnsub();
-            //
-            raiseError(ERR_NOT_IMPL);
-            break;
 
          case sub_read_list:
-            // Parses the next list of sexprs from reg[regIn], and
+            // Parses the next list of exprs from reg[regIn], and
             // leaves the results in reg[regRetval].
             //
             // On entry, expects the next char on input to be the open
             // paren '(' which begins the list.
             //
             c = queuePeekFront(reg[regIn]);
-            if ( '(' != code(TYPE_CHAR,'(') )
+            if ( code(TYPE_CHAR,'(') != c )
             {
                log("non-paren in input: " + pp(c));
                raiseError(ERR_SEMANTIC);
                break;
             }
             queuePopFront(reg[regIn]);
-            gosub(sub_read,sub_read_list+0x1);
+            gosub(sub_read_burn_space,sub_read_list+0x1);
             break;
          case sub_read_list+0x1:
             c = queuePeekFront(reg[regIn]);
-            t = type(c);
-            v = value(c);
+            if ( code(TYPE_CHAR,')') == c )
+            {
+               log("matching close-paren: " + pp(c));
+               queuePopFront(reg[regIn]);
+               reg[regRetval] = NIL;
+               returnsub();
+               break;
+            }
+            if ( EOF == c )
+            {
+               log("EOF when seeking close-paren");
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            log("what next?");
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_read_list+0x2:
             if ( EOF == c )
             {
                log("eof mid-list");
                raiseError(ERR_LEXICAL);
                break;
             }
+            c = queuePeekFront(reg[regIn]);
+            t = type(c);
+            v = value(c);
             if ( DEBUG && TYPE_CHAR != t )
             {
                log("non-char in input: " + pp(c));
@@ -629,6 +648,31 @@ public class JhwScm
             }
             break;
 
+         case sub_read_burn_space:
+            // Consumes any whitespace from reg[regIn].
+            //
+            c = queuePeekFront(reg[regIn]);
+            if ( EOF == c )
+            {
+               returnsub();
+               break;
+            }
+            switch (value(c))
+            {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+               queuePopFront(reg[regIn]);
+               gosub(sub_read_burn_space,blk_re_return);
+               break;
+            default:
+               returnsub();
+               break;
+            }
+            break;
+
+
          case sub_eval:
             // Evaluates the expr in reg[regArg0] in the env in
             // reg[regArg1], and leaves the results in reg[regRetval].
@@ -672,6 +716,9 @@ public class JhwScm
                   gosub(sub_eval,sub_eval+0x1);
                   break;
                }
+               break;
+            case TYPE_NIL:
+               raiseError(ERR_SEMANTIC);
                break;
             default:
                log("wtf: " + pp(reg[regArg1]));
@@ -1224,6 +1271,7 @@ public class JhwScm
    private static final int sub_read_boolean     = TYPE_SUB |  0x2400;
    private static final int sub_read_symbol      = TYPE_SUB |  0x2500;
    private static final int sub_read_symbol_loop = TYPE_SUB |  0x2600;
+   private static final int sub_read_burn_space  = TYPE_SUB |  0x2700;
 
    private static final int sub_eval             = TYPE_SUB |  0x3000;
    private static final int sub_eval_look_env    = TYPE_SUB |  0x3100;
@@ -1937,6 +1985,7 @@ public class JhwScm
          case sub_read_boolean:     buf.append("sub_read_boolean");     break;
          case sub_read_symbol:      buf.append("sub_read_symbol");      break;
          case sub_read_symbol_loop: buf.append("sub_read_symbol_loop"); break;
+         case sub_read_burn_space:  buf.append("sub_read_burn_space");  break;
          case sub_eval:             buf.append("sub_eval");             break;
          case sub_eval_list:        buf.append("sub_eval_list");        break;
          case sub_eval_look_env:    buf.append("sub_eval_look_env");    break;
