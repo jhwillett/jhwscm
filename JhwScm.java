@@ -650,9 +650,16 @@ public class JhwScm
                returnsub();
                break;
             case TYPE_CELL:
-               reg[regTmp0] = car(reg[regArg0]); // the first elem: op
-               reg[regTmp1] = cdr(reg[regArg0]); // the rest elems: args
-               switch (type(reg[regTmp0]))
+               // TODO: this is a lot of friggin' aliasing, with
+               // little point to it.
+               //
+               // I know I'm trying to *be* the compiler, but that
+               // doesn't mean I need to be clever.
+               reg[regTmp0] = car(reg[regArg0]);
+               reg[regTmp1] = cdr(reg[regArg0]);
+               log("  h: " + pp(reg[regTmp0]));
+               log("  t: " + pp(reg[regTmp1]));
+               switch (reg[regTmp0])
                {
                case IS_STRING:
                   // strings are self-evaluating
@@ -660,7 +667,8 @@ public class JhwScm
                   returnsub();
                   break;
                case IS_SYMBOL:
-                  reg[regArg0] = reg[regArg0]; // forward the op
+                  log("  going to sub_eval_lookup");
+                  reg[regArg0] = reg[regArg0]; // forward the symbol
                   reg[regArg1] = reg[regArg1]; // forward the env
                   gosub(sub_eval_lookup,blk_re_return);
                   break;
@@ -674,6 +682,7 @@ public class JhwScm
                }
                break;
             default:
+               log("  wtf: " + pp(reg[regArg1]));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -688,7 +697,6 @@ public class JhwScm
             case TYPE_FUNC:
                // we need to evaluate the arguments then apply
                store(reg[regRetval]);       // store the eval of the first elem
-               store(reg[regArg1]);         // store the env
                reg[regArg0] = reg[regTmp0]; // forward the rest of the expr
                reg[regArg1] = reg[regArg1]; // forward the env
                gosub(sub_eval_list,sub_eval+0x02);
@@ -706,15 +714,28 @@ public class JhwScm
 */
             break;
          case sub_eval+0x02: // following eval of the rest elems
-            reg[regArg2] = restore();      // restore the env
-            reg[regArg1] = reg[regRetval]; // retrieve the eval of the rest
             reg[regArg0] = restore();      // restore the eval of the first
+            reg[regArg1] = reg[regRetval]; // retrieve the eval of the rest
             gosub(sub_apply,blk_re_return);
+            break;
+
+         case sub_eval_list:
+            // Evaluates all the expressions in the list in
+            // reg[regArg0] in the env in reg[regArg1].
+            //
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_eval_lookup:
+            // Looks up the symbol in reg[regArg0] in the env in
+            // reg[regArg1].
+            //
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case sub_apply:
             // Applies the op in reg[regArg0] to the args in
-            // reg[regArg1] within the evironment reg[regArg2].
+            // reg[regArg1].
             //
             raiseError(ERR_NOT_IMPL);
             break;
@@ -1033,7 +1054,7 @@ public class JhwScm
 
    private static final int regArg0             =  8; // argument
    private static final int regArg1             =  9; // argument
-   private static final int regArg2             =  9; // argument
+   private static final int reg__Unused         = 10; // 
    private static final int regTmp0             = 11; // temporary
    private static final int regTmp1             = 12; // temporary
    private static final int regRetval           = 13; // return value
@@ -1778,6 +1799,9 @@ public class JhwScm
          case sub_read_symbol:      buf.append("sub_read_symbol");      break;
          case sub_read_symbol_loop: buf.append("sub_read_symbol_loop"); break;
          case sub_eval:             buf.append("sub_eval");             break;
+         case sub_eval_list:        buf.append("sub_eval_list");        break;
+         case sub_eval_lookup:      buf.append("sub_eval_lookup");      break;
+         case sub_apply:            buf.append("sub_apply");            break;
          case sub_print:            buf.append("sub_print");            break;
          case sub_print_list:       buf.append("sub_print_list");       break;
          case sub_print_list_elems: buf.append("sub_print_list_elems"); break;
