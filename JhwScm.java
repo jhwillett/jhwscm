@@ -595,8 +595,24 @@ public class JhwScm
                returnsub();
                break;
             case '\\':
-               log("character literal");
-               raiseError(ERR_NOT_IMPL);
+               c1 = queuePeekFront(reg[regIn]);
+               if ( EOF == c1 )
+               {
+                  log("eof after octothorpe slash");
+                  raiseError(ERR_LEXICAL);
+                  break;
+               }
+               if ( DEBUG && TYPE_CHAR != type(c1) )
+               {
+                  log("non-char in input: " + pp(c1));
+                  raiseError(ERR_INTERNAL);
+                  break;
+               }
+               log("character literal: " + pp(c1));
+               queuePopFront(reg[regIn]);
+               reg[regRetval] = c1;
+               returnsub();
+               // TODO: so far, we only handle the 1-char sequences...
                break;
             default:
                log("unexpected after octothorpe: " + pp(c0));
@@ -987,8 +1003,17 @@ public class JhwScm
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'c'));
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'e'));
                   break;
+               case '\n':
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'n'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'e'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'w'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'l'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'i'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'n'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'e'));
+                  break;
                default:
-                  queuePushBack(reg[regOut],v);
+                  queuePushBack(reg[regOut],c);
                   break;
                }
                returnsub();

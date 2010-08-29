@@ -181,13 +181,17 @@ public class Test
          { "#\\NeWlInE","#\\newline" },
           */
       };
-      for ( final String[] pair : tweakyInts )
+      for ( final String[] pair : tweakyChars )
       {
          expectSuccess(pair[0],             pair[1]);
          expectSuccess(" " + pair[0],       pair[1]);
          expectSuccess(pair[0] + " " ,      pair[1]);
          expectSuccess(" " + pair[0] + " ", pair[1]);
       }
+      expectLexical("#");
+      expectLexical("#\\");
+      expectLexical("# ");
+      expectLexical("#\n");
       if ( false )
       {
          expectLexical("#\\spac");
