@@ -301,31 +301,24 @@ public class JhwScm
             //   representation is incomplete and therefore not
             //   parsable, an error is signalled.
             //
+            gosub(sub_read_burn_space,sub_read+0x1);
+            break;
+         case sub_read+0x1:
             c = queuePeekFront(reg[regIn]);
-            t = type(c);
-            v = value(c);
             if ( EOF == c )
             {
                reg[regRetval] = EOF;
                returnsub();
                break;
             }
-            if ( DEBUG && TYPE_CHAR != t )
+            if ( DEBUG && TYPE_CHAR != type(c) )
             {
                log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
-            // TODO: use sub_read_burn_space
-            switch (v)
+            switch (value(c))
             {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-               queuePopFront(reg[regIn]);
-               jump(sub_read); // or we could self-tail-recurse here
-               break;
             case '(':
                gosub(sub_read_list,blk_re_return);
                break;
