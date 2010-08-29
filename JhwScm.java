@@ -227,6 +227,7 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
+         if ( DEBUG ) javaDepth = 1;
          log("step: " + pp(reg[regPc]));
          if ( DEBUG ) javaDepth = 2;
          switch ( reg[regPc] )
@@ -369,13 +370,13 @@ public class JhwScm
             v = value(c);
             if ( EOF == c )
             {
-               log("  eof mid-list");
+               log("eof mid-list");
                raiseError(ERR_LEXICAL);
                break;
             }
             if ( DEBUG && TYPE_CHAR != t )
             {
-               log("  non-char in input: " + pp(c));
+               log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -394,19 +395,19 @@ public class JhwScm
             }
             if ( '0' <= v && v <= '9' )
             {
-               log("  non-negated number");
+               log("non-negated number");
                gosub(sub_read_num,blk_re_return);
                break;
             }
             if ( '#' == v )
             {
-               log("  octothorpe special");
+               log("octothorpe special");
                gosub(sub_read_boolean,blk_re_return);
                break;
             }
             if ( '-' == v )
             {
-               log("  minus special case");
+               log("minus special case");
                // The minus sign is special.  We need to look ahead
                // *again* before we can decide whether it is part of a
                // symbol or part of a number.
@@ -421,19 +422,19 @@ public class JhwScm
                }
                if ( '0' <= v1 && v1 <= '9' )
                {
-                  log("    minus-in-negative");
+                  log("  minus-in-negative");
                   gosub(sub_read_num,sub_read_token+0x1);
                   break;
                }
                else
                {
-                  log("    minus-in-symbol");
+                  log("  minus-in-symbol");
                   queuePushBack(reg[regIn],c1);
                   gosub(sub_read_symbol,blk_re_return);
                   break;
                }
             }
-            log("    symbol");
+            log("symbol");
             gosub(sub_read_symbol,blk_re_return);
             break;
          case sub_read_token+0x1:
@@ -445,7 +446,7 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            log("  negating: " + pp(c));
+            log("negating: " + pp(c));
             v = -v;
             reg[regRetval] = code(TYPE_FIXINT,v);
             log("  to:       " + pp(reg[regRetval]));
@@ -471,14 +472,14 @@ public class JhwScm
             v0 = value(c0);
             if ( EOF == c0 )
             {
-               log("  eof: returning " + pp(reg[regArg0]));
+               log("eof: returning " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             }
             if ( TYPE_CHAR != t0 )
             {
-               log("  non-char in input: " + pp(c0));
+               log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -487,7 +488,7 @@ public class JhwScm
             v1 = value(c1);
             if ( TYPE_FIXINT != t1 )
             {
-               log("  non-fixint in arg: " + pp(c1));
+               log("non-fixint in arg: " + pp(c1));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -499,21 +500,21 @@ public class JhwScm
             case '\n':
             case '(':
             case ')':
-               log("  terminator: " + pp(c0) + " return " + pp(reg[regArg0]));
+               log("terminator: " + pp(c0) + " return " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             default:
                if ( v0 < '0' || v0 > '9' )
                {
-                  log("  non-digit in input: " + pp(c0));
+                  log("non-digit in input: " + pp(c0));
                   raiseError(ERR_LEXICAL);
                   break;
                }
                tmp = 10*v1 + (v0-'0');
-               log("  first char: " + (char)v0);
-               log("  old accum:  " +       v1);
-               log("  new accum:  " +       tmp);
+               log("first char: " + (char)v0);
+               log("old accum:  " +       v1);
+               log("new accum:  " +       tmp);
                queuePopFront(reg[regIn]);
                reg[regArg0] = code(TYPE_FIXINT,tmp);
                gosub(sub_read_num_loop,blk_re_return);
@@ -536,14 +537,14 @@ public class JhwScm
             v0 = value(c0);
             if ( TRUE == c0 )
             {
-               log("  eof after octothorpe");
+               log("eof after octothorpe");
                raiseError(ERR_LEXICAL);
                break;
             }
             queuePopFront(reg[regIn]);
             if ( TYPE_CHAR != t0 )
             {
-               log("  non-char in input: " + pp(c0));
+               log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -558,7 +559,7 @@ public class JhwScm
                returnsub();
                break;
             default:
-               log("  unexpected after octothorpe: " + pp(c0));
+               log("unexpected after octothorpe: " + pp(c0));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -587,7 +588,7 @@ public class JhwScm
             //
             if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
-               log("  non-queue in arg: " + pp(reg[regArg0]));
+               log("non-queue in arg: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -597,13 +598,13 @@ public class JhwScm
             if ( EOF == c0 )
             {
                reg[regRetval] = car(reg[regArg0]);
-               log("  eof: returning " + pp(reg[regRetval]));
+               log("eof: returning " + pp(reg[regRetval]));
                returnsub();
                break;
             }
             if ( TYPE_CHAR != t0 )
             {
-               log("  non-char in input: " + pp(c0));
+               log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -616,13 +617,13 @@ public class JhwScm
             case '(':
             case ')':
                reg[regRetval] = car(reg[regArg0]);
-               log("  eot, returning: " + pp(reg[regRetval]));
+               log("eot, returning: " + pp(reg[regRetval]));
                returnsub();
                break;
             default:
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
-               log("  pushing: " + pp(c0));
+               log("pushing: " + pp(c0));
                gosub(sub_read_symbol_loop,blk_re_return);
                break;
             }
@@ -649,8 +650,8 @@ public class JhwScm
                // doesn't mean I need to be clever.
                reg[regTmp0] = car(reg[regArg0]);
                reg[regTmp1] = cdr(reg[regArg0]);
-               log("  h: " + pp(reg[regTmp0]));
-               log("  t: " + pp(reg[regTmp1]));
+               log("h: " + pp(reg[regTmp0]));
+               log("t: " + pp(reg[regTmp1]));
                switch (reg[regTmp0])
                {
                case IS_STRING:
@@ -673,7 +674,7 @@ public class JhwScm
                }
                break;
             default:
-               log("  wtf: " + pp(reg[regArg1]));
+               log("wtf: " + pp(reg[regArg1]));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -742,7 +743,7 @@ public class JhwScm
             //
             if ( NIL == reg[regArg1] )
             {
-               log("  empty env: symbol not found");
+               log("empty env: symbol not found");
                reg[regRetval] = NIL;
                returnsub();
                break;
@@ -762,7 +763,7 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( NIL != reg[regRetval] )
             {
-               log("  symbol found w/ binding: " + pp(reg[regRetval]));
+               log("symbol found w/ binding: " + pp(reg[regRetval]));
                returnsub();
                break;
             }
@@ -878,7 +879,7 @@ public class JhwScm
             c = reg[regArg0];
             t = type(c);
             v = value(c);
-            log("  printing: " + pp(c));
+            log("printing: " + pp(c));
             switch (t)
             {
             case TYPE_NIL:
@@ -1029,7 +1030,7 @@ public class JhwScm
             c1 = cdr(c);
             if ( TYPE_CHAR != type(c0) )
             {
-               log("  bogus: " + pp(c0));
+               log("bogus: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -1079,12 +1080,12 @@ public class JhwScm
             case ERR_SEMANTIC:  return FAILURE_SEMANTIC;
             case ERR_NOT_IMPL:  return UNIMPLEMENTED;
             default:            
-               log("  unknown error code: " + pp(reg[regError]));
+               log("unknown error code: " + pp(reg[regError]));
                return INTERNAL_ERROR;
             }
 
          default:
-            log("  bogus: " + pp(reg[regPc]));
+            log("bogus: " + pp(reg[regPc]));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -1255,7 +1256,7 @@ public class JhwScm
       }
       if ( NIL != reg[regError] )
       {
-         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
+         if ( verbose ) log("flow suspended for error: " + reg[regError]);
          return;
       }
       reg[regPc] = nextOp;
