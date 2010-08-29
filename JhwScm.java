@@ -354,18 +354,10 @@ public class JhwScm
             // paren '(' which begins the list.
             //
             c = queuePeekFront(reg[regIn]);
-            t = type(c);
-            v = value(c);
-            if ( DEBUG && TYPE_CHAR != t )
-            {
-               log("non-char in input: " + pp(c));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            if ( DEBUG && '(' != v )
+            if ( '(' != code(TYPE_CHAR,'(') )
             {
                log("non-paren in input: " + pp(c));
-               raiseError(ERR_INTERNAL);
+               raiseError(ERR_SEMANTIC);
                break;
             }
             queuePopFront(reg[regIn]);
@@ -805,7 +797,7 @@ public class JhwScm
             store(reg[regArg0]);
             store(reg[regArg1]);
             reg[regArg1] = car(reg[regArg1]);
-            gosub(sub_eqv_p,sub_eval_look_frame+0x1);
+            gosub(sub_equal_p,sub_eval_look_frame+0x1);
             break;
          case sub_eval_look_frame+0x1:
             reg[regArg1] = restore();
@@ -820,7 +812,7 @@ public class JhwScm
             gosub(sub_eval_look_frame,blk_re_return);
             break;
 
-         case sub_eqv_p:
+         case sub_equal_p:
             // Compares the objects in reg[regArg0] and reg[regArg1].
             //
             // Returns TRUE in reg[regRetval] if they are equivalent,
@@ -831,6 +823,8 @@ public class JhwScm
             // necessary that it do so if we don't expose this to
             // users and ensure that it can only be called on objects
             // (like symbols) that are known to be cycle-free.
+            //
+            // NOTE: this is meant to be the equal? described in R5RS.
             //
             if ( reg[regArg0] == reg[regArg1] )
             {
@@ -856,9 +850,9 @@ public class JhwScm
             store(reg[regArg1]);
             reg[regArg0] = car(reg[regArg0]);
             reg[regArg1] = car(reg[regArg1]);
-            gosub(sub_eqv_p,sub_eqv_p+0x1);
+            gosub(sub_equal_p,sub_equal_p+0x1);
             break;
-         case sub_eqv_p+0x1:
+         case sub_equal_p+0x1:
             reg[regArg1] = restore();
             reg[regArg0] = restore();
             if ( FALSE == reg[regRetval] )
@@ -868,7 +862,7 @@ public class JhwScm
             }
             reg[regArg0] = cdr(reg[regArg0]);
             reg[regArg1] = cdr(reg[regArg1]);
-            gosub(sub_eqv_p,blk_re_return);
+            gosub(sub_equal_p,blk_re_return);
             break;
 
          case sub_apply:
@@ -1243,7 +1237,7 @@ public class JhwScm
    private static final int sub_print_string     = TYPE_SUB |  0x5300;
    private static final int sub_print_chars      = TYPE_SUB |  0x5400;
 
-   private static final int sub_eqv_p            = TYPE_SUB |  0x6000;
+   private static final int sub_equal_p          = TYPE_SUB |  0x6000;
 
    private static final int blk_re_return        = TYPE_SUB | 0x10001;
    private static final int blk_error            = TYPE_SUB | 0x10002;
@@ -1952,7 +1946,7 @@ public class JhwScm
          case sub_print_list_elems: buf.append("sub_print_list_elems"); break;
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
-         case sub_eqv_p:            buf.append("sub_eqv_p");            break;
+         case sub_equal_p:          buf.append("sub_equal_p");          break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
