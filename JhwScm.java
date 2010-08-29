@@ -316,6 +316,7 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
+            // TODO: use sub_read_burn_space
             switch (v)
             {
             case ' ':
@@ -373,6 +374,7 @@ public class JhwScm
             }
             log("what next?");
             raiseError(ERR_NOT_IMPL);
+            //gosub(sub_read,sub_read_list+0x2);
             break;
          case sub_read_list+0x2:
             if ( EOF == c )
@@ -510,6 +512,7 @@ public class JhwScm
                raiseError(ERR_LEXICAL);
                break;
             }
+            // TODO: use sub_read_burn_space
             switch (v0)
             {
             case ' ':
@@ -626,6 +629,7 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
+            // TODO: use sub_read_burn_space
             switch (v0)
             {
             case ' ':
@@ -1436,7 +1440,7 @@ public class JhwScm
       final boolean verbose = true;
       if ( verbose )
       {
-         log("  raiseError():");
+         log("raiseError():");
       }
       if ( DEBUG && TYPE_ERROR != type(err) )
       {
@@ -1444,9 +1448,9 @@ public class JhwScm
       }
       if ( verbose )
       {
-         log("    err:   " + pp(err));
-         log("    pc:    " + pp(reg[regPc]));
-         log("    stack: " + pp(reg[regStack]));
+         log("  err:   " + pp(err));
+         log("  pc:    " + pp(reg[regPc]));
+         log("  stack: " + pp(reg[regStack]));
       }
       if ( verbose )
       {
@@ -1463,19 +1467,19 @@ public class JhwScm
                active = true;
                continue;
             }
-            log("    java:  " + elm);
+            log("  java:  " + elm);
          }
          for ( int c = reg[regStack]; NIL != c; c = cdr(c) )
          {
             // TODO: hopefully the stack isn't corrupt....
-            log("    scm:   " + pp(car(c)));
+            log("  scm:   " + pp(car(c)));
          }
       }
       if ( NIL == reg[regError] ) 
       {
          if ( verbose )
          {
-            log("    primary: documenting");
+            log("  first: documenting");
          }
          reg[regError]      = err;
          reg[regErrorPc]    = reg[regPc];
@@ -1485,7 +1489,7 @@ public class JhwScm
       {
          if ( verbose )
          {
-            log("    secondary: supressing");
+            log("  late:  supressing");
          }
       }
       reg[regPc]    = blk_error;
