@@ -124,12 +124,28 @@ public class Test
       expectSuccess(" #t ", "#t");
       expectSuccess("#f ",  "#f");
       expectSuccess(" #f",  "#f");
+      expectLexical("#x");
 
       JhwScm.SILENT = false;
 
       // unbound variables fail
-      expectFailure("a");
-      expectFailure("a1");
+      expectSemantic("a");
+      expectSemantic("a1");
+
+      // some lexical, rather than semantic, error case expectations
+      expectSemantic("()");
+      expectLexical("(");
+      expectLexical(")");
+      expectSemantic("(()())");
+      expectLexical("(()()))");
+      expectLexical("((()())");
+
+      expectSemantic("(a b c)");
+      expectSemantic("(a (b c))");
+      expectSemantic("((a b) c)");
+      expectSemantic("((a b c))");
+      expectLexical("((a b) c");
+      expectLexical("((a b c)");
 
       // simple arithmetic
       expectSuccess("(+ 0)","0");
@@ -138,7 +154,7 @@ public class Test
       expectSuccess("(+ 100 2)","102");
       expectSuccess("(* 97 2)","184");
       expectSuccess("(* 2 3 5)","30");
-      expectFailure("(+ a b)");
+      expectSemantic("(+ a b)");
 
       // cons and list have a particular relationship
       expectSuccess("(cons 1 2)","(1 . 2)");
@@ -146,10 +162,10 @@ public class Test
       expectSuccess("(cdr (cons 1 2))","2");
       expectSuccess("(list)","()");
       expectSuccess("(list 1 2)","(1 2)");
-      expectFailure("(car 1)");
-      expectFailure("(car '())");
-      expectFailure("(cdr 1)");
-      expectFailure("(cdr '())");
+      expectSemantic("(car 1)");
+      expectSemantic("(car '())");
+      expectSemantic("(cdr 1)");
+      expectSemantic("(cdr '())");
       expectSuccess("(cons 1 '())","(1)");
       expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
 
@@ -166,13 +182,13 @@ public class Test
       expectSuccess("(quote ())","()");
       expectSuccess("(quote (1 2))","(1 2)");
       expectSuccess("(quote (a b))","(a b)");
-      expectFailure("(+ 1 (quote ()))");
+      expectSemantic("(+ 1 (quote ()))");
 
       // simple quote sugar
       expectSuccess("'()","()");
       expectSuccess("'(1 2)","(1 2)");
       expectSuccess("'(a b)","(a b)");
-      expectFailure("(+ 1 '())");
+      expectSemantic("(+ 1 '())");
 
       {
          final JhwScm scm = new JhwScm();
@@ -185,21 +201,21 @@ public class Test
          expectSuccess("(define a 100)","",   scm);
          expectSuccess("(define b   2)","",   scm);
          expectSuccess("(+ a b)",       "102",scm);
-         expectFailure("(+ a c)",             scm);
+         expectSemantic("(+ a c)",             scm);
          selfTest(scm);
       }
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define foo +)","",  scm);
          expectSuccess("(foo 13 18)",   "31",scm);
-         expectFailure("(foo 13 '())",       scm);
+         expectSemantic("(foo 13 '())",       scm);
          selfTest(scm);
       }
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
          expectSuccess("(foo 13 18)",               "31",scm);
-         expectFailure("(foo 13 '())",                   scm);
+         expectSemantic("(foo 13 '())",                   scm);
          selfTest(scm);
       }
 
@@ -229,8 +245,8 @@ public class Test
          expectSuccess("#\\SPACE",  "#\\space");
          expectSuccess("#\\newline","#\\newline");
          expectSuccess("#\\NeWlInE","#\\newline");
-         expectFailure("#\\spac");
-         expectFailure("#\\asdf");
+         expectLexical("#\\spac");
+         expectLexical("#\\asdf");
       }
    }
 
@@ -280,12 +296,29 @@ public class Test
       selfTest(scm);
    }
 
-   private static void expectFailure ( final String expr )
+   private static void expectLexical ( final String expr )
    {
-      expectFailure(expr,null);
+      expectFailure(expr,null,JhwScm.FAILURE_LEXICAL);
    }
 
-   private static void expectFailure ( final String expr, JhwScm scm )
+   private static void expectLexical ( final String expr, JhwScm scm )
+   {
+      expectFailure(expr,scm,JhwScm.FAILURE_LEXICAL);
+   }
+
+   private static void expectSemantic ( final String expr )
+   {
+      expectFailure(expr,null,JhwScm.FAILURE_SEMANTIC);
+   }
+
+   private static void expectSemantic ( final String expr, JhwScm scm )
+   {
+      expectFailure(expr,scm,JhwScm.FAILURE_SEMANTIC);
+   }
+
+   private static void expectFailure ( final String expr, 
+                                       JhwScm       scm,
+                                       final int    expectedError )
    {
       if ( null == scm )
       {
@@ -308,7 +341,7 @@ public class Test
          System.out.println("\"");
       }
       assertEquals("should fail evaluating \"" + expr + "\":",
-                   JhwScm.FAILURE, 
+                   expectedError, 
                    dcode);
       selfTest(scm);
    }

@@ -51,13 +51,14 @@ public class JhwScm
 
    public static final boolean verbose        = false;
 
-   public static final int     SUCCESS        = 0;
-   public static final int     INCOMPLETE     = 1000;
-   public static final int     BAD_ARG        = 2000; // often + specifier
-   public static final int     OUT_OF_MEMORY  = 3000; // often + specifier
-   public static final int     FAILURE        = 4000; // often + specifier
-   public static final int     UNIMPLEMENTED  = 5000; // often + specifier
-   public static final int     INTERNAL_ERROR = 6000; // often + specifier
+   public static final int     SUCCESS          = 0;
+   public static final int     INCOMPLETE       = 1;
+   public static final int     BAD_ARG          = 2;
+   public static final int     OUT_OF_MEMORY    = 3;
+   public static final int     FAILURE_LEXICAL  = 4;
+   public static final int     FAILURE_SEMANTIC = 5;
+   public static final int     UNIMPLEMENTED    = 6;
+   public static final int     INTERNAL_ERROR   = 7;
 
    public JhwScm ()
    {
@@ -154,20 +155,19 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
+      // TODO: make this all-or-nothing, like input()?
       for ( int f = 0; EOF != ( f = queuePeekFront(reg[regOut]) ); /*below*/ )
       {
          final int  v = value(f);
          final char c = (char)(MASK_VALUE & v);
-         // TODO: change signature so we don't need this guard here?
-         // 
-         // TODO: make this all-or-nothing, like input()?
          try
          {
             output.append(c);
          }
          catch ( Throwable e )
          {
-            return FAILURE;
+            // TODO: change signature so we don't need this guard here?
+            return OUT_OF_MEMORY;
          }
          queuePopFront(reg[regOut]);
       }
@@ -375,15 +375,15 @@ public class JhwScm
             c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
-            if ( DEBUG && TYPE_CHAR != t )
+            if ( EOF == c )
             {
-               log("non-char in input: " + pp(c));
-               raiseError(ERR_INTERNAL);
+               log("  eof mid-list");
+               raiseError(ERR_LEXICAL);
                break;
             }
-            if ( DEBUG && '(' != v )
+            if ( DEBUG && TYPE_CHAR != t )
             {
-               log("non-paren in input: " + pp(c));
+               log("  non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -590,8 +590,8 @@ public class JhwScm
             // Parses the next symbol from reg[regIn], expecting the
             // accumulated value-so-far as a queue in reg[regArg0].
             //
-            // A helper for sub_read_sym, but still a sub_ in its own
-            // right.
+            // A helper for sub_read_symbol, but still a sub_ in its
+            // own right.
             //
             if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
@@ -631,7 +631,7 @@ public class JhwScm
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
                log("  pushing: " + pp(c0));
-               gosub(sub_read_num_loop,blk_re_return);
+               gosub(sub_read_symbol_loop,blk_re_return);
                break;
             }
             break;
@@ -667,10 +667,9 @@ public class JhwScm
                   returnsub();
                   break;
                case IS_SYMBOL:
-                  log("  going to sub_eval_look");
                   reg[regArg0] = reg[regArg0]; // forward the symbol
                   reg[regArg1] = reg[regArg1]; // forward the env
-                  gosub(sub_eval_look_env,blk_re_return);
+                  gosub(sub_eval_look_env,sub_eval+0x3);
                   break;
                default:
                   store(reg[regTmp1]);         // store the args
@@ -718,6 +717,15 @@ public class JhwScm
             reg[regArg1] = reg[regRetval]; // retrieve the eval of the rest
             gosub(sub_apply,blk_re_return);
             break;
+         case sub_eval+0x03: // following sybol lookup
+            if ( NIL == reg[regRetval] )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg[regRetval] = cdr(reg[regRetval]);
+            returnsub();
+            break;
 
          case sub_eval_list:
             // Evaluates all the expressions in the list in
@@ -742,6 +750,7 @@ public class JhwScm
             //
             if ( NIL == reg[regArg1] )
             {
+               log("  empty env: symbol not found");
                reg[regRetval] = NIL;
                returnsub();
                break;
@@ -761,6 +770,7 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( NIL != reg[regRetval] )
             {
+               log("  symbol found w/ binding: " + pp(reg[regRetval]));
                returnsub();
                break;
             }
@@ -1071,7 +1081,8 @@ public class JhwScm
             {
             case ERR_OOM:       return OUT_OF_MEMORY;
             case ERR_INTERNAL:  return INTERNAL_ERROR;
-            case ERR_LEXICAL:   return FAILURE;
+            case ERR_LEXICAL:   return FAILURE_LEXICAL;
+            case ERR_SEMANTIC:  return FAILURE_SEMANTIC;
             case ERR_NOT_IMPL:  return UNIMPLEMENTED;
             default:            
                log("  unknown error code: " + pp(reg[regError]));
@@ -1455,11 +1466,11 @@ public class JhwScm
       final int c = code(t,v);
       if ( t != type(c) )
       {
-         return FAILURE + 1;
+         return INTERNAL_ERROR;
       }
       if ( v != value(c) )
       {
-         return FAILURE + 2;
+         return INTERNAL_ERROR;
       }
 
       final int numFree      = listLength(reg[regFreeCellList]);
@@ -1484,45 +1495,47 @@ public class JhwScm
       final int cell0 = cons(i0,i1); 
       if ( (NIL == cell0) != (numFree <= 0) )
       {
-         return FAILURE + 5;
+         return INTERNAL_ERROR;
       }
-      if ( NIL != cell0 )
+      if ( NIL == cell0 )
       {
-         if ( i0 != car(cell0) )
+         return OUT_OF_MEMORY;
+      }
+
+      if ( i0 != car(cell0) )
+      {
+         return INTERNAL_ERROR;
+      }
+      if ( i1 != cdr(cell0) )
+      {
+         return INTERNAL_ERROR;
+      }
+      final int cell1 = cons(i2,cell0); 
+      if ( (NIL == cell1) != (numFree <= 1) )
+      {
+         return INTERNAL_ERROR;
+      }
+      if ( NIL != cell1 )
+      {
+         if ( i2 != car(cell1) )
          {
-            return FAILURE + 10;
+            return INTERNAL_ERROR;
          }
-         if ( i1 != cdr(cell0) )
+         if ( cell0 != cdr(cell1) )
          {
-            return FAILURE + 20;
+            return INTERNAL_ERROR;
          }
-         final int cell1 = cons(i2,cell0); 
-         if ( (NIL == cell1) != (numFree <= 1) )
+         if ( i0 != car(cdr(cell1)) )
          {
-            return FAILURE + 6;
+            return INTERNAL_ERROR;
          }
-         if ( NIL != cell1 )
+         if ( i1 != cdr(cdr(cell1)) )
          {
-            if ( i2 != car(cell1) )
-            {
-               return FAILURE + 30;
-            }
-            if ( cell0 != cdr(cell1) )
-            {
-               return FAILURE + 40;
-            }
-            if ( i0 != car(cdr(cell1)) )
-            {
-               return FAILURE + 50;
-            }
-            if ( i1 != cdr(cdr(cell1)) )
-            {
-               return FAILURE + 60;
-            }
-            if ( listLength(reg[regFreeCellList]) != numFree-2 )
-            {
-               return FAILURE + 70;
-            }
+            return INTERNAL_ERROR;
+         }
+         if ( listLength(reg[regFreeCellList]) != numFree-2 )
+         {
+            return INTERNAL_ERROR;
          }
       }
 
