@@ -730,14 +730,84 @@ public class JhwScm
             // Looks up the symbol in reg[regArg0] in the env in
             // reg[regArg1].
             //
-            raiseError(ERR_NOT_IMPL);
+            // Returns NIL if not found, else the binding of the
+            // symbol: a cell whose car is a symbol equivalent to the
+            // argument symbol, and whose cdr is the value.
+            //
+            // Subsequent setcdrs on that cell change the value of the
+            // symbol.
+            //
+            // Finds the *first* binding in the *first* frame for the
+            // symbol.
+            //
+            if ( NIL == reg[regArg1] )
+            {
+               reg[regRetval] = NIL;
+               returnsub();
+               break;
+            }
+            if ( TYPE_CELL != type(reg[regArg1]) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            store(reg[regArg0]);
+            store(reg[regArg1]);
+            reg[regArg1] = car(reg[regArg1]);
+            gosub(sub_eval_look_frame,sub_eval_look_env+0x1);
+            break;
+         case sub_eval_look_env+0x1:
+            reg[regArg1] = restore();
+            reg[regArg0] = restore();
+            if ( NIL != reg[regRetval] )
+            {
+               returnsub();
+               break;
+            }
+            reg[regArg1] = cdr(reg[regArg1]);
+            gosub(sub_eval_look_env,blk_re_return);
             break;
 
          case sub_eval_look_frame:
-            // Looks up the symbol in reg[regArg0] in the env in
+            // Looks up the symbol in reg[regArg0] in the env frame in
             // reg[regArg1].
             //
-            raiseError(ERR_NOT_IMPL);
+            // Returns NIL if not found, else the binding of the
+            // symbol: a cell whose car is a symbol equivalent to the
+            // argument symbol, and whose cdr is the value.
+            //
+            // Subsequent setcdrs on that cell change the value of the
+            // symbol.
+            //
+            // Finds the *first* binding in the frame for the symbol.
+            //
+            if ( NIL == reg[regArg1] )
+            {
+               reg[regRetval] = NIL;
+               returnsub();
+               break;
+            }
+            if ( TYPE_CELL != type(reg[regArg1]) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            store(reg[regArg0]);
+            store(reg[regArg1]);
+            reg[regArg1] = car(reg[regArg1]);
+            gosub(sub_eqv_p,sub_eval_look_frame+0x1);
+            break;
+         case sub_eval_look_frame+0x1:
+            reg[regArg1] = restore();
+            reg[regArg0] = restore();
+            if ( TRUE == reg[regRetval] )
+            {
+               reg[regRetval] = car(reg[regArg1]);
+               returnsub();
+               break;
+            }
+            reg[regArg1] = cdr(reg[regArg1]);
+            gosub(sub_eval_look_frame,blk_re_return);
             break;
 
          case sub_eqv_p:
