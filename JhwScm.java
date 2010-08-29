@@ -77,7 +77,7 @@ public class JhwScm
          reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
       }
 
-      reg[regPc] = sub_rep;
+      reg[regPc]  = sub_rep;
 
       reg[regIn]  = queueCreate();
       reg[regOut] = queueCreate();
@@ -319,12 +319,12 @@ public class JhwScm
             }
             switch (value(c))
             {
-            case '(':
-               gosub(sub_read_list,blk_re_return);
-               break;
             case ')':
                log("mismatch close paren");
                raiseError(ERR_LEXICAL);
+               break;
+            case '(':
+               gosub(sub_read_list,blk_re_return);
                break;
             default:
                gosub(sub_read_atom,blk_re_return);
@@ -333,23 +333,39 @@ public class JhwScm
             break;
 
          case sub_read_list:
-            // Parses the next list of exprs from reg[regIn], and
-            // leaves the results in reg[regRetval].
+            // Reads the next list expr from reg[regIn], returning
+            // the result in reg[regRetval].
+            // 
+            // On entry, expects the next char from reg[regIn] to be
+            // the opening '(' a list expression.
+            // 
+            // On exit, precisely the list expression will have been
+            // consumed from reg[regIn], up to and including the final
+            // ')'.
             //
-            // On entry, expects the next char on input to be the open
-            // paren '(' which begins the list.
-            //
-            c = queuePeekFront(reg[regIn]);
-            if ( code(TYPE_CHAR,'(') != c )
+            if ( queuePeekFront(reg[regIn]) != code(TYPE_CHAR,'(') )
             {
-               log("non-paren in input: " + pp(c));
-               raiseError(ERR_SEMANTIC);
+               raiseError(ERR_LEXICAL);
                break;
             }
             queuePopFront(reg[regIn]);
-            gosub(sub_read_burn_space,sub_read_list+0x1);
+            gosub(sub_read_list_open,blk_re_return);
             break;
-         case sub_read_list+0x1:
+
+         case sub_read_list_open:
+            // Reads all exprs from reg[regIn] until a loose EOF or
+            // ')' is encountered.
+            //
+            // EOF results in an error (mismatchd paren).  ')' results
+            // in returning a list containing all the exprs in order.
+            // 
+            // On exit, precisely the list expression will have been
+            // consumed from reg[regIn], up to and including the final
+            // ')'.
+            //
+            gosub(sub_read_burn_space,sub_read_list_open+0x1);
+            break;
+         case sub_read_list_open+0x1:
             c = queuePeekFront(reg[regIn]);
             if ( code(TYPE_CHAR,')') == c )
             {
@@ -365,30 +381,37 @@ public class JhwScm
                raiseError(ERR_LEXICAL);
                break;
             }
-            log("what next?");
-            raiseError(ERR_NOT_IMPL);
-            //gosub(sub_read,sub_read_list+0x2);
+            gosub(sub_read,sub_read_list_open+0x2);
             break;
-         case sub_read_list+0x2:
-            if ( EOF == c )
+         case sub_read_list_open+0x2:
+            if ( DEBUG && EOF == reg[regRetval] )
             {
-               log("eof mid-list");
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            c = queuePeekFront(reg[regIn]);
-            t = type(c);
-            v = value(c);
-            if ( DEBUG && TYPE_CHAR != t )
-            {
-               log("non-char in input: " + pp(c));
+               // sub_read_list+0x1, ensuring sub_read wasn't going to
+               // find EOF or ')'.
+               log("unexpected eof mid-list");
                raiseError(ERR_INTERNAL);
                break;
             }
-            raiseError(ERR_NOT_IMPL);
+            store(reg[regRetval]);                            // store subexpr
+            gosub(sub_read_list_open,sub_read_list_open+0x3); // recurse
+            break;
+         case sub_read_list_open+0x3:
+            reg[regTmp0]   = restore();                      // restore subexpr
+            reg[regTmp1]   = reg[regRetval];                 // get rest
+            reg[regRetval] = cons(reg[regTmp0],reg[regTmp1]);
+            returnsub();
             break;
 
          case sub_read_atom:
+            // Reads the next atomic expr from reg[regIn], returning
+            // the result in reg[regRetval].
+            // 
+            // On entry, expects the next char from reg[regIn] to be
+            // the initial character of an atomic expression.
+            // 
+            // On exit, precisely the atomic expression will have been
+            // consumed from reg[regIn].
+            // 
             c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
@@ -505,7 +528,6 @@ public class JhwScm
                raiseError(ERR_LEXICAL);
                break;
             }
-            // TODO: use sub_read_burn_space
             switch (v0)
             {
             case ' ':
@@ -579,7 +601,6 @@ public class JhwScm
             }
             break;
 
-
          case sub_read_symbol:
             // Parses the next symbol from reg[regIn].
             //
@@ -622,7 +643,6 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            // TODO: use sub_read_burn_space
             switch (v0)
             {
             case ' ':
@@ -1261,6 +1281,7 @@ public class JhwScm
 
    private static final int sub_read             = TYPE_SUB |  0x2000;
    private static final int sub_read_list        = TYPE_SUB |  0x2100;
+   private static final int sub_read_list_open   = TYPE_SUB |  0x2110;
    private static final int sub_read_atom        = TYPE_SUB |  0x2200;
    private static final int sub_read_num         = TYPE_SUB |  0x2300;
    private static final int sub_read_num_loop    = TYPE_SUB |  0x2310;
@@ -1287,6 +1308,17 @@ public class JhwScm
    private static final int blk_re_return        = TYPE_SUB | 0x10001;
    private static final int blk_error            = TYPE_SUB | 0x10002;
 
+   // TODO: jump is icky.
+   //
+   // I feel like I'm using it, there was a recursive form (probably
+   // tail-recursive) that I missed.
+   //
+   // Seems to me I should be eating my own dogfood on the recursion a
+   // bit more.
+   // 
+   // Of course, at some point I'll probably be introducing a
+   // conditional branch...
+   //
    private void jump ( final int nextOp )
    {
       if ( DEBUG )
@@ -1975,6 +2007,7 @@ public class JhwScm
          case sub_rep:              buf.append("sub_rep");              break;
          case sub_read:             buf.append("sub_read");             break;
          case sub_read_list:        buf.append("sub_read_list");        break;
+         case sub_read_list_open:   buf.append("sub_read_list_open");   break;
          case sub_read_atom:        buf.append("sub_read_atom");        break;
          case sub_read_num:         buf.append("sub_read_num");         break;
          case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;

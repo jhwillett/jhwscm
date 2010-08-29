@@ -126,8 +126,6 @@ public class Test
       expectSuccess(" #f",  "#f");
       expectLexical("#x");
 
-      JhwScm.SILENT = false;
-
       // unbound variables fail
       expectSemantic("a");
       expectSemantic("a1");
@@ -140,8 +138,8 @@ public class Test
       expectLexical(")");
       expectSemantic("(()())");
       expectSemantic("  ( ( )    ( ) )");
-      expectLexical("(()()))");
-      expectLexical(" ( () ())) ");
+      expectSemantic("(()()))");     // fails on expr before reaching extra ')'
+      expectSemantic(" ( () ())) "); // fails on expr before reaching extra ')'
       expectLexical("((()())");
 
       expectSemantic("(a b c)");
@@ -150,6 +148,8 @@ public class Test
       expectSemantic("((a b c))");
       expectLexical("((a b) c");
       expectLexical("((a b c)");
+
+      JhwScm.SILENT = false;
 
       // simple arithmetic
       expectSuccess("(+ 0)","0");
