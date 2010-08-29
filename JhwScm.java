@@ -637,6 +637,14 @@ public class JhwScm
          case sub_read_string:
             // Parses the next string literal from reg[regIn].
             //
+            c = queuePeekFront(reg[regIn]);
+            if ( code(TYPE_CHAR,'"') != c )
+            {
+               log("non-\" leading string literal: " + pp(c));
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            queuePopFront(reg[regIn]);
             reg[regArg0] = queueCreate();
             store(reg[regArg0]);
             gosub(sub_read_char_seq,sub_read_string+0x1);
@@ -645,12 +653,6 @@ public class JhwScm
             reg[regTmp0]   = restore();
             reg[regRetval] = cons(IS_STRING,car(reg[regTmp0]));
             c = queuePeekFront(reg[regIn]);
-            if ( EOF == c )
-            {
-               log("eof in string literal");
-               raiseError(ERR_LEXICAL);
-               break;
-            }
             if ( code(TYPE_CHAR,'"') != c )
             {
                log("non-\" terminating string literal: " + pp(c));
