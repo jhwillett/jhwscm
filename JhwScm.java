@@ -434,7 +434,7 @@ public class JhwScm
             case '#':
                // TODO: can mean more than just a boolean literal
                log("octothorpe special");
-               gosub(sub_read_boolean,blk_re_return);
+               gosub(sub_read_octo_tok,blk_re_return);
                break;
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
@@ -558,8 +558,8 @@ public class JhwScm
             }
             break;
 
-         case sub_read_boolean:
-            // Parses the next boolean literal reg[regIn].
+         case sub_read_octo_tok:
+            // Parses the next octothorpe literal reg[regIn].
             //
             c = queuePeekFront(reg[regIn]);
             if ( c != code(TYPE_CHAR,'#') )
@@ -569,30 +569,34 @@ public class JhwScm
             }
             queuePopFront(reg[regIn]);
             c0 = queuePeekFront(reg[regIn]);
-            t0 = type(c0);
-            v0 = value(c0);
-            if ( TRUE == c0 )
+            if ( EOF == c0 )
             {
                log("eof after octothorpe");
                raiseError(ERR_LEXICAL);
                break;
             }
-            queuePopFront(reg[regIn]);
-            if ( TYPE_CHAR != t0 )
+            if ( DEBUG && TYPE_CHAR != type(c0) )
             {
                log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
-            switch (v0)
+            queuePopFront(reg[regIn]);
+            switch (value(c0))
             {
             case 't':
+               log("true");
                reg[regRetval] = TRUE;
                returnsub();
                break;
             case 'f':
+               log("false");
                reg[regRetval] = FALSE;
                returnsub();
+               break;
+            case '\\':
+               log("character literal");
+               raiseError(ERR_NOT_IMPL);
                break;
             default:
                log("unexpected after octothorpe: " + pp(c0));
@@ -1285,7 +1289,7 @@ public class JhwScm
    private static final int sub_read_atom        = TYPE_SUB |  0x2200;
    private static final int sub_read_num         = TYPE_SUB |  0x2300;
    private static final int sub_read_num_loop    = TYPE_SUB |  0x2310;
-   private static final int sub_read_boolean     = TYPE_SUB |  0x2400;
+   private static final int sub_read_octo_tok    = TYPE_SUB |  0x2400;
    private static final int sub_read_symbol      = TYPE_SUB |  0x2500;
    private static final int sub_read_symbol_loop = TYPE_SUB |  0x2600;
    private static final int sub_read_burn_space  = TYPE_SUB |  0x2700;
@@ -2011,7 +2015,7 @@ public class JhwScm
          case sub_read_atom:        buf.append("sub_read_atom");        break;
          case sub_read_num:         buf.append("sub_read_num");         break;
          case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;
-         case sub_read_boolean:     buf.append("sub_read_boolean");     break;
+         case sub_read_octo_tok:    buf.append("sub_read_octo_tok");    break;
          case sub_read_symbol:      buf.append("sub_read_symbol");      break;
          case sub_read_symbol_loop: buf.append("sub_read_symbol_loop"); break;
          case sub_read_burn_space:  buf.append("sub_read_burn_space");  break;
