@@ -332,15 +332,6 @@ public class JhwScm
                log("mismatch close paren");
                raiseError(ERR_LEXICAL);
                break;
-            case '\'':
-               raiseError(ERR_NOT_IMPL);
-               break;
-            case '\"':
-               raiseError(ERR_NOT_IMPL);
-               break;
-            case '#':
-               raiseError(ERR_NOT_IMPL);
-               break;
             default:
                gosub(sub_read_token,blk_re_return);
                break;
@@ -412,49 +403,57 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            if ( '0' <= v && v <= '9' )
+            switch (v)
             {
-               log("non-negated number");
-               gosub(sub_read_num,blk_re_return);
+            case '\'':
+               log("quote (maybe not belong here in sub_read_token)");
+               raiseError(ERR_NOT_IMPL);
                break;
-            }
-            if ( '#' == v )
-            {
+            case '\"':
+               log("string literal");
+               raiseError(ERR_NOT_IMPL);
+               break;
+            case '#':
+               // TODO: can mean more than just a boolean literal
                log("octothorpe special");
                gosub(sub_read_boolean,blk_re_return);
                break;
-            }
-            if ( '-' == v )
-            {
-               log("minus special case");
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+               log("non-negated number");
+               gosub(sub_read_num,blk_re_return);
+               break;
+            case '-':
                // The minus sign is special.  We need to look ahead
                // *again* before we can decide whether it is part of a
                // symbol or part of a number.
+               log("minus special case");
                queuePopFront(reg[regIn]);
                c1 = queuePeekFront(reg[regIn]);
                t1 = type(c1);
                v1 = value(c1);
-               if ( DEBUG && TYPE_CHAR != t1 )
+               if ( EOF == c1 )
                {
-                  raiseError(ERR_INTERNAL);
-                  break;
+                  log("  lonliest minus in the world");
+                  queuePushBack(reg[regIn],c);
+                  gosub(sub_read_symbol,blk_re_return);
                }
-               if ( '0' <= v1 && v1 <= '9' )
+               else if ( TYPE_CHAR == t1 && '0' <= v1 && v1 <= '9' )
                {
                   log("  minus-in-negative");
                   gosub(sub_read_num,sub_read_token+0x1);
-                  break;
                }
                else
                {
                   log("  minus-in-symbol");
-                  queuePushBack(reg[regIn],c1);
-                  gosub(sub_read_symbol,blk_re_return);
-                  break;
+                  raiseError(ERR_NOT_IMPL);
                }
+               break;
+            default:
+               log("symbol");
+               gosub(sub_read_symbol,blk_re_return);
+               break;
             }
-            log("symbol");
-            gosub(sub_read_symbol,blk_re_return);
             break;
          case sub_read_token+0x1:
             c = reg[regRetval];

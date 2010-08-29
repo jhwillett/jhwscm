@@ -134,10 +134,14 @@ public class Test
 
       // some lexical, rather than semantic, error case expectations
       expectSemantic("()");
+      expectSemantic("\r(\t)\n");
       expectLexical("(");
+      expectLexical(" (  ");
       expectLexical(")");
       expectSemantic("(()())");
+      expectSemantic("  ( ( )    ( ) )");
       expectLexical("(()()))");
+      expectLexical(" ( () ())) ");
       expectLexical("((()())");
 
       expectSemantic("(a b c)");
