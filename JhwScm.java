@@ -333,7 +333,7 @@ public class JhwScm
                raiseError(ERR_LEXICAL);
                break;
             default:
-               gosub(sub_read_token,blk_re_return);
+               gosub(sub_read_atom,blk_re_return);
                break;
             }
             break;
@@ -393,7 +393,7 @@ public class JhwScm
             raiseError(ERR_NOT_IMPL);
             break;
 
-         case sub_read_token:
+         case sub_read_atom:
             c = queuePeekFront(reg[regIn]);
             t = type(c);
             v = value(c);
@@ -406,7 +406,7 @@ public class JhwScm
             switch (v)
             {
             case '\'':
-               log("quote (maybe not belong here in sub_read_token)");
+               log("quote (maybe not belong here in sub_read_atom)");
                raiseError(ERR_NOT_IMPL);
                break;
             case '\"':
@@ -441,7 +441,7 @@ public class JhwScm
                else if ( TYPE_CHAR == t1 && '0' <= v1 && v1 <= '9' )
                {
                   log("  minus-in-negative");
-                  gosub(sub_read_num,sub_read_token+0x1);
+                  gosub(sub_read_num,sub_read_atom+0x1);
                }
                else
                {
@@ -455,7 +455,7 @@ public class JhwScm
                break;
             }
             break;
-         case sub_read_token+0x1:
+         case sub_read_atom+0x1:
             c = reg[regRetval];
             t = type(c);
             v = value(c);
@@ -1264,7 +1264,7 @@ public class JhwScm
 
    private static final int sub_read             = TYPE_SUB |  0x2000;
    private static final int sub_read_list        = TYPE_SUB |  0x2100;
-   private static final int sub_read_token       = TYPE_SUB |  0x2200;
+   private static final int sub_read_atom        = TYPE_SUB |  0x2200;
    private static final int sub_read_num         = TYPE_SUB |  0x2300;
    private static final int sub_read_num_loop    = TYPE_SUB |  0x2310;
    private static final int sub_read_boolean     = TYPE_SUB |  0x2400;
@@ -1978,7 +1978,7 @@ public class JhwScm
          case sub_rep:              buf.append("sub_rep");              break;
          case sub_read:             buf.append("sub_read");             break;
          case sub_read_list:        buf.append("sub_read_list");        break;
-         case sub_read_token:       buf.append("sub_read_token");       break;
+         case sub_read_atom:        buf.append("sub_read_atom");        break;
          case sub_read_num:         buf.append("sub_read_num");         break;
          case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;
          case sub_read_boolean:     buf.append("sub_read_boolean");     break;
