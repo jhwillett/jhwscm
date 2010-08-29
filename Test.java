@@ -149,8 +149,6 @@ public class Test
       expectLexical("((a b) c");
       expectLexical("((a b c)");
 
-      JhwScm.SILENT = false;
-
       // character literals are self-evaluating - though some of them
       // are tweaky (self-evaluate but don't self-print)
       final String[] simpleChars = { 
@@ -197,6 +195,8 @@ public class Test
          expectLexical("#\\spac");
          expectLexical("#\\asdf");
       }
+
+      JhwScm.SILENT = false;
 
       // string literals expressions are self-evaluating and
       // self-printing.

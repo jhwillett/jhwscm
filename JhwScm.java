@@ -427,9 +427,9 @@ public class JhwScm
                log("quote (maybe not belong here in sub_read_atom)");
                raiseError(ERR_NOT_IMPL);
                break;
-            case '\"':
+            case '"':
                log("string literal");
-               raiseError(ERR_NOT_IMPL);
+               gosub(sub_read_string,blk_re_return);
                break;
             case '#':
                // TODO: can mean more than just a boolean literal
@@ -626,7 +626,7 @@ public class JhwScm
             //
             reg[regArg0] = queueCreate();
             store(reg[regArg0]);
-            gosub(sub_read_symbol_loop,sub_read_symbol+0x1);
+            gosub(sub_read_char_seq,sub_read_symbol+0x1);
             break;
          case sub_read_symbol+0x1:
             reg[regTmp0]   = restore();
@@ -634,7 +634,34 @@ public class JhwScm
             returnsub();
             break;
 
-         case sub_read_symbol_loop:
+         case sub_read_string:
+            // Parses the next string literal from reg[regIn].
+            //
+            reg[regArg0] = queueCreate();
+            store(reg[regArg0]);
+            gosub(sub_read_char_seq,sub_read_string+0x1);
+            break;
+         case sub_read_string+0x1:
+            reg[regTmp0]   = restore();
+            reg[regRetval] = cons(IS_STRING,car(reg[regTmp0]));
+            c = queuePeekFront(reg[regIn]);
+            if ( EOF == c )
+            {
+               log("eof in string literal");
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            if ( code(TYPE_CHAR,'"') != c )
+            {
+               log("non-\" terminating string literal: " + pp(c));
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            queuePopFront(reg[regIn]);
+            returnsub();
+            break;
+
+         case sub_read_char_seq:
             // Parses the next symbol from reg[regIn], expecting the
             // accumulated value-so-far as a queue in reg[regArg0].
             //
@@ -671,6 +698,7 @@ public class JhwScm
             case '\n':
             case '(':
             case ')':
+            case '"':
                reg[regRetval] = car(reg[regArg0]);
                log("eot, returning: " + pp(reg[regRetval]));
                returnsub();
@@ -679,7 +707,7 @@ public class JhwScm
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
                log("pushing: " + pp(c0));
-               gosub(sub_read_symbol_loop,blk_re_return);
+               gosub(sub_read_char_seq,blk_re_return);
                break;
             }
             break;
@@ -793,7 +821,7 @@ public class JhwScm
             reg[regArg1] = reg[regRetval]; // retrieve the eval of the rest
             gosub(sub_apply,blk_re_return);
             break;
-         case sub_eval+0x03: // following sybol lookup
+         case sub_eval+0x03: // following symbol lookup
             if ( NIL == reg[regRetval] )
             {
                raiseError(ERR_SEMANTIC);
@@ -1316,8 +1344,9 @@ public class JhwScm
    private static final int sub_read_num_loop    = TYPE_SUB |  0x2310;
    private static final int sub_read_octo_tok    = TYPE_SUB |  0x2400;
    private static final int sub_read_symbol      = TYPE_SUB |  0x2500;
-   private static final int sub_read_symbol_loop = TYPE_SUB |  0x2600;
-   private static final int sub_read_burn_space  = TYPE_SUB |  0x2700;
+   private static final int sub_read_string      = TYPE_SUB |  0x2600;
+   private static final int sub_read_char_seq    = TYPE_SUB |  0x2700;
+   private static final int sub_read_burn_space  = TYPE_SUB |  0x2800;
 
    private static final int sub_eval             = TYPE_SUB |  0x3000;
    private static final int sub_eval_look_env    = TYPE_SUB |  0x3100;
@@ -2042,7 +2071,8 @@ public class JhwScm
          case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;
          case sub_read_octo_tok:    buf.append("sub_read_octo_tok");    break;
          case sub_read_symbol:      buf.append("sub_read_symbol");      break;
-         case sub_read_symbol_loop: buf.append("sub_read_symbol_loop"); break;
+         case sub_read_string:      buf.append("sub_read_string");      break;
+         case sub_read_char_seq:    buf.append("sub_read_char_seq");    break;
          case sub_read_burn_space:  buf.append("sub_read_burn_space");  break;
          case sub_eval:             buf.append("sub_eval");             break;
          case sub_eval_list:        buf.append("sub_eval_list");        break;
