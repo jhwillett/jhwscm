@@ -153,32 +153,61 @@ public class Test
 
       // character literals are self-evaluating - though some of them
       // are tweaky (self-evaluate but don't self-print)
-      expectSuccess("#\\1",      "#\\1");
-      expectSuccess("#\\a",      "#\\a");
-      expectSuccess("#\\A",      "#\\A");
-      expectSuccess("#\\z",      "#\\z");
-      expectSuccess("#\\Z",      "#\\Z");
-      expectSuccess("#\\~",      "#\\~");
-      expectSuccess("#\\<",      "#\\<");
-      expectSuccess("#\\>",      "#\\>");
-      expectSuccess("#\\\\",     "#\\\\");
-      expectSuccess("#\\'",      "#\\'");
-      expectSuccess("#\\(",      "#\\(");
-      expectSuccess("#\\)",      "#\\)");
-      expectSuccess("#\\)",      "#\\)");
-      expectSuccess("#\\ ",      "#\\space");
-      expectSuccess("#\\\n",     "#\\newline");
-      if ( false )
+      final String[] simpleChars = { 
+         "#\\1", "#\\a", "#\\A", "#\\z", "#\\Z", 
+         "#\\~", "#\\<", "#\\>", "#\\\\","#\\'",
+         "#\\(", "#\\)", "#\\)",
+      };
+      for ( final String expr : simpleChars )
       {
+         expectSuccess(expr,                   expr);
+         expectSuccess(" " + expr,             expr);
+         expectSuccess(expr + " " ,            expr);
+         expectSuccess(" " + expr + " ",       expr);
+         expectSuccess("\n" + expr,            expr);
+         expectSuccess(expr + "\n" ,           expr);
+         expectSuccess("\t" + expr + "\t\r\n", expr);
+      }
+      final String[][] tweakyChars = { 
+         { "#\\ ",      "#\\space"   }, 
+         { "#\\\n",     "#\\newline" },
          // TODO: long-forms character literal inputs are deferred -
          // lexer really has to look forward a long way to decide if
          // it's valid.  Ditto for failure modes.
-         expectSuccess("#\\space",  "#\\space");
-         expectSuccess("#\\SPACE",  "#\\space");
-         expectSuccess("#\\newline","#\\newline");
-         expectSuccess("#\\NeWlInE","#\\newline");
+         /*
+         { "#\\space",  "#\\space"   },
+         { "#\\SPACE",  "#\\space"   },
+         { "#\\newline","#\\newline" },
+         { "#\\NeWlInE","#\\newline" },
+          */
+      };
+      for ( final String[] pair : tweakyInts )
+      {
+         expectSuccess(pair[0],             pair[1]);
+         expectSuccess(" " + pair[0],       pair[1]);
+         expectSuccess(pair[0] + " " ,      pair[1]);
+         expectSuccess(" " + pair[0] + " ", pair[1]);
+      }
+      if ( false )
+      {
          expectLexical("#\\spac");
          expectLexical("#\\asdf");
+      }
+
+      // string literals expressions are self-evaluating and
+      // self-printing.
+      final String[] simpleStrs = { 
+         "\"\"", "\" \"", "\"\t\"", "\"a\"", "\"Hello, World!\"",
+      };
+      for ( final String expr : simpleStrs )
+      {
+         expectSuccess(expr,                   expr);
+         expectSuccess(" " + expr,             expr);
+         expectSuccess(expr + " " ,            expr);
+         expectSuccess(" " + expr + " ",       expr);
+         expectSuccess("\n" + expr,            expr);
+         expectSuccess(expr + "\n" ,           expr);
+         expectSuccess("\t" + expr + "\t\r\n", expr);
       }
 
       // simple arithmetic
