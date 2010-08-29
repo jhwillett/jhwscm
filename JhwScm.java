@@ -496,7 +496,7 @@ public class JhwScm
             if ( TYPE_FIXINT != t1 )
             {
                log("  non-fixint in arg: " + pp(c1));
-               raiseError(ERR_LEX);
+               raiseError(ERR_LEXICAL);
                break;
             }
             switch (v0)
@@ -515,7 +515,7 @@ public class JhwScm
                if ( v0 < '0' || v0 > '9' )
                {
                   log("  non-digit in input: " + pp(c0));
-                  raiseError(ERR_LEX);
+                  raiseError(ERR_LEXICAL);
                   break;
                }
                tmp = 10*v1 + (v0-'0');
@@ -545,7 +545,7 @@ public class JhwScm
             if ( TRUE == c0 )
             {
                log("  eof after octothorpe");
-               raiseError(ERR_LEX);
+               raiseError(ERR_LEXICAL);
                break;
             }
             queuePopFront(reg[regIn]);
@@ -567,7 +567,7 @@ public class JhwScm
                break;
             default:
                log("  unexpected after octothorpe: " + pp(c0));
-               raiseError(ERR_LEX);
+               raiseError(ERR_LEXICAL);
                break;
             }
             break;
@@ -581,8 +581,8 @@ public class JhwScm
             gosub(sub_read_symbol_loop,sub_read_symbol+0x1);
             break;
          case sub_read_symbol+0x1:
-            reg[regTmp]    = restore();
-            reg[regRetval] = cons(IS_SYMBOL,car(reg[regTmp]));
+            reg[regTmp0]   = restore();
+            reg[regRetval] = cons(IS_SYMBOL,car(reg[regTmp0]));
             returnsub();
             break;
 
@@ -640,11 +640,7 @@ public class JhwScm
             // Evaluates the expr in reg[regArg0] in the env in
             // reg[regArg1], and leaves the results in reg[regRetval].
             //
-            // TODO: implement properly.
-            //
-            c0 = reg[regArg0];
-            t0 = type(c0);
-            switch (t0)
+            switch (type(reg[regArg0]))
             {
             case TYPE_CHAR:
             case TYPE_FIXINT:
@@ -654,12 +650,73 @@ public class JhwScm
                returnsub();
                break;
             case TYPE_CELL:
-               raiseError(ERR_NOT_IMPL);
+               reg[regTmp0] = car(reg[regArg0]); // the first elem: op
+               reg[regTmp1] = cdr(reg[regArg0]); // the rest elems: args
+               switch (type(reg[regTmp0]))
+               {
+               case IS_STRING:
+                  // strings are self-evaluating
+                  reg[regRetval] = reg[regArg0];
+                  returnsub();
+                  break;
+               case IS_SYMBOL:
+                  reg[regArg0] = reg[regArg0]; // forward the op
+                  reg[regArg1] = reg[regArg1]; // forward the env
+                  gosub(sub_eval_lookup,blk_re_return);
+                  break;
+               default:
+                  store(reg[regTmp1]);         // store the args
+                  store(reg[regArg1]);         // store the env
+                  reg[regArg0] = reg[regTmp0]; // forward the op
+                  reg[regArg1] = reg[regArg1]; // forward the env
+                  gosub(sub_eval,sub_eval+0x1);
+                  break;
+               }
                break;
             default:
                raiseError(ERR_INTERNAL);
                break;
             }
+            break;
+         case sub_eval+0x01: // following eval of the first elem
+            reg[regArg1] = restore(); // restore the env
+            reg[regTmp0] = restore(); // restore the rest of the expr
+/*
+            switch (type(reg[regRetval]))
+            {
+            case TYPE_SUB:
+            case TYPE_FUNC:
+               // we need to evaluate the arguments then apply
+               store(reg[regRetval]);       // store the eval of the first elem
+               store(reg[regArg1]);         // store the env
+               reg[regArg0] = reg[regTmp0]; // forward the rest of the expr
+               reg[regArg1] = reg[regArg1]; // forward the env
+               gosub(sub_eval_list,sub_eval+0x02);
+               break;
+            case TYPE_SPECIAL:
+               reg[regArg2] = reg[regArg1];   // forward the env
+               reg[regArg1] = reg[regTmp0];   // forward the unevaluated args
+               reg[regArg0] = reg[regRetval]; // forward the op
+               gosub(sub_apply,blk_re_return);
+               break;
+            default:
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+*/
+            break;
+         case sub_eval+0x02: // following eval of the rest elems
+            reg[regArg2] = restore();      // restore the env
+            reg[regArg1] = reg[regRetval]; // retrieve the eval of the rest
+            reg[regArg0] = restore();      // restore the eval of the first
+            gosub(sub_apply,blk_re_return);
+            break;
+
+         case sub_apply:
+            // Applies the op in reg[regArg0] to the args in
+            // reg[regArg1] within the evironment reg[regArg2].
+            //
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case sub_print:
@@ -865,7 +922,7 @@ public class JhwScm
             {
             case ERR_OOM:       return OUT_OF_MEMORY;
             case ERR_INTERNAL:  return INTERNAL_ERROR;
-            case ERR_LEX:       return FAILURE;
+            case ERR_LEXICAL:   return FAILURE;
             case ERR_NOT_IMPL:  return UNIMPLEMENTED;
             default:            
                log("  unknown error code: " + pp(reg[regError]));
@@ -958,7 +1015,8 @@ public class JhwScm
 
    private static final int ERR_OOM             = TYPE_ERROR    | 42;
    private static final int ERR_INTERNAL        = TYPE_ERROR    | 18;
-   private static final int ERR_LEX             = TYPE_ERROR    | 11;
+   private static final int ERR_LEXICAL         = TYPE_ERROR    | 11;
+   private static final int ERR_SEMANTIC        = TYPE_ERROR    |  7;
    private static final int ERR_NOT_IMPL        = TYPE_ERROR    | 87;
 
    private static final int regFreeCellList     =  0; // unused cells
@@ -975,10 +1033,12 @@ public class JhwScm
 
    private static final int regArg0             =  8; // argument
    private static final int regArg1             =  9; // argument
-   private static final int regTmp              = 10; // argument
-   private static final int regRetval           = 11; // return value
+   private static final int regArg2             =  9; // argument
+   private static final int regTmp0             = 11; // temporary
+   private static final int regTmp1             = 12; // temporary
+   private static final int regRetval           = 13; // return value
 
-   private static final int regGlobalEnv        = 12; // list of env frames
+   private static final int regGlobalEnv        = 14; // list of env frames
 
    private static final int numRegisters        = 16;  // in slots
    private static final int heapSize            = 512; // in cells
@@ -1011,12 +1071,16 @@ public class JhwScm
    private static final int sub_read_symbol_loop = TYPE_SUB |  0x2600;
 
    private static final int sub_eval             = TYPE_SUB |  0x3000;
+   private static final int sub_eval_lookup      = TYPE_SUB |  0x3100;
+   private static final int sub_eval_list        = TYPE_SUB |  0x3200;
 
-   private static final int sub_print            = TYPE_SUB |  0x4000;
-   private static final int sub_print_list       = TYPE_SUB |  0x4100;
-   private static final int sub_print_list_elems = TYPE_SUB |  0x4200;
-   private static final int sub_print_string     = TYPE_SUB |  0x4300;
-   private static final int sub_print_chars      = TYPE_SUB |  0x4400;
+   private static final int sub_apply            = TYPE_SUB |  0x4000;
+
+   private static final int sub_print            = TYPE_SUB |  0x5000;
+   private static final int sub_print_list       = TYPE_SUB |  0x5100;
+   private static final int sub_print_list_elems = TYPE_SUB |  0x5200;
+   private static final int sub_print_string     = TYPE_SUB |  0x5300;
+   private static final int sub_print_chars      = TYPE_SUB |  0x5400;
 
    private static final int blk_re_return        = TYPE_SUB | 0x10001;
    private static final int blk_error            = TYPE_SUB | 0x10002;
@@ -1683,7 +1747,8 @@ public class JhwScm
       case FALSE:               return "FALSE";
       case ERR_OOM:             return "ERR_OOM";
       case ERR_INTERNAL:        return "ERR_INTERNAL";
-      case ERR_LEX:             return "ERR_LEX";
+      case ERR_LEXICAL:         return "ERR_LEXICAL";
+      case ERR_SEMANTIC:        return "ERR_SEMANTIC";
       case ERR_NOT_IMPL:        return "ERR_NOT_IMPL";
       case blk_re_return:       return "blk_re_return";
       case blk_error:           return "blk_error";
