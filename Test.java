@@ -196,8 +196,6 @@ public class Test
          expectLexical("#\\asdf");
       }
 
-      JhwScm.SILENT = false;
-
       // string literals expressions are self-evaluating and
       // self-printing.
       final String[] simpleStrs = { 
@@ -216,7 +214,10 @@ public class Test
       expectLexical("\"");
       expectLexical("\"hello");
 
-      // simple arithmetic
+      JhwScm.SILENT = false;
+
+      // simple arithmetic (also requires a top-level environment to
+      // have something in it)
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
       expectSuccess("(+ 0 1)","1");
@@ -224,6 +225,23 @@ public class Test
       expectSuccess("(* 97 2)","184");
       expectSuccess("(* 2 3 5)","30");
       expectSemantic("(+ a b)");
+
+      // defining symbols
+      {
+         final JhwScm scm = new JhwScm();
+         expectSuccess("(define a 100)","",   scm);
+         selfTest(scm);
+         expectSuccess("a",             "100",scm);
+         selfTest(scm);
+         expectSuccess("(define a 100)","",   scm);
+         selfTest(scm);
+         expectSuccess("(define b   2)","",   scm);
+         selfTest(scm);
+         expectSuccess("(+ a b)",       "102",scm);
+         selfTest(scm);
+         expectSemantic("(+ a c)",            scm);
+         selfTest(scm);
+      }
 
       // cons and list have a particular relationship
       expectSuccess("(cons 1 2)","(1 . 2)");
@@ -261,30 +279,18 @@ public class Test
 
       {
          final JhwScm scm = new JhwScm();
-         expectSuccess("(define a 100)","",scm);
-         expectSuccess("a","100",scm);
-         selfTest(scm);
-      }
-      {
-         final JhwScm scm = new JhwScm();
-         expectSuccess("(define a 100)","",   scm);
-         expectSuccess("(define b   2)","",   scm);
-         expectSuccess("(+ a b)",       "102",scm);
-         expectSemantic("(+ a c)",             scm);
-         selfTest(scm);
-      }
-      {
-         final JhwScm scm = new JhwScm();
          expectSuccess("(define foo +)","",  scm);
          expectSuccess("(foo 13 18)",   "31",scm);
-         expectSemantic("(foo 13 '())",       scm);
+         expectSemantic("(foo 13 '())",      scm);
          selfTest(scm);
       }
+
+      // defining functions
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
          expectSuccess("(foo 13 18)",               "31",scm);
-         expectSemantic("(foo 13 '())",                   scm);
+         expectSemantic("(foo 13 '())",                  scm);
          selfTest(scm);
       }
 
