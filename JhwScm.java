@@ -626,7 +626,7 @@ public class JhwScm
             //
             reg[regArg0] = queueCreate();
             store(reg[regArg0]);
-            gosub(sub_read_char_seq,sub_read_symbol+0x1);
+            gosub(sub_read_symbol_body,sub_read_symbol+0x1);
             break;
          case sub_read_symbol+0x1:
             reg[regTmp0]   = restore();
@@ -647,7 +647,7 @@ public class JhwScm
             queuePopFront(reg[regIn]);
             reg[regArg0] = queueCreate();
             store(reg[regArg0]);
-            gosub(sub_read_char_seq,sub_read_string+0x1);
+            gosub(sub_read_string_body,sub_read_string+0x1);
             break;
          case sub_read_string+0x1:
             reg[regTmp0]   = restore();
@@ -663,7 +663,7 @@ public class JhwScm
             returnsub();
             break;
 
-         case sub_read_char_seq:
+         case sub_read_symbol_body:
             // Parses the next symbol from reg[regIn], expecting the
             // accumulated value-so-far as a queue in reg[regArg0].
             //
@@ -677,8 +677,6 @@ public class JhwScm
                break;
             }
             c0 = queuePeekFront(reg[regIn]);
-            t0 = type(c0);
-            v0 = value(c0);
             if ( EOF == c0 )
             {
                reg[regRetval] = car(reg[regArg0]);
@@ -686,13 +684,13 @@ public class JhwScm
                returnsub();
                break;
             }
-            if ( TYPE_CHAR != t0 )
+            if ( TYPE_CHAR != type(c0) )
             {
                log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
-            switch (v0)
+            switch (value(c0))
             {
             case ' ':
             case '\t':
@@ -706,10 +704,56 @@ public class JhwScm
                returnsub();
                break;
             default:
+               log("pushing: " + pp(c0));
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
+               gosub(sub_read_symbol_body,blk_re_return);
+               break;
+            }
+            break;
+
+         case sub_read_string_body:
+            // Parses the next string from reg[regIn], expecting the
+            // accumulated value-so-far as a queue in reg[regArg0].
+            //
+            // A helper for sub_read_string, but still a sub_ in its
+            // own right.
+            //
+            // Expects that the leading \" has already been consumed,
+            // and stops on the trailing \" (which is left
+            // unconsumed for balance).
+            //
+            if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
+            {
+               log("non-queue in arg: " + pp(reg[regArg0]));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            c0 = queuePeekFront(reg[regIn]);
+            if ( EOF == c0 )
+            {
+               log("eof in string literal");
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            if ( TYPE_CHAR != type(c0) )
+            {
+               log("non-char in input: " + pp(c0));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            switch (value(c0))
+            {
+            case '"':
+               reg[regRetval] = car(reg[regArg0]);
+               log("eot, returning: " + pp(reg[regRetval]));
+               returnsub();
+               break;
+            default:
                log("pushing: " + pp(c0));
-               gosub(sub_read_char_seq,blk_re_return);
+               queuePushBack(reg[regArg0],c0);
+               queuePopFront(reg[regIn]);
+               gosub(sub_read_string_body,blk_re_return);
                break;
             }
             break;
@@ -1207,7 +1251,7 @@ public class JhwScm
             }
 
          default:
-            log("bogus: " + pp(reg[regPc]));
+            log("bogus op: " + pp(reg[regPc]));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -1347,8 +1391,9 @@ public class JhwScm
    private static final int sub_read_octo_tok    = TYPE_SUB |  0x2400;
    private static final int sub_read_symbol      = TYPE_SUB |  0x2500;
    private static final int sub_read_string      = TYPE_SUB |  0x2600;
-   private static final int sub_read_char_seq    = TYPE_SUB |  0x2700;
-   private static final int sub_read_burn_space  = TYPE_SUB |  0x2800;
+   private static final int sub_read_symbol_body = TYPE_SUB |  0x2700;
+   private static final int sub_read_string_body = TYPE_SUB |  0x2800;
+   private static final int sub_read_burn_space  = TYPE_SUB |  0x2900;
 
    private static final int sub_eval             = TYPE_SUB |  0x3000;
    private static final int sub_eval_look_env    = TYPE_SUB |  0x3100;
@@ -2074,7 +2119,8 @@ public class JhwScm
          case sub_read_octo_tok:    buf.append("sub_read_octo_tok");    break;
          case sub_read_symbol:      buf.append("sub_read_symbol");      break;
          case sub_read_string:      buf.append("sub_read_string");      break;
-         case sub_read_char_seq:    buf.append("sub_read_char_seq");    break;
+         case sub_read_symbol_body: buf.append("sub_read_symbol_body"); break;
+         case sub_read_string_body: buf.append("sub_read_string_body"); break;
          case sub_read_burn_space:  buf.append("sub_read_burn_space");  break;
          case sub_eval:             buf.append("sub_eval");             break;
          case sub_eval_list:        buf.append("sub_eval_list");        break;

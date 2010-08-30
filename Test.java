@@ -213,6 +213,8 @@ public class Test
          expectSuccess(expr + "\n" ,           expr);
          expectSuccess("\t" + expr + "\t\r\n", expr);
       }
+      expectLexical("\"");
+      expectLexical("\"hello");
 
       // simple arithmetic
       expectSuccess("(+ 0)","0");
