@@ -782,16 +782,9 @@ public class JhwScm
                returnsub();
                break;
             case TYPE_CELL:
-               // TODO: this is a lot of friggin' aliasing, with
-               // little point to it.
-               //
-               // I know I'm trying to *be* the compiler, but that
-               // doesn't mean I need to be clever.
-               reg[regTmp0] = car(reg[regArg0]);
-               reg[regTmp1] = cdr(reg[regArg0]);
-               log("h: " + pp(reg[regTmp0]));
-               log("t: " + pp(reg[regTmp1]));
-               switch (reg[regTmp0])
+               tmp0 = car(reg[regArg0]);
+               log("h: " + pp(tmp0));
+               switch (tmp0)
                {
                case IS_STRING:
                   // Strings are self-evaluating.
@@ -800,8 +793,9 @@ public class JhwScm
                   break;
                case IS_SYMBOL:
                   // Lookup the symbol in the environment.
-                  reg[regArg0] = reg[regArg0]; // forward the symbol
-                  reg[regArg1] = reg[regArg1]; // forward the env
+                  //
+                  //   reg[regArg0] already contains the symbol
+                  //   reg[regArg1] already contains the env
                   gosub(sub_eval_look_env,sub_eval+0x1);
                   break;
                default:
@@ -810,7 +804,7 @@ public class JhwScm
                   // to apply.
                   store(reg[regArg0]);         // store the expr
                   store(reg[regArg1]);         // store the env
-                  reg[regArg0] = reg[regTmp0]; // forward the op
+                  reg[regArg0] = tmp0;         // forward the op
                   reg[regArg1] = reg[regArg1]; // forward the env
                   gosub(sub_eval,sub_eval+0x2);
                   break;
@@ -853,6 +847,67 @@ public class JhwScm
             // TODO: args-to-registers loading for TYPE_SUB?  Do we
             // even let TYPE_SUB be directly invokable?  Or are the
             // builtins a distinct namespace?
+            // 
+            // Mon Aug 30 07:49:58 PDT 2010: OK, here's the deal.  I'm
+            // having a rough time getting past this point: it feels
+            // like I need to make several design decisions and tricky
+            // implementations all at once:
+            //
+            //   1. How to distinguish built-in special forms from
+            //   built-in functions.
+            //
+            //   2. Whether to allow user code to directly invoke
+            //   built-ins, or whether to have them in some distinct
+            //   namespace.
+            //
+            //   3. How to pass arguments: so far, we've used 2
+            //   registers, but with longer argument lists that breaks
+            //   down eventually.  Do we go absolute, and require all
+            //   args to everything always be in a list?  Would this
+            //   mean reimplementing all the existing sub_foo?  What
+            //   about primitives?  Should they be the same?  E.g. if
+            //   args must be in a list, how would we implement
+            //   (cons)?
+            //
+            //   4. How to represent user-defined special forms and
+            //   functions?
+            //
+            //   5. How to seed the top-level environment with
+            //   bindings for primitives?
+            //
+            //   6. How (and whether) to seed the top-level
+            //   environment with bindings for non-primitives?
+            //
+            //   7. Whether and how to support direct lexical
+            //   reference to primitives e.g. can the user do "#<+>"
+            //   and get the primitive adder regardless of how "+" may
+            //   have been defined or redefined?
+            //
+            // Gotta figure out how to make decisions about fewer of
+            // these at a time, in a seperately implementable and
+            // testable way.
+            //
+            // Feeling: I'd kind of like to end up with the most
+            // primitivemost Scheme engine when I'm done, one which
+            // perhaps defines no top-level environment whatsoever.
+            // That would suggest supporting creation of the standard
+            // top-level environment as library code.  That library
+            // code might have to look like:
+            //
+            //   (#<def> define #<def>)
+            //   (define + #<+>)
+            //   (define cons #<cons>)
+            //   ... 
+            //
+            // I like this from two points of view: "the language is
+            // implemented in itself" and also "maintain a draconian
+            // constraint of the featureset scope of the lower-level
+            // components".  The downside is finding that syntax for
+            // unbound primitives.
+            //
+            // OK, that answers 5-7, but leaves 1-4 open.  Still,
+            // gives me something to do while Enkidu works on the open
+            // questions.
 
             switch (type(reg[regRetval]))
             {
