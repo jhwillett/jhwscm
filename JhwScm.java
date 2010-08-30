@@ -908,6 +908,13 @@ public class JhwScm
             // OK, that answers 5-7, but leaves 1-4 open.  Still,
             // gives me something to do while Enkidu works on the open
             // questions.
+            //
+            // Hmm, still begs the question: where does this
+            // "namespace" for primitives live.  I think it belongs
+            // hard-coded somewhere in sub_read_foo.  If we call it a
+            // special frame in the global environment (which is
+            // protected from mutation after initialization) then
+            // we're just back where we started.
 
             switch (type(reg[regRetval]))
             {
