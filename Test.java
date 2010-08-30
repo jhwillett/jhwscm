@@ -216,15 +216,18 @@ public class Test
 
       JhwScm.SILENT = false;
 
-      // simple arithmetic (also requires a top-level environment to
-      // have something in it)
+      // simple arithmetic - more than testing math, also requires a
+      // top-level env with symbols bound to primitive functions
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
       expectSuccess("(+ 0 1)","1");
       expectSuccess("(+ 100 2)","102");
+      expectSuccess("(+ 100 -2)","98");
       expectSuccess("(* 97 2)","184");
       expectSuccess("(* 2 3 5)","30");
       expectSemantic("(+ a b)");
+
+      // TODO: test min, max, bounds, 2s-complement nature of fixints?
 
       // defining symbols
       {

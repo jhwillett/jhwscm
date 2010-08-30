@@ -212,18 +212,11 @@ public class JhwScm
       // saved in registers and on the stack instead.
       //
       int c    = 0;
-      int t    = 0;
-      int v    = 0;
       int c0   = 0;
-      int t0   = 0;
       int v0   = 0;
       int c1   = 0;
-      int t1   = 0;
       int v1   = 0;
-      int tmp  = 0;
-      int tmp1 = 0;
-      int tmp2 = 0;
-      int err  = SUCCESS;
+      int tmp0 = 0;
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
@@ -413,15 +406,14 @@ public class JhwScm
             // consumed from reg[regIn].
             // 
             c = queuePeekFront(reg[regIn]);
-            t = type(c);
-            v = value(c);
-            if ( DEBUG && TYPE_CHAR != t )
+            v0 = value(c);
+            if ( DEBUG && TYPE_CHAR != type(c) )
             {
                log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
-            switch (v)
+            switch (v0)
             {
             case '\'':
                log("quote (maybe not belong here in sub_read_atom)");
@@ -448,7 +440,6 @@ public class JhwScm
                log("minus special case");
                queuePopFront(reg[regIn]);
                c1 = queuePeekFront(reg[regIn]);
-               t1 = type(c1);
                v1 = value(c1);
                if ( EOF == c1 )
                {
@@ -456,7 +447,7 @@ public class JhwScm
                   queuePushBack(reg[regIn],c);
                   gosub(sub_read_symbol,blk_re_return);
                }
-               else if ( TYPE_CHAR == t1 && '0' <= v1 && v1 <= '9' )
+               else if ( TYPE_CHAR == type(c1) && '0' <= v1 && v1 <= '9' )
                {
                   log("  minus-in-negative");
                   gosub(sub_read_num,sub_read_atom+0x1);
@@ -475,16 +466,13 @@ public class JhwScm
             break;
          case sub_read_atom+0x1:
             c = reg[regRetval];
-            t = type(c);
-            v = value(c);
-            if ( TYPE_FIXINT != t )
+            if ( TYPE_FIXINT != type(c) )
             {
                raiseError(ERR_INTERNAL);
                break;
             }
             log("negating: " + pp(c));
-            v = -v;
-            reg[regRetval] = code(TYPE_FIXINT,v);
+            reg[regRetval] = code(TYPE_FIXINT,-value(c));
             log("  to:       " + pp(reg[regRetval]));
             returnsub();
             break;
@@ -504,7 +492,6 @@ public class JhwScm
             // right.
             //
             c0 = queuePeekFront(reg[regIn]);
-            t0 = type(c0);
             v0 = value(c0);
             if ( EOF == c0 )
             {
@@ -513,16 +500,15 @@ public class JhwScm
                returnsub();
                break;
             }
-            if ( TYPE_CHAR != t0 )
+            if ( TYPE_CHAR != type(c0) )
             {
                log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
             c1 = reg[regArg0];
-            t1 = type(c1);
             v1 = value(c1);
-            if ( TYPE_FIXINT != t1 )
+            if ( TYPE_FIXINT != type(c1) )
             {
                log("non-fixint in arg: " + pp(c1));
                raiseError(ERR_LEXICAL);
@@ -547,12 +533,12 @@ public class JhwScm
                   raiseError(ERR_LEXICAL);
                   break;
                }
-               tmp = 10*v1 + (v0-'0');
+               tmp0 = 10*v1 + (v0-'0');
                log("first char: " + (char)v0);
                log("old accum:  " +       v1);
-               log("new accum:  " +       tmp);
+               log("new accum:  " +       tmp0);
                queuePopFront(reg[regIn]);
-               reg[regArg0] = code(TYPE_FIXINT,tmp);
+               reg[regArg0] = code(TYPE_FIXINT,tmp0);
                gosub(sub_read_num_loop,blk_re_return);
                break;
             }
@@ -782,7 +768,6 @@ public class JhwScm
             }
             break;
 
-
          case sub_eval:
             // Evaluates the expr in reg[regArg0] in the env in
             // reg[regArg1], and leaves the results in reg[regRetval].
@@ -809,21 +794,25 @@ public class JhwScm
                switch (reg[regTmp0])
                {
                case IS_STRING:
-                  // strings are self-evaluating
+                  // Strings are self-evaluating.
                   reg[regRetval] = reg[regArg0];
                   returnsub();
                   break;
                case IS_SYMBOL:
+                  // Lookup the symbol in the environment.
                   reg[regArg0] = reg[regArg0]; // forward the symbol
                   reg[regArg1] = reg[regArg1]; // forward the env
-                  gosub(sub_eval_look_env,sub_eval+0x3);
+                  gosub(sub_eval_look_env,sub_eval+0x1);
                   break;
                default:
-                  store(reg[regTmp1]);         // store the args
+                  // Evaluate the operator: the type of the result
+                  // will determine whether we evaluate the args prior
+                  // to apply.
+                  store(reg[regArg0]);         // store the expr
                   store(reg[regArg1]);         // store the env
                   reg[regArg0] = reg[regTmp0]; // forward the op
                   reg[regArg1] = reg[regArg1]; // forward the env
-                  gosub(sub_eval,sub_eval+0x1);
+                  gosub(sub_eval,sub_eval+0x2);
                   break;
                }
                break;
@@ -831,43 +820,13 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             default:
-               log("wtf: " + pp(reg[regArg1]));
+               log("unexpected object in eval: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
             break;
-         case sub_eval+0x01: // following eval of the first elem
-            reg[regArg1] = restore(); // restore the env
-            reg[regTmp0] = restore(); // restore the rest of the expr
-/*
-            switch (type(reg[regRetval]))
-            {
-            case TYPE_SUB:
-            case TYPE_FUNC:
-               // we need to evaluate the arguments then apply
-               store(reg[regRetval]);       // store the eval of the first elem
-               reg[regArg0] = reg[regTmp0]; // forward the rest of the expr
-               reg[regArg1] = reg[regArg1]; // forward the env
-               gosub(sub_eval_list,sub_eval+0x02);
-               break;
-            case TYPE_SPECIAL:
-               reg[regArg2] = reg[regArg1];   // forward the env
-               reg[regArg1] = reg[regTmp0];   // forward the unevaluated args
-               reg[regArg0] = reg[regRetval]; // forward the op
-               gosub(sub_apply,blk_re_return);
-               break;
-            default:
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-*/
-            break;
-         case sub_eval+0x02: // following eval of the rest elems
-            reg[regArg0] = restore();      // restore the eval of the first
-            reg[regArg1] = reg[regRetval]; // retrieve the eval of the rest
-            gosub(sub_apply,blk_re_return);
-            break;
-         case sub_eval+0x03: // following symbol lookup
+         case sub_eval+0x1:
+            // following symbol lookup
             if ( NIL == reg[regRetval] )
             {
                raiseError(ERR_SEMANTIC);
@@ -875,6 +834,35 @@ public class JhwScm
             }
             reg[regRetval] = cdr(reg[regRetval]);
             returnsub();
+            break;
+         case sub_eval+0x2:
+            // following eval of the first elem
+            reg[regArg1] = restore();         // restore the env
+            reg[regArg0] = restore();         // restore the expr
+            reg[regTmp0] = reg[regRetval];    // the value of the operator
+            reg[regTmp1] = cdr(reg[regArg0]); // the unevaluated arg list
+
+            // If it's a function, evaluate the args next, following
+            // up with apply.
+            //
+            // If it's a special form, don't evaluate the args,
+            // just pass it off to apply.
+            //
+            // TODO: arity checking?
+            //
+            // TODO: args-to-registers loading for TYPE_SUB?  Do we
+            // even let TYPE_SUB be directly invokable?  Or are the
+            // builtins a distinct namespace?
+
+            switch (type(reg[regRetval]))
+            {
+            case TYPE_SUB:
+               raiseError(ERR_NOT_IMPL);
+               break;
+            case TYPE_CELL:
+               raiseError(ERR_NOT_IMPL);
+               break;
+            }
             break;
 
          case sub_eval_list:
@@ -990,15 +978,13 @@ public class JhwScm
                returnsub();
                break;
             }
-            t0 = type(reg[regArg0]);
-            t1 = type(reg[regArg1]);
-            if ( t0 != t1 )
+            if ( type(reg[regArg0]) != type(reg[regArg1]) )
             {
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
-            if ( t0 != TYPE_CELL )
+            if ( type(reg[regArg0]) != TYPE_CELL )
             {
                reg[regRetval] = FALSE;
                returnsub();
@@ -1034,10 +1020,8 @@ public class JhwScm
             // Prints the expr in reg[regArg0] to reg[regOut].
             //
             c = reg[regArg0];
-            t = type(c);
-            v = value(c);
             log("printing: " + pp(c));
-            switch (t)
+            switch (type(c))
             {
             case TYPE_NIL:
                gosub(sub_print_list,blk_re_return);
@@ -1068,7 +1052,7 @@ public class JhwScm
             case TYPE_CHAR:
                queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
                queuePushBack(reg[regOut],code(TYPE_CHAR,'\\'));
-               switch (v)
+               switch (value(c))
                {
                case ' ':
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'s'));
@@ -1113,41 +1097,13 @@ public class JhwScm
                // We trick out the sign extension of our 28-bit
                // twos-complement FIXINTs to match Java's 32 bits
                // before proceeding.
-               v = (v << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
-               if ( true )
+               v0 = (value(c) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
+               // TODO: this is a huge cop-out, implement it right
+               final String str = "" + v0;
+               for ( tmp0 = 0; tmp0 < str.length(); ++tmp0 )
                {
-                  // TODO: this is a huge cop-out, implement it right
-                  final String str = "" + v;
-                  for ( tmp = 0; tmp < str.length(); ++tmp )
-                  {
-                     queuePushBack(reg[regOut],code(TYPE_CHAR,str.charAt(tmp)));
-                  }
-                  returnsub();
-                  break;
-               }
-               if ( 0 == v )
-               {
-                  queuePushBack(reg[regOut],code(TYPE_CHAR,'0'));
-               }
-               else
-               {
-                  if ( v < 0 )
-                  {
-                     queuePushBack(reg[regOut],code(TYPE_CHAR,'-'));
-                     v *= -1;
-                  }
-                  while ( v > 0 )
-                  {
-                     tmp1 = v;
-                     tmp2 = 1;
-                     while ( tmp1/10 > 0 )
-                     {
-                        tmp1 /= 10;
-                        tmp2 *= 10;
-                     }
-                     queuePushBack(reg[regOut],code(TYPE_CHAR,'0'+tmp1));
-                     v -= tmp1*tmp2;
-                  }
+                  queuePushBack(reg[regOut],
+                                code(TYPE_CHAR,str.charAt(tmp0)));
                }
                returnsub();
                break;
@@ -2057,8 +2013,8 @@ public class JhwScm
       return value;
    }
 
-   // scmDepth and javaDepth are ONLY used for debug cosmetics: they
-   // are *not* sanctioned VM state.
+   // scmDepth and javaDepth are ONLY used for debug: they are *not*
+   // sanctioned VM state.
    //
    private int scmDepth  = 0;
    private int javaDepth = 0;
