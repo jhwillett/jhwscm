@@ -915,6 +915,10 @@ public class JhwScm
             // special frame in the global environment (which is
             // protected from mutation after initialization) then
             // we're just back where we started.
+            //
+            // A short expression of the two main quandaries: how do I
+            // bind "define" to the thing which does name binding?
+            // And to what do I bind "+"?
 
             switch (type(reg[regRetval]))
             {
