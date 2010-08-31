@@ -317,10 +317,10 @@ public class JhwScm
                raiseError(ERR_LEXICAL);
                break;
             case '(':
-               gosub(sub_read_list,blk_re_return);
+               gosub(sub_read_list,blk_tail_call);
                break;
             default:
-               gosub(sub_read_atom,blk_re_return);
+               gosub(sub_read_atom,blk_tail_call);
                break;
             }
             break;
@@ -342,7 +342,7 @@ public class JhwScm
                break;
             }
             queuePopFront(reg[regIn]);
-            gosub(sub_read_list_open,blk_re_return);
+            gosub(sub_read_list_open,blk_tail_call);
             break;
 
          case sub_read_list_open:
@@ -385,14 +385,8 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            store(reg[regRetval]);                            // store subexpr
-            gosub(sub_read_list_open,sub_read_list_open+0x3); // recurse
-            break;
-         case sub_read_list_open+0x3:
-            reg[regTmp0]   = restore();                      // restore subexpr
-            reg[regTmp1]   = reg[regRetval];                 // get rest
-            reg[regRetval] = cons(reg[regTmp0],reg[regTmp1]);
-            returnsub();
+            store(reg[regRetval]);                          // store subexpr
+            gosub(sub_read_list_open,blk_tail_call_m_cons); // recurse
             break;
 
          case sub_read_atom:
@@ -421,17 +415,17 @@ public class JhwScm
                break;
             case '"':
                log("string literal");
-               gosub(sub_read_string,blk_re_return);
+               gosub(sub_read_string,blk_tail_call);
                break;
             case '#':
                // TODO: can mean more than just a boolean literal
                log("octothorpe special");
-               gosub(sub_read_octo_tok,blk_re_return);
+               gosub(sub_read_octo_tok,blk_tail_call);
                break;
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
                log("non-negated number");
-               gosub(sub_read_num,blk_re_return);
+               gosub(sub_read_num,blk_tail_call);
                break;
             case '-':
                // The minus sign is special.  We need to look ahead
@@ -445,7 +439,7 @@ public class JhwScm
                {
                   log("  lonliest minus in the world");
                   queuePushBack(reg[regIn],c);
-                  gosub(sub_read_symbol,blk_re_return);
+                  gosub(sub_read_symbol,blk_tail_call);
                }
                else if ( TYPE_CHAR == type(c1) && '0' <= v1 && v1 <= '9' )
                {
@@ -460,7 +454,7 @@ public class JhwScm
                break;
             default:
                log("symbol");
-               gosub(sub_read_symbol,blk_re_return);
+               gosub(sub_read_symbol,blk_tail_call);
                break;
             }
             break;
@@ -481,7 +475,7 @@ public class JhwScm
             // Parses the next number from reg[regIn].
             //
             reg[regArg0] = code(TYPE_FIXINT,0);
-            gosub(sub_read_num_loop,blk_re_return);
+            gosub(sub_read_num_loop,blk_tail_call);
             break;
          case sub_read_num_loop:
             // Parses the next number from reg[regIn], expecting the
@@ -539,7 +533,7 @@ public class JhwScm
                log("new accum:  " +       tmp0);
                queuePopFront(reg[regIn]);
                reg[regArg0] = code(TYPE_FIXINT,tmp0);
-               gosub(sub_read_num_loop,blk_re_return);
+               gosub(sub_read_num_loop,blk_tail_call);
                break;
             }
             break;
@@ -614,7 +608,7 @@ public class JhwScm
             store(reg[regArg0]);
             gosub(sub_read_symbol_body,sub_read_symbol+0x1);
             break;
-         case sub_read_symbol+0x1:
+         case sub_read_symbol+0x1: // blk_tail_call_m_cons!!
             reg[regTmp0]   = restore();
             reg[regRetval] = cons(IS_SYMBOL,car(reg[regTmp0]));
             returnsub();
@@ -635,7 +629,7 @@ public class JhwScm
             store(reg[regArg0]);
             gosub(sub_read_string_body,sub_read_string+0x1);
             break;
-         case sub_read_string+0x1:
+         case sub_read_string+0x1: // blk_tail_call_m_cons??
             reg[regTmp0]   = restore();
             reg[regRetval] = cons(IS_STRING,car(reg[regTmp0]));
             c = queuePeekFront(reg[regIn]);
@@ -693,7 +687,7 @@ public class JhwScm
                log("pushing: " + pp(c0));
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
-               gosub(sub_read_symbol_body,blk_re_return);
+               gosub(sub_read_symbol_body,blk_tail_call);
                break;
             }
             break;
@@ -739,7 +733,7 @@ public class JhwScm
                log("pushing: " + pp(c0));
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
-               gosub(sub_read_string_body,blk_re_return);
+               gosub(sub_read_string_body,blk_tail_call);
                break;
             }
             break;
@@ -760,7 +754,7 @@ public class JhwScm
             case '\r':
             case '\n':
                queuePopFront(reg[regIn]);
-               gosub(sub_read_burn_space,blk_re_return);
+               gosub(sub_read_burn_space,blk_tail_call);
                break;
             default:
                returnsub();
@@ -979,7 +973,7 @@ public class JhwScm
                break;
             }
             reg[regArg1] = cdr(reg[regArg1]);
-            gosub(sub_eval_look_env,blk_re_return);
+            gosub(sub_eval_look_env,blk_tail_call);
             break;
 
          case sub_eval_look_frame:
@@ -1021,7 +1015,7 @@ public class JhwScm
                break;
             }
             reg[regArg1] = cdr(reg[regArg1]);
-            gosub(sub_eval_look_frame,blk_re_return);
+            gosub(sub_eval_look_frame,blk_tail_call);
             break;
 
          case sub_equal_p:
@@ -1072,7 +1066,7 @@ public class JhwScm
             }
             reg[regArg0] = cdr(reg[regArg0]);
             reg[regArg1] = cdr(reg[regArg1]);
-            gosub(sub_equal_p,blk_re_return);
+            gosub(sub_equal_p,blk_tail_call);
             break;
 
          case sub_apply:
@@ -1090,7 +1084,7 @@ public class JhwScm
             switch (type(c))
             {
             case TYPE_NIL:
-               gosub(sub_print_list,blk_re_return);
+               gosub(sub_print_list,blk_tail_call);
                break;
             case TYPE_CELL:
                // TODO: check for TYPE_SENTINEL in car(c)
@@ -1101,17 +1095,17 @@ public class JhwScm
                case IS_STRING:
                   log("  IS_STRING: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
-                  gosub(sub_print_string,blk_re_return);
+                  gosub(sub_print_string,blk_tail_call);
                   break;
                case IS_SYMBOL:
                   log("  IS_SYMBOL: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
-                  gosub(sub_print_chars,blk_re_return);
+                  gosub(sub_print_chars,blk_tail_call);
                   break;
                default:
                   log("  WHATEVER:  " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c;
-                  gosub(sub_print_list,blk_re_return);
+                  gosub(sub_print_list,blk_tail_call);
                   break;
                }
                break;
@@ -1249,10 +1243,20 @@ public class JhwScm
             raiseError(ERR_NOT_IMPL);
             break;
 
-         case blk_re_return:
+         case blk_tail_call:
             // Just returns whatever retval left behind by the
             // subroutine which continued to here.
             //
+            returnsub();
+            break;
+
+         case blk_tail_call_m_cons:
+            // Returns the cons of the value on the stack with
+            // reg[regRetval].
+            //
+            reg[regTmp0]   = restore();
+            reg[regTmp1]   = reg[regRetval];
+            reg[regRetval] = cons(reg[regTmp0],reg[regTmp0]);
             returnsub();
             break;
 
@@ -1396,7 +1400,7 @@ public class JhwScm
    // Helper opcodes do not get a name: they use their parent's name
    // plus 0x0..0xF.
    //
-   // An exception to the naming policy is blk_re_return and
+   // An exception to the naming policy is blk_tail_call and
    // blk_error.  These are not proper subroutines, but instead they
    // are utility blocks used from many places.
 
@@ -1432,8 +1436,9 @@ public class JhwScm
 
    private static final int sub_equal_p          = TYPE_SUB |  0x6000;
 
-   private static final int blk_re_return        = TYPE_SUB | 0x10001;
-   private static final int blk_error            = TYPE_SUB | 0x10002;
+   private static final int blk_tail_call        = TYPE_SUB | 0x10001;
+   private static final int blk_tail_call_m_cons = TYPE_SUB | 0x10002;
+   private static final int blk_error            = TYPE_SUB | 0x10003;
 
    // TODO: jump is icky.
    //
@@ -2102,19 +2107,20 @@ public class JhwScm
    {
       switch (code)
       {
-      case NIL:                 return "NIL";
-      case EOF:                 return "EOF";
-      case IS_STRING:           return "IS_STRING";
-      case IS_SYMBOL:           return "IS_SYMBOL";
-      case TRUE:                return "TRUE";
-      case FALSE:               return "FALSE";
-      case ERR_OOM:             return "ERR_OOM";
-      case ERR_INTERNAL:        return "ERR_INTERNAL";
-      case ERR_LEXICAL:         return "ERR_LEXICAL";
-      case ERR_SEMANTIC:        return "ERR_SEMANTIC";
-      case ERR_NOT_IMPL:        return "ERR_NOT_IMPL";
-      case blk_re_return:       return "blk_re_return";
-      case blk_error:           return "blk_error";
+      case NIL:                  return "NIL";
+      case EOF:                  return "EOF";
+      case IS_STRING:            return "IS_STRING";
+      case IS_SYMBOL:            return "IS_SYMBOL";
+      case TRUE:                 return "TRUE";
+      case FALSE:                return "FALSE";
+      case ERR_OOM:              return "ERR_OOM";
+      case ERR_INTERNAL:         return "ERR_INTERNAL";
+      case ERR_LEXICAL:          return "ERR_LEXICAL";
+      case ERR_SEMANTIC:         return "ERR_SEMANTIC";
+      case ERR_NOT_IMPL:         return "ERR_NOT_IMPL";
+      case blk_tail_call:        return "blk_tail_call";
+      case blk_tail_call_m_cons: return "blk_tail_call_m_cons";
+      case blk_error:            return "blk_error";
       }
       final int t = type(code);
       final int v = value(code);
