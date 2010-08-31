@@ -236,6 +236,9 @@ public class JhwScm
             //
             // Top-level entry point for the interactive interpreter.
             //
+            // Note: return value is undefined.  Doesn't return for
+            // that matter, just exits the VM.  TODO: kinda icky.
+            //
             gosub(sub_read,sub_rep+0x1);
             break;
          case sub_rep+0x1:
@@ -249,36 +252,10 @@ public class JhwScm
             break;
          case sub_rep+0x2:
             reg[regArg0] = reg[regRetval];
-            //
-            // Note: we could probably tighten up rep by just jumping
-            // back to sub_rep on return from sub_print.
-            //
-            // But that would count as a specialized form of
-            // tail-recursion - not even regular tail recursion, and
-            // it might have funny stack-depth-tracking consequences.
-            //
-            // Going with the extra blk for now to take it easy on the
-            // subtlety.
-            //
-            // Note: return value is undefined.
-            //
             gosub(sub_print,sub_rep+0x3);
             break;
          case sub_rep+0x3:
-            //
-            // Note: two choices here: we could do regular tail
-            // recursion, or implement as a loop with jump.  Both
-            // logically equivalent, but the tail recursion is much
-            // less efficient unless we have efficient tail recursion
-            // :) - but it would be an interesting experiment to see
-            // if we could eliminate the jump() operator altogether in
-            // that case.
-            //
-            // Also, the tail recursion decision would expose certain
-            // uncomfortable questions about what the return value of
-            // (print) is.  So for now, we just jump().
-            //
-            jump(sub_rep);
+            gosub(sub_rep,blk_tail_call);
             break;
 
          case sub_rp:
@@ -288,7 +265,8 @@ public class JhwScm
             // A useful entry point for testing sub_read and sub_print
             // decoupled from sub_eval and sub_apply.
             //
-            // Note: return value is undefined.
+            // Note: return value is undefined.  Doesn't return for
+            // that matter, just exits the VM.  TODO: kinda icky.
             //
             gosub(sub_read,sub_rp+0x1);
             break;
@@ -301,7 +279,7 @@ public class JhwScm
             gosub(sub_print,sub_rp+0x2);
             break;
          case sub_rp+0x2:
-            jump(sub_rp);  // TODO: jumps are icky
+            gosub(sub_rp,blk_tail_call);
             break;
 
          case sub_read:
@@ -1113,6 +1091,8 @@ public class JhwScm
          case sub_print:
             // Prints the expr in reg[regArg0] to reg[regOut].
             //
+            // Note: return value undefined, kinda icky.
+            //
             c = reg[regArg0];
             log("printing: " + pp(c));
             switch (type(c))
@@ -1252,7 +1232,7 @@ public class JhwScm
             }
             queuePushBack(reg[regOut],c0);
             reg[regArg0] = c1;
-            jump(sub_print_chars); // TODO: jump() is icky!
+            gosub(sub_print_chars,blk_tail_call);
             break;
 
          case sub_print_list:
@@ -1504,35 +1484,19 @@ public class JhwScm
    private static final int blk_tail_call_m_cons = TYPE_SUB | 0x10002;
    private static final int blk_error            = TYPE_SUB | 0x10003;
 
-   // TODO: jump is icky.
+   // jump() is icky.  I have deliberately not used it, in favor of
+   // tail recursion wherever possible - even *before* the tail
+   // recursion optimization has been written.
    //
-   // I feel like I'm using it, there was a recursive form (probably
-   // tail-recursive) that I missed.
+   // I feel like, wherever I'm tempted to use jump(), there was a
+   // recursive form that I missed - and when I find it, I end up with
+   // something a lot shorter and more reusable.
    //
    // Seems to me I should be eating my own dogfood on the recursion a
    // bit more.
    // 
    // Of course, at some point I'll probably be introducing a
    // conditional branch...
-   //
-   private void jump ( final int nextOp )
-   {
-      if ( DEBUG )
-      {
-         final int t = type(nextOp);
-         if ( TYPE_SUB != t )
-         {
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-      }
-      if ( NIL != reg[regError] )
-      {
-         if ( verbose ) log("flow suspended for error: " + reg[regError]);
-         return;
-      }
-      reg[regPc] = nextOp;
-   }
 
    private void gosub ( final int nextOp, final int continuationOp )
    {
