@@ -298,10 +298,10 @@ public class JhwScm
                return SUCCESS;
             }
             reg[regArg0] = reg[regRetval];
-            gosub(sub_print,sub_rep+0x2);
+            gosub(sub_print,sub_rp+0x2);
             break;
          case sub_rp+0x2:
-            jump(sub_rep); // TODO: jumps are icky
+            jump(sub_rp);  // TODO: jumps are icky
             break;
 
          case sub_read:
@@ -1255,7 +1255,8 @@ public class JhwScm
             // Prints the list (NIL or a cell) in reg[regArg0] to
             // reg[regOut] in parens.
             //
-            // TODO: UNTESTED
+            reg[regArg0] = reg[regArg0];
+            reg[regArg1] = TRUE;
             queuePushBack(reg[regOut],code(TYPE_CHAR,'('));
             gosub(sub_print_list_elems,sub_print_list+0x1);
             break;
@@ -1270,7 +1271,30 @@ public class JhwScm
             // Prints the elements in the list (NIL or a cell) in
             // reg[regArg0] to reg[regOut] with a space between each.
             //
-            raiseError(ERR_NOT_IMPL);
+            // Furthermore, reg[regArg1] should be TRUE if
+            // reg[regArg0] is the first item in the list, FALSE
+            // otherwise.
+            //
+            // Note, return value is undefined.
+            //
+            if ( NIL == reg[regArg0] )
+            {
+               returnsub();
+               break;
+            }
+            if ( FALSE == reg[regArg1] )
+            {
+               queuePushBack(reg[regOut],code(TYPE_CHAR,' '));
+            }
+            store(reg[regArg0]);
+            reg[regArg0] = car(reg[regArg0]);
+            gosub(sub_print,sub_print_list_elems+0x1);
+            break;
+         case sub_print_list_elems+0x1:
+            reg[regTmp0] = restore();
+            reg[regArg0] = cdr(reg[regTmp0]);
+            reg[regArg1] = FALSE;
+            gosub(sub_print_list_elems,blk_tail_call);
             break;
 
          case blk_tail_call:

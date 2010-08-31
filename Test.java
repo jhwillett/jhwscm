@@ -149,27 +149,30 @@ public class Test
       expectLexical("((a b) c");
       expectLexical("((a b c)");
 
+      expectSuccess("(a b c)",      "(a b c)",   new JhwScm(false));
+      expectSuccess("(a (b c))",    "(a (b c))", new JhwScm(false));
+      expectSuccess("((a b) c)",    "((a b) c)", new JhwScm(false));
+      expectSuccess("((a b c))",    "((a b c))", new JhwScm(false));
+      expectLexical("((a b) c",                  new JhwScm(false));
+      expectLexical("((a b c)",                  new JhwScm(false));
+      expectSuccess("()",           "()",        new JhwScm(false));
+      expectSuccess("\r(\t)\n",     "()",        new JhwScm(false));
+      expectLexical("(",                         new JhwScm(false));
+      expectLexical(" (  ",                      new JhwScm(false));
+      expectLexical(")",                         new JhwScm(false));
+      expectSuccess("(()())",       "(() ())",   new JhwScm(false));
+      expectSuccess(" ( ( ) ( ) )", "(() ())",   new JhwScm(false));
+      expectLexical("(()()))",                   new JhwScm(false));
+      expectLexical(" ( () ())) ",               new JhwScm(false));
+      expectLexical("((()())",                   new JhwScm(false));
+      
       JhwScm.SILENT = false;
-
-      {
-         expectSuccess("(a b c)",      "(a b c)",   new JhwScm(false));
-         expectSuccess("(a (b c))",    "(a (b c))", new JhwScm(false));
-         expectSuccess("((a b) c)",    "((a b) c)", new JhwScm(false));
-         expectSuccess("((a b c))",    "((a b c))", new JhwScm(false));
-         expectLexical("((a b) c",                  new JhwScm(false));
-         expectLexical("((a b c)",                  new JhwScm(false));
-         expectSuccess("()","()",                   new JhwScm(false));
-         expectSuccess("\r(\t)\n",     "()",        new JhwScm(false));
-         expectLexical("(",                         new JhwScm(false));
-         expectLexical(" (  ",                      new JhwScm(false));
-         expectLexical(")",                         new JhwScm(false));
-         expectSuccess("(()())",       "(()())",    new JhwScm(false));
-         expectSuccess(" ( ( ) ( ) )", "(()())",    new JhwScm(false));
-         expectLexical("(()()))",                   new JhwScm(false));
-         expectLexical(" ( () ())) ",               new JhwScm(false));
-         expectLexical("((()())",                   new JhwScm(false));
-      }
-
+      
+      expectSuccess("(1 . 2)",      "(1 . 2)",   new JhwScm(false));
+      expectSuccess("(1 2 . 3)",    "(1 2 . 3)", new JhwScm(false));
+      expectLexical("(1 . )",                    new JhwScm(false));
+      expectLexical("(1 .)",                     new JhwScm(false));
+      
       // character literals are self-evaluating - though some of them
       // are tweaky (self-evaluate but don't self-print)
       final String[] simpleChars = { 
