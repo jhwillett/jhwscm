@@ -107,35 +107,35 @@ public class JhwScm
          return BAD_ARG;
       }
       log("input():  \"" + input + "\"");
-      // TODO: this method is horribly inefficient :(
-      //
-      // Should reconsider our goal of leaving the input buffer
-      // unchanged, or should do a more clever cache-the-tail-cell to
-      // recover from failure in O(1).  In any case, we shouldn't have
-      // to walk all the input twice here, once into the temp queue
-      // and once in queueSpliceBack().
-      //
-      final int tmpQueue = queueCreate();
-      if ( NIL == tmpQueue )
-      {
-         return OUT_OF_MEMORY + 1;
-      }
-      for ( int i = 0; i < input.length(); ++i )
-      {
-         final char c    = input.charAt(i);
-         final int  code = code(TYPE_CHAR,c);
-         queuePushBack(tmpQueue,code);
-      }
-      if ( NIL == reg[regIn] )
+      if ( DEBUG && TYPE_CELL != type(reg[regIn]) )
       {
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
-      queueSpliceBack(reg[regIn],car(tmpQueue));
-      // TODO: could recycle the cell at tmpQueue here.
-      //
-      // TODO: check did we get in an error state before reporting
-      // success?
+      if ( DEBUG && NIL != reg[regError] )
+      {
+         // TODO: is this really a legit use case?  Need a new code?
+         //
+         // What we're doing here is saying "can't accept input on a
+         // VM in an error state", which is different than saying
+         // "encountered an error processing this input".
+         raiseError(ERR_INTERNAL);
+         return INTERNAL_ERROR;
+      }
+      final int oldCar = car(reg[regIn]);
+      final int oldCdr = car(reg[regIn]);
+      for ( int i = 0; i < input.length(); ++i )
+      {
+         final char c    = input.charAt(i);
+         final int  code = code(TYPE_CHAR,c);
+         queuePushBack(reg[regIn],code);
+         if ( NIL != reg[regError] )
+         {
+            setcar(reg[regIn],oldCar);
+            setcdr(reg[regIn],oldCdr);
+            return INTERNAL_ERROR; // TODO: proper proxy for reg[regError]
+         }
+      }
       return SUCCESS;
    }
 
@@ -430,7 +430,6 @@ public class JhwScm
                gosub(sub_read_string,blk_tail_call);
                break;
             case '#':
-               // TODO: can mean more than just a boolean literal
                log("octothorpe special");
                gosub(sub_read_octo_tok,blk_tail_call);
                break;
@@ -1101,7 +1100,6 @@ public class JhwScm
                gosub(sub_print_list,blk_tail_call);
                break;
             case TYPE_CELL:
-               // TODO: check for TYPE_SENTINEL in car(c)
                c0 = car(c);
                c1 = cdr(c);
                switch (c0)
@@ -1245,8 +1243,6 @@ public class JhwScm
             gosub(sub_print_list_elems,sub_print_list+0x1);
             break;
          case sub_print_list+0x1:
-            //
-            // TODO: UNTESTED
             queuePushBack(reg[regOut],code(TYPE_CHAR,')'));
             returnsub();
             break;
