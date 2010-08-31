@@ -349,6 +349,10 @@ public class JhwScm
             case '(':
                gosub(sub_read_list,blk_tail_call);
                break;
+            case '.':
+               log("dotted lists are an ugly can of worms");
+               raiseError(ERR_NOT_IMPL);
+               break;
             default:
                gosub(sub_read_atom,blk_tail_call);
                break;
