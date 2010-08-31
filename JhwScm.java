@@ -62,6 +62,11 @@ public class JhwScm
 
    public JhwScm ()
    {
+      this(true);
+   }
+
+   public JhwScm ( final boolean doREP )
+   {
       log("JhwScm.JhwScm()");
       for ( int i = 0; i < reg.length; i++ )
       {
@@ -77,7 +82,7 @@ public class JhwScm
          reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
       }
 
-      reg[regPc]  = sub_rep;
+      reg[regPc]  = doREP ? sub_rep : sub_rp;
 
       reg[regIn]  = queueCreate();
       reg[regOut] = queueCreate();
@@ -255,6 +260,8 @@ public class JhwScm
             // Going with the extra blk for now to take it easy on the
             // subtlety.
             //
+            // Note: return value is undefined.
+            //
             gosub(sub_print,sub_rep+0x3);
             break;
          case sub_rep+0x3:
@@ -272,6 +279,29 @@ public class JhwScm
             // (print) is.  So for now, we just jump().
             //
             jump(sub_rep);
+            break;
+
+         case sub_rp:
+            // Reads the next expr from reg[regIn], and prints the
+            // result in reg[regOut].
+            //
+            // A useful entry point for testing sub_read and sub_print
+            // decoupled from sub_eval and sub_apply.
+            //
+            // Note: return value is undefined.
+            //
+            gosub(sub_read,sub_rp+0x1);
+            break;
+         case sub_rp+0x1:
+            if ( EOF == reg[regRetval] )
+            {
+               return SUCCESS;
+            }
+            reg[regArg0] = reg[regRetval];
+            gosub(sub_print,sub_rep+0x2);
+            break;
+         case sub_rp+0x2:
+            jump(sub_rep); // TODO: jumps are icky
             break;
 
          case sub_read:
@@ -608,7 +638,7 @@ public class JhwScm
             store(reg[regArg0]);
             gosub(sub_read_symbol_body,sub_read_symbol+0x1);
             break;
-         case sub_read_symbol+0x1: // blk_tail_call_m_cons!!
+         case sub_read_symbol+0x1: // blk_tail_call_m_cons-ish??
             reg[regTmp0]   = restore();
             reg[regRetval] = cons(IS_SYMBOL,car(reg[regTmp0]));
             returnsub();
@@ -629,7 +659,7 @@ public class JhwScm
             store(reg[regArg0]);
             gosub(sub_read_string_body,sub_read_string+0x1);
             break;
-         case sub_read_string+0x1: // blk_tail_call_m_cons??
+         case sub_read_string+0x1:
             reg[regTmp0]   = restore();
             reg[regRetval] = cons(IS_STRING,car(reg[regTmp0]));
             c = queuePeekFront(reg[regIn]);
@@ -1254,9 +1284,14 @@ public class JhwScm
             // Returns the cons of the value on the stack with
             // reg[regRetval].
             //
+            // This has a distinctive pattern of use:
+            //
+            //   store(head_to_be);
+            //   gosub(sub_foo,blk_tail_call_m_cons);
+            //
             reg[regTmp0]   = restore();
             reg[regTmp1]   = reg[regRetval];
-            reg[regRetval] = cons(reg[regTmp0],reg[regTmp0]);
+            reg[regRetval] = cons(reg[regTmp0],reg[regTmp1]);
             returnsub();
             break;
 
@@ -1407,6 +1442,7 @@ public class JhwScm
    private static final int MASK_BLOCKID         =                0xF;
 
    private static final int sub_rep              = TYPE_SUB |  0x1000;
+   private static final int sub_rp               = TYPE_SUB |  0x1100;
 
    private static final int sub_read             = TYPE_SUB |  0x2000;
    private static final int sub_read_list        = TYPE_SUB |  0x2100;
@@ -2138,6 +2174,7 @@ public class JhwScm
          switch (code & ~MASK_BLOCKID)
          {
          case sub_rep:              buf.append("sub_rep");              break;
+         case sub_rp:               buf.append("sub_rp");               break;
          case sub_read:             buf.append("sub_read");             break;
          case sub_read_list:        buf.append("sub_read_list");        break;
          case sub_read_list_open:   buf.append("sub_read_list_open");   break;

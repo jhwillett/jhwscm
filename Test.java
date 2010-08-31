@@ -149,6 +149,27 @@ public class Test
       expectLexical("((a b) c");
       expectLexical("((a b c)");
 
+      JhwScm.SILENT = false;
+
+      {
+         expectSuccess("(a b c)",      "(a b c)",   new JhwScm(false));
+         expectSuccess("(a (b c))",    "(a (b c))", new JhwScm(false));
+         expectSuccess("((a b) c)",    "((a b) c)", new JhwScm(false));
+         expectSuccess("((a b c))",    "((a b c))", new JhwScm(false));
+         expectLexical("((a b) c",                  new JhwScm(false));
+         expectLexical("((a b c)",                  new JhwScm(false));
+         expectSuccess("()","()",                   new JhwScm(false));
+         expectSuccess("\r(\t)\n",     "()",        new JhwScm(false));
+         expectLexical("(",                         new JhwScm(false));
+         expectLexical(" (  ",                      new JhwScm(false));
+         expectLexical(")",                         new JhwScm(false));
+         expectSuccess("(()())",       "(()())",    new JhwScm(false));
+         expectSuccess(" ( ( ) ( ) )", "(()())",    new JhwScm(false));
+         expectLexical("(()()))",                   new JhwScm(false));
+         expectLexical(" ( () ())) ",               new JhwScm(false));
+         expectLexical("((()())",                   new JhwScm(false));
+      }
+
       // character literals are self-evaluating - though some of them
       // are tweaky (self-evaluate but don't self-print)
       final String[] simpleChars = { 
@@ -213,8 +234,6 @@ public class Test
       }
       expectLexical("\"");
       expectLexical("\"hello");
-
-      JhwScm.SILENT = false;
 
       // simple arithmetic - more than testing math, also requires a
       // top-level env with symbols bound to primitive functions
