@@ -171,14 +171,26 @@ public class Test
       expectLexical(" ( () ())) ",               new JhwScm(false));
       expectLexical("((()())",                   new JhwScm(false));
 
+      // improper list experssions: yay!
+      expectSuccess("(1 . 2)",      "(1 . 2)",   new JhwScm(false));
+      expectSuccess("(1 2 . 3)",    "(1 2 . 3)", new JhwScm(false));
+      expectLexical("(1 . 2 3)",                 new JhwScm(false));
+      expectLexical("( . 2 3)",                  new JhwScm(false));
+      expectLexical("(1 . )",                    new JhwScm(false));
+      expectLexical("(1 .)",                     new JhwScm(false));
+
+      expectSuccess("(1 . ())",     "(1)",       new JhwScm(false));
+      expectSuccess("(1 .())",      "(1)",       new JhwScm(false));
+
       if ( false )
       {
-         // we'll come back to this later...
          JhwScm.SILENT = false;
-         expectSuccess("(1 . 2)",      "(1 . 2)",   new JhwScm(false));
-         expectSuccess("(1 2 . 3)",    "(1 2 . 3)", new JhwScm(false));
-         expectLexical("(1 . )",                    new JhwScm(false));
-         expectLexical("(1 .)",                     new JhwScm(false));
+         // Probably not until I handle floats
+         expectSuccess("(1 .2)",       "(1 0.2)",   new JhwScm(false));
+
+         // ???? guile does this ????
+         expectSuccess("( . 2 )",    "2",           new JhwScm(false));
+         expectSuccess("( . () )",   "()",          new JhwScm(false));
       }
       
       // character literals are self-evaluating - though some of them
