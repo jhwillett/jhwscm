@@ -87,8 +87,13 @@ public class JhwScm
 
       reg[regPc]  = doREP ? sub_rep : sub_rp;
 
-      reg[regIn]  = queueCreate();
-      reg[regOut] = queueCreate();
+      reg[regIn]        = queueCreate();
+      reg[regOut]       = queueCreate();
+
+      reg[regGlobalEnv] = cons(NIL,NIL);
+
+      prebind("+",code(TYPE_FIXINT,1234));
+      //prebind("+",sub_add);
    }
 
    /**
@@ -941,7 +946,7 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             default:
-               if ( verb ) log("unexpected object in eval: " + pp(reg[regArg0]));
+               if ( verb ) log("unexpected type in eval: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -1079,16 +1084,24 @@ public class JhwScm
             // Finds the *first* binding in the *first* frame for the
             // symbol.
             //
+            // (define (sub_eval_look_env sym env)
+            //   (if (null? env) 
+            //       '()
+            //       (let ((bind (sub_eval_look_frame sym (car env))))
+            //         (if (null? bind) 
+            //             (sub_eval_look_env sym (cdr env))
+            //             bind))))
+            //
+            if ( verb ) log("  SYM: " + pp(reg[regArg0]));
+            if ( verb ) log("  ENV: " + pp(reg[regArg1]));
+            if ( verb ) log("  GLO: " + pp(reg[regGlobalEnv]));
+            if ( verb ) log("  GLa: " + pp(car(reg[regGlobalEnv])));
+            if ( verb ) log("  GLd: " + pp(cdr(reg[regGlobalEnv])));
             if ( NIL == reg[regArg1] )
             {
                if ( verb ) log("empty env: symbol not found");
                reg[regRetval] = NIL;
                returnsub();
-               break;
-            }
-            if ( TYPE_CELL != type(reg[regArg1]) )
-            {
-               raiseError(ERR_INTERNAL);
                break;
             }
             store(reg[regArg0]);
@@ -1101,7 +1114,7 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( NIL != reg[regRetval] )
             {
-               if ( verb ) log("symbol found w/ binding: " + pp(reg[regRetval]));
+               if ( verb ) log("symbol found w/ bind: " + pp(reg[regRetval]));
                returnsub();
                break;
             }
@@ -1122,20 +1135,23 @@ public class JhwScm
             //
             // Finds the *first* binding in the frame for the symbol.
             //
+            // (define (sub_eval_look_frame sym frame)
+            //   (if (null? frame) 
+            //       '()
+            //       (let ((s (car (car frame))))
+            //         (if (equal? sym s) 
+            //             (car frame)
+            //             (sub_eval_look_frame (cdr frame))))))
+            //
             if ( NIL == reg[regArg1] )
             {
                reg[regRetval] = NIL;
                returnsub();
                break;
             }
-            if ( TYPE_CELL != type(reg[regArg1]) )
-            {
-               raiseError(ERR_INTERNAL);
-               break;
-            }
             store(reg[regArg0]);
             store(reg[regArg1]);
-            reg[regArg1] = car(reg[regArg1]);
+            reg[regArg1] = car(car(reg[regArg1]));
             gosub(sub_equal_p,sub_eval_look_frame+0x1);
             break;
          case sub_eval_look_frame+0x1:
@@ -1165,24 +1181,30 @@ public class JhwScm
             //
             // NOTE: this is meant to be the equal? described in R5RS.
             //
+            if ( verb ) log("  arg0: " + pp(reg[regArg0]));
+            if ( verb ) log("  arg1: " + pp(reg[regArg1]));
             if ( reg[regArg0] == reg[regArg1] )
             {
+               if ( verb ) log("  identical");
                reg[regRetval] = TRUE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != type(reg[regArg1]) )
             {
+               if ( verb ) log("  different types");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != TYPE_CELL )
             {
+               if ( verb ) log("  not cells");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
+            if ( verb ) log("  checking car");
             store(reg[regArg0]);
             store(reg[regArg1]);
             reg[regArg0] = car(reg[regArg0]);
@@ -1194,9 +1216,11 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( FALSE == reg[regRetval] )
             {
+               if ( verb ) log("  car mismatch");
                returnsub();
                break;
             }
+            if ( verb ) log("  checking cdr");
             reg[regArg0] = cdr(reg[regArg0]);
             reg[regArg1] = cdr(reg[regArg1]);
             gosub(sub_equal_p,blk_tail_call);
@@ -1769,10 +1793,6 @@ public class JhwScm
    {
       final boolean verb = true;
       if ( verb ) log("raiseError():");
-      if ( DEBUG && TYPE_ERROR != type(err) )
-      {
-         // TODO: Bad call to raiseError()? Are we out of tricks?
-      }
       if ( verb ) log("  err:   " + pp(err));
       if ( verb ) log("  pc:    " + pp(reg[regPc]));
       if ( verb ) log("  stack: " + pp(reg[regStack]));
@@ -1812,6 +1832,15 @@ public class JhwScm
       }
       reg[regPc]    = blk_error;
       reg[regStack] = NIL;
+      if ( DEBUG && TYPE_ERROR != type(err) )
+      {
+         // TODO: Bad call to raiseError()? Are we out of tricks?
+         throw new RuntimeException("bogus error code: " + pp(err));
+      }
+      if ( DEBUG && ERR_INTERNAL == err )
+      {
+         throw new RuntimeException("internal error");
+      }
    }
 
    /**
@@ -2329,5 +2358,31 @@ public class JhwScm
          }
          buf.append(c);
       }
+   }
+
+   private void prebind ( final String name, final int code )
+   {
+      // TODO: this is sloppy, non-LISPy, magic, and has no error
+      // checking.
+      //
+      // Longer-term I want lexical-level bindings for this stuff, and
+      // to just express the "standard" name bindings as a series of
+      // defines against the lexically supported stuff.
+      //
+      // But I did this now because I don't want to go inventing some
+      // off-specification lexical bindings which I will be committed
+      // to maintianging longer term until *after* I've got (eval)
+      // working and the entry points in the microcode tied down more.
+      //
+      final int queue = queueCreate();
+      for ( int i = 0; i < name.length(); i++ )
+      {
+         queuePushBack(queue,code(TYPE_CHAR,name.charAt(i)));
+      }
+      final int symbol   = cons(IS_SYMBOL,car(queue));
+      final int binding  = cons(symbol,code);
+      final int frame    = car(reg[regGlobalEnv]);
+      final int newframe = cons(binding,frame);
+      setcar(reg[regGlobalEnv],newframe);
    }
 }

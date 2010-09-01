@@ -205,6 +205,7 @@ public class Test
       expectSuccess("( . 2 )",    "2",           new JhwScm(false));
       expectSuccess("( . () )",   "()",          new JhwScm(false));
       expectLexical("( . 2 3 )");
+      expectSuccess("(. abc )",   "abc",         new JhwScm(false));
 
       if ( false )
       {
@@ -282,6 +283,7 @@ public class Test
 
       // simple arithmetic - more than testing math, also requires a
       // top-level env with symbols bound to primitive functions
+      expectSuccess("+","????");
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
       expectSuccess("(+ 0 1)","1");
