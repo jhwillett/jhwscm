@@ -178,21 +178,41 @@ public class Test
       expectLexical("( . 2 3)",                  new JhwScm(false));
       expectLexical("(1 . )",                    new JhwScm(false));
       expectLexical("(1 .)",                     new JhwScm(false));
+      expectLexical("(1 . 2 3)");
+      expectLexical("( . 2 3)");
+      expectLexical("(1 . )");
+      expectLexical("(1 .)");
 
       expectSuccess("(1 . ())",     "(1)",       new JhwScm(false));
       expectSuccess("(1 .())",      "(1)",       new JhwScm(false));
 
+      // Guile does this, with nothing before the dot in a dotted list
+      // but I do not quite understand why it works.
+      // 
+      // What is more surprising, is once I had the basic dotted list
+      // working in (read) and (print), the first time I tried these
+      // cases they behaved as expected, as Guile does.
+      //
+      // Which makes me feel warm and fuzzy, like this is a funny edge
+      // case in the definition and my implementation was faithful
+      // enough to the definition that it exhibits the same edge
+      // cases, although I did not anticipate them at time of
+      // implementation.
+      //
+      // Still, this demands I meditate on it to understand fully why
+      // this is so.
+      //
+      expectSuccess("( . 2 )",    "2",           new JhwScm(false));
+      expectSuccess("( . () )",   "()",          new JhwScm(false));
+      expectLexical("( . 2 3 )");
+
       if ( false )
       {
+         // Probably not until I handle floats!
          JhwScm.SILENT = false;
-         // Probably not until I handle floats
          expectSuccess("(1 .2)",       "(1 0.2)",   new JhwScm(false));
-
-         // ???? guile does this ????
-         expectSuccess("( . 2 )",    "2",           new JhwScm(false));
-         expectSuccess("( . () )",   "()",          new JhwScm(false));
       }
-      
+
       // character literals are self-evaluating - though some of them
       // are tweaky (self-evaluate but don't self-print)
       final String[] simpleChars = { 
