@@ -1,0 +1,25 @@
+
+
+(define (sub_read_list)
+  (let ((c (peek-input)))
+    (if (!= c #\()
+        EOF
+        (block (pop-input) (sub_read_list_open #f)))))
+(define (sub_read_list_open b)
+  (block
+   (burn-space)
+   (let ((c (peek-input)))
+     (if (= c #\()
+         (block (pop-input) '())
+         (block (pop-input) 
+                (let ((c (peek-input)))
+                  (if (= c #\.)
+                      (block (pop-input) '())
+                      (block (pop-input) (cons (read) (sub_read_list_open)))
+                      )
+                  )
+                )
+         )
+     )
+   )
+  )

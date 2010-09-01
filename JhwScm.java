@@ -239,6 +239,10 @@ public class JhwScm
             // Note: return value is undefined.  Doesn't return for
             // that matter, just exits the VM.  TODO: kinda icky.
             //
+            // (define (sub_rep)
+            //   (begin (sub_print (sub_eval (sub_read) global_env))
+            //          (sub_rep)))
+            //
             gosub(sub_read,sub_rep+0x1);
             break;
          case sub_rep+0x1:
@@ -267,6 +271,10 @@ public class JhwScm
             //
             // Note: return value is undefined.  Doesn't return for
             // that matter, just exits the VM.  TODO: kinda icky.
+            //
+            // (define (sub_rp)
+            //   (begin (sub_print (sub_read))
+            //          (sub_rp)))
             //
             gosub(sub_read,sub_rp+0x1);
             break;
@@ -301,6 +309,15 @@ public class JhwScm
             //   external representation, but the external
             //   representation is incomplete and therefore not
             //   parsable, an error is signalled.
+            //
+            // (define (sub_read)
+            //   (begin (sub_read_burn_space)
+            //          (let ((c (queue_peeek_front)))
+            //            (case c
+            //              ((EOF) EOF)
+            //              ((#\)) (err_lexical))
+            //              ((#\() (sub_read_list))
+            //              (else  (sub_read_atom))))))
             //
             gosub(sub_read_burn_space,sub_read+0x1);
             break;
@@ -338,9 +355,10 @@ public class JhwScm
             break;
 
          case sub_read_list:
-            // Reads the next list expr from reg[regIn], returning
-            // the result in reg[regRetval].
+            // Reads the next list expr from reg[regIn], returning the
+            // result in reg[regRetval]. Also handles dotted lists.
             // 
+            //
             // On entry, expects the next char from reg[regIn] to be
             // the opening '(' a list expression.
             // 
@@ -354,23 +372,40 @@ public class JhwScm
                break;
             }
             queuePopFront(reg[regIn]);
+            reg[regArg0] = FALSE;
             gosub(sub_read_list_open,blk_tail_call);
             break;
 
          case sub_read_list_open:
-            // Reads all exprs from reg[regIn] until a loose EOF or
-            // ')' is encountered.
+            // Reads all exprs from reg[regIn] until a loose EOF, a
+            // ')', or a '.' is encountered.  reg[regArg0] should be
+            // FALSE on main entry: reg[regArg0] TRUE is used for an
+            // internal recursion to indicate we have seen at least
+            // one subexpression.
             //
-            // EOF results in an error (mismatchd paren).  ')' results
-            // in returning a list containing all the exprs in order.
+            // EOF results in an error (mismatchd paren).
+            //
+            // ')' results in returning a list containing all the
+            // exprs in order.
+            //
+            // '.' results in a dotted list, provided subsequent
+            // success reading a single expression further and finding
+            // the closing ')'.
             // 
             // On exit, precisely the list expression will have been
             // consumed from reg[regIn], up to and including the final
             // ')'.
             //
+            store(reg[regArg0]);
             gosub(sub_read_burn_space,sub_read_list_open+0x1);
             break;
          case sub_read_list_open+0x1:
+            reg[regArg0] = restore();
+            if ( DEBUG && TYPE_BOOLEAN != type(reg[regArg0]) )
+            {
+               raiseError(ERR_INTERNAL); // or semantic?
+               break;
+            }
             c = queuePeekFront(reg[regIn]);
             if ( code(TYPE_CHAR,')') == c )
             {
@@ -378,6 +413,20 @@ public class JhwScm
                queuePopFront(reg[regIn]);
                reg[regRetval] = NIL;
                returnsub();
+               break;
+            }
+            if ( code(TYPE_CHAR,'.') == c )
+            {
+               if ( FALSE == reg[regArg0] )
+               {
+                  log("dot before first expr");
+                  raiseError(ERR_INTERNAL); // or semantic?
+                  break;
+               }
+               log("dotted list: " + pp(c));
+               queuePopFront(reg[regIn]);
+               reg[regArg0] = FALSE;
+               gosub(sub_read,sub_read_list_open+0x3);
                break;
             }
             if ( EOF == c )
@@ -389,16 +438,41 @@ public class JhwScm
             gosub(sub_read,sub_read_list_open+0x2);
             break;
          case sub_read_list_open+0x2:
-            if ( DEBUG && EOF == reg[regRetval] )
+            // after reading a subexpression before the dot 
+            if ( EOF == reg[regRetval] )
             {
-               // sub_read_list+0x1, ensuring sub_read wasn't going to
-               // find EOF or ')'.
                log("unexpected eof mid-list");
                raiseError(ERR_INTERNAL);
                break;
             }
             store(reg[regRetval]);                          // store subexpr
+            reg[regArg0] = FALSE;
             gosub(sub_read_list_open,blk_tail_call_m_cons); // recurse
+            break;
+         case sub_read_list_open+0x3:
+            // after reading the subexpression after the dot 
+            if ( EOF == reg[regRetval] )
+            {
+               log("unexpected eof mid-dotted-list");
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            store(reg[regRetval]);
+            gosub(sub_read_burn_space,sub_read_list_open+0x4);
+            break;
+         case sub_read_list_open+0x4:
+            reg[regRetval] = restore();
+            // after burning space after the subexpression after the dot 
+            c = queuePeekFront(reg[regIn]);
+            if ( code(TYPE_CHAR,')') != c )
+            {
+               log("bogus char or eof before close-paren: " + pp(c));
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            log("matching close-paren: " + pp(c));
+            queuePopFront(reg[regIn]);
+            returnsub();
             break;
 
          case sub_read_atom:
@@ -410,7 +484,23 @@ public class JhwScm
             // 
             // On exit, precisely the atomic expression will have been
             // consumed from reg[regIn].
-            // 
+            //
+            // (define (sub_read_atom)
+            //   (let ((c (queue_peek_front)))
+            //     (case c
+            //       ((#\') (err_not_impl))
+            //       ((#\") (sub_read_string))
+            //       ((#\#) (sub_read_octo_tok))
+            //       ((#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9) 
+            //        (sub_read_num))
+            //       ((#\-) (begin 
+            //                (queue_pop_front)
+            //                (let ((c (queue_peek_front)))
+            //                  (case c
+            //                    ((#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9) 
+            //                     (- (sub_read_num)))
+            //                    (else (sub_read_symbol)))))))))
+            //
             c = queuePeekFront(reg[regIn]);
             v0 = value(c);
             if ( DEBUG && TYPE_CHAR != type(c) )
@@ -751,6 +841,8 @@ public class JhwScm
 
          case sub_read_burn_space:
             // Consumes any whitespace from reg[regIn].
+            //
+            // Note: return value unspecified.
             //
             c = queuePeekFront(reg[regIn]);
             if ( EOF == c )

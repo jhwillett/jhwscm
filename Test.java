@@ -142,6 +142,12 @@ public class Test
       expectSemantic(" ( () ())) "); // fails on expr before reaching extra ')'
       expectLexical("((()())");
 
+      JhwScm.SILENT = false;
+      expectSuccess("-",   "-",  new JhwScm(false));
+      expectSemantic("-");
+      expectSuccess("-as", "-asd",  new JhwScm(false));
+      expectSemantic("-as");
+      
       expectSemantic("(a b c)");
       expectSemantic("(a (b c))");
       expectSemantic("((a b) c)");
@@ -165,7 +171,6 @@ public class Test
       expectLexical("(()()))",                   new JhwScm(false));
       expectLexical(" ( () ())) ",               new JhwScm(false));
       expectLexical("((()())",                   new JhwScm(false));
-      
 
       if ( false )
       {
