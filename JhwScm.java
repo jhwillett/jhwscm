@@ -49,7 +49,8 @@ public class JhwScm
    //
    public static final boolean DEBUG          = true;
 
-   public static final boolean verbose        = false;
+   // TODO: permeable abstraction barrier
+   public static boolean SILENT = false;
 
    public static final int     SUCCESS          = 0;
    public static final int     INCOMPLETE       = 1;
@@ -67,7 +68,9 @@ public class JhwScm
 
    public JhwScm ( final boolean doREP )
    {
-      log("JhwScm.JhwScm()");
+      final boolean verb = false;
+
+      if ( verb ) log("JhwScm.JhwScm()");
       for ( int i = 0; i < reg.length; i++ )
       {
          reg[i] = NIL;
@@ -100,13 +103,15 @@ public class JhwScm
     */
    public int input ( final CharSequence input ) 
    {
+      final boolean verb = true && !SILENT;
+
       if ( DEBUG ) javaDepth = 0;
       if ( null == input )
       {
-         log("input():  null arg");
+         if ( verb ) log("input():  null arg");
          return BAD_ARG;
       }
-      log("input():  \"" + input + "\"");
+      if ( verb ) log("input():  \"" + input + "\"");
       if ( DEBUG && TYPE_CELL != type(reg[regIn]) )
       {
          raiseError(ERR_INTERNAL);
@@ -149,10 +154,11 @@ public class JhwScm
     */
    public int output ( final Appendable output ) 
    {
+      final boolean verb = true && !SILENT;
       if ( DEBUG ) javaDepth = 0;
       if ( null == output )
       {
-         log("output(): null arg");
+         if ( verb ) log("output(): null arg");
          return BAD_ARG;
       }
       if ( NIL == reg[regOut] )
@@ -176,7 +182,7 @@ public class JhwScm
          }
          queuePopFront(reg[regOut]);
       }
-      log("output(): \"" + output + "\"");
+      if ( verb ) log("output(): \"" + output + "\"");
       return SUCCESS;
    }
 
@@ -202,10 +208,12 @@ public class JhwScm
     */
    public int drive ( final int numSteps )
    {
+      final boolean verb = true && !SILENT;
+
       if ( DEBUG ) javaDepth = 0;
-      log("drive():");
+      if ( verb ) log("drive():");
       if ( DEBUG ) javaDepth = 1;
-      log("numSteps: " + numSteps);
+      if ( verb ) log("numSteps: " + numSteps);
 
       if ( numSteps < -1 )
       {
@@ -226,7 +234,7 @@ public class JhwScm
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
          if ( DEBUG ) javaDepth = 1;
-         log("step: " + pp(reg[regPc]));
+         if ( verb ) log("step: " + pp(reg[regPc]));
          if ( DEBUG ) javaDepth = 2;
          switch ( reg[regPc] )
          {
@@ -331,21 +339,21 @@ public class JhwScm
             }
             if ( DEBUG && TYPE_CHAR != type(c) )
             {
-               log("non-char in input: " + pp(c));
+               if ( verb ) log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
             switch (value(c))
             {
             case ')':
-               log("mismatch close paren");
+               if ( verb ) log("mismatch close paren");
                raiseError(ERR_LEXICAL);
                break;
             case '(':
                gosub(sub_read_list,blk_tail_call);
                break;
             case '.':
-               log("dotted lists are an ugly can of worms");
+               if ( verb ) log("dotted lists are an ugly can of worms");
                raiseError(ERR_NOT_IMPL);
                break;
             default:
@@ -409,7 +417,7 @@ public class JhwScm
             c = queuePeekFront(reg[regIn]);
             if ( code(TYPE_CHAR,')') == c )
             {
-               log("matching close-paren: " + pp(c));
+               if ( verb ) log("matching close-paren: " + pp(c));
                queuePopFront(reg[regIn]);
                reg[regRetval] = NIL;
                returnsub();
@@ -419,11 +427,11 @@ public class JhwScm
             {
                if ( FALSE == reg[regArg0] )
                {
-                  log("dot before first expr");
+                  if ( verb ) log("dot before first expr");
                   raiseError(ERR_INTERNAL); // or semantic?
                   break;
                }
-               log("dotted list: " + pp(c));
+               if ( verb ) log("dotted list: " + pp(c));
                queuePopFront(reg[regIn]);
                reg[regArg0] = FALSE;
                gosub(sub_read,sub_read_list_open+0x3);
@@ -431,7 +439,7 @@ public class JhwScm
             }
             if ( EOF == c )
             {
-               log("EOF when seeking close-paren");
+               if ( verb ) log("EOF when seeking close-paren");
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -441,7 +449,7 @@ public class JhwScm
             // after reading a subexpression before the dot 
             if ( EOF == reg[regRetval] )
             {
-               log("unexpected eof mid-list");
+               if ( verb ) log("unexpected eof mid-list");
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -453,7 +461,7 @@ public class JhwScm
             // after reading the subexpression after the dot 
             if ( EOF == reg[regRetval] )
             {
-               log("unexpected eof mid-dotted-list");
+               if ( verb ) log("unexpected eof mid-dotted-list");
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -466,11 +474,11 @@ public class JhwScm
             c = queuePeekFront(reg[regIn]);
             if ( code(TYPE_CHAR,')') != c )
             {
-               log("bogus char or eof before close-paren: " + pp(c));
+               if ( verb ) log("bogus char or eof before close-paren: " + pp(c));
                raiseError(ERR_LEXICAL);
                break;
             }
-            log("matching close-paren: " + pp(c));
+            if ( verb ) log("matching close-paren: " + pp(c));
             queuePopFront(reg[regIn]);
             returnsub();
             break;
@@ -506,27 +514,27 @@ public class JhwScm
             v0 = value(c);
             if ( DEBUG && TYPE_CHAR != type(c) )
             {
-               log("non-char in input: " + pp(c));
+               if ( verb ) log("non-char in input: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
             switch (v0)
             {
             case '\'':
-               log("quote (maybe not belong here in sub_read_atom)");
+               if ( verb ) log("quote (maybe not belong here in sub_read_atom)");
                raiseError(ERR_NOT_IMPL);
                break;
             case '"':
-               log("string literal");
+               if ( verb ) log("string literal");
                gosub(sub_read_string,blk_tail_call);
                break;
             case '#':
-               log("octothorpe special");
+               if ( verb ) log("octothorpe special");
                gosub(sub_read_octo_tok,blk_tail_call);
                break;
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
-               log("non-negated number");
+               if ( verb ) log("non-negated number");
                gosub(sub_read_num,blk_tail_call);
                break;
             case '-':
@@ -538,28 +546,28 @@ public class JhwScm
                v1 = value(c1);
                if ( TYPE_CHAR == type(c1) && '0' <= v1 && v1 <= '9' )
                {
-                  log("minus-starting-number");
+                  if ( verb ) log("minus-starting-number");
                   gosub(sub_read_num,sub_read_atom+0x1);
                }
                else if ( EOF == c1 )
                {
-                  log("lonliest minus in the world");
+                  if ( verb ) log("lonliest minus in the world");
                   reg[regTmp0]   = cons(code(TYPE_CHAR,'-'),NIL);
                   reg[regRetval] = cons(IS_SYMBOL,reg[regTmp0]);
                   returnsub();
                }
                else
                {
-                  log("minus-starting-symbol");
+                  if ( verb ) log("minus-starting-symbol");
                   reg[regArg0] = queueCreate();
-                  log("pushing: minus onto " + pp(reg[regArg0]));
+                  if ( verb ) log("pushing: minus onto " + pp(reg[regArg0]));
                   queuePushBack(reg[regArg0],code(TYPE_CHAR,'-'));
                   store(reg[regArg0]);
                   gosub(sub_read_symbol_body,sub_read_atom+0x2);
                }
                break;
             default:
-               log("symbol");
+               if ( verb ) log("symbol");
                gosub(sub_read_symbol,blk_tail_call);
                break;
             }
@@ -571,22 +579,22 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            log("negating: " + pp(c));
+            if ( verb ) log("negating: " + pp(c));
             reg[regRetval] = code(TYPE_FIXINT,-value(c));
-            log("  to:       " + pp(reg[regRetval]));
+            if ( verb ) log("  to:       " + pp(reg[regRetval]));
             returnsub();
             break;
          case sub_read_atom+0x2:
             reg[regTmp0]   = restore();
             reg[regTmp1]   = car(reg[regTmp0]);
             reg[regRetval] = cons(IS_SYMBOL,reg[regTmp1]);
-            log("YO YO YO: " + pp(reg[regTmp0]) + " " + pp(reg[regTmp1]));
+            if ( verb ) log("YO YO YO: " + pp(reg[regTmp0]) + " " + pp(reg[regTmp1]));
             if ( DEBUG )
             {
                reg[regTmp1] = reg[regTmp0];
                while ( NIL != reg[regTmp1] )
                {
-                  log("  YO: " + pp(car(reg[regTmp1])));
+                  if ( verb ) log("  YO: " + pp(car(reg[regTmp1])));
                   reg[regTmp1] = cdr(reg[regTmp1]);
                }
             }
@@ -611,14 +619,14 @@ public class JhwScm
             v0 = value(c0);
             if ( EOF == c0 )
             {
-               log("eof: returning " + pp(reg[regArg0]));
+               if ( verb ) log("eof: returning " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             }
             if ( TYPE_CHAR != type(c0) )
             {
-               log("non-char in input: " + pp(c0));
+               if ( verb ) log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -626,7 +634,7 @@ public class JhwScm
             v1 = value(c1);
             if ( TYPE_FIXINT != type(c1) )
             {
-               log("non-fixint in arg: " + pp(c1));
+               if ( verb ) log("non-fixint in arg: " + pp(c1));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -638,21 +646,21 @@ public class JhwScm
             case '\n':
             case '(':
             case ')':
-               log("terminator: " + pp(c0) + " return " + pp(reg[regArg0]));
+               if ( verb ) log("terminator: " + pp(c0) + " return " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             default:
                if ( v0 < '0' || v0 > '9' )
                {
-                  log("non-digit in input: " + pp(c0));
+                  if ( verb ) log("non-digit in input: " + pp(c0));
                   raiseError(ERR_LEXICAL);
                   break;
                }
                tmp0 = 10*v1 + (v0-'0');
-               log("first char: " + (char)v0);
-               log("old accum:  " +       v1);
-               log("new accum:  " +       tmp0);
+               if ( verb ) log("first char: " + (char)v0);
+               if ( verb ) log("old accum:  " +       v1);
+               if ( verb ) log("new accum:  " +       tmp0);
                queuePopFront(reg[regIn]);
                reg[regArg0] = code(TYPE_FIXINT,tmp0);
                gosub(sub_read_num_loop,blk_tail_call);
@@ -673,13 +681,13 @@ public class JhwScm
             c0 = queuePeekFront(reg[regIn]);
             if ( EOF == c0 )
             {
-               log("eof after octothorpe");
+               if ( verb ) log("eof after octothorpe");
                raiseError(ERR_LEXICAL);
                break;
             }
             if ( DEBUG && TYPE_CHAR != type(c0) )
             {
-               log("non-char in input: " + pp(c0));
+               if ( verb ) log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -687,12 +695,12 @@ public class JhwScm
             switch (value(c0))
             {
             case 't':
-               log("true");
+               if ( verb ) log("true");
                reg[regRetval] = TRUE;
                returnsub();
                break;
             case 'f':
-               log("false");
+               if ( verb ) log("false");
                reg[regRetval] = FALSE;
                returnsub();
                break;
@@ -700,24 +708,24 @@ public class JhwScm
                c1 = queuePeekFront(reg[regIn]);
                if ( EOF == c1 )
                {
-                  log("eof after octothorpe slash");
+                  if ( verb ) log("eof after octothorpe slash");
                   raiseError(ERR_LEXICAL);
                   break;
                }
                if ( DEBUG && TYPE_CHAR != type(c1) )
                {
-                  log("non-char in input: " + pp(c1));
+                  if ( verb ) log("non-char in input: " + pp(c1));
                   raiseError(ERR_INTERNAL);
                   break;
                }
-               log("character literal: " + pp(c1));
+               if ( verb ) log("character literal: " + pp(c1));
                queuePopFront(reg[regIn]);
                reg[regRetval] = c1;
                returnsub();
                // TODO: so far, we only handle the 1-char sequences...
                break;
             default:
-               log("unexpected after octothorpe: " + pp(c0));
+               if ( verb ) log("unexpected after octothorpe: " + pp(c0));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -747,20 +755,20 @@ public class JhwScm
             //
             if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
-               log("non-queue in arg: " + pp(reg[regArg0]));
+               if ( verb ) log("non-queue in arg: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
             c0 = queuePeekFront(reg[regIn]);
             if ( EOF == c0 )
             {
-               log("eof: returning");
+               if ( verb ) log("eof: returning");
                returnsub();
                break;
             }
             if ( TYPE_CHAR != type(c0) )
             {
-               log("non-char in input: " + pp(c0));
+               if ( verb ) log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -773,11 +781,11 @@ public class JhwScm
             case '(':
             case ')':
             case '"':
-               log("eot: returning");
+               if ( verb ) log("eot: returning");
                returnsub();
                break;
             default:
-               log("pushing: " + pp(c0) + " onto " + pp(reg[regArg0]));
+               if ( verb ) log("pushing: " + pp(c0) + " onto " + pp(reg[regArg0]));
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
                gosub(sub_read_symbol_body,blk_tail_call);
@@ -791,7 +799,7 @@ public class JhwScm
             c = queuePeekFront(reg[regIn]);
             if ( code(TYPE_CHAR,'"') != c )
             {
-               log("non-\" leading string literal: " + pp(c));
+               if ( verb ) log("non-\" leading string literal: " + pp(c));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -806,7 +814,7 @@ public class JhwScm
             c = queuePeekFront(reg[regIn]);
             if ( code(TYPE_CHAR,'"') != c )
             {
-               log("non-\" terminating string literal: " + pp(c));
+               if ( verb ) log("non-\" terminating string literal: " + pp(c));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -827,20 +835,20 @@ public class JhwScm
             //
             if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
-               log("non-queue in arg: " + pp(reg[regArg0]));
+               if ( verb ) log("non-queue in arg: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
             c0 = queuePeekFront(reg[regIn]);
             if ( EOF == c0 )
             {
-               log("eof in string literal");
+               if ( verb ) log("eof in string literal");
                raiseError(ERR_LEXICAL);
                break;
             }
             if ( TYPE_CHAR != type(c0) )
             {
-               log("non-char in input: " + pp(c0));
+               if ( verb ) log("non-char in input: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -848,11 +856,11 @@ public class JhwScm
             {
             case '"':
                reg[regRetval] = car(reg[regArg0]);
-               log("eot, returning: " + pp(reg[regRetval]));
+               if ( verb ) log("eot, returning: " + pp(reg[regRetval]));
                returnsub();
                break;
             default:
-               log("pushing: " + pp(c0));
+               if ( verb ) log("pushing: " + pp(c0));
                queuePushBack(reg[regArg0],c0);
                queuePopFront(reg[regIn]);
                gosub(sub_read_string_body,blk_tail_call);
@@ -901,7 +909,7 @@ public class JhwScm
                break;
             case TYPE_CELL:
                tmp0 = car(reg[regArg0]);
-               log("h: " + pp(tmp0));
+               if ( verb ) log("h: " + pp(tmp0));
                switch (tmp0)
                {
                case IS_STRING:
@@ -932,7 +940,7 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             default:
-               log("unexpected object in eval: " + pp(reg[regArg0]));
+               if ( verb ) log("unexpected object in eval: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -1072,7 +1080,7 @@ public class JhwScm
             //
             if ( NIL == reg[regArg1] )
             {
-               log("empty env: symbol not found");
+               if ( verb ) log("empty env: symbol not found");
                reg[regRetval] = NIL;
                returnsub();
                break;
@@ -1092,7 +1100,7 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( NIL != reg[regRetval] )
             {
-               log("symbol found w/ binding: " + pp(reg[regRetval]));
+               if ( verb ) log("symbol found w/ binding: " + pp(reg[regRetval]));
                returnsub();
                break;
             }
@@ -1206,7 +1214,7 @@ public class JhwScm
             // Note: return value undefined, kinda icky.
             //
             c = reg[regArg0];
-            log("printing: " + pp(c));
+            if ( verb ) log("printing: " + pp(c));
             switch (type(c))
             {
             case TYPE_NIL:
@@ -1218,17 +1226,17 @@ public class JhwScm
                switch (c0)
                {
                case IS_STRING:
-                  log("  IS_STRING: " + pp(c) + " " + pp(c0) + " " + pp(c1));
+                  if ( verb ) log("  IS_STRING: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
                   gosub(sub_print_string,blk_tail_call);
                   break;
                case IS_SYMBOL:
-                  log("  IS_SYMBOL: " + pp(c) + " " + pp(c0) + " " + pp(c1));
+                  if ( verb ) log("  IS_SYMBOL: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
                   gosub(sub_print_chars,blk_tail_call);
                   break;
                default:
-                  log("  WHATEVER:  " + pp(c) + " " + pp(c0) + " " + pp(c1));
+                  if ( verb ) log("  WHATEVER:  " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c;
                   gosub(sub_print_list,blk_tail_call);
                   break;
@@ -1330,7 +1338,7 @@ public class JhwScm
             }
             if ( TYPE_CELL != type(c) )
             {
-               log("bogus non-cell: " + pp(c));
+               if ( verb ) log("bogus non-cell: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -1338,7 +1346,7 @@ public class JhwScm
             c1 = cdr(c);
             if ( TYPE_CHAR != type(c0) )
             {
-               log("bogus: " + pp(c0));
+               if ( verb ) log("bogus: " + pp(c0));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -1425,12 +1433,12 @@ public class JhwScm
             case ERR_SEMANTIC:  return FAILURE_SEMANTIC;
             case ERR_NOT_IMPL:  return UNIMPLEMENTED;
             default:            
-               log("unknown error code: " + pp(reg[regError]));
+               if ( verb ) log("unknown error code: " + pp(reg[regError]));
                return INTERNAL_ERROR;
             }
 
          default:
-            log("bogus op: " + pp(reg[regPc]));
+            if ( verb ) log("bogus op: " + pp(reg[regPc]));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -1610,26 +1618,26 @@ public class JhwScm
 
    private void gosub ( final int nextOp, final int continuationOp )
    {
-      final boolean verbose = false;
-      if ( verbose ) log("  gosub()");
-      if ( verbose ) log("    old stack: " + reg[regStack]);
+      final boolean verb = false;
+      if ( verb ) log("  gosub()");
+      if ( verb ) log("    old stack: " + reg[regStack]);
       if ( DEBUG )
       {
          if ( TYPE_SUB != type(nextOp) )
          {
-            if ( verbose ) log("    non-op: " + pp(nextOp) + " w/ type " + type(nextOp));
+            if ( verb ) log("    non-op: " + pp(nextOp) + " w/ type " + type(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
          if ( 0 != ( MASK_BLOCKID & nextOp ) )
          {
-            if ( verbose ) log("    non-sub: " + pp(nextOp) + " " + ( MASK_BLOCKID & nextOp ));
+            if ( verb ) log("    non-sub: " + pp(nextOp) + " " + ( MASK_BLOCKID & nextOp ));
             raiseError(ERR_INTERNAL);
             return;
          }
          if ( TYPE_SUB != type(continuationOp) )
          {
-            if ( verbose ) log("    non-op: " + pp(continuationOp));
+            if ( verb ) log("    non-op: " + pp(continuationOp));
             raiseError(ERR_INTERNAL);
             return;
          }
@@ -1640,14 +1648,14 @@ public class JhwScm
             // to return to a subroutine entrypoint.
             //
             // I could be wrong about this being an error.
-            if ( verbose ) log("    full-sub: " + pp(continuationOp));
+            if ( verb ) log("    full-sub: " + pp(continuationOp));
             raiseError(ERR_INTERNAL);
             return;
          }
       }
       if ( NIL != reg[regError] )
       {
-         if ( verbose ) log("    flow suspended for error: " + reg[regError]);
+         if ( verb ) log("    flow suspended for error: " + reg[regError]);
          return;
       }
       store(continuationOp);
@@ -1675,40 +1683,40 @@ public class JhwScm
 
    private void store ( final int value )
    {
-      final boolean verbose = true;
+      final boolean verb = true;
       if ( NIL != reg[regError] )
       {
-         if ( verbose ) log("store(): flow suspended for error");
+         if ( verb ) log("store(): flow suspended for error");
          return;
       }
       final int cell = cons(value,reg[regStack]);
       if ( NIL == cell )
       {
          // error already raised in cons()
-         if ( verbose ) log("store(): oom");
+         if ( verb ) log("store(): oom");
          return;
       }
-      if ( verbose ) log("stored:   " + pp(value));
+      if ( verb ) log("stored:   " + pp(value));
       reg[regStack] = cell;
    }
 
    private int restore ()
    {
-      final boolean verbose = true;
+      final boolean verb = true;
       if ( NIL != reg[regError] )
       {
-         if ( verbose ) log("restore(): flow suspended for error");
+         if ( verb ) log("restore(): flow suspended for error");
          return NIL; // TODO: don't like this use of NIL
       }
       if ( DEBUG && NIL == reg[regStack] )
       {
-         if ( verbose ) log("restore(): stack underflow");
+         if ( verb ) log("restore(): stack underflow");
          raiseError(ERR_INTERNAL);
          return NIL; // TODO: don't like this use of NIL
       }
       if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
       {
-         if ( verbose ) log("restore(): corrupt stack");
+         if ( verb ) log("restore(): corrupt stack");
          raiseError(ERR_INTERNAL);
          return NIL; // TODO: don't like this use of NIL
       }
@@ -1718,7 +1726,7 @@ public class JhwScm
       // TODO: Recycle cell, at least, if we haven't ended up in an
       // error state or are otherwise "holding" old stacks?
       reg[regStack]  = rest;
-      if ( verbose ) log("restored: " + pp(head));
+      if ( verb ) log("restored: " + pp(head));
       return head;
    }
 
@@ -1732,22 +1740,16 @@ public class JhwScm
     */
    private void raiseError ( final int err )
    {
-      final boolean verbose = true;
-      if ( verbose )
-      {
-         log("raiseError():");
-      }
+      final boolean verb = true;
+      if ( verb ) log("raiseError():");
       if ( DEBUG && TYPE_ERROR != type(err) )
       {
          // TODO: Bad call to raiseError()? Are we out of tricks?
       }
-      if ( verbose )
-      {
-         log("  err:   " + pp(err));
-         log("  pc:    " + pp(reg[regPc]));
-         log("  stack: " + pp(reg[regStack]));
-      }
-      if ( verbose )
+      if ( verb ) log("  err:   " + pp(err));
+      if ( verb ) log("  pc:    " + pp(reg[regPc]));
+      if ( verb ) log("  stack: " + pp(reg[regStack]));
+      if ( verb )
       {
          final Thread              thread = Thread.currentThread();
          final StackTraceElement[] stack  = thread.getStackTrace();
@@ -1762,30 +1764,24 @@ public class JhwScm
                active = true;
                continue;
             }
-            log("  java:  " + elm);
+            if ( verb ) log("  java:  " + elm);
          }
          for ( int c = reg[regStack]; NIL != c; c = cdr(c) )
          {
             // TODO: hopefully the stack isn't corrupt....
-            log("  scm:   " + pp(car(c)));
+            if ( verb ) log("  scm:   " + pp(car(c)));
          }
       }
       if ( NIL == reg[regError] ) 
       {
-         if ( verbose )
-         {
-            log("  first: documenting");
-         }
+         if ( verb ) log("  first: documenting");
          reg[regError]      = err;
          reg[regErrorPc]    = reg[regPc];
          reg[regErrorStack] = reg[regStack];
       }
       else
       {
-         if ( verbose )
-         {
-            log("  late:  supressing");
-         }
+         if ( verb ) log("  late:  supressing");
       }
       reg[regPc]    = blk_error;
       reg[regStack] = NIL;
@@ -1799,7 +1795,8 @@ public class JhwScm
     */
    public int selfTest ()
    {
-      if ( verbose ) log("selfTest()");
+      final boolean verb = false;
+      if ( verb ) log("selfTest()");
 
       // consistency check
       final int t = 0x12345678 & TYPE_FIXINT;
@@ -1817,12 +1814,9 @@ public class JhwScm
       final int numFree      = listLength(reg[regFreeCellList]);
       final int numStack     = listLength(reg[regStack]);
       final int numGlobalEnv = listLength(reg[regGlobalEnv]);
-      if ( verbose )
-      {
-         log("  numFree:      " + numFree);
-         log("  numStack:     " + numStack);
-         log("  numGlobalEnv: " + numGlobalEnv);
-      }
+      if ( verb ) log("  numFree:      " + numFree);
+      if ( verb ) log("  numStack:     " + numStack);
+      if ( verb ) log("  numGlobalEnv: " + numGlobalEnv);
 
       // if this is a just-created selfTest(), we should see i = heap.length/2
 
@@ -1881,10 +1875,7 @@ public class JhwScm
       }
 
       final int newNumFree = listLength(reg[regFreeCellList]);
-      if ( verbose )
-      {
-         log("  newNumFree: " + newNumFree);
-      }
+      if ( verb ) log("  newNumFree: " + newNumFree);
 
       return SUCCESS;
    }
@@ -2015,9 +2006,9 @@ public class JhwScm
     */
    private int queueCreate ()
    {
-      final boolean verbose = false;
+      final boolean verb = false;
       final int queue = cons(NIL,NIL);
-      if ( verbose ) log("  queueCreate(): returning " + pp(queue));
+      if ( verb ) log("  queueCreate(): returning " + pp(queue));
       return queue;
    }
 
@@ -2026,11 +2017,11 @@ public class JhwScm
     */
    private void queuePushBack ( final int queue, final int value )
    {
-      final boolean verbose = false;
+      final boolean verb = false;
       final int queue_t = type(queue);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("  queuePushBack(): non-queue " + pp(queue));
+         if ( verb ) log("  queuePushBack(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return;
       }
@@ -2038,7 +2029,7 @@ public class JhwScm
       {
          // EOF cannot go in queues, lest it confuse the return value
          // channel in one of the peeks or pops.
-         if ( verbose ) log("  queuePushBack(): EOF");
+         if ( verb ) log("  queuePushBack(): EOF");
          raiseError(ERR_INTERNAL);
          return;
       }
@@ -2046,7 +2037,7 @@ public class JhwScm
       {
          // OK, this is BS: I haven't decided for queues to be only of
          // characters.  But so far I'm only using them as such ...
-         if ( verbose ) log("  queuePushBack(): non-char " + pp(value));
+         if ( verb ) log("  queuePushBack(): non-char " + pp(value));
          raiseError(ERR_INTERNAL);
          return;
       }
@@ -2054,7 +2045,7 @@ public class JhwScm
       final int new_cell = cons(value,NIL);
       if ( NIL == new_cell )
       {
-         if ( verbose ) log("  queuePushBack(): oom");
+         if ( verb ) log("  queuePushBack(): oom");
          return; // avoid further damage
       }
 
@@ -2067,11 +2058,11 @@ public class JhwScm
       {
          if ( NIL != h || NIL != t )
          {
-            if ( verbose ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
+            if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
             raiseError(ERR_INTERNAL); // corrupt queue
             return;
          }
-         if ( verbose ) log("  queuePushBack(): pushing to empty " + pp(value));
+         if ( verb ) log("  queuePushBack(): pushing to empty " + pp(value));
          setcar(queue,new_cell);
          setcdr(queue,new_cell);
          return;
@@ -2079,83 +2070,14 @@ public class JhwScm
 
       if ( (TYPE_CELL != type(h)) || (TYPE_CELL != type(t)) )
       {
-         if ( verbose ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
+         if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
          raiseError(ERR_INTERNAL); // corrupt queue
          return;
       }
 
-      if ( verbose ) log("  queuePushBack(): pushing to nonempty " + pp(value));
+      if ( verb ) log("  queuePushBack(): pushing to nonempty " + pp(value));
       setcdr(t,    new_cell);
       setcdr(queue,new_cell);
-   }
-
-   /**
-    * Splices the list onto the back of the queue: splices, not
-    * copies.  the cells in list become cells in the queue.
-    *
-    * TODO: DEPRECATED
-    */
-   private void queueSpliceBack ( final int queue, final int list )
-   {
-      final boolean verbose = false;
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verbose ) log("  queueSpliceBack(): non-queue " + pp(queue));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      if ( TYPE_NIL == type(list) ) 
-      {
-         if ( verbose ) log("  queueSpliceBack(): empty list");
-         return; // empty list: nothing to do
-      }
-      if ( DEBUG && TYPE_CELL != type(list) ) 
-      {
-         if ( verbose ) log("  queueSpliceBack(): non-list " + pp(list));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-
-      // INVARIANT: head and tail are both NIL (e.g. empty) or they
-      // are both cells!
-      final int h = car(queue);
-      final int t = cdr(queue);
-
-      if ( NIL == h || NIL == t )
-      {
-         if ( verbose ) log("  empty");
-         if ( NIL != h || NIL != t )
-         {
-            if ( verbose ) log("  queueSpliceBack(): X " + pp(h) + " " + pp(t));
-            raiseError(ERR_INTERNAL); // corrupt queue
-            return;
-         }
-         setcar(queue,list);
-         setcdr(queue,list);
-      }
-      else
-      {
-         if ( (TYPE_CELL != type(h)) || (TYPE_CELL != type(t)) )
-         {
-            if ( verbose ) log("  queueSpliceBack(): Y " + pp(h) + " " + pp(t));
-            raiseError(ERR_INTERNAL); // corrupt queue
-            return;
-         }
-         setcdr(t,list);
-      }
-
-      int tmp = queue;
-      while ( NIL != cdr(tmp) )
-      {
-         if ( verbose ) log("  queueSpliceBack(): advance tail");
-         tmp = cdr(tmp);
-      }
-      if ( verbose ) log("  tail to: " + pp(tmp));
-      setcdr(queue,tmp);
-      if ( verbose ) log("  queue:   " + pp(queue));
-      if ( verbose ) log("  list:    " + pp(list));
-      if ( verbose ) log("  head:    " + pp(car(queue)));
-      if ( verbose ) log("  tail:    " + pp(cdr(queue)));
    }
 
    /**
@@ -2164,22 +2086,22 @@ public class JhwScm
     */
    private int queuePopFront ( final int queue )
    {
-      final boolean verbose = false;
+      final boolean verb = false;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("  queuePopFront(): non-queue " + pp(queue));
+         if ( verb ) log("  queuePopFront(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
-         if ( verbose ) log("  queuePopFront(): empty " + pp(queue));
+         if ( verb ) log("  queuePopFront(): empty " + pp(queue));
          return EOF;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose ) log("  queuePopFront(): corrupt queue " + pp(head));
+         if ( verb ) log("  queuePopFront(): corrupt queue " + pp(head));
          raiseError(ERR_INTERNAL); // corrupt queue
          return EOF;
       }
@@ -2189,7 +2111,7 @@ public class JhwScm
       {
          setcdr(queue,NIL);
       }
-      if ( verbose ) log("  queuePopFront(): popped " + pp(value));
+      if ( verb ) log("  queuePopFront(): popped " + pp(value));
       return value;
    }
 
@@ -2198,27 +2120,27 @@ public class JhwScm
     */
    private int queuePeekFront ( final int queue )
    {
-      final boolean verbose = false;
+      final boolean verb = false;
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
-         if ( verbose ) log("  queuePeekFront(): non-queue " + pp(queue));
+         if ( verb ) log("  queuePeekFront(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
-         if ( verbose ) log("  queuePeekFront(): empty " + pp(queue));
+         if ( verb ) log("  queuePeekFront(): empty " + pp(queue));
          return EOF;
       }
       if ( TYPE_CELL != type(head) ) 
       {
-         if ( verbose ) log("  queuePeekFront(): corrupt queue " + pp(head));
+         if ( verb ) log("  queuePeekFront(): corrupt queue " + pp(head));
          raiseError(ERR_INTERNAL); // corrupt queue
          return EOF;
       }
       final int value = car(head);
-      if ( verbose ) log("  queuePeekFront(): peeked " + pp(value));
+      if ( verb ) log("  queuePeekFront(): peeked " + pp(value));
       return value;
    }
 
@@ -2237,9 +2159,6 @@ public class JhwScm
       }
       System.out.println(msg);
    }
-
-   // TODO: permeable abstraction barrier
-   public static boolean SILENT = false;
 
    private static String pp ( final int code )
    {

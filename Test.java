@@ -142,7 +142,6 @@ public class Test
       expectSemantic(" ( () ())) "); // fails on expr before reaching extra ')'
       expectLexical("((()())");
 
-      JhwScm.SILENT = false;
       expectSuccess("-",   "-",  new JhwScm(false));
       expectSemantic("-");
       expectSuccess("-asd", "-asd",  new JhwScm(false));
