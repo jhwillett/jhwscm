@@ -145,7 +145,7 @@ public class Test
       JhwScm.SILENT = false;
       expectSuccess("-",   "-",  new JhwScm(false));
       expectSemantic("-");
-      expectSuccess("-as", "-asd",  new JhwScm(false));
+      expectSuccess("-asd", "-asd",  new JhwScm(false));
       expectSemantic("-as");
       
       expectSemantic("(a b c)");

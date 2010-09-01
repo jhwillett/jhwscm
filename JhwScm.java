@@ -499,7 +499,8 @@ public class JhwScm
             //                  (case c
             //                    ((#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9) 
             //                     (- (sub_read_num)))
-            //                    (else (sub_read_symbol)))))))))
+            //                    (else (prepend #\- 
+            //                                   (sub_read_symbol_body))))))))))
             //
             c = queuePeekFront(reg[regIn]);
             v0 = value(c);
@@ -532,25 +533,29 @@ public class JhwScm
                // The minus sign is special.  We need to look ahead
                // *again* before we can decide whether it is part of a
                // symbol or part of a number.
-               log("minus special case");
                queuePopFront(reg[regIn]);
                c1 = queuePeekFront(reg[regIn]);
                v1 = value(c1);
-               if ( EOF == c1 )
+               if ( TYPE_CHAR == type(c1) && '0' <= v1 && v1 <= '9' )
                {
-                  log("  lonliest minus in the world");
-                  queuePushBack(reg[regIn],c);
-                  gosub(sub_read_symbol,blk_tail_call);
-               }
-               else if ( TYPE_CHAR == type(c1) && '0' <= v1 && v1 <= '9' )
-               {
-                  log("  minus-in-negative");
+                  log("minus-starting-number");
                   gosub(sub_read_num,sub_read_atom+0x1);
+               }
+               else if ( EOF == c1 )
+               {
+                  log("lonliest minus in the world");
+                  reg[regTmp0]   = cons(code(TYPE_CHAR,'-'),NIL);
+                  reg[regRetval] = cons(IS_SYMBOL,reg[regTmp0]);
+                  returnsub();
                }
                else
                {
-                  log("  minus-in-symbol");
-                  raiseError(ERR_NOT_IMPL);
+                  log("minus-starting-symbol");
+                  reg[regArg0] = queueCreate();
+                  log("pushing: minus onto " + pp(reg[regArg0]));
+                  queuePushBack(reg[regArg0],code(TYPE_CHAR,'-'));
+                  store(reg[regArg0]);
+                  gosub(sub_read_symbol_body,sub_read_atom+0x2);
                }
                break;
             default:
@@ -569,6 +574,22 @@ public class JhwScm
             log("negating: " + pp(c));
             reg[regRetval] = code(TYPE_FIXINT,-value(c));
             log("  to:       " + pp(reg[regRetval]));
+            returnsub();
+            break;
+         case sub_read_atom+0x2:
+            reg[regTmp0]   = restore();
+            reg[regTmp1]   = car(reg[regTmp0]);
+            reg[regRetval] = cons(IS_SYMBOL,reg[regTmp1]);
+            log("YO YO YO: " + pp(reg[regTmp0]) + " " + pp(reg[regTmp1]));
+            if ( DEBUG )
+            {
+               reg[regTmp1] = reg[regTmp0];
+               while ( NIL != reg[regTmp1] )
+               {
+                  log("  YO: " + pp(car(reg[regTmp1])));
+                  reg[regTmp1] = cdr(reg[regTmp1]);
+               }
+            }
             returnsub();
             break;
 
@@ -715,6 +736,55 @@ public class JhwScm
             returnsub();
             break;
 
+         case sub_read_symbol_body:
+            // Parses the next symbol from reg[regIn], expecting the
+            // accumulated value-so-far as a queue in reg[regArg0].
+            //
+            // A helper for sub_read_symbol, but still a sub_ in its
+            // own right.
+            //
+            // TODO: return value undefined, works via side-effects.
+            //
+            if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
+            {
+               log("non-queue in arg: " + pp(reg[regArg0]));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            c0 = queuePeekFront(reg[regIn]);
+            if ( EOF == c0 )
+            {
+               log("eof: returning");
+               returnsub();
+               break;
+            }
+            if ( TYPE_CHAR != type(c0) )
+            {
+               log("non-char in input: " + pp(c0));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            switch (value(c0))
+            {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+            case '(':
+            case ')':
+            case '"':
+               log("eot: returning");
+               returnsub();
+               break;
+            default:
+               log("pushing: " + pp(c0) + " onto " + pp(reg[regArg0]));
+               queuePushBack(reg[regArg0],c0);
+               queuePopFront(reg[regIn]);
+               gosub(sub_read_symbol_body,blk_tail_call);
+               break;
+            }
+            break;
+
          case sub_read_string:
             // Parses the next string literal from reg[regIn].
             //
@@ -742,55 +812,6 @@ public class JhwScm
             }
             queuePopFront(reg[regIn]);
             returnsub();
-            break;
-
-         case sub_read_symbol_body:
-            // Parses the next symbol from reg[regIn], expecting the
-            // accumulated value-so-far as a queue in reg[regArg0].
-            //
-            // A helper for sub_read_symbol, but still a sub_ in its
-            // own right.
-            //
-            if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
-            {
-               log("non-queue in arg: " + pp(reg[regArg0]));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            c0 = queuePeekFront(reg[regIn]);
-            if ( EOF == c0 )
-            {
-               reg[regRetval] = car(reg[regArg0]);
-               log("eof: returning " + pp(reg[regRetval]));
-               returnsub();
-               break;
-            }
-            if ( TYPE_CHAR != type(c0) )
-            {
-               log("non-char in input: " + pp(c0));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            switch (value(c0))
-            {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-            case '(':
-            case ')':
-            case '"':
-               reg[regRetval] = car(reg[regArg0]);
-               log("eot, returning: " + pp(reg[regRetval]));
-               returnsub();
-               break;
-            default:
-               log("pushing: " + pp(c0));
-               queuePushBack(reg[regArg0],c0);
-               queuePopFront(reg[regIn]);
-               gosub(sub_read_symbol_body,blk_tail_call);
-               break;
-            }
             break;
 
          case sub_read_string_body:
@@ -1309,6 +1330,7 @@ public class JhwScm
             }
             if ( TYPE_CELL != type(c) )
             {
+               log("bogus non-cell: " + pp(c));
                raiseError(ERR_INTERNAL);
                break;
             }
