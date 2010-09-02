@@ -92,17 +92,15 @@ public class JhwScm
 
       reg[regGlobalEnv] = cons(NIL,NIL);
 
-      prebind("+",code(TYPE_FIXINT,1234));
-      //prebind("+",sub_add);
-      prebind("+",code(TYPE_FIXINT,1234));
-      prebind("*",code(TYPE_FIXINT,1234));
-      prebind("cons",code(TYPE_FIXINT,1234));
-      prebind("car",code(TYPE_FIXINT,1234));
-      prebind("cdr",code(TYPE_FIXINT,1234));
-      prebind("list",code(TYPE_FIXINT,1234));
-      prebind("if",code(TYPE_FIXINT,1234));
-      prebind("quote",code(TYPE_FIXINT,1234));
-      prebind("define",code(TYPE_FIXINT,1234));
+      prebind("+",       sub_add);
+      prebind("*",       sub_mul);
+      prebind("cons",    sub_cons);
+      prebind("car",     sub_car);
+      prebind("cdr",     sub_cdr);
+      prebind("list",    sub_list);
+      prebind("if",      sub_if);
+      prebind("quote",   sub_quote);
+      prebind("define",  sub_define);
    }
 
    /**
@@ -1337,8 +1335,10 @@ public class JhwScm
                returnsub();
                break;
             case TYPE_SUB:
-            case TYPE_ERROR:
                raiseError(ERR_NOT_IMPL);
+               break;
+            case TYPE_ERROR:
+               raiseError(ERR_INTERNAL);
                break;
             case TYPE_SENTINEL:
                // TYPE_SENTINEL is used by sub_print, true, but should
@@ -1456,6 +1456,34 @@ public class JhwScm
             queuePushBack(reg[regOut],code(TYPE_CHAR,'.'));
             queuePushBack(reg[regOut],code(TYPE_CHAR,' '));
             gosub(sub_print,blk_tail_call);
+            break;
+
+         case sub_add:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_mul:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_cons:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_car:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_cdr:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_list:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_if:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_quote:
+            raiseError(ERR_NOT_IMPL);
+            break;
+         case sub_define:
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case blk_tail_call:
@@ -1657,6 +1685,16 @@ public class JhwScm
    private static final int sub_print_chars      = TYPE_SUB |  0x5400;
 
    private static final int sub_equal_p          = TYPE_SUB |  0x6000;
+
+   private static final int sub_add              = TYPE_SUB |  0x7000;
+   private static final int sub_mul              = TYPE_SUB |  0x7100;
+   private static final int sub_cons             = TYPE_SUB |  0x7200;
+   private static final int sub_car              = TYPE_SUB |  0x7300;
+   private static final int sub_cdr              = TYPE_SUB |  0x7400;
+   private static final int sub_list             = TYPE_SUB |  0x7500;
+   private static final int sub_if               = TYPE_SUB |  0x7600;
+   private static final int sub_quote            = TYPE_SUB |  0x7700;
+   private static final int sub_define           = TYPE_SUB |  0x7800;
 
    private static final int blk_tail_call        = TYPE_SUB | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUB | 0x10002;
@@ -2285,6 +2323,15 @@ public class JhwScm
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
+         case sub_add:              buf.append("sub_add");              break;
+         case sub_mul:              buf.append("sub_mul");              break;
+         case sub_cons:             buf.append("sub_cons");             break;
+         case sub_car:              buf.append("sub_car");              break;
+         case sub_cdr:              buf.append("sub_cdr");              break;
+         case sub_list:             buf.append("sub_list");             break;
+         case sub_if:               buf.append("sub_if");               break;
+         case sub_quote:            buf.append("sub_quote");            break;
+         case sub_define:           buf.append("sub_define");           break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
