@@ -297,10 +297,18 @@ public class Test
       expectSuccess("define",  null);
       expectSuccess("lambda",  null);
 
+      // Dipping my toe into basic edge cases around implied (eval)
+      // and some simple arithmetic - more than testing math.
+      //
+      expectSemantic("(())");
+      expectSemantic("(1)");
+      expectSemantic("(\"a\")");
+      expectSemantic("(#\\a)");
+      expectSemantic("(() 0)");
+      expectSemantic("(1 0)");
+      expectSemantic("(\"a\" 0)");
+      expectSemantic("(#\\a 0)");
       JhwScm.SILENT = false;
-
-      // simple arithmetic - more than testing math, also requires a
-      // top-level env with symbols bound to primitive functions
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
       expectSuccess("(+ 0 1)","1");
@@ -309,8 +317,6 @@ public class Test
       expectSuccess("(* 97 2)","184");
       expectSuccess("(* 2 3 5)","30");
       expectSemantic("(+ a b)");
-
-      // TODO: test min, max, bounds, 2s-complement nature of fixints?
 
       // defining symbols
       {
@@ -387,7 +393,18 @@ public class Test
          selfTest(scm);
       }
 
-      // ambition
+      // ambition: nontrivial user-defined recursive function
+      // 
+      // This one, the Fibonacci Sequence, is not tail-recursive and
+      // will eat O(n) stack space and runs in something awful like
+      // O(n*n) or worse - making it also a good stressor for garbage
+      // collection.
+      // 
+      // Fib can be made half-tail-recursive though...
+      // 
+      // Later, there exists a good memoized dynamic programming
+      // version which would be good for comparison.
+      //
       {
          final String fib = 
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
@@ -406,11 +423,53 @@ public class Test
          selfTest(scm);
       }
 
+      // ambition: nontrivial user-defined recursive function
+      // 
+      // This one, Factorial, is good for playing w/ tail-recursion.
+      // The naive form is not tail recursive and consumes O(n) stack
+      // space - but the tail-recursive function is super simple.
+      //
+      // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
+      // but its tail-recursive twin runs just fine to vastly larger
+      // scale.
+      {
+         final String fac1 = 
+            "(define (fac1 n) (if (< n 2) 1 (* n (fac1 (- n 1)))))";
+         final JhwScm scm = new JhwScm();
+         expectSuccess(fac1,"???",scm);
+         expectSuccess("(fac1 -1)","1",scm);
+         expectSuccess("(fac1 0)","1",scm);
+         expectSuccess("(fac1 1)","1",scm);
+         expectSuccess("(fac1 2)","2",scm);
+         expectSuccess("(fac1 3)","6",scm);
+         expectSuccess("(fac1 4)","24",scm);
+         expectSuccess("(fac1 5)","120",scm);
+         expectSuccess("(fac1 6)","720",scm);
+         selfTest(scm);
+      }
+      {
+         final String fac2a = 
+            "(define (helper n a) (if (< n 2) a (helper (- n 1) (* n a))))";
+         final String fac2 = 
+            "(define (fac2 n) (helper n 1))";
+         final JhwScm scm = new JhwScm();
+         expectSuccess(helper,"???",scm);
+         expectSuccess(fac2,"???",scm);
+         expectSuccess("(fac2 -1)","1",scm);
+         expectSuccess("(fac2 0)","1",scm);
+         expectSuccess("(fac2 1)","1",scm);
+         expectSuccess("(fac2 2)","2",scm);
+         expectSuccess("(fac2 3)","6",scm);
+         expectSuccess("(fac2 4)","24",scm);
+         expectSuccess("(fac2 5)","120",scm);
+         expectSuccess("(fac2 6)","720",scm);
+         selfTest(scm);
+      }
+
+      // TODO: test min, max, bounds, 2s-complement nature of fixints?
+
       // TODO: nested lexical scopes
 
-      // TODO: A non-tail-recursive function running OOM at a certain
-      // scale, but its tail-recursive twin running just fine to
-      // vastly larger scale.
 
    }
 
