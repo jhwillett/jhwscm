@@ -279,19 +279,25 @@ public class Test
       expectLexical("\"");
       expectLexical("\"hello");
 
-      JhwScm.SILENT = false;
-
       // Check some basic symbol bindings are preset for us which
       // would enable our upcoming (eval) tests...
-      expectSuccess("+","????");
-      expectSuccess("*","????");
-      expectSuccess("cons","????");
-      expectSuccess("car","????");
-      expectSuccess("cdr","????");
-      expectSuccess("list","????");
-      expectSuccess("if","????");
-      expectSuccess("define","????");
-      expectSuccess("quote","????");
+      //
+      // R5RS and R6RS do not specify how these print - and so far
+      // neither do I.  So there's no unit test here, just that they
+      // evaluate OK.
+      //
+      expectSuccess("+",       null);
+      expectSuccess("*",       null);
+      expectSuccess("cons",    null);
+      expectSuccess("car",     null);
+      expectSuccess("cdr",     null);
+      expectSuccess("list",    null);
+      expectSuccess("if",      null);
+      expectSuccess("quote",   null);
+      expectSuccess("define",  null);
+      expectSuccess("lambda",  null);
+
+      JhwScm.SILENT = false;
 
       // simple arithmetic - more than testing math, also requires a
       // top-level env with symbols bound to primitive functions
@@ -439,9 +445,12 @@ public class Test
       assertEquals("output failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    ocode);
-      assertEquals("result failure on \"" + expr + "\":",
-                   expect,
-                   buf.toString());
+      if ( null != expect )
+      {
+         assertEquals("result failure on \"" + expr + "\":",
+                      expect,
+                      buf.toString());
+      }
       if ( verbose )
       {
          System.out.print("pass: expr \"");

@@ -101,6 +101,7 @@ public class JhwScm
       prebind("if",      sub_if);
       prebind("quote",   sub_quote);
       prebind("define",  sub_define);
+      prebind("lambda",  sub_lambda);
    }
 
    /**
@@ -1058,10 +1059,34 @@ public class JhwScm
             // A short expression of the two main quandaries: how do I
             // bind "define" to the thing which does name binding?
             // And to what do I bind "+"?
+            //
+            // Answers 5-7: definitely moving toward a special
+            // lexical-level binding for primitivemost built-ins.  I'm
+            // thinking really low level, like only "binary fixint
+            // add" and not "full numeric tower variadic add".  Higher
+            // adds can be defined as accumulations, etc.
+            //
+            // Answers 1-4: Introduced ARITY_MASK, A0, A1, AX, etc to
+            // encode arity.  In the case of sub_foo, the arity is
+            // encoded within the opcode itself - this can be used for
+            // internal error-checking in gosub(), but will also be
+            // used in sub_eval to help marshal higher-level code on
+            // its way to the various sub_foo.
+            //
+            // Higher-level code of course passes arguments through
+            // name bindings, so that's not an issue.
+            //
+            // Higher-level code will enjoy a distinct sentinel for
+            // IS_PROCEDURE and IS_SPECIAL_FORM.  I forked TYPE_SUB
+            // into TYPE_SUBP and TYPE_SUBS for sub_foo which act like
+            // procedures or special forms, respectively.
+            //
+            // sub_eval is going to be complicated....
 
             switch (type(reg[regRetval]))
             {
-            case TYPE_SUB:
+            case TYPE_SUBP:
+            case TYPE_SUBS:
                raiseError(ERR_NOT_IMPL);
                break;
             case TYPE_CELL:
@@ -1334,8 +1359,17 @@ public class JhwScm
                reg[regRetval] = UNDEFINED;
                returnsub();
                break;
-            case TYPE_SUB:
-               raiseError(ERR_NOT_IMPL);
+            case TYPE_SUBP:
+            case TYPE_SUBS:
+               // TODO: this is a huge cop-out, implement it right
+               final String str2 = pp(c);
+               for ( tmp0 = 0; tmp0 < str2.length(); ++tmp0 )
+               {
+                  queuePushBack(reg[regOut],
+                                code(TYPE_CHAR,str2.charAt(tmp0)));
+               }
+               reg[regRetval] = UNDEFINED;
+               returnsub();
                break;
             case TYPE_ERROR:
                raiseError(ERR_INTERNAL);
@@ -1485,6 +1519,9 @@ public class JhwScm
          case sub_define:
             raiseError(ERR_NOT_IMPL);
             break;
+         case sub_lambda:
+            raiseError(ERR_NOT_IMPL);
+            break;
 
          case blk_tail_call:
             // Just returns whatever retval left behind by the
@@ -1575,10 +1612,11 @@ public class JhwScm
    private static final int TYPE_FIXINT   = 0x20000000;
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
-   private static final int TYPE_SUB      = 0x50000000;
-   private static final int TYPE_ERROR    = 0x60000000;
-   private static final int TYPE_BOOLEAN  = 0x70000000;
-   private static final int TYPE_SENTINEL = 0x80000000;
+   private static final int TYPE_ERROR    = 0x50000000;
+   private static final int TYPE_BOOLEAN  = 0x60000000;
+   private static final int TYPE_SENTINEL = 0x70000000;
+   private static final int TYPE_SUBP     = 0x80000000; // procedure-like
+   private static final int TYPE_SUBS     = 0x90000000; // special-form-like
 
    // In many of these constants, I would prefer to initialize them as
    // code(TYPE_FOO,n) rather than TYPE_FOO|n, for consistency and to
@@ -1605,6 +1643,8 @@ public class JhwScm
    private static final int UNDEFINED           = TYPE_SENTINEL | 16;
    private static final int IS_SYMBOL           = TYPE_SENTINEL | 79;
    private static final int IS_STRING           = TYPE_SENTINEL | 32;
+   private static final int IS_PROCEDURE        = TYPE_SENTINEL | 83;
+   private static final int IS_SPECIAL_FORM     = TYPE_SENTINEL | 54;
 
    private static final int TRUE                = TYPE_BOOLEAN  | 37;
    private static final int FALSE               = TYPE_BOOLEAN  | 91;
@@ -1653,52 +1693,62 @@ public class JhwScm
    // blk_error.  These are not proper subroutines, but instead they
    // are utility blocks used from many places.
 
-   private static final int MASK_BLOCKID         =                0xF;
+   private static final int MASK_BLOCKID         =               0x0000000F;
+   private static final int SHIFT_BLOCKID        =                        0;
+   private static final int MASK_ARITY           =               0x00F00000;
+   private static final int SHIFT_ARITY          =                       20;
 
-   private static final int sub_rep              = TYPE_SUB |  0x1000;
-   private static final int sub_rp               = TYPE_SUB |  0x1100;
+   private static final int A0                   =       0x0 << SHIFT_ARITY;
+   private static final int A1                   =       0x1 << SHIFT_ARITY;
+   private static final int A2                   =       0x2 << SHIFT_ARITY;
+   private static final int A3                   =       0x3 << SHIFT_ARITY;
+   private static final int AX                   =       0xF << SHIFT_ARITY;
 
-   private static final int sub_read             = TYPE_SUB |  0x2000;
-   private static final int sub_read_list        = TYPE_SUB |  0x2100;
-   private static final int sub_read_list_open   = TYPE_SUB |  0x2110;
-   private static final int sub_read_atom        = TYPE_SUB |  0x2200;
-   private static final int sub_read_num         = TYPE_SUB |  0x2300;
-   private static final int sub_read_num_loop    = TYPE_SUB |  0x2310;
-   private static final int sub_read_octo_tok    = TYPE_SUB |  0x2400;
-   private static final int sub_read_symbol      = TYPE_SUB |  0x2500;
-   private static final int sub_read_string      = TYPE_SUB |  0x2600;
-   private static final int sub_read_symbol_body = TYPE_SUB |  0x2700;
-   private static final int sub_read_string_body = TYPE_SUB |  0x2800;
-   private static final int sub_read_burn_space  = TYPE_SUB |  0x2900;
+   private static final int sub_rep              = TYPE_SUBP | A0 |  0x1000;
+   private static final int sub_rp               = TYPE_SUBP | A0 |  0x1100;
 
-   private static final int sub_eval             = TYPE_SUB |  0x3000;
-   private static final int sub_eval_look_env    = TYPE_SUB |  0x3100;
-   private static final int sub_eval_look_frame  = TYPE_SUB |  0x3110;
-   private static final int sub_eval_list        = TYPE_SUB |  0x3200;
+   private static final int sub_read             = TYPE_SUBP | A0 |  0x2000;
+   private static final int sub_read_list        = TYPE_SUBP | A0 |  0x2100;
+   private static final int sub_read_list_open   = TYPE_SUBP | A0 |  0x2110;
+   private static final int sub_read_atom        = TYPE_SUBP | A0 |  0x2200;
+   private static final int sub_read_num         = TYPE_SUBP | A0 |  0x2300;
+   private static final int sub_read_num_loop    = TYPE_SUBP | A0 |  0x2310;
+   private static final int sub_read_octo_tok    = TYPE_SUBP | A0 |  0x2400;
+   private static final int sub_read_symbol      = TYPE_SUBP | A0 |  0x2500;
+   private static final int sub_read_string      = TYPE_SUBP | A0 |  0x2600;
+   private static final int sub_read_symbol_body = TYPE_SUBP | A0 |  0x2700;
+   private static final int sub_read_string_body = TYPE_SUBP | A0 |  0x2800;
+   private static final int sub_read_burn_space  = TYPE_SUBP | A0 |  0x2900;
 
-   private static final int sub_apply            = TYPE_SUB |  0x4000;
+   private static final int sub_eval             = TYPE_SUBS | A2 |  0x3000;
+   private static final int sub_eval_look_env    = TYPE_SUBS | A2 |  0x3100;
+   private static final int sub_eval_look_frame  = TYPE_SUBS | A2 |  0x3110;
+   private static final int sub_eval_list        = TYPE_SUBS | A2 |  0x3200;
 
-   private static final int sub_print            = TYPE_SUB |  0x5000;
-   private static final int sub_print_list       = TYPE_SUB |  0x5100;
-   private static final int sub_print_list_elems = TYPE_SUB |  0x5200;
-   private static final int sub_print_string     = TYPE_SUB |  0x5300;
-   private static final int sub_print_chars      = TYPE_SUB |  0x5400;
+   private static final int sub_apply            = TYPE_SUBP | A3 |  0x4000;
 
-   private static final int sub_equal_p          = TYPE_SUB |  0x6000;
+   private static final int sub_print            = TYPE_SUBP | A1 |  0x5000;
+   private static final int sub_print_list       = TYPE_SUBP | A1 |  0x5100;
+   private static final int sub_print_list_elems = TYPE_SUBP | A1 |  0x5200;
+   private static final int sub_print_string     = TYPE_SUBP | A1 |  0x5300;
+   private static final int sub_print_chars      = TYPE_SUBP | A1 |  0x5400;
 
-   private static final int sub_add              = TYPE_SUB |  0x7000;
-   private static final int sub_mul              = TYPE_SUB |  0x7100;
-   private static final int sub_cons             = TYPE_SUB |  0x7200;
-   private static final int sub_car              = TYPE_SUB |  0x7300;
-   private static final int sub_cdr              = TYPE_SUB |  0x7400;
-   private static final int sub_list             = TYPE_SUB |  0x7500;
-   private static final int sub_if               = TYPE_SUB |  0x7600;
-   private static final int sub_quote            = TYPE_SUB |  0x7700;
-   private static final int sub_define           = TYPE_SUB |  0x7800;
+   private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
 
-   private static final int blk_tail_call        = TYPE_SUB | 0x10001;
-   private static final int blk_tail_call_m_cons = TYPE_SUB | 0x10002;
-   private static final int blk_error            = TYPE_SUB | 0x10003;
+   private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
+   private static final int sub_mul              = TYPE_SUBP | A2 |  0x7100;
+   private static final int sub_cons             = TYPE_SUBP | A2 |  0x7200;
+   private static final int sub_car              = TYPE_SUBP | A1 |  0x7300;
+   private static final int sub_cdr              = TYPE_SUBP | A1 |  0x7400;
+   private static final int sub_list             = TYPE_SUBP | AX |  0x7500;
+   private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
+   private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
+   private static final int sub_define           = TYPE_SUBS | A2 |  0x7800;
+   private static final int sub_lambda           = TYPE_SUBS | A2 |  0x7900;
+
+   private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
+   private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
+   private static final int blk_error            = TYPE_SUBP | A0 | 0x10003;
 
    // jump() is icky.  I have deliberately not used it, in favor of
    // tail recursion wherever possible - even *before* the tail
@@ -1721,19 +1771,21 @@ public class JhwScm
       if ( verb ) log("    old stack: " + reg[regStack]);
       if ( DEBUG )
       {
-         if ( TYPE_SUB != type(nextOp) )
+         final int tn = type(nextOp);
+         if ( TYPE_SUBP != tn && TYPE_SUBS != tn )
          {
-            if ( verb ) log("    non-op: " + pp(nextOp) + " w/ type " + type(nextOp));
+            if ( verb ) log("    non-op: " + pp(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
          if ( 0 != ( MASK_BLOCKID & nextOp ) )
          {
-            if ( verb ) log("    non-sub: " + pp(nextOp) + " " + ( MASK_BLOCKID & nextOp ));
+            if ( verb ) log("    non-sub: " + pp(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
-         if ( TYPE_SUB != type(continuationOp) )
+         final int tc = type(continuationOp);
+         if ( TYPE_SUBP != tc && TYPE_SUBS != tc )
          {
             if ( verb ) log("    non-op: " + pp(continuationOp));
             raiseError(ERR_INTERNAL);
@@ -1771,7 +1823,7 @@ public class JhwScm
       if ( DEBUG ) scmDepth--;
       final int c = restore();
       final int t = type(c);
-      if ( TYPE_SUB != t )
+      if ( TYPE_SUBP != t && TYPE_SUBS != t)
       {
          raiseError(ERR_INTERNAL);
          return;
@@ -2272,6 +2324,8 @@ public class JhwScm
       case UNDEFINED:            return "UNDEFINED";
       case IS_STRING:            return "IS_STRING";
       case IS_SYMBOL:            return "IS_SYMBOL";
+      case IS_PROCEDURE:         return "IS_PROCEDURE";
+      case IS_SPECIAL_FORM:      return "IS_SPECIAL_FORM";
       case TRUE:                 return "TRUE";
       case FALSE:                return "FALSE";
       case ERR_OOM:              return "ERR_OOM";
@@ -2295,7 +2349,8 @@ public class JhwScm
       case TYPE_ERROR:    buf.append("error");    break;
       case TYPE_BOOLEAN:  buf.append("boolean");  break;
       case TYPE_SENTINEL: buf.append("sentinel"); break;
-      case TYPE_SUB:      
+      case TYPE_SUBP:
+      case TYPE_SUBS:
          switch (code & ~MASK_BLOCKID)
          {
          case sub_rep:              buf.append("sub_rep");              break;
@@ -2386,7 +2441,8 @@ public class JhwScm
             break;
          }
          break;
-      case TYPE_SUB:   
+      case TYPE_SUBP:   
+      case TYPE_SUBS:   
          hex(buf,v & MASK_BLOCKID,1);
          break;
       default:          
