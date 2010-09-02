@@ -1141,7 +1141,45 @@ public class JhwScm
             // reg[regArg0] in the env in reg[regArg1], and returns a
             // list of the results.
             //
-            raiseError(ERR_NOT_IMPL);
+            //   (define (sub_eval_list list env)
+            //     (if (null? list) 
+            //         '()
+            //         (cons (sub_eval (car list) env)
+            //               (sub_eval_list (cdr list) env))))
+            //   (define (sub_eval_list list env)
+            //     (if (null? list) 
+            //         '()
+            //         (let ((first (sub_eval (car list) env))
+            //           (cons first (sub_eval_list (cdr list) env)))))
+            //   (define (sub_eval_list list env)
+            //     (if (null? list) 
+            //         '()
+            //         (let ((first (sub_eval (car list) env))
+            //               (rest  (sub_eval_list (cdr list) env))
+            //           (cons first rest))))
+            //
+            // Using something most like the second varsion: I get to
+            // exploit blk_tail_call_m_cons again! :)
+            //
+            // TODO: is this almost sub_map? ;)
+            //
+            if ( NIL == reg[regArg0] )
+            {
+               reg[regRetval] = NIL;
+               returnsub();
+               break;
+            }
+            store(cdr(reg[regArg0]));          // the rest of the list
+            store(reg[regArg1]);               // the env
+            reg[regArg0] = car(reg[regArg0]);  // the head of the list
+            reg[regArg1] = reg[regArg1];       // the env
+            gosub(sub_eval,sub_eval_list+0x1);
+            break;
+         case sub_eval_list+0x1:
+            reg[regArg1] = restore();          // the env
+            reg[regArg0] = restore();          // the rest of the list
+            store(reg[regRetval]);             // feed blk_tail_call_m_cons
+            gosub(sub_eval_list,blk_tail_call_m_cons);
             break;
 
          case sub_eval_look_env:
