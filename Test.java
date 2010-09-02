@@ -281,9 +281,20 @@ public class Test
 
       JhwScm.SILENT = false;
 
+      // Check some basic symbol bindings are preset for us which
+      // would enable our upcoming (eval) tests...
+      expectSuccess("+","????");
+      expectSuccess("*","????");
+      expectSuccess("cons","????");
+      expectSuccess("car","????");
+      expectSuccess("cdr","????");
+      expectSuccess("list","????");
+      expectSuccess("if","????");
+      expectSuccess("define","????");
+      expectSuccess("quote","????");
+
       // simple arithmetic - more than testing math, also requires a
       // top-level env with symbols bound to primitive functions
-      expectSuccess("+","????");
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
       expectSuccess("(+ 0 1)","1");
@@ -339,12 +350,19 @@ public class Test
       expectSuccess("(quote (1 2))","(1 2)");
       expectSuccess("(quote (a b))","(a b)");
       expectSemantic("(+ 1 (quote ()))");
+      expectSuccess("(quote 9)",                "9");
+      expectSuccess("(quote (quote 9))",        "(quote 9)");
+      expectSuccess("(quote (quote (quote 9)))","(quote (quote 9))");
 
       // simple quote sugar
       expectSuccess("'()","()");
       expectSuccess("'(1 2)","(1 2)");
       expectSuccess("'(a b)","(a b)");
       expectSemantic("(+ 1 '())");
+      expectSuccess("'9",       "9");
+      expectSuccess("''9",      "(quote 9)");
+      expectSuccess("'''9",     "(quote (quote 9))");
+      expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
 
       {
          final JhwScm scm = new JhwScm();
@@ -362,6 +380,31 @@ public class Test
          expectSemantic("(foo 13 '())",                  scm);
          selfTest(scm);
       }
+
+      // ambition
+      {
+         final String fib = 
+            "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
+         final JhwScm scm = new JhwScm();
+         expectSuccess(fib,"???",scm);
+         expectSuccess("(fib -1)","-1",scm);
+         expectSuccess("(fib 0)","0",scm);
+         expectSuccess("(fib 1)","1",scm);
+         expectSuccess("(fib 2)","1",scm);
+         expectSuccess("(fib 3)","2",scm);
+         expectSuccess("(fib 4)","3",scm);
+         expectSuccess("(fib 5)","5",scm);
+         expectSuccess("(fib 6)","8",scm);
+         expectSuccess("(fib 10)","55",scm);
+         expectSuccess("(fib 20)","6565",scm);
+         selfTest(scm);
+      }
+
+      // TODO: nested lexical scopes
+
+      // TODO: A non-tail-recursive function running OOM at a certain
+      // scale, but its tail-recursive twin running just fine to
+      // vastly larger scale.
 
    }
 

@@ -94,6 +94,15 @@ public class JhwScm
 
       prebind("+",code(TYPE_FIXINT,1234));
       //prebind("+",sub_add);
+      prebind("+",code(TYPE_FIXINT,1234));
+      prebind("*",code(TYPE_FIXINT,1234));
+      prebind("cons",code(TYPE_FIXINT,1234));
+      prebind("car",code(TYPE_FIXINT,1234));
+      prebind("cdr",code(TYPE_FIXINT,1234));
+      prebind("list",code(TYPE_FIXINT,1234));
+      prebind("if",code(TYPE_FIXINT,1234));
+      prebind("quote",code(TYPE_FIXINT,1234));
+      prebind("define",code(TYPE_FIXINT,1234));
    }
 
    /**
