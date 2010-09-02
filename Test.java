@@ -448,7 +448,7 @@ public class Test
          selfTest(scm);
       }
       {
-         final String fac2a = 
+         final String helper = 
             "(define (helper n a) (if (< n 2) a (helper (- n 1) (* n a))))";
          final String fac2 = 
             "(define (fac2 n) (helper n 1))";

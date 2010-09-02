@@ -468,12 +468,10 @@ public class JhwScm
                  code(TYPE_CHAR,'.') != car(cdr(reg[regTmp0])) ||
                  NIL                 != cdr(cdr(reg[regTmp0]))  )
             {
-               log(" NOT NOT NOT NOT NOT NOT NOT NOT NOT NOT NOT NOT");
                reg[regRetval] = cons(reg[regTmp0],reg[regTmp1]);
                returnsub();
                break;
             }
-            log(" DOT DOT DOT DOT DOT DOT DOT DOT DOT DOT DOT DOT");
             if ( NIL == reg[regTmp1] )
             {
                log("dangling dot");
@@ -942,7 +940,7 @@ public class JhwScm
                   // Evaluate the operator: the type of the result
                   // will determine whether we evaluate the args prior
                   // to apply.
-                  store(reg[regArg0]);         // store the expr
+                  store(cdr(reg[regArg0]));    // store the arg exprs
                   store(reg[regArg1]);         // store the env
                   reg[regArg0] = tmp0;         // forward the op
                   reg[regArg1] = reg[regArg1]; // forward the env
@@ -951,6 +949,27 @@ public class JhwScm
                }
                break;
             case TYPE_NIL:
+               // TODO: it may be that NIL is self-evaluating
+               //
+               // Guile is weird, it gives different errors for
+               // top-level () vs ()-in-op-position:
+               //
+               //   guile> ()
+               //   ERROR: In procedure memoization:
+               //   ERROR: Illegal empty combination ().
+               //   ABORT: (syntax-error)
+               //   guile> (())
+               //   
+               //   Backtrace:
+               //   In current input:
+               //      2: 0* [()]
+               //   
+               //   <unnamed port>:2:1: In expression (()):
+               //   <unnamed port>:2:1: Wrong type to apply: ()
+               //   ABORT: (misc-error)
+               //
+               // Don't know what to make of this.
+               //
                raiseError(ERR_SEMANTIC);
                break;
             default:
@@ -971,10 +990,6 @@ public class JhwScm
             break;
          case sub_eval+0x2:
             // following eval of the first elem
-            reg[regArg1] = restore();         // restore the env
-            reg[regArg0] = restore();         // restore the expr
-            reg[regTmp0] = reg[regRetval];    // the value of the operator
-            reg[regTmp1] = cdr(reg[regArg0]); // the unevaluated arg list
 
             // If it's a function, evaluate the args next, following
             // up with apply.
@@ -1082,22 +1097,49 @@ public class JhwScm
             // procedures or special forms, respectively.
             //
             // sub_eval is going to be complicated....
-
-            switch (type(reg[regRetval]))
+            //
+            reg[regTmp1] = restore();         // restore the env
+            reg[regTmp0] = restore();         // restore the arg exprs
+            reg[regTmp2] = reg[regRetval];    // the value of the operator
+            tmp0 = type(reg[regTmp2]);
+            if ( TYPE_SUBP == tmp0 || 
+                 TYPE_CELL == tmp0 && IS_PROCEDURE == car(reg[regTmp2]) )
             {
-            case TYPE_SUBP:
-            case TYPE_SUBS:
-               raiseError(ERR_NOT_IMPL);
-               break;
-            case TYPE_CELL:
-               raiseError(ERR_NOT_IMPL);
+               // eval args
+               // 
+               // apply op to args
+               store(reg[regTmp2]);      // store the value of the operator
+               store(reg[regTmp1]);      // store the env
+               reg[regArg0] = reg[regTmp0];
+               reg[regArg1] = reg[regTmp1];
+               gosub(sub_eval_list,sub_eval+0x3);
                break;
             }
+            if ( TYPE_SUBS == tmp0 || 
+                 TYPE_CELL == tmp0 && IS_SPECIAL_FORM == car(reg[regTmp2]) )
+            {
+               // apply op to args
+               reg[regArg0] = reg[regTmp2];
+               reg[regArg1] = reg[regTmp0];
+               reg[regArg2] = reg[regTmp1];
+               gosub(sub_apply,blk_tail_call);
+               break;
+            }
+            log("bogus complex form op: " + pp(reg[regTmp2]));
+            raiseError(ERR_SEMANTIC);
+            break;
+         case sub_eval+0x3:
+            // following eval of the args
+            reg[regArg1] = restore();      // restore the env
+            reg[regArg0] = restore();      // restore value of the operator
+            reg[regArg2] = reg[regRetval]; // restore list of args
+            gosub(sub_apply,blk_tail_call);
             break;
 
          case sub_eval_list:
             // Evaluates all the expressions in the list in
-            // reg[regArg0] in the env in reg[regArg1].
+            // reg[regArg0] in the env in reg[regArg1], and returns a
+            // list of the results.
             //
             raiseError(ERR_NOT_IMPL);
             break;
@@ -1260,7 +1302,7 @@ public class JhwScm
 
          case sub_apply:
             // Applies the op in reg[regArg0] to the args in
-            // reg[regArg1].
+            // reg[regArg1] under the environment reg[regArg2].
             //
             raiseError(ERR_NOT_IMPL);
             break;
@@ -1655,28 +1697,30 @@ public class JhwScm
    private static final int ERR_SEMANTIC        = TYPE_ERROR    |  7;
    private static final int ERR_NOT_IMPL        = TYPE_ERROR    | 87;
 
-   private static final int regFreeCellList     =  0; // unused cells
+   private static final int regFreeCellList     =   0; // unused cells
 
-   private static final int regStack            =  1; // the runtime stack
-   private static final int regPc               =  2; // opcode to return to
+   private static final int regStack            =   1; // the runtime stack
+   private static final int regPc               =   2; // opcode to return to
 
-   private static final int regError            =  3; // NIL or a TYPE_ERROR
-   private static final int regErrorPc          =  4; // reg[regPc] of err
-   private static final int regErrorStack       =  5; // reg[regStack] of err
+   private static final int regError            =   3; // NIL or a TYPE_ERROR
+   private static final int regErrorPc          =   4; // reg[regPc] of err
+   private static final int regErrorStack       =   5; // reg[regStack] of err
 
-   private static final int regIn               =  6; // input char queue
-   private static final int regOut              =  7; // output char queue
+   private static final int regIn               =   6; // input char queue
+   private static final int regOut              =   7; // output char queue
 
-   private static final int regArg0             =  8; // argument
-   private static final int regArg1             =  9; // argument
-   private static final int reg__Unused         = 10; // 
-   private static final int regTmp0             = 11; // temporary
-   private static final int regTmp1             = 12; // temporary
-   private static final int regRetval           = 13; // return value
+   private static final int regArg0             =   8; // argument
+   private static final int regArg1             =   9; // argument
+   private static final int regArg2             =  10; // argument
+   private static final int regTmp0             =  11; // temporary
+   private static final int regTmp1             =  12; // temporary
+   private static final int regTmp2             =  13; // temporary
+   private static final int reg_Unused          =  14; // temporary
+   private static final int regRetval           =  15; // return value
 
-   private static final int regGlobalEnv        = 14; // list of env frames
+   private static final int regGlobalEnv        =  16; // list of env frames
 
-   private static final int numRegisters        = 16;  // in slots
+   private static final int numRegisters        =  32;  // in slots
    private static final int heapSize            = 512; // in cells
 
    private final int[] heap = new int[2*heapSize];
