@@ -243,6 +243,7 @@ public class JhwScm
       int c1   = 0;
       int v1   = 0;
       int tmp0 = 0;
+      int tmp1 = 0;
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
@@ -1125,7 +1126,6 @@ public class JhwScm
                gosub(sub_apply,blk_tail_call);
                break;
             }
-            log("bogus complex form op: " + pp(reg[regTmp2]));
             raiseError(ERR_SEMANTIC);
             break;
          case sub_eval+0x3:
@@ -1342,7 +1342,38 @@ public class JhwScm
             // Applies the op in reg[regArg0] to the args in
             // reg[regArg1] under the environment reg[regArg2].
             //
-            raiseError(ERR_NOT_IMPL);
+            tmp0 = type(reg[regArg0]);
+            if ( TYPE_SUBP == tmp0 || TYPE_SUBS == tmp0 )
+            {
+               // get arity
+               //
+               // - if AX, just put the list of args in reg[regArg0].
+               //
+               // - if A<N>, assign N entries from list at
+               //   reg[regArg1] into reg[regArg0.regArg<N>].
+               //   Freak out if there are not exactly N args.
+               //
+               // Then just gosub()!
+               raiseError(ERR_NOT_IMPL);
+               break;
+            }
+            if ( TYPE_CELL == tmp0 )
+            {
+               tmp1 = car(reg[regTmp2]);
+               if ( IS_PROCEDURE == tmp1 || IS_SPECIAL_FORM == tmp1 )
+               {
+                  // TODO: Oh boy this'll be thorny.  Gotta decide on
+                  // an internal representation for higher-level
+                  // procedures and special forms.
+                  //
+                  // Must track at a minimum: list of args and their
+                  // names, the body, and the lexical environment.
+                  //
+                  raiseError(ERR_NOT_IMPL);
+                  break;
+               }
+            }
+            raiseError(ERR_SEMANTIC);
             break;
 
          case sub_print:
