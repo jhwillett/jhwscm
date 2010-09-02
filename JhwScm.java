@@ -1130,9 +1130,9 @@ public class JhwScm
             break;
          case sub_eval+0x3:
             // following eval of the args
-            reg[regArg1] = restore();      // restore the env
+            reg[regArg2] = restore();      // restore the env
             reg[regArg0] = restore();      // restore value of the operator
-            reg[regArg2] = reg[regRetval]; // restore list of args
+            reg[regArg1] = reg[regRetval]; // restore list of args
             gosub(sub_apply,blk_tail_call);
             break;
 
@@ -1342,8 +1342,9 @@ public class JhwScm
             // Applies the op in reg[regArg0] to the args in
             // reg[regArg1] under the environment reg[regArg2].
             //
-            tmp0 = type(reg[regArg0]);
-            if ( TYPE_SUBP == tmp0 || TYPE_SUBS == tmp0 )
+            tmp0 = reg[regArg0];
+            tmp1 = type(reg[regArg0]);
+            if ( TYPE_SUBP == tmp1 || TYPE_SUBS == tmp1 )
             {
                // get arity
                //
@@ -1354,10 +1355,49 @@ public class JhwScm
                //   Freak out if there are not exactly N args.
                //
                // Then just gosub()!
-               raiseError(ERR_NOT_IMPL);
+               final int arity = (tmp0 & MASK_ARITY) >>> SHIFT_ARITY;
+               log("  tmp0:  " + pp(tmp0));
+               log("  tmp0:  " + hex(tmp0,8));
+               log("  arity: " + arity);
+               log("  arg1:  " + pp(reg[regArg1]));
+               log("  car(arg1):  " + pp(car(reg[regArg1])));
+               log("  cdr(arg1):  " + pp(cdr(reg[regArg1])));
+               switch (arity << SHIFT_ARITY)
+               {
+               case AX:
+                  reg[regArg0] = reg[regArg1];
+                  gosub(tmp0,blk_tail_call);
+                  break;
+               case A0:
+                  // TODO: error check, too many args?
+                  gosub(tmp0,blk_tail_call);
+                  break;
+               case A1:
+                  // TODO: error check, too few, too many?
+                  reg[regArg0] = car(reg[regArg1]);
+                  gosub(tmp0,blk_tail_call);
+                  break;
+               case A2:
+                  // TODO: error check, too few, too many?
+                  reg[regArg0] = car(reg[regArg1]);
+                  reg[regArg1] = car(cdr(reg[regArg1]));
+                  gosub(tmp0,blk_tail_call);
+                  break;
+               case A3:
+                  // TODO: error check, too few, too many?
+                  reg[regArg0] = car(reg[regArg1]);
+                  reg[regArg1] = car(cdr(reg[regArg1]));
+                  reg[regArg2] = car(cdr(cdr(reg[regArg1])));
+                  gosub(tmp0,blk_tail_call);
+                  break;
+               default:
+                  raiseError(ERR_INTERNAL);
+                  break;
+               }
+               gosub(tmp0,blk_tail_call);
                break;
             }
-            if ( TYPE_CELL == tmp0 )
+            if ( TYPE_CELL == tmp1 )
             {
                tmp1 = car(reg[regTmp2]);
                if ( IS_PROCEDURE == tmp1 || IS_SPECIAL_FORM == tmp1 )
@@ -1604,7 +1644,10 @@ public class JhwScm
             break;
 
          case sub_add:
-            raiseError(ERR_NOT_IMPL);
+            tmp0 = value(reg[regArg0]);
+            tmp1 = value(reg[regArg1]);
+            reg[regRetval] = code(TYPE_FIXINT,value(tmp0+tmp1));
+            returnsub();
             break;
          case sub_mul:
             raiseError(ERR_NOT_IMPL);
@@ -2583,6 +2626,13 @@ public class JhwScm
          }
          buf.append(c);
       }
+   }
+
+   private static String hex ( int code, int nibbles )
+   {
+      final StringBuilder buf = new StringBuilder();
+      hex(buf,code,nibbles);
+      return buf.toString();
    }
 
    private void prebind ( final String name, final int code )

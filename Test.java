@@ -309,6 +309,13 @@ public class Test
       expectSemantic("(\"a\" 0)");
       expectSemantic("(#\\a 0)");
       JhwScm.SILENT = false;
+      expectSuccess("(+ 0 0)", "0");
+      expectSuccess("(+ 0 1)", "1");
+      expectSuccess("(+ 0 2)", "2");
+      expectSuccess("(+ 2 0)", "2");
+      expectSuccess("(+ 2 3)", "5");
+      expectSuccess("(+ 2 -3)","-1");
+      if ( true ) return;
       expectSuccess("(+ 0)","0");
       expectSuccess("(+ 1)","1");
       expectSuccess("(+ 0 1)","1");
