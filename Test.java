@@ -308,22 +308,21 @@ public class Test
       expectSemantic("(1 0)");
       expectSemantic("(\"a\" 0)");
       expectSemantic("(#\\a 0)");
-      JhwScm.SILENT = false;
       expectSuccess("(+ 0 0)", "0");
       expectSuccess("(+ 0 1)", "1");
       expectSuccess("(+ 0 2)", "2");
       expectSuccess("(+ 2 0)", "2");
       expectSuccess("(+ 2 3)", "5");
       expectSuccess("(+ 2 -3)","-1");
-      if ( true ) return;
-      expectSuccess("(+ 0)","0");
-      expectSuccess("(+ 1)","1");
-      expectSuccess("(+ 0 1)","1");
       expectSuccess("(+ 100 2)","102");
       expectSuccess("(+ 100 -2)","98");
-      expectSuccess("(* 97 2)","184");
-      expectSuccess("(* 2 3 5)","30");
+      expectSuccess("(* 97 2)","194");
       expectSemantic("(+ a b)");
+
+      JhwScm.SILENT = false;
+      expectSuccess("(+ 0)","0");
+      expectSuccess("(+ 1)","1");
+      expectSuccess("(* 2 3 5)","30");
 
       // defining symbols
       {

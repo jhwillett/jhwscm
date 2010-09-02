@@ -1650,7 +1650,10 @@ public class JhwScm
             returnsub();
             break;
          case sub_mul:
-            raiseError(ERR_NOT_IMPL);
+            tmp0 = value(reg[regArg0]);
+            tmp1 = value(reg[regArg1]);
+            reg[regRetval] = code(TYPE_FIXINT,value(tmp0*tmp1));
+            returnsub();
             break;
          case sub_cons:
             raiseError(ERR_NOT_IMPL);
