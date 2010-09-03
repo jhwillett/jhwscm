@@ -356,17 +356,19 @@ public class Test
       expectSuccess("(quote (quote 9))",        "(quote 9)");
       expectSuccess("(quote (quote (quote 9)))","(quote (quote 9))");
 
-      JhwScm.SILENT = false;
-
       // simple quote sugar
       expectSuccess("'()","()");
       expectSuccess("'(1 2)","(1 2)");
       expectSuccess("'(a b)","(a b)");
       expectSemantic("(+ 1 '())");
       expectSuccess("'9",       "9");
-      expectSuccess("''9",      "(quote 9)");
-      expectSuccess("'''9",     "(quote (quote 9))");
-      expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
+      if ( false )
+      {
+         // TODO: the quoted-quote question, and how to print it
+         expectSuccess("''9",      "(quote 9)");
+         expectSuccess("'''9",     "(quote (quote 9))");
+         expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
+      }
 
       // simple conditionals: in Scheme, only #f is false
       // 
@@ -379,6 +381,12 @@ public class Test
       expectSuccess("(if #t 2 5)","2");
       expectSuccess("(if '() 2 5)","2"); 
       expectSuccess("(if 0 2 5)","2");
+      expectSuccess("(if 0 (+ 2 1) 5)","3");
+      expectSuccess("(if 0 2 5)","2");
+      expectSuccess("(if #t (+ 2 1) (+ 4 5))","3");
+      expectSuccess("(if #f (+ 2 1) (+ 4 5))","9");
+
+      JhwScm.SILENT = false;
 
       // cons, car, cdr, and list have a particular relationship
       //

@@ -537,7 +537,8 @@ public class JhwScm
             {
             case '\'':
                if ( verb ) log("quote (not belong here in sub_read_atom?)");
-               raiseError(ERR_NOT_IMPL);
+               queuePopFront(reg[regIn]);
+               gosub(sub_read,sub_read_atom+0x3);
                break;
             case '"':
                if ( verb ) log("string literal");
@@ -613,6 +614,21 @@ public class JhwScm
                   reg[regTmp1] = cdr(reg[regTmp1]);
                }
             }
+            returnsub();
+            break;
+         case sub_read_atom+0x3:
+            // after single quote
+            //
+            // TODO: Think about this one, by putting sub_quote here
+            // instead of the symbol 'quote there are some funny
+            // consequences: like for instance it kind of implies that
+            // sub_quote needs to be self-evaluating (if not all
+            // sub_foo).
+            //
+            // Also - how should it print?
+            //
+            reg[regTmp0]   = cons(reg[regRetval],NIL);
+            reg[regRetval] = cons(sub_quote,reg[regTmp0]);
             returnsub();
             break;
 
@@ -922,6 +938,8 @@ public class JhwScm
             case TYPE_CHAR:
             case TYPE_FIXINT:
             case TYPE_BOOLEAN:
+            case TYPE_SUBS:    // TODO: is this a valid decision?  Off-spec?
+            case TYPE_SUBP:    // TODO: is this a valid decision?  Off-spec?
                // these types are self-evaluating
                reg[regRetval] = reg[regArg0];
                returnsub();
@@ -1362,10 +1380,17 @@ public class JhwScm
                log("  tmp0:  " + pp(tmp0));
                log("  tmp0:  " + hex(tmp0,8));
                log("  arity: " + arity);
+               log("  arg1:  " + pp(reg[regArg1]));
                reg[regTmp0] = reg[regArg1];
                reg[regArg0] = UNDEFINED;
                reg[regArg1] = UNDEFINED;
                reg[regArg2] = UNDEFINED;
+               // TODO: icky dependency on reg order
+               // 
+               // TODO: on the other hand, first use of
+               // register-index-as-variable.... hmmm
+               //
+               tmp2         = regArg0;
                switch (arity << SHIFT_ARITY)
                {
                case AX:
@@ -1379,9 +1404,10 @@ public class JhwScm
                      raiseError(ERR_SEMANTIC);
                      break;
                   }
-                  reg[regArg0] = car(reg[regTmp0]);
+                  reg[tmp2]    = car(reg[regTmp0]);
                   reg[regTmp0] = cdr(reg[regTmp0]);
                   log("pop arg: " + pp(reg[regArg0]));
+                  tmp2++;
                   // fall through
                case A2:
                   if ( NIL == reg[regTmp0] )
@@ -1390,11 +1416,10 @@ public class JhwScm
                      raiseError(ERR_SEMANTIC);
                      break;
                   }
-                  reg[regArg1] = reg[regArg0];
-                  reg[regArg0] = car(reg[regTmp0]);
+                  reg[tmp2]    = car(reg[regTmp0]);
                   reg[regTmp0] = cdr(reg[regTmp0]);
                   log("pop arg: " + pp(reg[regArg0]));
-                  // fall through
+                  tmp2++;
                case A1:
                   if ( NIL == reg[regTmp0] )
                   {
@@ -1402,12 +1427,10 @@ public class JhwScm
                      raiseError(ERR_SEMANTIC);
                      break;
                   }
-                  reg[regArg2] = reg[regArg1];
-                  reg[regArg1] = reg[regArg0];
-                  reg[regArg0] = car(reg[regTmp0]);
+                  reg[tmp2]    = car(reg[regTmp0]);
                   reg[regTmp0] = cdr(reg[regTmp0]);
                   log("pop arg: " + pp(reg[regArg0]));
-                  // fall through
+                  tmp2++;
                case A0:
                   if ( NIL != reg[regTmp0] )
                   {
@@ -1752,7 +1775,20 @@ public class JhwScm
             raiseError(ERR_NOT_IMPL);
             break;
          case sub_if:
-            raiseError(ERR_NOT_IMPL);
+            log("arg0: " + pp(reg[regArg0]));
+            log("arg1: " + pp(reg[regArg1]));
+            log("arg2: " + pp(reg[regArg2]));
+            if ( FALSE != reg[regArg0] )
+            {
+               reg[regTmp0] = reg[regArg1];
+            }            
+            else
+            {
+               reg[regTmp0] = reg[regArg2];
+            }
+            reg[regArg0] = reg[regTmp0];
+            reg[regArg1] = reg[regGlobalEnv]; // TODO: where "the current env?"
+            gosub(sub_eval,blk_tail_call);
             break;
          case sub_quote:
             reg[regRetval] = reg[regArg0];
