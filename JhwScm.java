@@ -1673,6 +1673,16 @@ public class JhwScm
             break;
 
          case sub_add:
+            if ( TYPE_FIXINT != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            if ( TYPE_FIXINT != type(reg[regArg1]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
             reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1));
@@ -1683,10 +1693,30 @@ public class JhwScm
             returnsub();
             break;
          case sub_add1:
+            if ( TYPE_FIXINT != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
             reg[regRetval] = reg[regArg0];
             returnsub();
             break;
          case sub_add3:
+            if ( TYPE_FIXINT != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            if ( TYPE_FIXINT != type(reg[regArg1]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            if ( TYPE_FIXINT != type(reg[regArg2]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
             tmp2 = value(reg[regArg2]);
@@ -1694,6 +1724,16 @@ public class JhwScm
             returnsub();
             break;
          case sub_mul:
+            if ( TYPE_FIXINT != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            if ( TYPE_FIXINT != type(reg[regArg1]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
             reg[regRetval] = code(TYPE_FIXINT,(tmp0*tmp1));
@@ -1715,7 +1755,8 @@ public class JhwScm
             raiseError(ERR_NOT_IMPL);
             break;
          case sub_quote:
-            raiseError(ERR_NOT_IMPL);
+            reg[regRetval] = reg[regArg0];
+            returnsub();
             break;
          case sub_define:
             raiseError(ERR_NOT_IMPL);

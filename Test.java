@@ -319,8 +319,6 @@ public class Test
       expectSuccess("(* 97 2)","194");
       expectSemantic("(+ a b)");
 
-      JhwScm.SILENT = false;
-
       if ( true )
       {
          // TODO: note, for now + and * are binary only: this will
@@ -349,6 +347,53 @@ public class Test
       expectSemantic("(+3 1 2)");
       expectSemantic("(+3 1 2 3 4)");
 
+      // simple special form
+      expectSuccess("(quote ())","()");
+      expectSuccess("(quote (1 2))","(1 2)");
+      expectSuccess("(quote (a b))","(a b)");
+      expectSemantic("(+ 1 (quote ()))");
+      expectSuccess("(quote 9)",                "9");
+      expectSuccess("(quote (quote 9))",        "(quote 9)");
+      expectSuccess("(quote (quote (quote 9)))","(quote (quote 9))");
+
+      JhwScm.SILENT = false;
+
+      // simple quote sugar
+      expectSuccess("'()","()");
+      expectSuccess("'(1 2)","(1 2)");
+      expectSuccess("'(a b)","(a b)");
+      expectSemantic("(+ 1 '())");
+      expectSuccess("'9",       "9");
+      expectSuccess("''9",      "(quote 9)");
+      expectSuccess("'''9",     "(quote (quote 9))");
+      expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
+
+      // simple conditionals: in Scheme, only #f is false
+      // 
+      // TODO: test w/ side effects that short-cut semantics work.
+      //
+      // TODO: when you do mutators, be sure to check that only one
+      // alternative in an (if) is executed.
+      //
+      expectSuccess("(if #f 2 5)","5");
+      expectSuccess("(if #t 2 5)","2");
+      expectSuccess("(if '() 2 5)","2"); 
+      expectSuccess("(if 0 2 5)","2");
+
+      // cons, car, cdr, and list have a particular relationship
+      //
+      expectSuccess("(cons 1 2)","(1 . 2)");
+      expectSuccess("(car (cons 1 2))","1");
+      expectSuccess("(cdr (cons 1 2))","2");
+      expectSuccess("(list)","()");
+      expectSuccess("(list 1 2)","(1 2)");
+      expectSemantic("(car 1)");
+      expectSemantic("(car '())");
+      expectSemantic("(cdr 1)");
+      expectSemantic("(cdr '())");
+      expectSuccess("(cons 1 '())","(1)");
+      expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
+
       // defining symbols
       {
          final JhwScm scm = new JhwScm();
@@ -365,47 +410,6 @@ public class Test
          expectSemantic("(+ a c)",            scm);
          selfTest(scm);
       }
-
-      // cons and list have a particular relationship
-      expectSuccess("(cons 1 2)","(1 . 2)");
-      expectSuccess("(car (cons 1 2))","1");
-      expectSuccess("(cdr (cons 1 2))","2");
-      expectSuccess("(list)","()");
-      expectSuccess("(list 1 2)","(1 2)");
-      expectSemantic("(car 1)");
-      expectSemantic("(car '())");
-      expectSemantic("(cdr 1)");
-      expectSemantic("(cdr '())");
-      expectSuccess("(cons 1 '())","(1)");
-      expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
-
-      // simple conditionals: in Scheme, only #f is false
-      expectSuccess("(if #f 2 5)","5");
-      expectSuccess("(if #t 2 5)","2");
-      expectSuccess("(if '() 2 5)","2"); 
-      expectSuccess("(if 0 2 5)","2");
-
-      // TODO: when you do mutators, be sure to check that only one
-      // alternative in an (if) is executed.
-
-      // simple special form
-      expectSuccess("(quote ())","()");
-      expectSuccess("(quote (1 2))","(1 2)");
-      expectSuccess("(quote (a b))","(a b)");
-      expectSemantic("(+ 1 (quote ()))");
-      expectSuccess("(quote 9)",                "9");
-      expectSuccess("(quote (quote 9))",        "(quote 9)");
-      expectSuccess("(quote (quote (quote 9)))","(quote (quote 9))");
-
-      // simple quote sugar
-      expectSuccess("'()","()");
-      expectSuccess("'(1 2)","(1 2)");
-      expectSuccess("'(a b)","(a b)");
-      expectSemantic("(+ 1 '())");
-      expectSuccess("'9",       "9");
-      expectSuccess("''9",      "(quote 9)");
-      expectSuccess("'''9",     "(quote (quote 9))");
-      expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
 
       {
          final JhwScm scm = new JhwScm();
