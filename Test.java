@@ -399,14 +399,12 @@ public class Test
       expectSemantic("(cdr '())");
       expectSuccess("(cons 1 '())","(1)");
 
-      JhwScm.SILENT = false;
-
       // OUCH! w/ no garbage collection, no proper tail recursion, and
       // a 512 cell heap, this goes OOM.  4 KB to interpret that?
       //
       expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
       
-      if ( true ) return;
+      JhwScm.SILENT = false;
 
       // defining symbols
       {
@@ -439,6 +437,16 @@ public class Test
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
          expectSuccess("(foo 13 18)",               "31",scm);
          expectSemantic("(foo 13 '())",                  scm);
+         selfTest(scm);
+      }
+      
+      // nested defines
+      {
+         final JhwScm scm = new JhwScm();
+         expectSuccess("(define (a x) (define b 2) (+ x b))", "",   scm);
+         expectSuccess("(a 10)",                              "12", scm);
+         expectSuccess("a",                                   "???", scm);
+         expectSemantic("b",                                         scm);
          selfTest(scm);
       }
 

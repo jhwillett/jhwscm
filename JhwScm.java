@@ -276,6 +276,7 @@ public class JhwScm
          case sub_rep+0x1:
             if ( EOF == reg[regRetval] )
             {
+               reg[regPc] = sub_rep;
                return SUCCESS;
             }
             reg[regArg0] = reg[regRetval];
@@ -309,6 +310,7 @@ public class JhwScm
          case sub_rp+0x1:
             if ( EOF == reg[regRetval] )
             {
+               reg[regPc] = sub_rp;
                return SUCCESS;
             }
             reg[regArg0] = reg[regRetval];
@@ -1578,8 +1580,23 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             case TYPE_SENTINEL:
-               // TYPE_SENTINEL is used by sub_print, true, but should
-               // not come up in a top-level argument to sub_print.
+               if ( VOID == c )
+               {
+                  reg[regRetval] = UNDEFINED;
+                  returnsub();
+                  break;
+               }
+               else
+               {
+                  // TYPE_SENTINEL is used by sub_print, true, but should
+                  // not come up in a top-level argument to sub_print.
+                  //
+                  // TODO: clearly having rules about TYPE_SENTINEL
+                  // break down, and UNDEFINED vs VOID vs NIL really
+                  // needs to be thought out.
+                  raiseError(ERR_INTERNAL);
+                  break;
+               }
             default:
                raiseError(ERR_INTERNAL);
                break;
@@ -1826,7 +1843,71 @@ public class JhwScm
             break;
 
          case sub_define:
-            raiseError(ERR_NOT_IMPL);
+            // If a variable is bound in the current environment
+            // *frame*, changes it.  Else creates a new binding in the
+            // current *frame*.
+            //
+            // That is - at the top-level define creates or mutates a
+            // top-level binding, and an inner define creates or
+            // mutates an inner binding, but an inner define will not
+            // create or (most importantly) mutate a higher-level
+            // binding.
+            //
+            // Also - we have two forms of define, the one with a
+            // symbol arg which just defines a variable (define x 1),
+            // and the one with a list arg which is sugar (define (x)
+            // 1) is (define x (lambda () 1)).
+            //
+            if ( TYPE_CELL != type(reg[regArg0]) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            if ( IS_SYMBOL == car(reg[regArg0]) )
+            {
+               reg[regTmp0] = reg[regArg0];
+               reg[regTmp1] = reg[regArg1];
+            }
+            else
+            {
+               // TODO: By putting sub_list here is like putting
+               // sub_quote in other lists: forces the hand on other
+               // design decisions.
+               //
+               reg[regTmp0] = car(reg[regArg0]);
+               reg[regTmp1] = cons(reg[regArg1],NIL);
+               reg[regTmp2] = cons(cdr(reg[regArg0]),reg[regTmp1]);
+               reg[regTmp1] = cons(sub_lambda,reg[regTmp2]);
+            }
+            store(reg[regTmp0]);              // store the symbol
+            reg[regArg0] = reg[regTmp1];      // eval the body
+            reg[regArg1] = reg[regGlobalEnv]; // we need an env arg here!
+            gosub(sub_eval,sub_define+0x1);
+            break;
+         case sub_define+0x1:
+            reg[regTmp0] = restore();         // restore the symbol
+            store(reg[regTmp0]);              // store the symbol
+            store(reg[regRetval]);            // store the body's value
+            reg[regArg0] = reg[regTmp0];           // lookup the binding
+            reg[regArg1] = car(reg[regGlobalEnv]); // we need an env arg here!
+            gosub(sub_eval_look_frame,sub_define+0x2);
+            break;
+         case sub_define+0x2:
+            reg[regTmp1] = restore();         // restore the body's value
+            reg[regTmp0] = restore();         // restore the symbol
+            if ( NIL == reg[regRetval] )
+            {
+               // create a new binding        // we need an env arg here!
+               reg[regTmp1] = cons(reg[regTmp0],reg[regTmp1]);
+               setcar(reg[regGlobalEnv],reg[regTmp1]);
+            }
+            else
+            {
+               // change the existing binding
+               setcdr(reg[regRetval],reg[regTmp1]);
+            }
+            reg[regRetval] = VOID;
+            returnsub();
             break;
 
          case sub_lambda:
@@ -1951,6 +2032,7 @@ public class JhwScm
 
    private static final int EOF                 = TYPE_SENTINEL | 97;
    private static final int UNDEFINED           = TYPE_SENTINEL | 16;
+   private static final int VOID                = TYPE_SENTINEL | 65;
    private static final int IS_SYMBOL           = TYPE_SENTINEL | 79;
    private static final int IS_STRING           = TYPE_SENTINEL | 32;
    private static final int IS_PROCEDURE        = TYPE_SENTINEL | 83;
@@ -2637,6 +2719,7 @@ public class JhwScm
       case NIL:                  return "NIL";
       case EOF:                  return "EOF";
       case UNDEFINED:            return "UNDEFINED";
+      case VOID:                 return "VOID";
       case IS_STRING:            return "IS_STRING";
       case IS_SYMBOL:            return "IS_SYMBOL";
       case IS_PROCEDURE:         return "IS_PROCEDURE";
