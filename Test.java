@@ -368,6 +368,51 @@ public class Test
          expectSuccess("''9",      "(quote 9)");
          expectSuccess("'''9",     "(quote (quote 9))");
          expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
+
+         // Trouble!
+         //
+         //   jwillett@little-man ~/jhwscm $ scsh
+         //   Welcome to scsh 0.6.7 (R6RS)
+         //   Type ,? for help.
+         //   > ''1
+         //   ''1
+         //   > (quote 1)
+         //   1
+         //   > '1
+         //   1
+         //   > ' '1
+         //   ''1
+         //   > (quote '1)
+         //   ''1
+         //   > 
+         //   Exit Scsh? (y/n)? y
+         //   jwillett@little-man ~/jhwscm $ guile
+         //   guile> ''1
+         //   (quote 1)
+         //   guile> (quote 1)
+         //   1
+         //   guile> '1
+         //   1
+         //   guile> ' '1
+         //   (quote 1)
+         //   guile> (quote '1)
+         //   (quote 1)
+         //   guile> 
+         //   
+         // OK, so scsh makes the decision to print quote as ' instead
+         // of as (quote) - no biggie.  But notice the last thing:
+         //   
+         //   [scsh]> (quote '1)
+         //   ''1
+         //   
+         //   guile> (quote '1)
+         //   (quote 1)
+         //   
+         // Scsh comes back with two levels of quoting, Guile with
+         // one.  I'm gonna have to see if this is something clarified
+         // by R6RS (noting that Scsh calls R6RS and knowing Guile
+         // defaults to around R5RSish), or if it is a bug in one of
+         // the two, or if it remains an open design decision.
       }
 
       // simple conditionals: in Scheme, only #f is false

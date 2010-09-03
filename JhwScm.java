@@ -1917,6 +1917,9 @@ public class JhwScm
             break;
 
          case sub_lambda:
+
+            //HERE_YOU_ARE_SOME_DECISIONS_TO_MAKE();
+
             raiseError(ERR_NOT_IMPL);
             break;
 
