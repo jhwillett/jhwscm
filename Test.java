@@ -386,8 +386,6 @@ public class Test
       expectSuccess("(if #t (+ 2 1) (+ 4 5))","3");
       expectSuccess("(if #f (+ 2 1) (+ 4 5))","9");
 
-      JhwScm.SILENT = false;
-
       // cons, car, cdr, and list have a particular relationship
       //
       expectSuccess("(cons 1 2)","(1 . 2)");
@@ -400,7 +398,15 @@ public class Test
       expectSemantic("(cdr 1)");
       expectSemantic("(cdr '())");
       expectSuccess("(cons 1 '())","(1)");
+
+      JhwScm.SILENT = false;
+
+      // OUCH! w/ no garbage collection, no proper tail recursion, and
+      // a 512 cell heap, this goes OOM.  4 KB to interpret that?
+      //
       expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
+      
+      if ( true ) return;
 
       // defining symbols
       {

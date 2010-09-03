@@ -1394,7 +1394,7 @@ public class JhwScm
                switch (arity << SHIFT_ARITY)
                {
                case AX:
-                  reg[regArg0] = reg[regArg1];
+                  reg[regArg0] = reg[regTmp0];
                   gosub(tmp0,blk_tail_call);
                   break;
                case A3:
@@ -1711,10 +1711,12 @@ public class JhwScm
             reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1));
             returnsub();
             break;
+
          case sub_add0:
             reg[regRetval] = code(TYPE_FIXINT,0);
             returnsub();
             break;
+
          case sub_add1:
             if ( TYPE_FIXINT != type(reg[regArg0]) )
             {
@@ -1724,6 +1726,7 @@ public class JhwScm
             reg[regRetval] = reg[regArg0];
             returnsub();
             break;
+
          case sub_add3:
             if ( TYPE_FIXINT != type(reg[regArg0]) )
             {
@@ -1746,6 +1749,7 @@ public class JhwScm
             reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1+tmp2));
             returnsub();
             break;
+
          case sub_mul:
             if ( TYPE_FIXINT != type(reg[regArg0]) )
             {
@@ -1762,18 +1766,48 @@ public class JhwScm
             reg[regRetval] = code(TYPE_FIXINT,(tmp0*tmp1));
             returnsub();
             break;
+
          case sub_cons:
-            raiseError(ERR_NOT_IMPL);
+            log("cons: " + pp(reg[regArg0]));
+            log("cons: " + pp(reg[regArg1]));
+            reg[regRetval] = cons(reg[regArg0],reg[regArg1]);
+            returnsub();
             break;
+
          case sub_car:
-            raiseError(ERR_NOT_IMPL);
+            log("car: " + pp(reg[regArg0]));
+            if ( TYPE_CELL != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg[regRetval] = car(reg[regArg0]);
+            returnsub();
             break;
+
          case sub_cdr:
-            raiseError(ERR_NOT_IMPL);
+            log("cdr: " + pp(reg[regArg0]));
+            if ( TYPE_CELL != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg[regRetval] = cdr(reg[regArg0]);
+            returnsub();
             break;
+
          case sub_list:
-            raiseError(ERR_NOT_IMPL);
+         case sub_quote:
+            // Commentary: I *love* how sub_quote and sub_list are the
+            // same once you abstract special form vs procedure into
+            // (eval) and arity into (apply).
+            //
+            // I totally get off on it!
+            //
+            reg[regRetval] = reg[regArg0];
+            returnsub();
             break;
+
          case sub_if:
             log("arg0: " + pp(reg[regArg0]));
             log("arg1: " + pp(reg[regArg1]));
@@ -1790,13 +1824,11 @@ public class JhwScm
             reg[regArg1] = reg[regGlobalEnv]; // TODO: where "the current env?"
             gosub(sub_eval,blk_tail_call);
             break;
-         case sub_quote:
-            reg[regRetval] = reg[regArg0];
-            returnsub();
-            break;
+
          case sub_define:
             raiseError(ERR_NOT_IMPL);
             break;
+
          case sub_lambda:
             raiseError(ERR_NOT_IMPL);
             break;
@@ -1957,7 +1989,7 @@ public class JhwScm
    private static final int regGlobalEnv        =  16; // list of env frames
 
    private static final int numRegisters        =  32;  // in slots
-   private static final int heapSize            = 512; // in cells
+   private static final int heapSize            = 512*2; // in cells
 
    private final int[] heap = new int[2*heapSize];
    private final int[] reg  = new int[numRegisters];
