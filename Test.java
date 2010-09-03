@@ -400,12 +400,11 @@ public class Test
       expectSuccess("(cons 1 '())","(1)");
 
       // OUCH! w/ no garbage collection, no proper tail recursion, and
-      // a 512 cell heap, this goes OOM.  4 KB to interpret that?
+      // a 512 cell heap, this goes OOM.  More than 4 KB to interpret
+      // that?
       //
       expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
       
-      JhwScm.SILENT = false;
-
       // defining symbols
       {
          final JhwScm scm = new JhwScm();
@@ -423,6 +422,9 @@ public class Test
          selfTest(scm);
       }
 
+      // redefining symbols
+      expectSuccess("(define a 1)a(define a 2)a","12");
+
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define foo +)","",  scm);
@@ -431,7 +433,10 @@ public class Test
          selfTest(scm);
       }
 
+      JhwScm.SILENT = false;
+
       // defining functions
+      expectSuccess("((lambda (f a b) (* a b)) 13 5)","65");
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (foo a b) (+ a b))","",  scm);

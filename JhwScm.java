@@ -1895,17 +1895,23 @@ public class JhwScm
          case sub_define+0x2:
             reg[regTmp1] = restore();         // restore the body's value
             reg[regTmp0] = restore();         // restore the symbol
+            logrec("define A",reg[regGlobalEnv]);
             if ( NIL == reg[regRetval] )
             {
                // create a new binding        // we need an env arg here!
                reg[regTmp1] = cons(reg[regTmp0],reg[regTmp1]);
-               setcar(reg[regGlobalEnv],reg[regTmp1]);
+               reg[regTmp2] = cons(reg[regTmp1],car(reg[regGlobalEnv]));
+               setcar(reg[regGlobalEnv],reg[regTmp2]);
+               log("define new binding");
+               
             }
             else
             {
                // change the existing binding
                setcdr(reg[regRetval],reg[regTmp1]);
+               log("define old binding");
             }
+            logrec("define B",reg[regGlobalEnv]);
             reg[regRetval] = VOID;
             returnsub();
             break;
@@ -2070,8 +2076,8 @@ public class JhwScm
 
    private static final int regGlobalEnv        =  16; // list of env frames
 
-   private static final int numRegisters        =  32;  // in slots
-   private static final int heapSize            = 512*2; // in cells
+   private static final int numRegisters        =  32;   // in slots
+   private static final int heapSize            = 512*4; // in cells
 
    private final int[] heap = new int[2*heapSize];
    private final int[] reg  = new int[numRegisters];
@@ -2230,7 +2236,7 @@ public class JhwScm
 
    private void store ( final int value )
    {
-      final boolean verb = true;
+      final boolean verb = false;
       if ( NIL != reg[regError] )
       {
          if ( verb ) log("store(): flow suspended for error");
@@ -2249,7 +2255,7 @@ public class JhwScm
 
    private int restore ()
    {
-      final boolean verb = true;
+      final boolean verb = false;
       if ( NIL != reg[regError] )
       {
          if ( verb ) log("restore(): flow suspended for error");
@@ -2710,6 +2716,18 @@ public class JhwScm
          System.out.print("  ");
       }
       System.out.println(msg);
+   }
+
+   private void logrec ( String tag, final int c )
+   {
+      tag += " ";
+      log(tag + pp(c));
+      if ( TYPE_CELL == type(c) )
+      {
+         tag += " ";
+         logrec(tag,car(c));
+         logrec(tag,cdr(c));
+      }
    }
 
    private static String pp ( final int code )
