@@ -320,9 +320,34 @@ public class Test
       expectSemantic("(+ a b)");
 
       JhwScm.SILENT = false;
-      expectSuccess("(+ 0)","0");
-      expectSuccess("(+ 1)","1");
-      expectSuccess("(* 2 3 5)","30");
+
+      if ( true )
+      {
+         // TODO: note, for now + and * are binary only: this will
+         // change!
+         expectSemantic("(+ 0)");
+         expectSemantic("(+)");
+         expectSemantic("(+ 1)");
+         expectSemantic("(* 2 3 5)");
+         expectSemantic("(*)");
+      }
+      else
+      {
+         expectSuccess("(+ 0)","0");
+         expectSuccess("(+)","0");
+         expectSuccess("(+ 1)","1");
+         expectSuccess("(* 2 3 5)","30");
+         expectSuccess("(*)","1");
+      }
+      expectSuccess("(+0)",      "0");
+      expectSuccess("(+1 10)",   "10");
+      expectSuccess("(+3 3 5 7)","15");
+      expectSemantic("(+0 1)");
+      expectSemantic("(+1)");
+      expectSemantic("(+1 1 2)");
+      expectSemantic("(+3)");
+      expectSemantic("(+3 1 2)");
+      expectSemantic("(+3 1 2 3 4)");
 
       // defining symbols
       {

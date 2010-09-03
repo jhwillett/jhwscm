@@ -101,7 +101,12 @@ public class JhwScm
       prebind("if",      sub_if);
       prebind("quote",   sub_quote);
       prebind("define",  sub_define);
+
       prebind("lambda",  sub_lambda);
+
+      prebind("+0",      sub_add0);
+      prebind("+1",      sub_add1);
+      prebind("+3",      sub_add3);
    }
 
    /**
@@ -244,6 +249,7 @@ public class JhwScm
       int v1   = 0;
       int tmp0 = 0;
       int tmp1 = 0;
+      int tmp2 = 0;
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
@@ -1110,7 +1116,6 @@ public class JhwScm
                // 
                // apply op to args
                store(reg[regTmp2]);      // store the value of the operator
-               store(reg[regTmp1]);      // store the env
                reg[regArg0] = reg[regTmp0];
                reg[regArg1] = reg[regTmp1];
                gosub(sub_eval_list,sub_eval+0x3);
@@ -1122,7 +1127,6 @@ public class JhwScm
                // apply op to args
                reg[regArg0] = reg[regTmp2];
                reg[regArg1] = reg[regTmp0];
-               reg[regArg2] = reg[regTmp1];
                gosub(sub_apply,blk_tail_call);
                break;
             }
@@ -1130,7 +1134,6 @@ public class JhwScm
             break;
          case sub_eval+0x3:
             // following eval of the args
-            reg[regArg2] = restore();      // restore the env
             reg[regArg0] = restore();      // restore value of the operator
             reg[regArg1] = reg[regRetval]; // restore list of args
             gosub(sub_apply,blk_tail_call);
@@ -1340,7 +1343,7 @@ public class JhwScm
 
          case sub_apply:
             // Applies the op in reg[regArg0] to the args in
-            // reg[regArg1] under the environment reg[regArg2].
+            // reg[regArg1].
             //
             tmp0 = reg[regArg0];
             tmp1 = type(reg[regArg0]);
@@ -1359,42 +1362,68 @@ public class JhwScm
                log("  tmp0:  " + pp(tmp0));
                log("  tmp0:  " + hex(tmp0,8));
                log("  arity: " + arity);
-               log("  arg1:  " + pp(reg[regArg1]));
-               log("  car(arg1):  " + pp(car(reg[regArg1])));
-               log("  cdr(arg1):  " + pp(cdr(reg[regArg1])));
+               reg[regTmp0] = reg[regArg1];
+               reg[regArg0] = UNDEFINED;
+               reg[regArg1] = UNDEFINED;
+               reg[regArg2] = UNDEFINED;
                switch (arity << SHIFT_ARITY)
                {
                case AX:
                   reg[regArg0] = reg[regArg1];
                   gosub(tmp0,blk_tail_call);
                   break;
-               case A0:
-                  // TODO: error check, too many args?
-                  gosub(tmp0,blk_tail_call);
-                  break;
-               case A1:
-                  // TODO: error check, too few, too many?
-                  reg[regArg0] = car(reg[regArg1]);
-                  gosub(tmp0,blk_tail_call);
-                  break;
-               case A2:
-                  // TODO: error check, too few, too many?
-                  reg[regArg0] = car(reg[regArg1]);
-                  reg[regArg1] = car(cdr(reg[regArg1]));
-                  gosub(tmp0,blk_tail_call);
-                  break;
                case A3:
-                  // TODO: error check, too few, too many?
-                  reg[regArg0] = car(reg[regArg1]);
-                  reg[regArg1] = car(cdr(reg[regArg1]));
-                  reg[regArg2] = car(cdr(cdr(reg[regArg1])));
+                  if ( NIL == reg[regTmp0] )
+                  {
+                     log("too few args");
+                     raiseError(ERR_SEMANTIC);
+                     break;
+                  }
+                  reg[regArg0] = car(reg[regTmp0]);
+                  reg[regTmp0] = cdr(reg[regTmp0]);
+                  log("pop arg: " + pp(reg[regArg0]));
+                  // fall through
+               case A2:
+                  if ( NIL == reg[regTmp0] )
+                  {
+                     log("too few args");
+                     raiseError(ERR_SEMANTIC);
+                     break;
+                  }
+                  reg[regArg1] = reg[regArg0];
+                  reg[regArg0] = car(reg[regTmp0]);
+                  reg[regTmp0] = cdr(reg[regTmp0]);
+                  log("pop arg: " + pp(reg[regArg0]));
+                  // fall through
+               case A1:
+                  if ( NIL == reg[regTmp0] )
+                  {
+                     log("too few args");
+                     raiseError(ERR_SEMANTIC);
+                     break;
+                  }
+                  reg[regArg2] = reg[regArg1];
+                  reg[regArg1] = reg[regArg0];
+                  reg[regArg0] = car(reg[regTmp0]);
+                  reg[regTmp0] = cdr(reg[regTmp0]);
+                  log("pop arg: " + pp(reg[regArg0]));
+                  // fall through
+               case A0:
+                  if ( NIL != reg[regTmp0] )
+                  {
+                     log("too many args");
+                     raiseError(ERR_SEMANTIC);
+                     break;
+                  }
+                  log("arg0: " + pp(reg[regArg0]));
+                  log("arg1: " + pp(reg[regArg1]));
+                  log("arg2: " + pp(reg[regArg2]));
                   gosub(tmp0,blk_tail_call);
                   break;
                default:
                   raiseError(ERR_INTERNAL);
                   break;
                }
-               gosub(tmp0,blk_tail_call);
                break;
             }
             if ( TYPE_CELL == tmp1 )
@@ -1646,13 +1675,28 @@ public class JhwScm
          case sub_add:
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
-            reg[regRetval] = code(TYPE_FIXINT,value(tmp0+tmp1));
+            reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1));
+            returnsub();
+            break;
+         case sub_add0:
+            reg[regRetval] = code(TYPE_FIXINT,0);
+            returnsub();
+            break;
+         case sub_add1:
+            reg[regRetval] = reg[regArg0];
+            returnsub();
+            break;
+         case sub_add3:
+            tmp0 = value(reg[regArg0]);
+            tmp1 = value(reg[regArg1]);
+            tmp2 = value(reg[regArg2]);
+            reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1+tmp2));
             returnsub();
             break;
          case sub_mul:
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
-            reg[regRetval] = code(TYPE_FIXINT,value(tmp0*tmp1));
+            reg[regRetval] = code(TYPE_FIXINT,(tmp0*tmp1));
             returnsub();
             break;
          case sub_cons:
@@ -1884,7 +1928,7 @@ public class JhwScm
    private static final int sub_eval_look_frame  = TYPE_SUBS | A2 |  0x3110;
    private static final int sub_eval_list        = TYPE_SUBS | A2 |  0x3200;
 
-   private static final int sub_apply            = TYPE_SUBP | A3 |  0x4000;
+   private static final int sub_apply            = TYPE_SUBP | A2 |  0x4000;
 
    private static final int sub_print            = TYPE_SUBP | A1 |  0x5000;
    private static final int sub_print_list       = TYPE_SUBP | A1 |  0x5100;
@@ -1895,6 +1939,9 @@ public class JhwScm
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
 
    private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
+   private static final int sub_add0             = TYPE_SUBP | A0 |  0x70A0;
+   private static final int sub_add1             = TYPE_SUBP | A1 |  0x70B0;
+   private static final int sub_add3             = TYPE_SUBP | A3 |  0x70C0;
    private static final int sub_mul              = TYPE_SUBP | A2 |  0x7100;
    private static final int sub_cons             = TYPE_SUBP | A2 |  0x7200;
    private static final int sub_car              = TYPE_SUBP | A1 |  0x7300;
@@ -2538,6 +2585,9 @@ public class JhwScm
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_add:              buf.append("sub_add");              break;
+         case sub_add0:             buf.append("sub_add0");             break;
+         case sub_add1:             buf.append("sub_add1");             break;
+         case sub_add3:             buf.append("sub_add3");             break;
          case sub_mul:              buf.append("sub_mul");              break;
          case sub_cons:             buf.append("sub_cons");             break;
          case sub_car:              buf.append("sub_car");              break;
