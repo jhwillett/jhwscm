@@ -495,6 +495,40 @@ public class Test
          // way "quote" can and I don't want redefinitions of quote
          // breaking homoiconicity.
          //
+         // Follow-on observation: what happens to apostrophe when you
+         // redefine quote? For the following input:
+         //
+         //   (define quote 1)
+         //   '3
+         //
+         // Both Guile and Scsh fail, saying more or less that I tried
+         // to apply 1 as a function to 3, and I can't do that.
+         //
+         // So... both of them have 'X expand to (quote X) via the
+         // *symbol* "quote", not the builtin standard value of
+         // "quote".  Interesting.
+         //
+         // In the LISP-2s I don't know quite what to expect, but
+         // whatever happens I do not think it is applicable, since
+         // LISP-2's have complex symbols and, if I recall, a
+         // different slot in the symbols for each of values,
+         // procedures, macros, and special forms (among other
+         // things).  From CLISP:
+         //
+         //   [1]> (defvar quote 1)
+         //   QUOTE
+         //   [2]> (quote 1)
+         //   1
+         //   [3]> (defun quote () 1)
+         //   
+         //   *** - DEFUN/DEFMACRO: QUOTE is a special operator and
+         //         may not be redefined.
+         //   
+         // So I can't redefine "quote", so I can't see what effect
+         // that has on apostrophe.
+         //   
+         // Interesting!  I'm gonna have to mine R5RS and R6RS on this
+         // one.
       }
 
       // simple conditionals: in Scheme, only #f is false
