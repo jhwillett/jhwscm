@@ -79,34 +79,38 @@ public class JhwScm
       reg[regFreeCellList] = NIL;
       for ( int i = 0; i < heap.length; i += 2 )
       {
-         // TODO: is the car of free list, e.g. heap[i+0], superfluous here?
+         // TODO: is the car of free list, e.g. heap[i+0], superfluous
+         // here?  Don't we always assign it before returning it from
+         // cons()?
+         //
+         // Hmmm.  Suggests there might be a lot of extra space
+         // sitting in the free cell list... we could maintain it as a
+         // heap and prefer pulling lower indices, to improve locality
+         // of reference and reduce the work required for heap
+         // compaction...
          heap[i+0]            = NIL;
          heap[i+1]            = reg[regFreeCellList];
          reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
       }
 
-      reg[regPc]  = doREP ? sub_rep : sub_rp;
-
+      reg[regPc]        = doREP ? sub_rep : sub_rp;
       reg[regIn]        = queueCreate();
       reg[regOut]       = queueCreate();
-
       reg[regGlobalEnv] = cons(NIL,NIL);
 
-      prebind("+",       sub_add);
-      prebind("*",       sub_mul);
-      prebind("cons",    sub_cons);
-      prebind("car",     sub_car);
-      prebind("cdr",     sub_cdr);
-      prebind("list",    sub_list);
-      prebind("if",      sub_if);
-      prebind("quote",   sub_quote);
-      prebind("define",  sub_define);
-
-      prebind("lambda",  sub_lambda);
-
-      prebind("+0",      sub_add0);
-      prebind("+1",      sub_add1);
-      prebind("+3",      sub_add3);
+      prebind("+",      sub_add);
+      prebind("*",      sub_mul);
+      prebind("+0",     sub_add0);
+      prebind("+1",     sub_add1);
+      prebind("+3",     sub_add3);
+      prebind("cons",   sub_cons);
+      prebind("car",    sub_car);
+      prebind("cdr",    sub_cdr);
+      prebind("list",   sub_list);
+      prebind("if",     sub_if);
+      prebind("quote",  sub_quote);
+      prebind("define", sub_define);
+      prebind("lambda", sub_lambda);
    }
 
    /**
@@ -1490,7 +1494,7 @@ public class JhwScm
             //
             //   '(IS_PROCEDURE arg-list body lexical-env)
             //
-            if ( DEBUG && TYPE_CELL != reg[regArg0] )
+            if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
                raiseError(ERR_INTERNAL);
                break;
@@ -1500,19 +1504,24 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            logrec("sub_apply_user op  ",reg[regArg0]);
-            logrec("sub_apply_user args",reg[regArg1]);
             store(reg[regArg0]);
             store(reg[regArg1]);
-            reg[regArg0] = car(reg[regArg0]);
-            reg[regTmp1] = car(cdr(reg[regArg0]));
-            reg[regTmp2] = car(cdr(cdr(reg[regArg0])));
-            raiseError(ERR_NOT_IMPL);
-            //store(reg[regArg0]);
-            //gosub(sub_zip,sub_apply_user+0x1);
+            reg[regArg0] = car(cdr(reg[regArg0]));
+            reg[regArg1] = reg[regArg1];
+            gosub(sub_zip,sub_apply_user+0x1);
             break;
          case sub_apply_user+0x1:
-            raiseError(ERR_NOT_IMPL);
+            reg[regArg1] = restore();                   // restore args UNUSED!
+            reg[regArg0] = restore();                   // restore operator
+            reg[regTmp0] = reg[regRetval];              // extract env frame
+            reg[regTmp1] = car(cdr(cdr(reg[regArg0]))); // extract body
+            reg[regTmp2] = cons(reg[regTmp0],reg[regGlobalEnv]);
+            //logrec("BODY ",reg[regTmp1]);
+            //logrec("FRAME",reg[regTmp0]);
+            //logrec("ENV  ",reg[regTmp2]);
+            reg[regArg0] = reg[regTmp1];
+            reg[regArg1] = reg[regTmp2];
+            gosub(sub_eval,blk_tail_call);
             break;
 
          case sub_zip:
@@ -1953,6 +1962,8 @@ public class JhwScm
                reg[regTmp2] = cons(cdr(reg[regArg0]),reg[regTmp1]);
                reg[regTmp1] = cons(sub_lambda,reg[regTmp2]);
             }
+            logrec("DEFINE SYMBOL: ",reg[regTmp0]);
+            logrec("DEFINE BODY:   ",reg[regTmp1]);
             store(reg[regTmp0]);              // store the symbol
             reg[regArg0] = reg[regTmp1];      // eval the body
             reg[regArg1] = reg[regGlobalEnv]; // we need an env arg here!
@@ -1960,7 +1971,7 @@ public class JhwScm
             break;
          case sub_define+0x1:
             reg[regTmp0] = restore();         // restore the symbol
-            store(reg[regTmp0]);              // store the symbol
+            store(reg[regTmp0]);              // store the symbol INEFFICIENT
             store(reg[regRetval]);            // store the body's value
             reg[regArg0] = reg[regTmp0];           // lookup the binding
             reg[regArg1] = car(reg[regGlobalEnv]); // we need an env arg here!
@@ -1969,7 +1980,6 @@ public class JhwScm
          case sub_define+0x2:
             reg[regTmp1] = restore();         // restore the body's value
             reg[regTmp0] = restore();         // restore the symbol
-            logrec("define A",reg[regGlobalEnv]);
             if ( NIL == reg[regRetval] )
             {
                // create a new binding        // we need an env arg here!
@@ -1985,7 +1995,7 @@ public class JhwScm
                setcdr(reg[regRetval],reg[regTmp1]);
                log("define old binding");
             }
-            logrec("define B",reg[regGlobalEnv]);
+            //logrec("define B",reg[regGlobalEnv]);
             reg[regRetval] = VOID;
             returnsub();
             break;
@@ -2912,6 +2922,7 @@ public class JhwScm
          case sub_if:               buf.append("sub_if");               break;
          case sub_quote:            buf.append("sub_quote");            break;
          case sub_define:           buf.append("sub_define");           break;
+         case sub_lambda:           buf.append("sub_lambda");           break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
