@@ -1363,7 +1363,7 @@ public class JhwScm
 
          case sub_apply:
             // Applies the op in reg[regArg0] to the args in
-            // reg[regArg1].
+            // reg[regArg1], and return the results.
             //
             switch (type(reg[regArg0]))
             {
@@ -1391,7 +1391,7 @@ public class JhwScm
          
          case sub_apply_builtin:
             // Applies the sub_foo in reg[regArg0] to the args in
-            // reg[regArg1].
+            // reg[regArg1], and return the results.
             //
             // get arity
             //
@@ -1478,13 +1478,67 @@ public class JhwScm
 
          case sub_apply_user:
             // Applies the user-defined procedure or special form in
-            // reg[regArg0] to the args in reg[regArg1].
+            // reg[regArg0] to the args in reg[regArg1], and return
+            // the results.
             //
-            // We consruct an env frame with the positional
-            // params bound to their corresponding args, extend
-            // the current env with that frame, and evaluate the
-            // body within the new env.
+            // We construct an env frame with the positional params
+            // bound to their corresponding args, extend the current
+            // env with that frame, and evaluate the body within the
+            // new env.
+            //
+            // The internal representation of a user-defined is:
+            //
+            //   '(IS_PROCEDURE arg-list body lexical-env)
+            //
+            if ( DEBUG && TYPE_CELL != reg[regArg0] )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            if ( DEBUG && IS_PROCEDURE != car(reg[regArg0]) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            logrec("sub_apply_user op  ",reg[regArg0]);
+            logrec("sub_apply_user args",reg[regArg1]);
+            store(reg[regArg0]);
+            store(reg[regArg1]);
+            reg[regArg0] = car(reg[regArg0]);
+            reg[regTmp1] = car(cdr(reg[regArg0]));
+            reg[regTmp2] = car(cdr(cdr(reg[regArg0])));
             raiseError(ERR_NOT_IMPL);
+            //store(reg[regArg0]);
+            //gosub(sub_zip,sub_apply_user+0x1);
+            break;
+         case sub_apply_user+0x1:
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_zip:
+            // Expects lists of equal lengths in reg[regArg0] and
+            // reg[regArg1]. Returns a new list of the same length,
+            // whose elments are cons() of corresponding elements from
+            // reg[regArg0] and reg[regArg1] respectively.
+            //
+            if ( NIL == reg[regArg0] && NIL == reg[regArg1] )
+            {
+               reg[regRetval] = NIL;
+               returnsub();
+               break;
+            }
+            if ( NIL == reg[regArg0] || NIL == reg[regArg1] )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg[regTmp0] = car(reg[regArg0]);
+            reg[regTmp1] = car(reg[regArg1]);
+            reg[regTmp2] = cons(reg[regTmp0],reg[regTmp1]);
+            reg[regArg0] = cdr(reg[regArg0]);
+            reg[regArg1] = cdr(reg[regArg1]);
+            store(reg[regTmp2]);
+            gosub(sub_zip,blk_tail_call_m_cons);
             break;
 
          case sub_print:
@@ -1949,7 +2003,7 @@ public class JhwScm
             // We're gonna need an arg list, a body, and a lexical
             // environment as well.  Let's just say that's it:
             //
-            //   (list IS_PROCEDURE arg-list body lexical-env)
+            //   '(IS_PROCEDURE arg-list body lexical-env)
             //
             // OK, done!
             //
@@ -2178,6 +2232,7 @@ public class JhwScm
    private static final int sub_print_chars      = TYPE_SUBP | A1 |  0x5400;
 
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
+   private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
 
    private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
    private static final int sub_add0             = TYPE_SUBP | A0 |  0x70A0;
@@ -2765,12 +2820,16 @@ public class JhwScm
    private void logrec ( String tag, final int c )
    {
       tag += " ";
-      log(tag + pp(c));
       if ( TYPE_CELL == type(c) )
       {
+         log(tag + pp(c));
          tag += " ";
          logrec(tag,car(c));
          logrec(tag,cdr(c));
+      }
+      else
+      {
+         log(tag + pp(c));
       }
    }
 
@@ -2840,6 +2899,7 @@ public class JhwScm
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
+         case sub_zip:              buf.append("sub_zip");              break;
          case sub_add:              buf.append("sub_add");              break;
          case sub_add0:             buf.append("sub_add0");             break;
          case sub_add1:             buf.append("sub_add1");             break;
