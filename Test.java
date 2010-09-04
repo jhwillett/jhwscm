@@ -505,8 +505,8 @@ public class Test
          // to apply 1 as a function to 3, and I can't do that.
          //
          // So... both of them have 'X expand to (quote X) via the
-         // *symbol* "quote", not the builtin standard value of
-         // "quote".  Interesting.
+         // *symbol* "quote", not the builtin operation to which
+         // "quote" is commonly bound.  Interesting.
          //
          // In the LISP-2s I don't know quite what to expect, but
          // whatever happens I do not think it is applicable, since
