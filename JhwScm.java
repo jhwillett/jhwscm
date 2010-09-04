@@ -1365,109 +1365,126 @@ public class JhwScm
             // Applies the op in reg[regArg0] to the args in
             // reg[regArg1].
             //
-            tmp0 = reg[regArg0];
-            tmp1 = type(reg[regArg0]);
-            if ( TYPE_SUBP == tmp1 || TYPE_SUBS == tmp1 )
+            switch (type(reg[regArg0]))
             {
-               // get arity
-               //
-               // - if AX, just put the list of args in reg[regArg0].
-               //
-               // - if A<N>, assign N entries from list at
-               //   reg[regArg1] into reg[regArg0.regArg<N>].
-               //   Freak out if there are not exactly N args.
-               //
-               // Then just gosub()!
-               final int arity = (tmp0 & MASK_ARITY) >>> SHIFT_ARITY;
-               log("  tmp0:  " + pp(tmp0));
-               log("  tmp0:  " + hex(tmp0,8));
-               log("  arity: " + arity);
-               log("  arg1:  " + pp(reg[regArg1]));
-               reg[regTmp0] = reg[regArg1];
-               reg[regArg0] = UNDEFINED;
-               reg[regArg1] = UNDEFINED;
-               reg[regArg2] = UNDEFINED;
-               // TODO: icky dependency on reg order
-               // 
-               // TODO: on the other hand, first use of
-               // register-index-as-variable.... hmmm
-               //
-               tmp2         = regArg0;
-               switch (arity << SHIFT_ARITY)
+            case TYPE_SUBP:
+            case TYPE_SUBS:
+               gosub(sub_apply_builtin,blk_tail_call);
+               break;
+            case TYPE_CELL:
+               switch (car(reg[regArg0]))
                {
-               case AX:
-                  reg[regArg0] = reg[regTmp0];
-                  gosub(tmp0,blk_tail_call);
-                  break;
-               case A3:
-                  if ( NIL == reg[regTmp0] )
-                  {
-                     log("too few args");
-                     raiseError(ERR_SEMANTIC);
-                     break;
-                  }
-                  reg[tmp2]    = car(reg[regTmp0]);
-                  reg[regTmp0] = cdr(reg[regTmp0]);
-                  log("pop arg: " + pp(reg[regArg0]));
-                  tmp2++;
-                  // fall through
-               case A2:
-                  if ( NIL == reg[regTmp0] )
-                  {
-                     log("too few args");
-                     raiseError(ERR_SEMANTIC);
-                     break;
-                  }
-                  reg[tmp2]    = car(reg[regTmp0]);
-                  reg[regTmp0] = cdr(reg[regTmp0]);
-                  log("pop arg: " + pp(reg[regArg0]));
-                  tmp2++;
-               case A1:
-                  if ( NIL == reg[regTmp0] )
-                  {
-                     log("too few args");
-                     raiseError(ERR_SEMANTIC);
-                     break;
-                  }
-                  reg[tmp2]    = car(reg[regTmp0]);
-                  reg[regTmp0] = cdr(reg[regTmp0]);
-                  log("pop arg: " + pp(reg[regArg0]));
-                  tmp2++;
-               case A0:
-                  if ( NIL != reg[regTmp0] )
-                  {
-                     log("too many args");
-                     raiseError(ERR_SEMANTIC);
-                     break;
-                  }
-                  log("arg0: " + pp(reg[regArg0]));
-                  log("arg1: " + pp(reg[regArg1]));
-                  log("arg2: " + pp(reg[regArg2]));
-                  gosub(tmp0,blk_tail_call);
+               case IS_PROCEDURE:
+               case IS_SPECIAL_FORM:
+                  gosub(sub_apply_user,blk_tail_call);
                   break;
                default:
                   raiseError(ERR_INTERNAL);
                   break;
                }
                break;
+            default:
+               raiseError(ERR_INTERNAL);
+               break;
             }
-            if ( TYPE_CELL == tmp1 )
+            break;
+         
+         case sub_apply_builtin:
+            // Applies the sub_foo in reg[regArg0] to the args in
+            // reg[regArg1].
+            //
+            // get arity
+            //
+            // - if AX, just put the list of args in reg[regArg0].
+            //
+            // - if A<N>, assign N entries from list at
+            //   reg[regArg1] into reg[regArg0.regArg<N>].
+            //   Freak out if there are not exactly N args.
+            //
+            // Then just gosub()!
+            tmp0 = reg[regArg0];
+            final int arity = (tmp0 & MASK_ARITY) >>> SHIFT_ARITY;
+            log("  tmp0:  " + pp(tmp0));
+            log("  tmp0:  " + hex(tmp0,8));
+            log("  arity: " + arity);
+            log("  arg1:  " + pp(reg[regArg1]));
+            reg[regTmp0] = reg[regArg1];
+            reg[regArg0] = UNDEFINED;
+            reg[regArg1] = UNDEFINED;
+            reg[regArg2] = UNDEFINED;
+            // TODO: icky dependency on reg order
+            // 
+            // TODO: on the other hand, first use of
+            // register-index-as-variable.... hmmm
+            //
+            tmp2         = regArg0;
+            switch (arity << SHIFT_ARITY)
             {
-               tmp1 = car(reg[regTmp2]);
-               if ( IS_PROCEDURE == tmp1 || IS_SPECIAL_FORM == tmp1 )
+            case AX:
+               reg[regArg0] = reg[regTmp0];
+               gosub(tmp0,blk_tail_call);
+               break;
+            case A3:
+               if ( NIL == reg[regTmp0] )
                {
-                  // TODO: Oh boy this'll be thorny.  Gotta decide on
-                  // an internal representation for higher-level
-                  // procedures and special forms.
-                  //
-                  // Must track at a minimum: list of args and their
-                  // names, the body, and the lexical environment.
-                  //
-                  raiseError(ERR_NOT_IMPL);
+                  log("too few args");
+                  raiseError(ERR_SEMANTIC);
                   break;
                }
+               reg[tmp2]    = car(reg[regTmp0]);
+               reg[regTmp0] = cdr(reg[regTmp0]);
+               log("pop arg: " + pp(reg[regArg0]));
+               tmp2++;
+               // fall through
+            case A2:
+               if ( NIL == reg[regTmp0] )
+               {
+                  log("too few args");
+                  raiseError(ERR_SEMANTIC);
+                  break;
+               }
+               reg[tmp2]    = car(reg[regTmp0]);
+               reg[regTmp0] = cdr(reg[regTmp0]);
+               log("pop arg: " + pp(reg[regArg0]));
+               tmp2++;
+            case A1:
+               if ( NIL == reg[regTmp0] )
+               {
+                  log("too few args");
+                  raiseError(ERR_SEMANTIC);
+                  break;
+               }
+               reg[tmp2]    = car(reg[regTmp0]);
+               reg[regTmp0] = cdr(reg[regTmp0]);
+               log("pop arg: " + pp(reg[regArg0]));
+               tmp2++;
+            case A0:
+               if ( NIL != reg[regTmp0] )
+               {
+                  log("too many args");
+                  raiseError(ERR_SEMANTIC);
+                  break;
+               }
+               log("arg0: " + pp(reg[regArg0]));
+               log("arg1: " + pp(reg[regArg1]));
+               log("arg2: " + pp(reg[regArg2]));
+               gosub(tmp0,blk_tail_call);
+               break;
+            default:
+               raiseError(ERR_INTERNAL);
+               break;
             }
-            raiseError(ERR_SEMANTIC);
+            break;
+
+         case sub_apply_user:
+            // Applies the user-defined procedure or special form in
+            // reg[regArg0] to the args in reg[regArg1].
+            //
+            // We consruct an env frame with the positional
+            // params bound to their corresponding args, extend
+            // the current env with that frame, and evaluate the
+            // body within the new env.
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case sub_print:
@@ -1488,17 +1505,20 @@ public class JhwScm
                switch (c0)
                {
                case IS_STRING:
-                  if ( verb ) log("  IS_STRING: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
                   gosub(sub_print_string,blk_tail_call);
                   break;
                case IS_SYMBOL:
-                  if ( verb ) log("  IS_SYMBOL: " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c1;
                   gosub(sub_print_chars,blk_tail_call);
                   break;
+               case IS_PROCEDURE:
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
+                  returnsub();
+                  break;
                default:
-                  if ( verb ) log("  WHATEVER:  " + pp(c) + " " + pp(c0) + " " + pp(c1));
                   reg[regArg0] = c;
                   gosub(sub_print_list,blk_tail_call);
                   break;
@@ -1917,10 +1937,29 @@ public class JhwScm
             break;
 
          case sub_lambda:
-
-            //HERE_YOU_ARE_SOME_DECISIONS_TO_MAKE();
-
-            raiseError(ERR_NOT_IMPL);
+            // Some key decisions here.  
+            //
+            // To get lambda, gotta decide how to represent a
+            // function.  
+            //
+            // From stubbing out sub_eval and sub_apply, I already
+            // know it's gonna be a list whose 1st element is
+            // IS_PROCEDURE.
+            //
+            // We're gonna need an arg list, a body, and a lexical
+            // environment as well.  Let's just say that's it:
+            //
+            //   (list IS_PROCEDURE arg-list body lexical-env)
+            //
+            // OK, done!
+            //
+            // TODO: gotta get that current environment here...
+            //
+            reg[regRetval] = cons(reg[regGlobalEnv], NIL);
+            reg[regRetval] = cons(reg[regArg1],      reg[regRetval]);
+            reg[regRetval] = cons(reg[regArg0],      reg[regRetval]);
+            reg[regRetval] = cons(IS_PROCEDURE,      reg[regRetval]);
+            returnsub();
             break;
 
          case blk_tail_call:
@@ -2129,6 +2168,8 @@ public class JhwScm
    private static final int sub_eval_list        = TYPE_SUBS | A2 |  0x3200;
 
    private static final int sub_apply            = TYPE_SUBP | A2 |  0x4000;
+   private static final int sub_apply_builtin    = TYPE_SUBP | A2 |  0x4100;
+   private static final int sub_apply_user       = TYPE_SUBP | A2 |  0x4200;
 
    private static final int sub_print            = TYPE_SUBP | A1 |  0x5000;
    private static final int sub_print_list       = TYPE_SUBP | A1 |  0x5100;
@@ -2791,6 +2832,8 @@ public class JhwScm
          case sub_eval_look_env:    buf.append("sub_eval_look_env");    break;
          case sub_eval_look_frame:  buf.append("sub_eval_look_frame");  break;
          case sub_apply:            buf.append("sub_apply");            break;
+         case sub_apply_builtin:    buf.append("sub_apply_builtin");    break;
+         case sub_apply_user:       buf.append("sub_apply_user");       break;
          case sub_print:            buf.append("sub_print");            break;
          case sub_print_list:       buf.append("sub_print_list");       break;
          case sub_print_list_elems: buf.append("sub_print_list_elems"); break;

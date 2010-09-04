@@ -481,7 +481,8 @@ public class Test
       JhwScm.SILENT = false;
 
       // defining functions
-      expectSuccess("((lambda (f a b) (* a b)) 13 5)","65");
+      expectSuccess("(lambda (a b) (* a b))",       "???");
+      expectSuccess("((lambda (a b) (* a b)) 13 5)","65");
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
