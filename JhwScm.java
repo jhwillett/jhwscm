@@ -1238,8 +1238,8 @@ public class JhwScm
             //
             if ( true )
             {
-               logrec("SYM",reg[regArg0]);
-               //logrec("ENV",reg[regArg1]);
+               logrec("sub_eval_look_env SYM",reg[regArg0]);
+               log(   "sub_eval_look_env ENV " + pp(reg[regArg1]));
             }
             if ( NIL == reg[regArg1] )
             {
@@ -1289,7 +1289,8 @@ public class JhwScm
             //
             if ( true )
             {
-               logrec("FRAME SYM  ",reg[regArg0]);
+               logrec("FRAME SYM   ",reg[regArg0]);
+               //logrec("FRAME FRAME ",reg[regArg1]);
             }
             if ( NIL == reg[regArg1] )
             {
@@ -1525,9 +1526,9 @@ public class JhwScm
             reg[regTmp0] = reg[regRetval];              // extract env frame
             reg[regTmp1] = car(cdr(cdr(reg[regArg0]))); // extract body
             reg[regTmp2] = cons(reg[regTmp0],reg[regGlobalEnv]);
-            //logrec("BODY ",reg[regTmp1]);
-            //logrec("FRAME",reg[regTmp0]);
-            //logrec("ENV  ",reg[regTmp2]);
+            logrec("sub_apply_user BODY ",reg[regTmp1]);
+            logrec("sub_apply_user FRAME",reg[regTmp0]);
+            log("sub_apply_user ENV  " + pp(reg[regTmp2]));
             reg[regArg0] = reg[regTmp1];
             reg[regArg1] = reg[regTmp2];
             gosub(sub_eval,blk_tail_call);
@@ -1930,6 +1931,63 @@ public class JhwScm
                reg[regTmp0] = reg[regArg2];
             }
             reg[regArg0] = reg[regTmp0];
+
+            // Thinking about the problem of tracking the current
+            // frame.
+            //
+            // Obviously we need a notion of "the current env" tracked
+            // someplace.  Without it, when this sub_if calls
+            // sub_eval, what does it pass?  Do we track the "current
+            // frame" in:
+            // 
+            // - The regular stack?
+            // 
+            // - A dedicated stack?
+            // 
+            // - Argument passing?
+            // 
+            // I do like argument passing b/c it is clean and doesn't
+            // introduce another global.
+            // 
+            // I don't like argument passing for more reasons than
+            // just the tedious billion register operations it will
+            // take to implement it that way.
+            //
+            // I also don't like argument passing b/c it means things
+            // like sub_define will take a different number of
+            // arguments than "(define)" normally takes, and I'm kind
+            // of keen on the microcoded buitins actually *being* the
+            // high-level forms, not just helpers for the high-level
+            // forms.
+            //
+            // I don't like putting it in a regular stack, that feels
+            // like needless multiplication of entities and yet
+            // another top-level global support special case.
+            //
+            // I like putting it on the regular stack, but how does it
+            // get "found" by calls like sub_if?  It could be
+            // arbitrarily many calls up the stack in the past that a
+            // new current stack got pushed.
+            //
+            // Thinking about the current frame ebbing and flowing, it
+            // feels stack-y, but it feels like a much colder stack
+            // than the regular one.  Doesn't shimmer nearly as much,
+            // just kind of throbs.
+            //
+            // So maybe.... the current env gets a register, but we
+            // push and pop onto the regular stack?
+            //
+            // Naa.. wait a sec, the env is recursively structured and
+            // stack like.  Why not just stop calling it the
+            // regGlobalEnv, instead call it regEnv... and push and
+            // pop there?
+            // 
+            // Hmmm, I'm liking it.  Names getting shorter, if it is
+            // b/c they've just gotten less qualified and more
+            // general, is a good smell...
+            // 
+            THIS_IS_WHERE_THE_ENV_IS_LOST_SUCH_THAT_FIB_BREAKS();
+
             reg[regArg1] = reg[regGlobalEnv]; // TODO: where "the current env?"
             gosub(sub_eval,blk_tail_call);
             break;
@@ -2836,16 +2894,31 @@ public class JhwScm
       System.out.println(msg);
    }
 
-   private void logrec ( String tag, final int c )
+   private void logrec ( String tag, int c )
    {
       if ( SILENT ) return;
       tag += " ";
       if ( TYPE_CELL == type(c) )
       {
-         log(tag + pp(c));
-         tag += " ";
-         logrec(tag,car(c));
-         logrec(tag,cdr(c));
+         final int first = car(c);
+         switch (car(c))
+         {
+         case IS_SYMBOL:
+         case IS_STRING:
+            final StringBuilder buf = new StringBuilder();
+            for ( c = cdr(c); NIL != c; c = cdr(c) )
+            {
+               buf.append((char)value(car(c)));
+            }
+            log(tag + pp(first) + " " + buf);
+            break;
+         default:
+            log(tag + pp(c));
+            tag += " ";
+            logrec(tag,car(c));
+            logrec(tag,cdr(c));
+            break;
+         }
       }
       else
       {
