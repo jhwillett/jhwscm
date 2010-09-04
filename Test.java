@@ -413,6 +413,88 @@ public class Test
          // by R6RS (noting that Scsh calls R6RS and knowing Guile
          // defaults to around R5RSish), or if it is a bug in one of
          // the two, or if it remains an open design decision.
+         //   
+         // Damn, had a real problem getting any other Schemes to work
+         // in Gentoo.
+         //   
+         // Aha!  With less weight as evidence perhaps, but I can try
+         // the same thing in various non-Scheme LISPs!
+         //   
+         // From GNU Emacs (duh, it was right there all along!):
+         //   
+         //   (quote 1)                 
+         //   ==> 1
+         //   '1                        
+         //   ==> 1
+         //   (quote (quote 1))
+         //   ==> (quote 1)
+         //   ''1
+         //   ==> (quote 1)
+         //   (quote (quote (quote 1)))
+         //   ==> (quote (quote 1))
+         //   '''1
+         //   ==> (quote (quote 1))
+         //   (quote '1)
+         //   ==> (quote 1)
+         //   
+         // From GNU CLISP:
+         //   
+         //   [1]> '1
+         //   1
+         //   [2]> ''1
+         //   '1
+         //   [3]> '''1
+         //   ''1
+         //   [4]> (quote 1)
+         //   1
+         //   [5]> (quote (quote 1))
+         //   '1
+         //   [6]> (quote (quote (quote 1)))
+         //   ''1
+         //   [7]> (quote '1)
+         //   '1
+         //   
+         // OK, so we have:  
+         //   
+         //   1. Scsh and CLISP print quote in the ' form.
+         //   
+         //   2. Guile and Emacs print quote in the (quote) form.
+         //   
+         //   3. Scsh and CLISP print quote in the ' form.
+         //   
+         //   4. Scsh interprets (quote '1) as two levels of
+         //   quotation.
+         //   
+         //   5. Guile, CLISP, and Emacs, interpret (quote '1) as a
+         //   single level of quotation.
+         //   
+         // No consensus on how to print - fine, I am comfortable
+         // making up my own mind on that.
+         //
+         // For the (quote '1) problem, the vote is leaning toward a
+         // single level of quotation.  Mind you, that's how it is
+         // printed, not what it *is*.  I think of the print operation
+         // in this survey as "stripping off one level of quote".
+         // 
+         // With that in mind, I'd like to see all ofboth (quote
+         // (quote 1)), (quote '1), '(quote 1), and ''1 print the
+         // same, as either '1 or (quote 1).
+         // 
+         // Guile, Emacs, and CLISP all do this.  Scsh is treats ' and
+         // quote consistently, but it breaks the "stripping off one
+         // level of quote" rule by it printing ''1 for ''1 but 1 for
+         // '1.
+         // 
+         // So I'm going with the striping off one level of quote rule
+         // in guiding how print works.  The question is open whether
+         // I want to print the long form or the apostrophe form.
+         //
+         // I am likely to go with apostrophe for the sorterness of
+         // it, even though I look to Guile in other matters.  The
+         // apostrophe, being a lexical token, can't be redefined the
+         // way "quote" can and I don't want redefinitions of quote
+         // breaking homoiconicity.
+         //
       }
 
       // simple conditionals: in Scheme, only #f is false
