@@ -606,27 +606,25 @@ public class Test
          selfTest(scm);
       }
 
-      if ( true ) return;
-      JhwScm.SILENT = false;
-
-      // ambition: nontrivial user-defined recursive function
-      // 
-      // This one, the Fibonacci Sequence, is not tail-recursive and
-      // will eat O(n) stack space and runs in something awful like
-      // O(n*n) or worse - making it also a good stressor for garbage
-      // collection.
-      // 
-      // Fib can be made half-tail-recursive though...
-      // 
-      // Later, there exists a good memoized dynamic programming
-      // version which would be good for comparison.
-      //
       {
+         // ambition: nontrivial user-defined recursive function
+         // 
+         // This one, the Fibonacci Sequence, is not tail-recursive
+         // and will eat O(n) stack space and runs in something awful
+         // like O(n*n) or worse - making it also a good stressor for
+         // garbage collection.
+         // 
+         // Fib can be made half-tail-recursive though...
+         // 
+         // Later, there exists a good memoized dynamic programming
+         // version which would be good for comparison.
+         //
          final String fib = 
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
          final JhwScm scm = new JhwScm();
-         expectSuccess(fib,"???",scm);
-         expectSuccess("(fib -1)","-1",scm);
+         expectSuccess(fib,"",scm);
+         expectSuccess("fib","???",scm);
+         JhwScm.SILENT = false;
          expectSuccess("(fib 0)","0",scm);
          expectSuccess("(fib 1)","1",scm);
          expectSuccess("(fib 2)","1",scm);
@@ -639,16 +637,16 @@ public class Test
          selfTest(scm);
       }
 
-      // ambition: nontrivial user-defined recursive function
-      // 
-      // This one, Factorial, is good for playing w/ tail-recursion.
-      // The naive form is not tail recursive and consumes O(n) stack
-      // space - but the tail-recursive function is super simple.
-      //
-      // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
-      // but its tail-recursive twin runs just fine to vastly larger
-      // scale.
       {
+         // ambition: nontrivial user-defined recursive function
+         // 
+         // This one, Factorial, is good for playing w/ tail-recursion.
+         // The naive form is not tail recursive and consumes O(n) stack
+         // space - but the tail-recursive function is super simple.
+         //
+         // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
+         // but its tail-recursive twin runs just fine to vastly larger
+         // scale.
          final String fac1 = 
             "(define (fac1 n) (if (< n 2) 1 (* n (fac1 (- n 1)))))";
          final JhwScm scm = new JhwScm();
@@ -685,7 +683,6 @@ public class Test
       // TODO: test min, max, bounds, 2s-complement nature of fixints?
 
       // TODO: nested lexical scopes, let, etc
-
 
       {
          // TODO: nested defines how do they work???

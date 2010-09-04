@@ -1016,6 +1016,11 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
+            if ( DEBUG && TYPE_CELL != type(reg[regRetval]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
             reg[regRetval] = cdr(reg[regRetval]);
             returnsub();
             break;
@@ -1231,11 +1236,11 @@ public class JhwScm
             //             (sub_eval_look_env sym (cdr env))
             //             bind))))
             //
-            if ( verb ) log("  SYM: " + pp(reg[regArg0]));
-            if ( verb ) log("  ENV: " + pp(reg[regArg1]));
-            if ( verb ) log("  GLO: " + pp(reg[regGlobalEnv]));
-            if ( verb ) log("  GLa: " + pp(car(reg[regGlobalEnv])));
-            if ( verb ) log("  GLd: " + pp(cdr(reg[regGlobalEnv])));
+            if ( true )
+            {
+               logrec("SYM",reg[regArg0]);
+               //logrec("ENV",reg[regArg1]);
+            }
             if ( NIL == reg[regArg1] )
             {
                if ( verb ) log("empty env: symbol not found");
@@ -1282,6 +1287,10 @@ public class JhwScm
             //             (car frame)
             //             (sub_eval_look_frame (cdr frame))))))
             //
+            if ( true )
+            {
+               logrec("FRAME SYM  ",reg[regArg0]);
+            }
             if ( NIL == reg[regArg1] )
             {
                reg[regRetval] = NIL;
@@ -2829,6 +2838,7 @@ public class JhwScm
 
    private void logrec ( String tag, final int c )
    {
+      if ( SILENT ) return;
       tag += " ";
       if ( TYPE_CELL == type(c) )
       {
