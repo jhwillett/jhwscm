@@ -203,6 +203,7 @@ public class Test
       // this is so.
       //
       expectSuccess("( . 2 )",    "2",           new JhwScm(false));
+      expectSuccess("( . 2 )",    "2",           new JhwScm(true));
       expectSuccess("( . () )",   "()",          new JhwScm(false));
       expectLexical("( . 2 3 )");
       expectSuccess("(. abc )",   "abc",         new JhwScm(false));
@@ -364,171 +365,13 @@ public class Test
       expectSuccess("'9",       "9");
       if ( false )
       {
+         // See the quote-quote-quote discussion in DIARY.txt.
+
          // TODO: the quoted-quote question, and how to print it
          expectSuccess("''9",      "(quote 9)");
          expectSuccess("'''9",     "(quote (quote 9))");
          expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
 
-         // Trouble!
-         //
-         //   jwillett@little-man ~/jhwscm $ scsh
-         //   Welcome to scsh 0.6.7 (R6RS)
-         //   Type ,? for help.
-         //   > ''1
-         //   ''1
-         //   > (quote 1)
-         //   1
-         //   > '1
-         //   1
-         //   > ' '1
-         //   ''1
-         //   > (quote '1)
-         //   ''1
-         //   > 
-         //   Exit Scsh? (y/n)? y
-         //   jwillett@little-man ~/jhwscm $ guile
-         //   guile> ''1
-         //   (quote 1)
-         //   guile> (quote 1)
-         //   1
-         //   guile> '1
-         //   1
-         //   guile> ' '1
-         //   (quote 1)
-         //   guile> (quote '1)
-         //   (quote 1)
-         //   guile> 
-         //   
-         // OK, so scsh makes the decision to print quote as ' instead
-         // of as (quote) - no biggie.  But notice the last thing:
-         //   
-         //   [scsh]> (quote '1)
-         //   ''1
-         //   
-         //   guile> (quote '1)
-         //   (quote 1)
-         //   
-         // Scsh comes back with two levels of quoting, Guile with
-         // one.  I'm gonna have to see if this is something clarified
-         // by R6RS (noting that Scsh calls R6RS and knowing Guile
-         // defaults to around R5RSish), or if it is a bug in one of
-         // the two, or if it remains an open design decision.
-         //   
-         // Damn, had a real problem getting any other Schemes to work
-         // in Gentoo.
-         //   
-         // Aha!  With less weight as evidence perhaps, but I can try
-         // the same thing in various non-Scheme LISPs!
-         //   
-         // From GNU Emacs (duh, it was right there all along!):
-         //   
-         //   (quote 1)                 
-         //   ==> 1
-         //   '1                        
-         //   ==> 1
-         //   (quote (quote 1))
-         //   ==> (quote 1)
-         //   ''1
-         //   ==> (quote 1)
-         //   (quote (quote (quote 1)))
-         //   ==> (quote (quote 1))
-         //   '''1
-         //   ==> (quote (quote 1))
-         //   (quote '1)
-         //   ==> (quote 1)
-         //   
-         // From GNU CLISP:
-         //   
-         //   [1]> '1
-         //   1
-         //   [2]> ''1
-         //   '1
-         //   [3]> '''1
-         //   ''1
-         //   [4]> (quote 1)
-         //   1
-         //   [5]> (quote (quote 1))
-         //   '1
-         //   [6]> (quote (quote (quote 1)))
-         //   ''1
-         //   [7]> (quote '1)
-         //   '1
-         //   
-         // OK, so we have:  
-         //   
-         //   1. Scsh and CLISP print quote in the ' form.
-         //   
-         //   2. Guile and Emacs print quote in the (quote) form.
-         //   
-         //   3. Scsh and CLISP print quote in the ' form.
-         //   
-         //   4. Scsh interprets (quote '1) as two levels of
-         //   quotation.
-         //   
-         //   5. Guile, CLISP, and Emacs, interpret (quote '1) as a
-         //   single level of quotation.
-         //   
-         // No consensus on how to print - fine, I am comfortable
-         // making up my own mind on that.
-         //
-         // For the (quote '1) problem, the vote is leaning toward a
-         // single level of quotation.  Mind you, that's how it is
-         // printed, not what it *is*.  I think of the print operation
-         // in this survey as "stripping off one level of quote".
-         // 
-         // With that in mind, I'd like to see all ofboth (quote
-         // (quote 1)), (quote '1), '(quote 1), and ''1 print the
-         // same, as either '1 or (quote 1).
-         // 
-         // Guile, Emacs, and CLISP all do this.  Scsh is treats ' and
-         // quote consistently, but it breaks the "stripping off one
-         // level of quote" rule by it printing ''1 for ''1 but 1 for
-         // '1.
-         // 
-         // So I'm going with the striping off one level of quote rule
-         // in guiding how print works.  The question is open whether
-         // I want to print the long form or the apostrophe form.
-         //
-         // I am likely to go with apostrophe for the sorterness of
-         // it, even though I look to Guile in other matters.  The
-         // apostrophe, being a lexical token, can't be redefined the
-         // way "quote" can and I don't want redefinitions of quote
-         // breaking homoiconicity.
-         //
-         // Follow-on observation: what happens to apostrophe when you
-         // redefine quote? For the following input:
-         //
-         //   (define quote 1)
-         //   '3
-         //
-         // Both Guile and Scsh fail, saying more or less that I tried
-         // to apply 1 as a function to 3, and I can't do that.
-         //
-         // So... both of them have 'X expand to (quote X) via the
-         // *symbol* "quote", not the builtin operation to which
-         // "quote" is commonly bound.  Interesting.
-         //
-         // In the LISP-2s I don't know quite what to expect, but
-         // whatever happens I do not think it is applicable, since
-         // LISP-2's have complex symbols and, if I recall, a
-         // different slot in the symbols for each of values,
-         // procedures, macros, and special forms (among other
-         // things).  From CLISP:
-         //
-         //   [1]> (defvar quote 1)
-         //   QUOTE
-         //   [2]> (quote 1)
-         //   1
-         //   [3]> (defun quote () 1)
-         //   
-         //   *** - DEFUN/DEFMACRO: QUOTE is a special operator and
-         //         may not be redefined.
-         //   
-         // So I can't redefine "quote", so I can't see what effect
-         // that has on apostrophe.
-         //   
-         // Interesting!  I'm gonna have to mine R5RS and R6RS on this
-         // one.
       }
 
       // simple conditionals: in Scheme, only #f is false

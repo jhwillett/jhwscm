@@ -1,0 +1,365 @@
+
+
+Keeping a dev diary, I'd like to track the design-decision journal
+style.
+
+The first several entries will be out of order, as I gather
+conversations I've had with myself in code comments over the last two
+weeks.
+
+
+*** Initial Architecture Sun Sep 5 2010
+
+I'm writing the first several implmentations in Java, but decidedly
+non-idiomatic Java.
+
+My goal is for my code itself to control as much of the runtime as
+possible: the point is to have written and understood as much runtime
+as possible, not to leverage Java's runtime efficiently.
+
+So, initial design decisions include:
+
+1. Only relying on things like String, throw, etc. for bootstrap
+scaffolding or debugging.
+
+2. Writing the top-level control loop so it can run for some number of
+"cycles" and then suspend.  
+
+3. The general contract for the Java implementation is that:
+
+  3a. The main drive() loop is guaranteed to halt.  It runs the VM for
+      a particular number of ticks.  Whether the hosted program is
+      Halting or no is of course undecidable - but in any case control
+      is guaranteed to return to the client.
+
+  3b. The implementation never calls Java's new except in the minimum
+      unavoidable cases: when it first initializes its heap and
+      registers, and when it resizes its heap: both of which it only
+      does when directed by the client.
+
+  3c. The implementation almost never* allows a Java exception to
+      cross the implementation's public interface.  The only
+      exceptions to this rule are debugging code.  Any exception
+      crossing that line are a bug.
+
+  3d. Not using exceptions within the implementation except where
+      minimally unavoidable in Java: in the 2 or 3 places where new is
+      called.  In those few cases, the exception is dealt with in the
+      narrowest possible try{}catch{}.
+
+  3e. Although I use them extensively in the early stages, it is my
+      goal to avoid using recursion, loops, or switch statements at
+      the Java level.  I *especially* want to avoid using those to
+      implement the flow control structure in the Scheme
+      implementation e.g. I don't want the Scheme runtime stack to
+      just be a mapping onto the Java runtime stack.
+
+These draconian limitation offer a couple of distinctive benefits.
+
+One, once I'm happy with the feature set and the stability of the
+implementation, I want a clear and unambiguous porting path to C or
+some lower language.
+
+Two, the point of not leveraging those features in Java is that I want
+to *implement* those features for myself.  I want to implement a
+runtime stack, I want to implement garbage collection, that's an
+inherent and central part of my motivation.
+
+Three, by being less shackled from the Java runtime, I am free to
+explore things which are unsupported by the Java runtime, like proper
+tail recursion, tail recursion modulo cons, and continuation passing
+style.
+
+
+At the lowest level, I'm using Java to implement a custom register
+machine whose primitive opcodes are tailored to support a LISP
+machine.  I'm also using Java to write the microcoding for that LISP
+machine.  As I move along, I'm kind of trying to identify the simplest
+possible core LISP interpreter which is sufficiently full featured but
+algorithmically efficient, and at the same time the simplest possible
+operand set I can come up with.  That is, without sacrificing
+generality of fundamental performance, I'm co-optimizing for
+medium-level and lowest-level complexity.
+
+Eventually, I'd like to see those roles decoupled, for the
+assembly which implements the LISP to be pulled out into a distinct
+file, and the Java to become no more than the CPU+REG+RAM simulator.
+
+Then, I'd like to start playing with implementations of that VM in
+multiple languages, compiled for multiple runtimes, etc...
+
+
+*** Improper Lists Sun Sep 5 2010
+
+Guile does this:
+
+   ( . 2 ) ===> 2
+
+That is, with nothing before the dot in a dotted list, you just get
+the last thing.
+
+I had noticed this, but not understood it, when I tried it on an early
+form of my (read (print)) loop.  I was pleasantly surprised to find my
+loop behaving the same way.
+
+Made me feel warm and fuzzy, like this is a funny edge case in the
+definition and my implementation was faithful enough to the definition
+that it exhibits the same edge cases, although I did not anticipate
+them at time of implementation.
+      
+Still, this demands I meditate on why this is.  I *think* that (read)
+is building an outer cons cell, but I don't understand how the
+processing of the dot, on the inside, would unmake the cell on the
+outside.
+
+
+*** The quote-quote-quote problem
+
+Trouble!
+
+  jwillett@little-man ~/jhwscm $ scsh
+  Welcome to scsh 0.6.7 (R6RS)
+  Type ,? for help.
+  > ''1
+  ''1
+  > (quote 1)
+  1
+  > '1
+  1
+  > ' '1
+  ''1
+  > (quote '1)
+  ''1
+  > 
+  Exit Scsh? (y/n)? y
+  jwillett@little-man ~/jhwscm $ guile
+  guile> ''1
+  (quote 1)
+  guile> (quote 1)
+  1
+  guile> '1
+  1
+  guile> ' '1
+  (quote 1)
+  guile> (quote '1)
+  (quote 1)
+  guile> 
+  
+OK, so scsh makes the decision to print quote as ' instead
+of as (quote) - no biggie.  But notice the last thing:
+  
+  [scsh]> (quote '1)
+  ''1
+  
+  guile> (quote '1)
+  (quote 1)
+  
+Scsh comes back with two levels of quoting, Guile with
+one.  I'm gonna have to see if this is something clarified
+by R6RS (noting that Scsh calls R6RS and knowing Guile
+defaults to around R5RSish), or if it is a bug in one of
+the two, or if it remains an open design decision.
+  
+Damn, had a real problem getting any other Schemes to work
+in Gentoo.
+  
+Aha!  With less weight as evidence perhaps, but I can try
+the same thing in various non-Scheme LISPs!
+  
+From GNU Emacs (duh, it was right there all along!):
+  
+  (quote 1)                 
+  ==> 1
+  '1                        
+  ==> 1
+  (quote (quote 1))
+  ==> (quote 1)
+  ''1
+  ==> (quote 1)
+  (quote (quote (quote 1)))
+  ==> (quote (quote 1))
+  '''1
+  ==> (quote (quote 1))
+  (quote '1)
+  ==> (quote 1)
+  
+From GNU CLISP:
+  
+  [1]> '1
+  1
+  [2]> ''1
+  '1
+  [3]> '''1
+  ''1
+  [4]> (quote 1)
+  1
+  [5]> (quote (quote 1))
+  '1
+  [6]> (quote (quote (quote 1)))
+  ''1
+  [7]> (quote '1)
+  '1
+  
+OK, so we have:  
+  
+  1. Scsh and CLISP print quote in the ' form.
+  
+  2. Guile and Emacs print quote in the (quote) form.
+  
+  3. Scsh and CLISP print quote in the ' form.
+  
+  4. Scsh interprets (quote '1) as two levels of
+  quotation.
+  
+  5. Guile, CLISP, and Emacs, interpret (quote '1) as a
+  single level of quotation.
+  
+No consensus on how to print - fine, I am comfortable
+making up my own mind on that.
+
+For the (quote '1) problem, the vote is leaning toward a single level
+of quotation.  Mind you, that's how it is printed, not what it *is*.
+I think of the print operation in this survey as "stripping off one
+level of quote".
+
+With that in mind, I'd like to see all ofboth (quote
+(quote 1)), (quote '1), '(quote 1), and ''1 print the
+same, as either '1 or (quote 1).
+
+Guile, Emacs, and CLISP all do this.  Scsh is treats ' and
+quote consistently, but it breaks the "stripping off one
+level of quote" rule by it printing ''1 for ''1 but 1 for
+'1.
+
+So I'm going with the striping off one level of quote rule
+in guiding how print works.  The question is open whether
+I want to print the long form or the apostrophe form.
+
+I am likely to go with apostrophe for the sorterness of
+it, even though I look to Guile in other matters.  The
+apostrophe, being a lexical token, can't be redefined the
+way "quote" can and I don't want redefinitions of quote
+breaking homoiconicity.
+
+Follow-on observation: what happens to apostrophe when you
+redefine quote? For the following input:
+
+  (define quote 1)
+  '3
+
+Both Guile and Scsh fail, saying more or less that I tried to apply 1
+as a function to 3, and I can't do that.  So... both of them have 'X
+expand to (quote X) via the *symbol* "quote", not the builtin
+operation to which "quote" is commonly bound.  Interesting.
+
+In the LISP-2s I don't know quite what to expect, but whatever happens
+I do not think it is applicable, since LISP-2's have complex symbols
+and, if I recall, a different slot in the symbols for each of values,
+procedures, macros, and special forms (among other things).  From
+CLISP:
+
+  [1]> (defvar quote 1)
+  QUOTE
+  [2]> (quote 1)
+  1
+  [3]> (defun quote () 1)
+  
+  *** - DEFUN/DEFMACRO: QUOTE is a special operator and
+        may not be redefined.
+  
+So I can't redefine "quote", so I can't see what effect that has on
+apostrophe.
+  
+Interesting!  I'm gonna have to mine R5RS and R6RS on this one.
+
+
+
+TODO: on the initial environment problem, printability of
+    primitives, unification of sub_foo and (foo).
+
+
+*** Struggles with unification of sub_foo and foo.
+
+Struggles: args-to-registers loading for TYPE_SUB?  Do we even let
+TYPE_SUB be directly invokable?  Or are the builtins a distinct
+namespace?
+ 
+Mon Aug 30 07:49:58 PDT 2010: OK, here's the deal.  I'm having a rough
+time getting past this point: it feels like I need to make several
+design decisions and tricky implementations all at once:
+
+  1. How to distinguish built-in special forms from built-in
+     functions.
+
+  2. Whether to allow user code to directly invoke built-ins, or
+     whether to have them in some distinct namespace.
+
+  3. How to pass arguments: so far, we've used 2 registers, but with
+     longer argument lists that breaks down eventually.  Do we go
+     absolute, and require all args to everything always be in a list?
+     Would this mean reimplementing all the existing sub_foo?  What
+     about primitives?  Should they be the same?  E.g. if args must be
+     in a list, how would we implement (cons)?
+
+  4. How to represent user-defined special forms and functions?
+
+  5. How to seed the top-level environment with bindings for
+     primitives?
+
+  6. How (and whether) to seed the top-level environment with bindings
+     for non-primitives?
+
+  7. Whether and how to support direct lexical reference to primitives
+     e.g. can the user do "#<+>" and get the primitive adder
+     regardless of how "+" may have been defined or redefined?
+
+Gotta figure out how to make decisions about fewer of these at a time,
+in a seperately implementable and testable way.
+
+Feeling: I'd kind of like to end up with the most primitivemost Scheme
+engine when I'm done, one which perhaps defines no top-level
+environment whatsoever.  That would suggest supporting creation of the
+standard top-level environment as library code.  That library code
+might have to look like:
+
+  (#<def> define #<def>)
+  (define + #<+>)
+  (define cons #<cons>)
+  ... 
+
+I like this from two points of view: "the language is implemented in
+itself" and also "maintain a draconian constraint of the featureset
+scope of the lower-level components".  The downside is finding that
+syntax for unbound primitives.
+
+OK, that answers 5-7, but leaves 1-4 open.  Still, gives me something
+to do while Enkidu works on the open questions.
+
+Hmm, still begs the question: where does this "namespace" for
+primitives live.  I think it belongs hard-coded somewhere in
+sub_read_foo.  If we call it a special frame in the global environment
+(which is protected from mutation after initialization) then we're
+just back where we started.
+
+A short expression of the two main quandaries: how do I bind "define"
+to the thing which does name binding?  And to what do I bind "+"?
+
+Answers 5-7: definitely moving toward a special lexical-level binding
+for primitivemost built-ins.  I'm thinking really low level, like only
+"binary fixint add" and not "full numeric tower variadic add".  Higher
+adds can be defined as accumulations, etc.
+
+Answers 1-4: Introduced ARITY_MASK, A0, A1, AX, etc to encode arity.
+In the case of sub_foo, the arity is encoded within the opcode itself
+- this can be used for internal error-checking in gosub(), but will
+also be used in sub_eval to help marshal higher-level code on its way
+to the various sub_foo.
+
+Higher-level code of course passes arguments through name bindings, so
+that's not an issue.
+
+Higher-level code will enjoy a distinct sentinel for IS_PROCEDURE and
+IS_SPECIAL_FORM.  I forked TYPE_SUB into TYPE_SUBP and TYPE_SUBS for
+sub_foo which act like procedures or special forms, respectively.
+
+sub_eval is going to be complicated....

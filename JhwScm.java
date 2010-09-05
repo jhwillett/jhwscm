@@ -93,10 +93,10 @@ public class JhwScm
          reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
       }
 
-      reg[regPc]        = doREP ? sub_rep : sub_rp;
-      reg[regIn]        = queueCreate();
-      reg[regOut]       = queueCreate();
-      reg[regGlobalEnv] = cons(NIL,NIL);
+      reg[regPc]  = doREP ? sub_rep : sub_rp;
+      reg[regIn]  = queueCreate();
+      reg[regOut] = queueCreate();
+      reg[regEnv] = cons(NIL,NIL);
 
       prebind("+",      sub_add);
       prebind("*",      sub_mul);
@@ -268,8 +268,8 @@ public class JhwScm
             //
             // Top-level entry point for the interactive interpreter.
             //
-            // Note: return value is undefined.  Doesn't return for
-            // that matter, just exits the VM.  TODO: kinda icky.
+            // Does not return in the Scheme sense, but may exit the
+            // VM (returning in the Java sense).
             //
             // (define (sub_rep)
             //   (begin (sub_print (sub_eval (sub_read) global_env))
@@ -284,7 +284,7 @@ public class JhwScm
                return SUCCESS;
             }
             reg[regArg0] = reg[regRetval];
-            reg[regArg1] = reg[regGlobalEnv];
+            reg[regArg1] = reg[regEnv];
             gosub(sub_eval,sub_rep+0x2);
             break;
          case sub_rep+0x2:
@@ -302,8 +302,8 @@ public class JhwScm
             // A useful entry point for testing sub_read and sub_print
             // decoupled from sub_eval and sub_apply.
             //
-            // Note: return value is undefined.  Doesn't return for
-            // that matter, just exits the VM.  TODO: kinda icky.
+            // Does not return in the Scheme sense, but may exit the
+            // VM (returning in the Java sense).
             //
             // (define (sub_rp)
             //   (begin (sub_print (sub_read))
@@ -1033,107 +1033,6 @@ public class JhwScm
             // If it's a special form, don't evaluate the args,
             // just pass it off to apply.
             //
-            // TODO: arity checking?
-            //
-            // TODO: args-to-registers loading for TYPE_SUB?  Do we
-            // even let TYPE_SUB be directly invokable?  Or are the
-            // builtins a distinct namespace?
-            // 
-            // Mon Aug 30 07:49:58 PDT 2010: OK, here's the deal.  I'm
-            // having a rough time getting past this point: it feels
-            // like I need to make several design decisions and tricky
-            // implementations all at once:
-            //
-            //   1. How to distinguish built-in special forms from
-            //   built-in functions.
-            //
-            //   2. Whether to allow user code to directly invoke
-            //   built-ins, or whether to have them in some distinct
-            //   namespace.
-            //
-            //   3. How to pass arguments: so far, we've used 2
-            //   registers, but with longer argument lists that breaks
-            //   down eventually.  Do we go absolute, and require all
-            //   args to everything always be in a list?  Would this
-            //   mean reimplementing all the existing sub_foo?  What
-            //   about primitives?  Should they be the same?  E.g. if
-            //   args must be in a list, how would we implement
-            //   (cons)?
-            //
-            //   4. How to represent user-defined special forms and
-            //   functions?
-            //
-            //   5. How to seed the top-level environment with
-            //   bindings for primitives?
-            //
-            //   6. How (and whether) to seed the top-level
-            //   environment with bindings for non-primitives?
-            //
-            //   7. Whether and how to support direct lexical
-            //   reference to primitives e.g. can the user do "#<+>"
-            //   and get the primitive adder regardless of how "+" may
-            //   have been defined or redefined?
-            //
-            // Gotta figure out how to make decisions about fewer of
-            // these at a time, in a seperately implementable and
-            // testable way.
-            //
-            // Feeling: I'd kind of like to end up with the most
-            // primitivemost Scheme engine when I'm done, one which
-            // perhaps defines no top-level environment whatsoever.
-            // That would suggest supporting creation of the standard
-            // top-level environment as library code.  That library
-            // code might have to look like:
-            //
-            //   (#<def> define #<def>)
-            //   (define + #<+>)
-            //   (define cons #<cons>)
-            //   ... 
-            //
-            // I like this from two points of view: "the language is
-            // implemented in itself" and also "maintain a draconian
-            // constraint of the featureset scope of the lower-level
-            // components".  The downside is finding that syntax for
-            // unbound primitives.
-            //
-            // OK, that answers 5-7, but leaves 1-4 open.  Still,
-            // gives me something to do while Enkidu works on the open
-            // questions.
-            //
-            // Hmm, still begs the question: where does this
-            // "namespace" for primitives live.  I think it belongs
-            // hard-coded somewhere in sub_read_foo.  If we call it a
-            // special frame in the global environment (which is
-            // protected from mutation after initialization) then
-            // we're just back where we started.
-            //
-            // A short expression of the two main quandaries: how do I
-            // bind "define" to the thing which does name binding?
-            // And to what do I bind "+"?
-            //
-            // Answers 5-7: definitely moving toward a special
-            // lexical-level binding for primitivemost built-ins.  I'm
-            // thinking really low level, like only "binary fixint
-            // add" and not "full numeric tower variadic add".  Higher
-            // adds can be defined as accumulations, etc.
-            //
-            // Answers 1-4: Introduced ARITY_MASK, A0, A1, AX, etc to
-            // encode arity.  In the case of sub_foo, the arity is
-            // encoded within the opcode itself - this can be used for
-            // internal error-checking in gosub(), but will also be
-            // used in sub_eval to help marshal higher-level code on
-            // its way to the various sub_foo.
-            //
-            // Higher-level code of course passes arguments through
-            // name bindings, so that's not an issue.
-            //
-            // Higher-level code will enjoy a distinct sentinel for
-            // IS_PROCEDURE and IS_SPECIAL_FORM.  I forked TYPE_SUB
-            // into TYPE_SUBP and TYPE_SUBS for sub_foo which act like
-            // procedures or special forms, respectively.
-            //
-            // sub_eval is going to be complicated....
-            //
             reg[regTmp1] = restore();         // restore the env
             reg[regTmp0] = restore();         // restore the arg exprs
             reg[regTmp2] = reg[regRetval];    // the value of the operator
@@ -1525,7 +1424,7 @@ public class JhwScm
             reg[regArg0] = restore();                   // restore operator
             reg[regTmp0] = reg[regRetval];              // extract env frame
             reg[regTmp1] = car(cdr(cdr(reg[regArg0]))); // extract body
-            reg[regTmp2] = cons(reg[regTmp0],reg[regGlobalEnv]);
+            reg[regTmp2] = cons(reg[regTmp0],reg[regEnv]);
             logrec("sub_apply_user BODY ",reg[regTmp1]);
             logrec("sub_apply_user FRAME",reg[regTmp0]);
             log("sub_apply_user ENV  " + pp(reg[regTmp2]));
@@ -1539,6 +1438,10 @@ public class JhwScm
             // reg[regArg1]. Returns a new list of the same length,
             // whose elments are cons() of corresponding elements from
             // reg[regArg0] and reg[regArg1] respectively.
+            //
+            // Note, if we had a sub_mapcar, this is really just:
+            //
+            //   (mapcar cons listA listB)
             //
             if ( NIL == reg[regArg0] && NIL == reg[regArg1] )
             {
@@ -1932,13 +1835,13 @@ public class JhwScm
             }
             reg[regArg0] = reg[regTmp0];
 
-            // Thinking about the problem of tracking the current
-            // frame.
+            // Thinking about the problem of tracking the current env.
             //
-            // Obviously we need a notion of "the current env" tracked
-            // someplace.  Without it, when this sub_if calls
-            // sub_eval, what does it pass?  Do we track the "current
-            // frame" in:
+            // Obviously we need the notion of the current env tracked
+            // someplace.  Without it, when something lie sub_if calls
+            // sub_eval, what env would sub_eval use?
+            //
+            // Do we track the current frame in:
             // 
             // - The regular stack?
             // 
@@ -1946,49 +1849,54 @@ public class JhwScm
             // 
             // - Argument passing?
             // 
-            // I do like argument passing b/c it is clean and doesn't
-            // introduce another global.
-            // 
-            // I don't like argument passing for more reasons than
-            // just the tedious billion register operations it will
-            // take to implement it that way.
+            // I like argument passing b/c it is clean and doesn't
+            // introduce another global.  I dislike argument passing
+            // for more reasons than just the tedious billion register
+            // operations it will take to implement it that way.  On
+            // second though, it is only clean when I am using my Java
+            // sensibilities, where I greatly prefer args to object
+            // state.  Here I'm looking at VM state, so it might be OK
+            // to let myself think differently.
             //
-            // I also don't like argument passing b/c it means things
-            // like sub_define will take a different number of
-            // arguments than "(define)" normally takes, and I'm kind
-            // of keen on the microcoded buitins actually *being* the
-            // high-level forms, not just helpers for the high-level
-            // forms.
+            // I have another reason to dislike argument passing.  It
+            // means things like sub_define will take a different
+            // number of arguments than the higher-level (define).
+            // That feels bunk.  I am keen on the microcoded buitins
+            // *being* the high-level forms, not just helpers for
+            // them.
             //
-            // I don't like putting it in a regular stack, that feels
-            // like needless multiplication of entities and yet
-            // another top-level global support special case.
+            // I dislike like putting the current env in a dedicated
+            // stack. That feels like needless multiplication of
+            // entities.
             //
-            // I like putting it on the regular stack, but how does it
-            // get "found" by calls like sub_if?  It could be
-            // arbitrarily many calls up the stack in the past that a
-            // new current stack got pushed.
+            // I like putting the current env on the regular stack,
+            // but how does it get found by calls like sub_if?  It
+            // could be arbitrarily many calls up the stack in the
+            // past that a new current stack got pushed.
             //
-            // Thinking about the current frame ebbing and flowing, it
-            // feels stack-y, but it feels like a much colder stack
-            // than the regular one.  Doesn't shimmer nearly as much,
-            // just kind of throbs.
+            // Thinking about the current env ebbing and flowing, it
+            // feels stack-y, like a much colder stack than the
+            // regular one.  It doesn't shimmer, it throbs.
             //
-            // So maybe.... the current env gets a register, but we
+            // So, maybe... the current env gets a register, but we
             // push and pop onto the regular stack?
             //
-            // Naa.. wait a sec, the env is recursively structured and
-            // stack like.  Why not just stop calling it the
-            // regGlobalEnv, instead call it regEnv... and push and
-            // pop there?
+            // Naa... wait a sec, the env is recursively structured
+            // and stack-like already.  Why not just stop calling it
+            // the regGlobalEnv, instead call it regEnv... and push
+            // and pop there?
             // 
-            // Hmmm, I'm liking it.  Names getting shorter, if it is
-            // b/c they've just gotten less qualified and more
-            // general, is a good smell...
+            // Hmmm, I'm liking it.  Names getting shorter, if b/c
+            // they've dropped qualifications and become general, is a
+            // good smell.
             // 
-            THIS_IS_WHERE_THE_ENV_IS_LOST_SUCH_THAT_FIB_BREAKS();
+            // OK, the plan is the env gets a dedicated stack - but
+            // the stack it gets is in the reg it already has.  We
+            // just use that reg more dynamically.
+            // 
+            //THIS_IS_WHERE_THE_ENV_IS_LOST_SUCH_THAT_FIB_BREAKS();
 
-            reg[regArg1] = reg[regGlobalEnv]; // TODO: where "the current env?"
+            reg[regArg1] = reg[regEnv]; // TODO: where "the current env?"
             gosub(sub_eval,blk_tail_call);
             break;
 
@@ -2033,15 +1941,15 @@ public class JhwScm
             logrec("DEFINE BODY:   ",reg[regTmp1]);
             store(reg[regTmp0]);              // store the symbol
             reg[regArg0] = reg[regTmp1];      // eval the body
-            reg[regArg1] = reg[regGlobalEnv]; // we need an env arg here!
+            reg[regArg1] = reg[regEnv];       // we need an env arg here!
             gosub(sub_eval,sub_define+0x1);
             break;
          case sub_define+0x1:
             reg[regTmp0] = restore();         // restore the symbol
             store(reg[regTmp0]);              // store the symbol INEFFICIENT
             store(reg[regRetval]);            // store the body's value
-            reg[regArg0] = reg[regTmp0];           // lookup the binding
-            reg[regArg1] = car(reg[regGlobalEnv]); // we need an env arg here!
+            reg[regArg0] = reg[regTmp0];      // lookup the binding
+            reg[regArg1] = car(reg[regEnv]);  // we need an env arg here!
             gosub(sub_eval_look_frame,sub_define+0x2);
             break;
          case sub_define+0x2:
@@ -2051,8 +1959,8 @@ public class JhwScm
             {
                // create a new binding        // we need an env arg here!
                reg[regTmp1] = cons(reg[regTmp0],reg[regTmp1]);
-               reg[regTmp2] = cons(reg[regTmp1],car(reg[regGlobalEnv]));
-               setcar(reg[regGlobalEnv],reg[regTmp2]);
+               reg[regTmp2] = cons(reg[regTmp1],car(reg[regEnv]));
+               setcar(reg[regEnv],reg[regTmp2]);
                log("define new binding");
                
             }
@@ -2062,7 +1970,7 @@ public class JhwScm
                setcdr(reg[regRetval],reg[regTmp1]);
                log("define old binding");
             }
-            //logrec("define B",reg[regGlobalEnv]);
+            //logrec("define B",reg[regEnv]);
             reg[regRetval] = VOID;
             returnsub();
             break;
@@ -2086,10 +1994,10 @@ public class JhwScm
             //
             // TODO: gotta get that current environment here...
             //
-            reg[regRetval] = cons(reg[regGlobalEnv], NIL);
-            reg[regRetval] = cons(reg[regArg1],      reg[regRetval]);
-            reg[regRetval] = cons(reg[regArg0],      reg[regRetval]);
-            reg[regRetval] = cons(IS_PROCEDURE,      reg[regRetval]);
+            reg[regRetval] = cons(reg[regEnv], NIL);
+            reg[regRetval] = cons(reg[regArg1],reg[regRetval]);
+            reg[regRetval] = cons(reg[regArg0],reg[regRetval]);
+            reg[regRetval] = cons(IS_PROCEDURE,reg[regRetval]);
             returnsub();
             break;
 
@@ -2247,7 +2155,7 @@ public class JhwScm
    private static final int reg_Unused          =  14; // temporary
    private static final int regRetval           =  15; // return value
 
-   private static final int regGlobalEnv        =  16; // list of env frames
+   private static final int regEnv              =  16; // list of env frames
 
    private static final int numRegisters        =  32;   // in slots
    private static final int heapSize            = 512*4; // in cells
@@ -2547,7 +2455,7 @@ public class JhwScm
 
       final int numFree      = listLength(reg[regFreeCellList]);
       final int numStack     = listLength(reg[regStack]);
-      final int numGlobalEnv = listLength(reg[regGlobalEnv]);
+      final int numGlobalEnv = listLength(reg[regEnv]);
       if ( verb ) log("  numFree:      " + numFree);
       if ( verb ) log("  numStack:     " + numStack);
       if ( verb ) log("  numGlobalEnv: " + numGlobalEnv);
@@ -3119,8 +3027,8 @@ public class JhwScm
       }
       final int symbol   = cons(IS_SYMBOL,car(queue));
       final int binding  = cons(symbol,code);
-      final int frame    = car(reg[regGlobalEnv]);
+      final int frame    = car(reg[regEnv]);
       final int newframe = cons(binding,frame);
-      setcar(reg[regGlobalEnv],newframe);
+      setcar(reg[regEnv],newframe);
    }
 }
