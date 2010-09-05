@@ -1430,7 +1430,26 @@ public class JhwScm
             log("sub_apply_user ENV  " + pp(reg[regTmp2]));
             reg[regArg0] = reg[regTmp1];
             reg[regArg1] = reg[regTmp2];
-            gosub(sub_eval,blk_tail_call);
+            if ( true )
+            {
+               // TODO: should this be eval's job?
+               log("MAKING THE LEAP");
+               store(reg[regEnv]);
+               reg[regEnv] = reg[regTmp2];
+               gosub(sub_eval, sub_apply_user+0x2);
+            }
+            else
+            {
+               gosub(sub_eval, blk_tail_call);
+            }
+            break;
+         case sub_apply_user+0x2:
+            // I am so sad that pushing that env above means we cannot
+            // be tail recursive.
+            //
+            log("LANDING!!!");
+            reg[regEnv] = restore();
+            returnsub();
             break;
 
          case sub_zip:
@@ -1834,68 +1853,6 @@ public class JhwScm
                reg[regTmp0] = reg[regArg2];
             }
             reg[regArg0] = reg[regTmp0];
-
-            // Thinking about the problem of tracking the current env.
-            //
-            // Obviously we need the notion of the current env tracked
-            // someplace.  Without it, when something lie sub_if calls
-            // sub_eval, what env would sub_eval use?
-            //
-            // Do we track the current frame in:
-            // 
-            // - The regular stack?
-            // 
-            // - A dedicated stack?
-            // 
-            // - Argument passing?
-            // 
-            // I like argument passing b/c it is clean and doesn't
-            // introduce another global.  I dislike argument passing
-            // for more reasons than just the tedious billion register
-            // operations it will take to implement it that way.  On
-            // second though, it is only clean when I am using my Java
-            // sensibilities, where I greatly prefer args to object
-            // state.  Here I'm looking at VM state, so it might be OK
-            // to let myself think differently.
-            //
-            // I have another reason to dislike argument passing.  It
-            // means things like sub_define will take a different
-            // number of arguments than the higher-level (define).
-            // That feels bunk.  I am keen on the microcoded buitins
-            // *being* the high-level forms, not just helpers for
-            // them.
-            //
-            // I dislike like putting the current env in a dedicated
-            // stack. That feels like needless multiplication of
-            // entities.
-            //
-            // I like putting the current env on the regular stack,
-            // but how does it get found by calls like sub_if?  It
-            // could be arbitrarily many calls up the stack in the
-            // past that a new current stack got pushed.
-            //
-            // Thinking about the current env ebbing and flowing, it
-            // feels stack-y, like a much colder stack than the
-            // regular one.  It doesn't shimmer, it throbs.
-            //
-            // So, maybe... the current env gets a register, but we
-            // push and pop onto the regular stack?
-            //
-            // Naa... wait a sec, the env is recursively structured
-            // and stack-like already.  Why not just stop calling it
-            // the regGlobalEnv, instead call it regEnv... and push
-            // and pop there?
-            // 
-            // Hmmm, I'm liking it.  Names getting shorter, if b/c
-            // they've dropped qualifications and become general, is a
-            // good smell.
-            // 
-            // OK, the plan is the env gets a dedicated stack - but
-            // the stack it gets is in the reg it already has.  We
-            // just use that reg more dynamically.
-            // 
-            //THIS_IS_WHERE_THE_ENV_IS_LOST_SUCH_THAT_FIB_BREAKS();
-
             reg[regArg1] = reg[regEnv]; // TODO: where "the current env?"
             gosub(sub_eval,blk_tail_call);
             break;

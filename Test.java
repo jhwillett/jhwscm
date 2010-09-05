@@ -452,6 +452,53 @@ public class Test
       {
          // ambition: nontrivial user-defined recursive function
          // 
+         // This one, Factorial, is good for playing w/ tail-recursion.
+         // The naive form is not tail recursive and consumes O(n) stack
+         // space - but the tail-recursive function is super simple.
+         //
+         // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
+         // but its tail-recursive twin runs just fine to vastly larger
+         // scale.
+         final String fact = 
+            "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
+         final JhwScm scm = new JhwScm();
+         expectSuccess(fact,       "",   scm);
+         expectSuccess("fact",     "???",scm);
+         JhwScm.SILENT = false;
+         expectSuccess("(fact -1)","1",  scm);
+         expectSuccess("(fact 0)", "1",  scm);
+         expectSuccess("(fact 1)", "1",  scm);
+         expectSuccess("(fact 2)", "2",  scm);
+         expectSuccess("(fact 3)", "6",  scm);
+         expectSuccess("(fact 4)", "24", scm);
+         expectSuccess("(fact 5)", "120",scm);
+         expectSuccess("(fact 6)", "720",scm);
+         selfTest(scm);
+      }
+      {
+         final String help = 
+            "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
+         final String fact = 
+            "(define (fact n) (helper n 1))";
+         final JhwScm scm = new JhwScm();
+         expectSuccess(help,       "",   scm);
+         expectSuccess(fact,       "",   scm);
+         expectSuccess("help",     "???",scm);
+         expectSuccess("fact",     "???",scm);
+         expectSuccess("(fact -1)","1",  scm);
+         expectSuccess("(fact 0)", "1",  scm);
+         expectSuccess("(fact 1)", "1",  scm);
+         expectSuccess("(fact 2)", "2",  scm);
+         expectSuccess("(fact 3)", "6",  scm);
+         expectSuccess("(fact 4)", "24", scm);
+         expectSuccess("(fact 5)", "120",scm);
+         expectSuccess("(fact 6)", "720",scm);
+         selfTest(scm);
+      }
+
+      {
+         // ambition: nontrivial user-defined recursive function
+         // 
          // This one, the Fibonacci Sequence, is not tail-recursive
          // and will eat O(n) stack space and runs in something awful
          // like O(n*n) or worse - making it also a good stressor for
@@ -477,49 +524,6 @@ public class Test
          expectSuccess("(fib 6)","8",scm);
          expectSuccess("(fib 10)","55",scm);
          expectSuccess("(fib 20)","6565",scm);
-         selfTest(scm);
-      }
-
-      {
-         // ambition: nontrivial user-defined recursive function
-         // 
-         // This one, Factorial, is good for playing w/ tail-recursion.
-         // The naive form is not tail recursive and consumes O(n) stack
-         // space - but the tail-recursive function is super simple.
-         //
-         // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
-         // but its tail-recursive twin runs just fine to vastly larger
-         // scale.
-         final String fac1 = 
-            "(define (fac1 n) (if (< n 2) 1 (* n (fac1 (- n 1)))))";
-         final JhwScm scm = new JhwScm();
-         expectSuccess(fac1,"???",scm);
-         expectSuccess("(fac1 -1)","1",scm);
-         expectSuccess("(fac1 0)","1",scm);
-         expectSuccess("(fac1 1)","1",scm);
-         expectSuccess("(fac1 2)","2",scm);
-         expectSuccess("(fac1 3)","6",scm);
-         expectSuccess("(fac1 4)","24",scm);
-         expectSuccess("(fac1 5)","120",scm);
-         expectSuccess("(fac1 6)","720",scm);
-         selfTest(scm);
-      }
-      {
-         final String helper = 
-            "(define (helper n a) (if (< n 2) a (helper (- n 1) (* n a))))";
-         final String fac2 = 
-            "(define (fac2 n) (helper n 1))";
-         final JhwScm scm = new JhwScm();
-         expectSuccess(helper,"???",scm);
-         expectSuccess(fac2,"???",scm);
-         expectSuccess("(fac2 -1)","1",scm);
-         expectSuccess("(fac2 0)","1",scm);
-         expectSuccess("(fac2 1)","1",scm);
-         expectSuccess("(fac2 2)","2",scm);
-         expectSuccess("(fac2 3)","6",scm);
-         expectSuccess("(fac2 4)","24",scm);
-         expectSuccess("(fac2 5)","120",scm);
-         expectSuccess("(fac2 6)","720",scm);
          selfTest(scm);
       }
 
