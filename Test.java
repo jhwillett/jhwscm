@@ -315,9 +315,16 @@ public class Test
       expectSuccess("(+ 2 0)", "2");
       expectSuccess("(+ 2 3)", "5");
       expectSuccess("(+ 2 -3)","-1");
+      expectSuccess("(+ -2 -3)", "-5");
+      expectSuccess("(- 2  3)","-1");
+      expectSuccess("(- 2 -3)","5");
+      expectSuccess("(- -3 2)","-5");
       expectSuccess("(+ 100 2)","102");
       expectSuccess("(+ 100 -2)","98");
       expectSuccess("(* 97 2)","194");
+      expectSuccess("(* -97 2)","-194");
+      expectSuccess("(* -97 -2)","194");
+      expectSuccess("(* 97 -2)","-194");
       expectSemantic("(+ a b)");
 
       if ( true )
@@ -374,14 +381,17 @@ public class Test
 
       }
 
-      expectSuccess("(equal? 10 10)","#t");
-      expectSuccess("(equal? 11 10)","#f");
-      expectSuccess("(equal? 'a 'a)","#t");
-      expectSuccess("(equal? 'a 'b)","#f");
-      expectSuccess("(equal? 10 'b)","#f");
-      expectSuccess("(<       9 10)","#t");
-      expectSuccess("(<      10  9)","#f");
-      expectSuccess("(<      10 10)","#f");
+      expectSuccess("(equal? 10  10)","#t");
+      expectSuccess("(equal? 11  10)","#f");
+      expectSuccess("(equal? 'a  'a)","#t");
+      expectSuccess("(equal? 'a  'b)","#f");
+      expectSuccess("(equal? 10  'b)","#f");
+      expectSuccess("(<       9  10)","#t");
+      expectSuccess("(<      10   9)","#f");
+      expectSuccess("(<      10  10)","#f");
+      expectSuccess("(<     -10   0)","#t");
+      expectSuccess("(<      -1  10)","#t");
+      expectSuccess("(<       0 -10)","#f");
       expectSemantic("(< 10 'a)");
 
       // simple conditionals: in Scheme, only #f is false
@@ -477,7 +487,7 @@ public class Test
          expectSuccess(fact,       "",   scm);
          expectSuccess("fact",     "???",scm);
          JhwScm.SILENT = false;
-         expectSuccess("(fact -1)","1",  scm);
+         expectSuccess("(fact -1)","1",  scm);  // OOM at 2 KB heap
          expectSuccess("(fact 0)", "1",  scm);
          expectSuccess("(fact 1)", "1",  scm);
          expectSuccess("(fact 2)", "2",  scm);

@@ -1743,6 +1743,10 @@ public class JhwScm
             }
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
+            tmp0 <<= (32-SHIFT_TYPE);
+            tmp0 >>= (32-SHIFT_TYPE);
+            tmp1 <<= (32-SHIFT_TYPE);
+            tmp1 >>= (32-SHIFT_TYPE);
             reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1));
             returnsub();
             break;
@@ -1781,6 +1785,12 @@ public class JhwScm
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
             tmp2 = value(reg[regArg2]);
+            tmp0 <<= (32-SHIFT_TYPE);
+            tmp0 >>= (32-SHIFT_TYPE);
+            tmp1 <<= (32-SHIFT_TYPE);
+            tmp1 >>= (32-SHIFT_TYPE);
+            tmp2 <<= (32-SHIFT_TYPE);
+            tmp2 >>= (32-SHIFT_TYPE);
             reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1+tmp2));
             returnsub();
             break;
@@ -1798,6 +1808,10 @@ public class JhwScm
             }
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
+            tmp0 <<= (32-SHIFT_TYPE);
+            tmp0 >>= (32-SHIFT_TYPE);
+            tmp1 <<= (32-SHIFT_TYPE);
+            tmp1 >>= (32-SHIFT_TYPE);
             reg[regRetval] = code(TYPE_FIXINT,(tmp0*tmp1));
             returnsub();
             break;
@@ -1815,6 +1829,10 @@ public class JhwScm
             }
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
+            tmp0 <<= (32-SHIFT_TYPE);
+            tmp0 >>= (32-SHIFT_TYPE);
+            tmp1 <<= (32-SHIFT_TYPE);
+            tmp1 >>= (32-SHIFT_TYPE);
             reg[regRetval] = code(TYPE_FIXINT,(tmp0-tmp1));
             returnsub();
             break;
@@ -1832,7 +1850,15 @@ public class JhwScm
             }
             tmp0 = value(reg[regArg0]);
             tmp1 = value(reg[regArg1]);
+            tmp0 <<= (32-SHIFT_TYPE);
+            tmp0 >>= (32-SHIFT_TYPE);
+            tmp1 <<= (32-SHIFT_TYPE);
+            tmp1 >>= (32-SHIFT_TYPE);
+            System.out.println("COMPARING: " + tmp0 + " " + tmp1);
             reg[regRetval] = (tmp0 < tmp1) ? TRUE : FALSE;
+            System.out.println("DECIDED:   " + pp(reg[regArg0]));
+            System.out.println("DECIDED:   " + pp(reg[regArg1]));
+            System.out.println("DECIDED:   " + pp(reg[regRetval]));
             returnsub();
             break;
 
@@ -2159,8 +2185,8 @@ public class JhwScm
 
    private static final int regEnv              =  16; // list of env frames
 
-   private static final int numRegisters        =  32;   // in slots
-   private static final int heapSize            = 512*4; // in cells
+   private static final int numRegisters        =  32;          // in slots
+   private static final int heapSize            =   4 * 1024;   // in cells
 
    private final int[] heap = new int[2*heapSize];
    private final int[] reg  = new int[numRegisters];
