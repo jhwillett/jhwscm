@@ -1854,11 +1854,7 @@ public class JhwScm
             tmp0 >>= (32-SHIFT_TYPE);
             tmp1 <<= (32-SHIFT_TYPE);
             tmp1 >>= (32-SHIFT_TYPE);
-            System.out.println("COMPARING: " + tmp0 + " " + tmp1);
             reg[regRetval] = (tmp0 < tmp1) ? TRUE : FALSE;
-            System.out.println("DECIDED:   " + pp(reg[regArg0]));
-            System.out.println("DECIDED:   " + pp(reg[regArg1]));
-            System.out.println("DECIDED:   " + pp(reg[regRetval]));
             returnsub();
             break;
 
@@ -2186,7 +2182,7 @@ public class JhwScm
    private static final int regEnv              =  16; // list of env frames
 
    private static final int numRegisters        =  32;          // in slots
-   private static final int heapSize            =   4 * 1024;   // in cells
+   private static final int heapSize            =  32 * 1024;   // in cells
 
    private final int[] heap = new int[2*heapSize];
    private final int[] reg  = new int[numRegisters];

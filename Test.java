@@ -486,15 +486,14 @@ public class Test
          final JhwScm scm = new JhwScm();
          expectSuccess(fact,       "",   scm);
          expectSuccess("fact",     "???",scm);
-         JhwScm.SILENT = false;
-         expectSuccess("(fact -1)","1",  scm);  // OOM at 2 KB heap
+         expectSuccess("(fact -1)","1",  scm);  // OOM at 2 kcells
          expectSuccess("(fact 0)", "1",  scm);
          expectSuccess("(fact 1)", "1",  scm);
          expectSuccess("(fact 2)", "2",  scm);
-         expectSuccess("(fact 3)", "6",  scm);
-         expectSuccess("(fact 4)", "24", scm);
+         expectSuccess("(fact 3)", "6",  scm);  // OOM at 4 kcells
+         expectSuccess("(fact 4)", "24", scm);  // OOM at 8 kcells
          expectSuccess("(fact 5)", "120",scm);
-         expectSuccess("(fact 6)", "720",scm);
+         expectSuccess("(fact 6)", "720",scm);  // OOM at 16 kcells
          selfTest(scm);
       }
       {
@@ -507,6 +506,7 @@ public class Test
          expectSuccess(fact,       "",   scm);
          expectSuccess("help",     "???",scm);
          expectSuccess("fact",     "???",scm);
+         JhwScm.SILENT = false;
          expectSuccess("(fact -1)","1",  scm);
          expectSuccess("(fact 0)", "1",  scm);
          expectSuccess("(fact 1)", "1",  scm);
