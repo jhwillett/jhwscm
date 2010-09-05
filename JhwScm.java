@@ -2212,7 +2212,7 @@ public class JhwScm
    private static final int sub_add1             = TYPE_SUBP | A1 |  0x7020;
    private static final int sub_add3             = TYPE_SUBP | A3 |  0x7030;
    private static final int sub_mul              = TYPE_SUBP | A2 |  0x7040;
-   private static final int sub_lt_p             = TYPE_SUBS | A2 |  0x7050;
+   private static final int sub_lt_p             = TYPE_SUBP | A2 |  0x7050;
 
    private static final int sub_cons             = TYPE_SUBP | A2 |  0x7200;
    private static final int sub_car              = TYPE_SUBP | A1 |  0x7300;
