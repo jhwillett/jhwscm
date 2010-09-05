@@ -500,13 +500,12 @@ public class Test
          final String help = 
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
          final String fact = 
-            "(define (fact n) (helper n 1))";
+            "(define (fact n) (help n 1))";
          final JhwScm scm = new JhwScm();
          expectSuccess(help,       "",   scm);
          expectSuccess(fact,       "",   scm);
          expectSuccess("help",     "???",scm);
          expectSuccess("fact",     "???",scm);
-         JhwScm.SILENT = false;
          expectSuccess("(fact -1)","1",  scm);
          expectSuccess("(fact 0)", "1",  scm);
          expectSuccess("(fact 1)", "1",  scm);
@@ -517,7 +516,7 @@ public class Test
          expectSuccess("(fact 6)", "720",scm);
          selfTest(scm);
       }
-
+      
       {
          // ambition: nontrivial user-defined recursive function
          // 
@@ -536,7 +535,6 @@ public class Test
          final JhwScm scm = new JhwScm();
          expectSuccess(fib,"",scm);
          expectSuccess("fib","???",scm);
-         JhwScm.SILENT = false;
          expectSuccess("(fib 0)","0",scm);
          expectSuccess("(fib 1)","1",scm);
          expectSuccess("(fib 2)","1",scm);
