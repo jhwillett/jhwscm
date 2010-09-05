@@ -143,7 +143,7 @@ public class Test
       expectLexical("((()())");
 
       expectSuccess("-",   "-",  new JhwScm(false));
-      expectSemantic("-");
+      expectSuccess("-",   null);
       expectSuccess("-asd", "-asd",  new JhwScm(false));
       expectSemantic("-as");
       
