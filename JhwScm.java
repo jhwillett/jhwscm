@@ -100,6 +100,7 @@ public class JhwScm
 
       prebind("+",      sub_add);
       prebind("*",      sub_mul);
+      prebind("<",      sub_lt_p);
       prebind("+0",     sub_add0);
       prebind("+1",     sub_add1);
       prebind("+3",     sub_add3);
@@ -111,6 +112,7 @@ public class JhwScm
       prebind("quote",  sub_quote);
       prebind("define", sub_define);
       prebind("lambda", sub_lambda);
+      prebind("equal?", sub_equal_p);
    }
 
    /**
@@ -1799,6 +1801,27 @@ public class JhwScm
             returnsub();
             break;
 
+         case sub_lt_p:
+            logrec("sub_lt_p arg0: ",reg[regArg0]);
+            logrec("sub_lt_p arg1: ",reg[regArg1]);
+            if ( TYPE_FIXINT != type(reg[regArg0]) )
+            {
+               log("bogus arg0: " + pp(reg[regArg0]));
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            if ( TYPE_FIXINT != type(reg[regArg1]) )
+            {
+               log("bogus arg1: " + pp(reg[regArg1]));
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            tmp0 = value(reg[regArg0]);
+            tmp1 = value(reg[regArg1]);
+            reg[regRetval] = (tmp0 < tmp1) ? TRUE : FALSE;
+            returnsub();
+            break;
+
          case sub_cons:
             log("cons: " + pp(reg[regArg0]));
             log("cons: " + pp(reg[regArg1]));
@@ -1844,16 +1867,24 @@ public class JhwScm
             log("arg0: " + pp(reg[regArg0]));
             log("arg1: " + pp(reg[regArg1]));
             log("arg2: " + pp(reg[regArg2]));
-            if ( FALSE != reg[regArg0] )
+            store(reg[regArg1]);
+            store(reg[regArg2]);
+            reg[regArg0] = reg[regArg0];
+            reg[regArg1] = reg[regEnv];
+            gosub(sub_eval,sub_if+0x1);
+            break;
+         case sub_if+0x1:
+            reg[regArg2] = restore();
+            reg[regArg1] = restore();
+            if ( FALSE != reg[regRetval] )
             {
-               reg[regTmp0] = reg[regArg1];
+               reg[regArg0] = reg[regArg1];
             }            
             else
             {
-               reg[regTmp0] = reg[regArg2];
+               reg[regArg0] = reg[regArg2];
             }
-            reg[regArg0] = reg[regTmp0];
-            reg[regArg1] = reg[regEnv]; // TODO: where "the current env?"
+            reg[regArg1] = reg[regEnv];
             gosub(sub_eval,blk_tail_call);
             break;
 
@@ -2177,10 +2208,12 @@ public class JhwScm
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
 
    private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
-   private static final int sub_add0             = TYPE_SUBP | A0 |  0x70A0;
-   private static final int sub_add1             = TYPE_SUBP | A1 |  0x70B0;
-   private static final int sub_add3             = TYPE_SUBP | A3 |  0x70C0;
-   private static final int sub_mul              = TYPE_SUBP | A2 |  0x7100;
+   private static final int sub_add0             = TYPE_SUBP | A0 |  0x7010;
+   private static final int sub_add1             = TYPE_SUBP | A1 |  0x7020;
+   private static final int sub_add3             = TYPE_SUBP | A3 |  0x7030;
+   private static final int sub_mul              = TYPE_SUBP | A2 |  0x7040;
+   private static final int sub_lt_p             = TYPE_SUBS | A2 |  0x7050;
+
    private static final int sub_cons             = TYPE_SUBP | A2 |  0x7200;
    private static final int sub_car              = TYPE_SUBP | A1 |  0x7300;
    private static final int sub_cdr              = TYPE_SUBP | A1 |  0x7400;
@@ -2863,6 +2896,7 @@ public class JhwScm
          case sub_add1:             buf.append("sub_add1");             break;
          case sub_add3:             buf.append("sub_add3");             break;
          case sub_mul:              buf.append("sub_mul");              break;
+         case sub_lt_p:             buf.append("sub_lt_p");             break;
          case sub_cons:             buf.append("sub_cons");             break;
          case sub_car:              buf.append("sub_car");              break;
          case sub_cdr:              buf.append("sub_cdr");              break;

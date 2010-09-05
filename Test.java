@@ -374,6 +374,16 @@ public class Test
 
       }
 
+      expectSuccess("(equal? 10 10)","#t");
+      expectSuccess("(equal? 11 10)","#f");
+      expectSuccess("(equal? 'a 'a)","#t");
+      expectSuccess("(equal? 'a 'b)","#f");
+      expectSuccess("(equal? 10 'b)","#f");
+      expectSuccess("(<       9 10)","#t");
+      expectSuccess("(<      10  9)","#f");
+      expectSuccess("(<      10 10)","#f");
+      expectSemantic("(< 10 'a)");
+
       // simple conditionals: in Scheme, only #f is false
       // 
       // TODO: test w/ side effects that short-cut semantics work.
@@ -389,6 +399,8 @@ public class Test
       expectSuccess("(if 0 2 5)","2");
       expectSuccess("(if #t (+ 2 1) (+ 4 5))","3");
       expectSuccess("(if #f (+ 2 1) (+ 4 5))","9");
+      expectSuccess("(if (equal? 1 1) 123 321)","123");
+      expectSuccess("(if (equal? 2 1) 123 321)","321");
 
       // cons, car, cdr, and list have a particular relationship
       //
