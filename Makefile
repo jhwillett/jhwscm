@@ -19,6 +19,7 @@ DEPS := $(LIBS:%=$(DESTDIR)/%)
 
 test: $(DESTDIR)/build.ok
 	time java -cp $(DESTDIR):$(DEPS) $(MAIN) $(MAIN_ARGS)
+	uptime
 
 build: $(DESTDIR)/build.ok
 $(DESTDIR)/build.ok: $(DEPS)

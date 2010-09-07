@@ -556,10 +556,15 @@ public class Test
          //
          // With CLEVER_STACK_RECYCLING, both fit in under 4 kcells.
          //
+         // W/ CLEVER_STACK_RECYCLING, (fib 20) shows a maxHeapTop of
+         // 400 kslots, but it burned through 34 mcells on the way
+         // there!
+         //
          expectSuccess("(fib 6)","8",scm);     // OOM at 32 kcells
          expectSuccess("(fib 10)","55",scm);   // OOM at 128 kcells
-         if ( true )
-         {        
+         if ( false )
+         {
+            // Takes like a minute...
             expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
          selfTest(scm);
