@@ -595,22 +595,105 @@ public class Test
       expectSuccess("(equal? 0 268435456)", "#t");
       expectSuccess("(equal? 0 (* 100 268435456))", "#t");
 
+      JhwScm.SILENT = false;
+
+      // let, local scopes:
+      expectSuccess("(let () 32)","32");
+      expectSuccess("(let ((a 10)) (+ a 32))","42");
+      expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
+      expectSemantic("(let ((a 10) (b 32)) (+ a c))");
+
+      // nested lexical scopes:
+      expectSuccess("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
+      {
+         final String fact = 
+            "(define (fact n)"                                               +
+            "  (let ((help"                                                  +
+            "        (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))))" +
+            "    (help n 1)))";
+         final JhwScm scm = new JhwScm();
+         expectSuccess(fact,       "",   scm);
+         expectSuccess("fact",     "???",scm);
+         expectSuccess("(fact -1)","1",  scm);
+         expectSuccess("(fact 0)", "1",  scm);
+         expectSuccess("(fact 1)", "1",  scm);
+         expectSuccess("(fact 2)", "2",  scm);
+         expectSuccess("(fact 3)", "6",  scm);
+         expectSuccess("(fact 4)", "24", scm);
+         expectSuccess("(fact 5)", "120",scm);
+         expectSuccess("(fact 6)", "720",scm);
+      }
+
       if ( false )
       {
-         // TODO: nested defines how do they work???
+         // inner defines
          // 
-         // I think I should do the (let) form first.
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
          expectSuccess("(a 10)",                              "12",  scm);
          expectSuccess("a",                                   "???", scm);
          expectSemantic("b",                                         scm);
+         expectSuccess("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
+         expectSuccess("(f)","3",scm);
          selfTest(scm);
       }
 
-      // TODO: nested lexical scopes, let, etc
+      if ( false )
+      {
+         // inner defines
+         // 
+         final String fact = 
+            "(define (fact n)"                                            +
+            "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
+            "  (help n 1))";
+         final JhwScm scm = new JhwScm();
+         expectSuccess(fact,       "",   scm);
+         expectSuccess("fact",     "???",scm);
+         expectSuccess("(fact -1)","1",  scm);
+         expectSuccess("(fact 0)", "1",  scm);
+         expectSuccess("(fact 1)", "1",  scm);
+         expectSuccess("(fact 2)", "2",  scm);
+         expectSuccess("(fact 3)", "6",  scm);
+         expectSuccess("(fact 4)", "24", scm);
+         expectSuccess("(fact 5)", "120",scm);
+         expectSuccess("(fact 6)", "720",scm);
+      }
 
-      // TODO: blocks, begin, cond, case.
+      // TODO: control special form: begin
+      //
+      // We need user-code-accesible side-effects to detect that (begin)
+      // is really doing the earlier items... though in a pinch we can
+      // use (define) for that, but it might confound with other
+      // syntactic special cases.
+      // 
+      expectSuccess("(begin)",          "");
+      expectSuccess("(begin 1)",        "1");
+      expectSuccess("(begin 1 2 3 4 5)","5");
+
+      // TODO: control special form: cond 
+      //
+      // We need user-code-accesible side-effects to detect that (cond)
+      // only evaluates the matching clause.
+      expectSemantic("(cond)");
+      expectSuccess("(cond (#f 2))","");
+      expectSuccess("(cond (#t 1) (#f 2))","1");
+      expectSuccess("(cond (#f 1) (#t 2))","2");
+      expectSuccess("(cond (#t 1) (#t 2))","2");
+      expectSuccess("(cond (#t 1) (#t 2))","2");
+      expectSuccess("(cond ((equal? 3 4) 1) ((equal? 5 (+ 2 3)) 2))","2");
+      expectSuccess("(cond ((equal? 3 4) 1) (else 2))","2");
+      expectSemantic("else"); // else is *not* just bound to #t!
+
+      // TODO: control special form: case
+      //
+      // We need user-code-accesible side-effects to detect that (case)
+      // only evaluates the matching clause.
+      expectSemantic("(case)");
+      expectSemantic("(case 1)");
+      expectSuccess("(case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300))","300");
+      expectSuccess("(case 7 ((2 3) 100) ((6 7) 200) ((4 5) 300))","200");
+      expectSuccess("(case 7 ((2 3) 100) ((4 5) 200) (else 300))", "300");
+      expectSuccess("(case 7 ((2 3) 100) ((4 5) 200))",            "dunno");
    }
 
    private static void selfTest ( final JhwScm scm )
