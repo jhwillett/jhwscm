@@ -550,11 +550,17 @@ public class Test
          expectSuccess("(fib 3)","2",scm);
          expectSuccess("(fib 4)","3",scm);
          expectSuccess("(fib 5)","5",scm);
+         
+         // Before gc, (fib 6) would OOM at heapSize 32 kcells, (fib
+         // 10) at 128 kcells.
+         //
+         // With CLEVER_STACK_RECYCLING, both fit in under 4 kcells.
+         //
+         expectSuccess("(fib 6)","8",scm);     // OOM at 32 kcells
+         expectSuccess("(fib 10)","55",scm);   // OOM at 128 kcells
          if ( true )
          {        
-            expectSuccess("(fib 6)","8",scm);     // OOM at 32 kcells
-            expectSuccess("(fib 10)","55",scm);   // OOM at 128 kcells
-            expectSuccess("(fib 20)","6565",scm); // OOM at 256 kcells, unknown
+            expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
          selfTest(scm);
          System.out.println("fib:");

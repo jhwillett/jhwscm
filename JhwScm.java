@@ -2190,7 +2190,7 @@ public class JhwScm
    private static final int regEnv              =  16; // list of env frames
 
    private static final int numRegisters        =  32;          // in slots
-   private static final int heapSize            =  4 * 1024;   // in cells
+   private static final int heapSize            = 1024 * 1024;   // in cells
 
    //  16 kcells:  0.5 sec
    //  32 kcells:  0.6 sec
