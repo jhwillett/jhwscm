@@ -573,15 +573,33 @@ public class Test
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
       }
 
-      JhwScm.SILENT = false;
-      if ( true ) return;
+      // min, max, bounds, 2s-complement nature of fixints
+      //
+      // TODO: it would be nice if this were fancy, if worked without
+      // knowing a-priori how many bits were in the fixints, found it,
+      // and checked edges.
+      //
+      // Of course, you'd also want that test to be halting if fixints
+      // ever started autopromoting to bigints... :)
+      //
+      expectSuccess("268435455", "-1");
+      expectSuccess("268435456", "0");
+      expectSuccess("268435457", "1");
+      expectSuccess("(+ 268435455 0)", "-1");
+      expectSuccess("(+ 268435456 0)", "0");
+      expectSuccess("(+ 268435456 1)", "1");
+      expectSuccess("(+ 268435457 1)", "2");
+      expectSuccess("(+ 134217728 134217727)", "-1");
+      expectSuccess("(- 0 268435456)", "0");
+      expectSuccess("(- 0 268435455)", "1");
+      expectSuccess("(equal? 0 268435456)", "#t");
+      expectSuccess("(equal? 0 (* 100 268435456))", "#t");
 
-      // TODO: test min, max, bounds, 2s-complement nature of fixints?
-
-      // TODO: nested lexical scopes, let, etc
-
+      if ( false )
       {
          // TODO: nested defines how do they work???
+         // 
+         // I think I should do the (let) form first.
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
          expectSuccess("(a 10)",                              "12",  scm);
@@ -590,8 +608,9 @@ public class Test
          selfTest(scm);
       }
 
-      // TODO: blocks, begin, cond, case.
+      // TODO: nested lexical scopes, let, etc
 
+      // TODO: blocks, begin, cond, case.
    }
 
    private static void selfTest ( final JhwScm scm )
