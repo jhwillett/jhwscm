@@ -107,6 +107,10 @@ public class JhwScm
       prebind("define", sub_define);
       prebind("lambda", sub_lambda);
       prebind("equal?", sub_equal_p);
+      prebind("let",    sub_let);
+      prebind("begin",  sub_begin);
+      prebind("cond",   sub_cond);
+      prebind("case",   sub_case);
    }
 
    /**
@@ -1270,6 +1274,22 @@ public class JhwScm
             gosub(sub_equal_p,blk_tail_call);
             break;
 
+         case sub_let:
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_begin:
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_cond:
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_case:
+            raiseError(ERR_NOT_IMPL);
+            break;
+
          case sub_apply:
             // Applies the op in reg[regArg0] to the args in
             // reg[regArg1], and return the results.
@@ -2260,6 +2280,10 @@ public class JhwScm
 
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
+   private static final int sub_let              = TYPE_SUBS | A2 |  0x6200;
+   private static final int sub_begin            = TYPE_SUBS | AX |  0x6300;
+   private static final int sub_case             = TYPE_SUBS | AX |  0x6400;
+   private static final int sub_cond             = TYPE_SUBS | AX |  0x6500;
 
    private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
    private static final int sub_add0             = TYPE_SUBP | A0 |  0x7010;
@@ -3022,6 +3046,10 @@ public class JhwScm
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
+         case sub_let:              buf.append("sub_let");              break;
+         case sub_begin:            buf.append("sub_begin");            break;
+         case sub_case:             buf.append("sub_case");             break;
+         case sub_cond:             buf.append("sub_cond");             break;
          case sub_zip:              buf.append("sub_zip");              break;
          case sub_add:              buf.append("sub_add");              break;
          case sub_add0:             buf.append("sub_add0");             break;

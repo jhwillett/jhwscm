@@ -624,7 +624,6 @@ public class Test
          expectSuccess("(fact 6)", "720",scm);
       }
 
-      if ( false )
       {
          // inner defines
          // 
@@ -635,18 +634,10 @@ public class Test
          expectSemantic("b",                                         scm);
          expectSuccess("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expectSuccess("(f)","3",scm);
-         selfTest(scm);
-      }
-
-      if ( false )
-      {
-         // inner defines
-         // 
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
             "  (help n 1))";
-         final JhwScm scm = new JhwScm();
          expectSuccess(fact,       "",   scm);
          expectSuccess("fact",     "???",scm);
          expectSuccess("(fact -1)","1",  scm);
@@ -657,6 +648,7 @@ public class Test
          expectSuccess("(fact 4)", "24", scm);
          expectSuccess("(fact 5)", "120",scm);
          expectSuccess("(fact 6)", "720",scm);
+         selfTest(scm);
       }
 
       // TODO: control special form: begin
