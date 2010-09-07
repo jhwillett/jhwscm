@@ -47,10 +47,11 @@ public class JhwScm
    // e.g. errors which theoretically can only arise due to bugs in
    // JhwScm, not user errors or JVM resource exhaustion.
    //
-   public static final boolean DEBUG                   = true;
-   public static final boolean PROFILE                 = true;
-   public static final boolean DEFER_HEAP_INIT         = true;
-   public static final boolean PROPERLY_TAIL_RECURSIVE = false;
+   public static final boolean DEBUG                     = true;
+   public static final boolean PROFILE                   = true;
+   public static final boolean DEFER_HEAP_INIT           = true;
+   public static final boolean PROPERLY_TAIL_RECURSIVE   = false;
+   public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
 
    // TODO: permeable abstraction barrier
    public static boolean SILENT = false;
@@ -2032,9 +2033,24 @@ public class JhwScm
             //   store(head_to_be);
             //   gosub(sub_foo,blk_tail_call_m_cons);
             //
-            reg[regTmp0]   = restore();
-            reg[regTmp1]   = reg[regRetval];
-            reg[regRetval] = cons(reg[regTmp0],reg[regTmp1]);
+            if ( CLEVER_TAIL_CALL_MOD_CONS )
+            {
+               // Recycles the stack cell holding the m cons argument
+               // for the m cons operation.
+               //
+               // In effect, just reverses the end of the stack onto
+               // the return result.
+               reg[regTmp0]   = reg[regStack];
+               reg[regStack]  = cdr(reg[regStack]);
+               setcdr(reg[regTmp0],reg[regRetval]);
+               reg[regRetval] = reg[regTmp0];
+            }
+            else
+            {
+               reg[regTmp0]   = restore();
+               reg[regTmp1]   = reg[regRetval];
+               reg[regRetval] = cons(reg[regTmp0],reg[regTmp1]);
+            }
             returnsub();
             break;
 
