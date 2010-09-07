@@ -550,8 +550,8 @@ public class Test
          expectSuccess("(fib 3)","2",scm);
          expectSuccess("(fib 4)","3",scm);
          expectSuccess("(fib 5)","5",scm);
-         if ( false )
-         {
+         if ( true )
+         {        
             expectSuccess("(fib 6)","8",scm);     // OOM at 32 kcells
             expectSuccess("(fib 10)","55",scm);   // OOM at 128 kcells
             expectSuccess("(fib 20)","6565",scm); // OOM at 256 kcells, unknown
