@@ -2168,7 +2168,14 @@ public class JhwScm
    private static final int regEnv              =  16; // list of env frames
 
    private static final int numRegisters        =  32;          // in slots
-   private static final int heapSize            = 512 * 1024;   // in cells
+   private static final int heapSize            =  32 * 1024;   // in cells
+
+   //  16 kcells:  0.5 sec
+   //  32 kcells:  0.6 sec
+   //  64 kcells:  1.0 sec
+   // 128 kcells:  4.2 sec  *** big nonlinearity up
+   // 256 kcells: 10.6 sec  *** small nonlinearity up
+   // 512 kcells: 11.5 sec  *** small nonlinearity down
 
    private final int[] reg     = new int[numRegisters];
    private final int[] heap    = new int[2*heapSize];
