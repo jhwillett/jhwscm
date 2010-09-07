@@ -52,6 +52,7 @@ public class JhwScm
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = false;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
+   public static final boolean CLEVER_STACK_RECYCLING    = true;
 
    // TODO: permeable abstraction barrier
    public static boolean SILENT = false;
@@ -2411,10 +2412,21 @@ public class JhwScm
       final int cell = reg[regStack];
       final int head = car(cell);
       final int rest = cdr(cell);
-      // TODO: Recycle cell, at least, if we haven't ended up in an
-      // error state or are otherwise "holding" old stacks?
       reg[regStack]  = rest;
       if ( verb ) log("restored: " + pp(head));
+      if ( CLEVER_STACK_RECYCLING && NIL == reg[regError] )
+      {
+         // Recycle stack cell which is unreachable from user code.
+         //
+         // That assertion is only true and this is only a valid
+         // optimization if we haven't stashed the continuation
+         // someplace.  
+         //
+         // This optimization may not be sustainable in the
+         // medium-term.
+         setcdr(cell,reg[regFreeCellList]);
+         reg[regFreeCellList] = cell;
+      }
       return head;
    }
 
