@@ -47,8 +47,10 @@ public class JhwScm
    // e.g. errors which theoretically can only arise due to bugs in
    // JhwScm, not user errors or JVM resource exhaustion.
    //
-   public static final boolean DEBUG           = true;
-   public static final boolean DEFER_HEAP_INIT = true;
+   public static final boolean DEBUG                   = true;
+   public static final boolean PROFILE                 = true;
+   public static final boolean DEFER_HEAP_INIT         = true;
+   public static final boolean PROPERLY_TAIL_RECURSIVE = false;
 
    // TODO: permeable abstraction barrier
    public static boolean SILENT = false;
@@ -61,7 +63,6 @@ public class JhwScm
    public static final int     FAILURE_SEMANTIC = 5;
    public static final int     UNIMPLEMENTED    = 6;
    public static final int     INTERNAL_ERROR   = 7;
-
 
    public JhwScm ()
    {
@@ -80,6 +81,8 @@ public class JhwScm
 
       reg[regFreeCellList] = NIL;
       heapTop              = 0;
+      numCallsToCons       = 0;
+      maxHeapTop           = 0;
 
       reg[regPc]  = doREP ? sub_rep : sub_rp;
       reg[regIn]  = queueCreate();
@@ -2181,7 +2184,9 @@ public class JhwScm
 
    private final int[] reg     = new int[numRegisters];
    private final int[] heap    = new int[2*heapSize];
-   private int         heapTop = 0;                             // in slots
+   private int         heapTop        = 0; // in slots
+   public  int         numCallsToCons = 0;
+   public  int         maxHeapTop     = 0;
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -2318,14 +2323,21 @@ public class JhwScm
          if ( verb ) log("    flow suspended for error: " + reg[regError]);
          return;
       }
-      store(continuationOp);
-      if ( NIL != reg[regError] )
+      if ( PROPERLY_TAIL_RECURSIVE && blk_tail_call == continuationOp )
       {
-         // error already reported in store()
-         return;
+         // Tail recursion is so cool.
+      }
+      else
+      {
+         store(continuationOp);
+         if ( NIL != reg[regError] )
+         {
+            // error already reported in store()
+            return;
+         }
+         if ( DEBUG ) scmDepth++;
       }
       reg[regPc] = nextOp;
-      if ( DEBUG ) scmDepth++;
    }
 
    private void returnsub ()
@@ -2590,6 +2602,10 @@ public class JhwScm
     */
    private int cons ( final int car, final int cdr )
    {
+      if ( PROFILE )
+      {
+         numCallsToCons++;
+      }
       int cell = reg[regFreeCellList];
       if ( NIL == cell )
       {
@@ -2633,6 +2649,13 @@ public class JhwScm
             reg[regFreeCellList] = code(TYPE_CELL,(heapTop >>> 1));
          }
          cell = reg[regFreeCellList];
+         if ( PROFILE )
+         {
+            if ( heapTop > maxHeapTop )
+            {
+               maxHeapTop = heapTop;
+            }
+         }
       }
       final int t          = type(cell);
       if ( DEBUG && TYPE_CELL != t )
