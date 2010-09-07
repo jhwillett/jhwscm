@@ -47,7 +47,8 @@ public class JhwScm
    // e.g. errors which theoretically can only arise due to bugs in
    // JhwScm, not user errors or JVM resource exhaustion.
    //
-   public static final boolean DEBUG          = true;
+   public static final boolean DEBUG           = true;
+   public static final boolean DEFER_HEAP_INIT = true;
 
    // TODO: permeable abstraction barrier
    public static boolean SILENT = false;
@@ -60,6 +61,7 @@ public class JhwScm
    public static final int     FAILURE_SEMANTIC = 5;
    public static final int     UNIMPLEMENTED    = 6;
    public static final int     INTERNAL_ERROR   = 7;
+
 
    public JhwScm ()
    {
@@ -2458,7 +2460,7 @@ public class JhwScm
     */
    public int selfTest ()
    {
-      final boolean verb = false;
+      final boolean verb = !SILENT;
       if ( verb ) log("selfTest()");
 
       // consistency check
@@ -2491,8 +2493,9 @@ public class JhwScm
       final int i1    = code(TYPE_FIXINT,0x07654321);
       final int i2    = code(TYPE_FIXINT,0x01514926);
       final int cell0 = cons(i0,i1); 
-      if ( (NIL == cell0) != (numFree <= 0) )
+      if ( !DEFER_HEAP_INIT && (NIL == cell0) != (numFree <= 0) )
       {
+         if ( verb ) log("  A: " + pp(cell0) + " " + numFree);
          return INTERNAL_ERROR;
       }
       if ( NIL == cell0 )
@@ -2502,37 +2505,46 @@ public class JhwScm
 
       if ( i0 != car(cell0) )
       {
+         if ( verb ) log("  B: " + pp(car(cell0)) + " " + pp(i0));
          return INTERNAL_ERROR;
       }
       if ( i1 != cdr(cell0) )
       {
+         if ( verb ) log("  C: " + pp(cdr(cell0)) + " " + pp(i1));
          return INTERNAL_ERROR;
       }
       final int cell1 = cons(i2,cell0); 
-      if ( (NIL == cell1) != (numFree <= 1) )
+      if ( !DEFER_HEAP_INIT && (NIL == cell1) != (numFree <= 1) )
       {
+         if ( verb ) log("  D");
          return INTERNAL_ERROR;
       }
       if ( NIL != cell1 )
       {
          if ( i2 != car(cell1) )
          {
+            if ( verb ) log("  E");
             return INTERNAL_ERROR;
          }
          if ( cell0 != cdr(cell1) )
          {
+            if ( verb ) log("  F");
             return INTERNAL_ERROR;
          }
          if ( i0 != car(cdr(cell1)) )
          {
+            if ( verb ) log("  G");
             return INTERNAL_ERROR;
          }
          if ( i1 != cdr(cdr(cell1)) )
          {
+            if ( verb ) log("  H");
             return INTERNAL_ERROR;
          }
-         if ( listLength(reg[regFreeCellList]) != numFree-2 )
+         if ( !DEFER_HEAP_INIT && 
+              listLength(reg[regFreeCellList]) != numFree-2 )
          {
+            if ( verb ) log("  I");
             return INTERNAL_ERROR;
          }
       }
@@ -2586,7 +2598,24 @@ public class JhwScm
             raiseError(ERR_OOM);
             return NIL;
          }
-         final int top = heapTop + 2*256; // heapTop in slots, 2* for cells
+         final int top;
+         if (DEFER_HEAP_INIT )
+         {
+            // heapTop in slots, 2* for cells, only init a piece of it
+            // this pass.
+            top = heapTop + 2*256;
+         }
+         else
+         {
+            // init all of the heap: pretty slow, even if you might
+            // eventually use it, because it's a badly non-local pass
+            // accros the entire heap on startup.
+            //
+            // Even if you're going to use all of it, at least we
+            // don't initialize a piece of heap until right before the
+            // higher-level program was going to get to it anyhow.
+            top = heap.length;
+         }
          final int lim = (top < heap.length) ? top : heap.length;
          for ( ; heapTop < lim; heapTop += 2 )
          {

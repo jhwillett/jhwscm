@@ -471,7 +471,7 @@ public class Test
          selfTest(scm);
       }
 
-      if ( false ) // slow
+      if ( true ) // slow
       {
          // ambition: nontrivial user-defined recursive function
          // 
@@ -497,7 +497,7 @@ public class Test
          expectSuccess("(fact 6)", "720",scm);  // OOM at 16 kcells
          selfTest(scm);
       }
-      if ( false ) // slow
+      if ( true ) // slow
       {
          final String help = 
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
@@ -519,7 +519,7 @@ public class Test
          selfTest(scm);
       }
 
-      if ( false ) // slow
+      if ( true ) // slow
       {
          // ambition: nontrivial user-defined recursive function
          // 
