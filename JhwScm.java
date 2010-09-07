@@ -77,21 +77,7 @@ public class JhwScm
       }
 
       reg[regFreeCellList] = NIL;
-      for ( int i = 0; i < heap.length; i += 2 )
-      {
-         // TODO: is the car of free list, e.g. heap[i+0], superfluous
-         // here?  Don't we always assign it before returning it from
-         // cons()?
-         //
-         // Hmmm.  Suggests there might be a lot of extra space
-         // sitting in the free cell list... we could maintain it as a
-         // heap and prefer pulling lower indices, to improve locality
-         // of reference and reduce the work required for heap
-         // compaction...
-         heap[i+0]            = NIL;
-         heap[i+1]            = reg[regFreeCellList];
-         reg[regFreeCellList] = code(TYPE_CELL,(i >>> 1));
-      }
+      heapTop              = 0;
 
       reg[regPc]  = doREP ? sub_rep : sub_rp;
       reg[regIn]  = queueCreate();
@@ -2184,8 +2170,9 @@ public class JhwScm
    private static final int numRegisters        =  32;          // in slots
    private static final int heapSize            =  16 * 1024;   // in cells
 
-   private final int[] heap = new int[2*heapSize];
-   private final int[] reg  = new int[numRegisters];
+   private final int[] reg     = new int[numRegisters];
+   private final int[] heap    = new int[2*heapSize];
+   private int         heapTop = 0;                             // in slots
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -2584,11 +2571,32 @@ public class JhwScm
     */
    private int cons ( final int car, final int cdr )
    {
-      final int cell       = reg[regFreeCellList];
+      int cell = reg[regFreeCellList];
       if ( NIL == cell )
       {
-         raiseError(ERR_OOM);
-         return NIL;
+         if ( heapTop >= heap.length )
+         {
+            raiseError(ERR_OOM);
+            return NIL;
+         }
+         final int top = heapTop + 2*256; // heapTop in slots, 2* for cells
+         final int lim = (top < heap.length) ? top : heap.length;
+         for ( ; heapTop < lim; heapTop += 2 )
+         {
+            // TODO: is the car of free list, e.g. heap[i+0], superfluous
+            // here?  Don't we always assign it before returning it from
+            // cons()?
+            //
+            // Hmmm.  Suggests there might be a lot of extra space
+            // sitting in the free cell list... we could maintain it as a
+            // heap and prefer pulling lower indices, to improve locality
+            // of reference and reduce the work required for heap
+            // compaction...
+            heap[heapTop+0]      = NIL;
+            heap[heapTop+1]      = reg[regFreeCellList];
+            reg[regFreeCellList] = code(TYPE_CELL,(heapTop >>> 1));
+         }
+         cell = reg[regFreeCellList];
       }
       final int t          = type(cell);
       if ( DEBUG && TYPE_CELL != t )
