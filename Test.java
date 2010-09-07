@@ -158,6 +158,12 @@ public class Test
       expectSuccess("(a (b c))",    "(a (b c))", new JhwScm(false));
       expectSuccess("((a b) c)",    "((a b) c)", new JhwScm(false));
       expectSuccess("((a b c))",    "((a b c))", new JhwScm(false));
+      expectSuccess("((a)b)",       "((a) b)",   new JhwScm(false));
+      expectSuccess("((a )b)",      "((a) b)",   new JhwScm(false));
+      expectSuccess("((a ) b)",     "((a) b)",   new JhwScm(false));
+      expectSuccess("( (a )b)",     "((a) b)",   new JhwScm(false));
+      expectSuccess("( (a) b)",     "((a) b)",   new JhwScm(false));
+      expectSuccess("( (a)b )",     "((a) b)",   new JhwScm(false));
       expectLexical("((a b) c",                  new JhwScm(false));
       expectLexical("((a b c)",                  new JhwScm(false));
       expectSuccess("()",           "()",        new JhwScm(false));
@@ -598,7 +604,9 @@ public class Test
       JhwScm.SILENT = false;
 
       // let, local scopes:
+      expectSemantic("(let ())");
       expectSuccess("(let () 32)","32");
+      expectSuccess("(let()32)","32");
       expectSuccess("(let ((a 10)) (+ a 32))","42");
       expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");
