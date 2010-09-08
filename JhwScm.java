@@ -1471,6 +1471,15 @@ public class JhwScm
             // catchall clause.  With (case), that would only work if
             // the key's value were identical to #t, not just non-#f.
             //
+            // I am vacillating about whether (case) belongs in the
+            // microcode layer.  It is weird, sort of un-Schemey in
+            // its semantics, and it requires the nontrivial "else"
+            // syntactic support to be useful - but then again it
+            // offers a lookup-table semantics that could potentially
+            // be implemented in constant time in the number of
+            // alternative paths. Neither (cond) nor an (if) chain
+            // can offer this.
+            //
             if ( TYPE_CELL != type(reg[regArg0]) )
             {
                raiseError(ERR_SEMANTIC);       // missing key
