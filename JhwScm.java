@@ -1448,6 +1448,29 @@ public class JhwScm
             break;
 
          case sub_case:
+            // Does:
+            //
+            //   (case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300)) ==> 300
+            //
+            // Returns VOID if no match is found.
+            //
+            // Note: the key gets evaluated, and the body of the
+            // matching clause gets evaluated as an implicit (begin)
+            // form, but the labels do *not* get evaluated.
+            //
+            // This means (case) is useful with atomic literals as
+            // labels, and not for compound expressions, variables, or
+            // anything else fancy like that.  Think fixints,
+            // booleans, and character literals: even strings and
+            // symbols won't match
+            //
+            // Matching is per eqv?, not equal?.
+            //
+            // This makes (case) much less useful without "else" than
+            // (cond) is: (cond) can fall back on #t for the default
+            // catchall clause.  With (case), that would only work if
+            // the key's value were identical to #t, not just non-#f.
+            //
             if ( TYPE_CELL != type(reg[regArg0]) )
             {
                raiseError(ERR_SEMANTIC);       // missing key
@@ -1471,8 +1494,99 @@ public class JhwScm
             reg[regTmp1] = restore();          // restore clauses
             logrec("key value: ",reg[regTmp0]);
             logrec("clauses:   ",reg[regTmp1]);
-            raiseError(ERR_NOT_IMPL);
+            reg[regArg0] = reg[regTmp0];
+            reg[regArg1] = reg[regTmp1];
+            gosub(sub_case_search,blk_tail_call);
             break;
+
+         case sub_case_search:
+            // reg[regArg0] is the value of the key
+            // reg[regArg1] is the list of clauses
+            logrec("key value:   ",reg[regArg0]);
+            logrec("clause list: ",reg[regArg1]);
+            if ( NIL == reg[regArg1] ) 
+            {
+               reg[regRetval] = VOID;
+               returnsub();
+               break;
+            }
+            if ( TYPE_CELL != type(reg[regArg1]) )
+            {
+               raiseError(ERR_SEMANTIC);      // bogus clause list
+               break;
+            }
+            reg[regTmp0] = car(reg[regArg1]); // first clause
+            reg[regTmp1] = cdr(reg[regArg1]); // rest clauses
+            logrec("first clause:",reg[regTmp0]);
+            logrec("rest clauses:",reg[regTmp1]);
+            if ( TYPE_CELL != type(reg[regTmp0]) )
+            {
+               raiseError(ERR_SEMANTIC);      // bogus clause
+               break;
+            }
+            reg[regTmp2] = car(reg[regTmp0]); // first clause label list
+            reg[regTmp3] = cdr(reg[regTmp0]); // first clause body
+            logrec("label list:  ",reg[regTmp2]);
+            store(reg[regArg0]);              // store key
+            store(reg[regTmp1]);              // store rest clauses
+            store(reg[regTmp3]);              // store body
+            reg[regArg0] = reg[regArg0];
+            reg[regArg1] = reg[regTmp2];
+            gosub(sub_case_in_list_p,sub_case_search+0x1);
+            break;
+         case sub_case_search+0x1:
+            reg[regTmp3] = restore();         // restore body
+            reg[regArg1] = restore();         // restore rest clauses
+            reg[regArg0] = restore();         // restore key
+            logrec("key:         ",reg[regArg0]);
+            logrec("rest clauses:",reg[regArg1]);
+            logrec("matchup:     ",reg[regRetval]);
+            if ( FALSE == reg[regRetval] )
+            {
+               gosub(sub_case_search,blk_tail_call);
+            }
+            else
+            {
+               reg[regArg0] = reg[regTmp3];
+               gosub(sub_begin,blk_tail_call);
+            }
+            break;
+
+         case sub_case_in_list_p:
+            // Returns TRUE if reg[regArg0] is hard-equal to any of
+            // the elements in the proper list in reg[regArg1], else
+            // FALSE.
+            //
+            // Only works w/ lables as per sub_case: fixints,
+            // booleans, and characer literals.  Nothing else will
+            // match.
+            logrec("key:   ",reg[regArg0]);
+            logrec("labels:",reg[regArg1]);
+            if ( NIL == reg[regArg1] ) 
+            {
+               reg[regRetval] = FALSE;
+               returnsub();
+               break;
+            }
+            if ( TYPE_CELL != type(reg[regArg1]) ) 
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg[regTmp0] = car(reg[regArg1]);  // first element
+            reg[regTmp1] = cdr(reg[regArg1]);  // rest of elements
+            if ( reg[regArg0] == reg[regTmp0] )
+            {
+               // TODO: Check type?  We would not want them to both be
+               // interned strings, or would we...?
+               reg[regRetval] = TRUE;
+               returnsub();
+               break;
+            }
+            reg[regArg0] = reg[regArg0];
+            reg[regArg1] = reg[regTmp1];
+            gosub(sub_case_in_list_p,blk_tail_call);
+            break; 
 
          case sub_apply:
             // Applies the op in reg[regArg0] to the args in
@@ -2388,10 +2502,11 @@ public class JhwScm
    private static final int regTmp0             =  11; // temporary
    private static final int regTmp1             =  12; // temporary
    private static final int regTmp2             =  13; // temporary
-   private static final int reg_Unused          =  14; // temporary
-   private static final int regRetval           =  15; // return value
+   private static final int regTmp3             =  14; // temporary
+   private static final int reg_Unused          =  15; // temporary
+   private static final int regRetval           =  16; // return value
 
-   private static final int regEnv              =  16; // list of env frames
+   private static final int regEnv              =  17; // list of env frames
 
    private static final int numRegisters        =  32;          // in slots
    private static final int heapSize            =   4 * 1024;   // in cells
@@ -2468,6 +2583,8 @@ public class JhwScm
    private static final int sub_let_bindings     = TYPE_SUBS | A2 |  0x6210;
    private static final int sub_begin            = TYPE_SUBS | AX |  0x6300;
    private static final int sub_case             = TYPE_SUBS | AX |  0x6400;
+   private static final int sub_case_search      = TYPE_SUBS | A2 |  0x6410;
+   private static final int sub_case_in_list_p   = TYPE_SUBP | A2 |  0x6420;
    private static final int sub_cond             = TYPE_SUBS | AX |  0x6500;
 
    private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
@@ -3235,6 +3352,8 @@ public class JhwScm
          case sub_let_bindings:     buf.append("sub_let_bindings");     break;
          case sub_begin:            buf.append("sub_begin");            break;
          case sub_case:             buf.append("sub_case");             break;
+         case sub_case_search:      buf.append("sub_case_search");      break;
+         case sub_case_in_list_p:   buf.append("sub_case_in_list_p");   break;
          case sub_cond:             buf.append("sub_cond");             break;
          case sub_zip:              buf.append("sub_zip");              break;
          case sub_add:              buf.append("sub_add");              break;

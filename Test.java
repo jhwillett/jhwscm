@@ -672,21 +672,42 @@ public class Test
          expectSemantic("else"); // else is *not* just bound to #t!
       }
 
-      JhwScm.SILENT = false;
-
       // TODO: control special form: case
       //
       // We need user-code-accesible side-effects to detect that (case)
       // only evaluates the matching clause.
       expectSemantic("(case)");
       expectSemantic("(case 1)");
+      expectSemantic("(case 1 1)");
+      expectSemantic("(case 1 (1))");
+      expectSemantic("(case 1 (1 1))");
+      expectSuccess("(case 1 ((1) 1))","1");
       expectSuccess("(case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300))","300");
       expectSuccess("(case 7 ((2 3) 100) ((6 7) 200) ((4 5) 300))","200");
-      expectSuccess("(case 7 ((2 3) 100) ((4 5) 200))",            "dunno");
+      expectSuccess("(case 7 ((2 3) 100) ((4 5) 200))",            "");
+      expectSuccess("(case  (+ 3 4) ((2 3) 100) ((6 7      ) 200))","200");
+      expectSuccess("(case  (+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
+      expectSuccess("(case '(+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
+      expectSuccess("(case 7 (() 10) ((7) 20))","20"); // empty label ok
+      JhwScm.SILENT = false;
+      expectSemantic("(case 7 ((2 3) 100) ((6 7)))");  // bad clause
+      expectSemantic("(case 7 (()) ((7) 20))");        // bad clause
+      expectSemantic("(case 7 (10) ((7) 20))");        // bad clause
+      expectSuccess("(case '7 ((2 3) 100) ((6 '7) 200) ((4 5) 300))","");
+      expectSuccess("(case \"7\" ((2 3) 100) ((6 \"7\") 200) ((4 5) 300))","");
+      expectSuccess("(case #t ((2 3) 100) ((6 #t) 200) ((4 5) 300))","200");
+      expectSuccess("(case #f ((2 3) 100) ((6 #f) 200) ((4 5) 300))","200");
+      expectSuccess("(case #\\a ((2 3) 100) ((6 #\\a) 200) ((4 5) 300))","200");
       if ( false )
       {
          // See "else" rant among (cond) tests.
          expectSuccess("(case 7 ((2 3) 100) ((4 5) 200) (else 300))", "300");
+      }
+      if ( false )
+      {
+         // TODO: an error if a case label is duplicated!
+         expectSemantic("(case 7 ((5 5) 100))");
+         expectSemantic("(case 7 ((5 3) 100) ((4 5) 200))");
       }
 
       {
@@ -809,7 +830,7 @@ public class Test
          System.out.print("\" evaluated to \"");
          System.out.print(buf);
          System.out.print("\"");
-         System.out.println("\"");
+         System.out.println();
       }
       assertEquals("should fail evaluating \"" + expr + "\":",
                    expectedError, 
