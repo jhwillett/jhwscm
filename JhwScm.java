@@ -1448,6 +1448,29 @@ public class JhwScm
             break;
 
          case sub_case:
+            if ( TYPE_CELL != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);       // missing key
+               break;
+            }
+            reg[regTmp0] = car(reg[regArg0]);  // key
+            reg[regTmp1] = cdr(reg[regArg0]);  // clauses
+            if ( TYPE_CELL != type(reg[regTmp1]) )
+            {
+               raiseError(ERR_SEMANTIC);       // missing clauses
+               break;
+            }
+            logrec("key expr:  ",reg[regTmp0]);
+            store(reg[regTmp1]);               // store clauses
+            reg[regArg0] = reg[regTmp0];
+            reg[regArg1] = reg[regEnv];
+            gosub(sub_eval,sub_case+0x1);
+            break;
+         case sub_case+0x1:
+            reg[regTmp0] = reg[regRetval];     // value of key
+            reg[regTmp1] = restore();          // restore clauses
+            logrec("key value: ",reg[regTmp0]);
+            logrec("clauses:   ",reg[regTmp1]);
             raiseError(ERR_NOT_IMPL);
             break;
 
