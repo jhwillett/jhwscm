@@ -1058,6 +1058,7 @@ public class JhwScm
                gosub(sub_apply,blk_tail_call);
                break;
             }
+            logrec("wtf",tmp0);
             raiseError(ERR_SEMANTIC);
             break;
          case sub_eval+0x3:
@@ -1229,30 +1230,30 @@ public class JhwScm
             //
             // NOTE: this is meant to be the equal? described in R5RS.
             //
-            if ( verb ) log("  arg0: " + pp(reg[regArg0]));
-            if ( verb ) log("  arg1: " + pp(reg[regArg1]));
+            if ( verb ) log("arg0: " + pp(reg[regArg0]));
+            if ( verb ) log("arg1: " + pp(reg[regArg1]));
             if ( reg[regArg0] == reg[regArg1] )
             {
-               if ( verb ) log("  identical");
+               if ( verb ) log("identical");
                reg[regRetval] = TRUE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != type(reg[regArg1]) )
             {
-               if ( verb ) log("  different types");
+               if ( verb ) log("different types");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != TYPE_CELL )
             {
-               if ( verb ) log("  not cells");
+               if ( verb ) log("not cells");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
-            if ( verb ) log("  checking car");
+            if ( verb ) log("checking car");
             store(reg[regArg0]);
             store(reg[regArg1]);
             reg[regArg0] = car(reg[regArg0]);
@@ -1264,11 +1265,11 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( FALSE == reg[regRetval] )
             {
-               if ( verb ) log("  car mismatch");
+               if ( verb ) log("car mismatch");
                returnsub();
                break;
             }
-            if ( verb ) log("  checking cdr");
+            if ( verb ) log("checking cdr");
             reg[regArg0] = cdr(reg[regArg0]);
             reg[regArg1] = cdr(reg[regArg1]);
             gosub(sub_equal_p,blk_tail_call);
@@ -1385,7 +1386,50 @@ public class JhwScm
             break;
 
          case sub_cond:
-            raiseError(ERR_NOT_IMPL);
+            // Expects each arg to be a list.  .... Err, does this:
+            //
+            //   (cond (#f 1) (#f 2) (#t 3))
+            //
+            // Evaluates the tests in order until one is true,
+            // whereupon it evaluates the body of that clause as an
+            // implicit (begin) statement.  If no args, returns VOID.
+            //
+            if ( NIL == reg[regArg0] )
+            {
+               reg[regRetval] = VOID;
+               returnsub();
+               break;
+            }
+            if ( TYPE_CELL != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg[regTmp0] = car(car(reg[regArg0]));  // test of first clause
+            reg[regTmp1] = cdr(car(reg[regArg0]));  // body of first clause
+            reg[regTmp2] = cdr(reg[regArg0]);       // rest of clauses
+            store(reg[regTmp1]);                    // store body of 1st clause
+            store(reg[regTmp2]);                    // store rest of clauses
+            logrec("test",reg[regTmp0]);
+            reg[regArg0] = reg[regTmp0];
+            reg[regArg1] = reg[regEnv];
+            gosub(sub_eval,sub_cond+0x1);
+            break;
+         case sub_cond+0x1:
+            reg[regTmp2] = restore();               // store rest of clauses
+            reg[regTmp1] = restore();               // store body of 1st clause
+            if ( FALSE == reg[regRetval] )
+            {
+               logrec("rest",reg[regTmp2]);
+               reg[regArg0] = reg[regTmp2];
+               gosub(sub_cond,blk_tail_call);
+            }
+            else
+            {
+               logrec("body",reg[regTmp1]);
+               reg[regArg0] = reg[regTmp1];
+               gosub(sub_begin,blk_tail_call);
+            }
             break;
 
          case sub_case:
@@ -1435,10 +1479,10 @@ public class JhwScm
             // Then just gosub()!
             tmp0 = reg[regArg0];
             final int arity = (tmp0 & MASK_ARITY) >>> SHIFT_ARITY;
-            log("  tmp0:  " + pp(tmp0));
-            log("  tmp0:  " + hex(tmp0,8));
-            log("  arity: " + arity);
-            log("  arg1:  " + pp(reg[regArg1]));
+            log("tmp0:  " + pp(tmp0));
+            log("tmp0:  " + hex(tmp0,8));
+            log("arity: " + arity);
+            log("arg1:  " + pp(reg[regArg1]));
             reg[regTmp0] = reg[regArg1];
             reg[regArg0] = UNDEFINED;
             reg[regArg1] = UNDEFINED;
