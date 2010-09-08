@@ -1354,7 +1354,34 @@ public class JhwScm
             break;
 
          case sub_begin:
-            raiseError(ERR_NOT_IMPL);
+            // Evaluates all its args, returning the result of the
+            // last.  If no args, returns VOID.
+            //
+            if ( NIL == reg[regArg0] )
+            {
+               reg[regRetval] = VOID;
+               returnsub();
+               break;
+            }
+            reg[regTmp0] = car(reg[regArg0]);
+            reg[regTmp1] = cdr(reg[regArg0]);
+            reg[regArg0] = reg[regTmp0];
+            reg[regArg1] = reg[regEnv];
+            reg[regTmp2] = UNDEFINED;
+            if ( NIL == reg[regTmp1] )
+            {
+               reg[regTmp2] = blk_tail_call;
+            }
+            else
+            {
+               store(reg[regTmp1]);             // store rest exprs
+               reg[regTmp2] = sub_begin+0x1;
+            }
+            gosub(sub_eval,reg[regTmp2]);
+            break;
+         case sub_begin+0x1:
+            reg[regArg0] = restore();           // restore rest exprs
+            gosub(sub_begin,blk_tail_call);
             break;
 
          case sub_cond:
