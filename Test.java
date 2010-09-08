@@ -654,6 +654,9 @@ public class Test
       expectSuccess("(cond (#t 1) (#t 2))","1");
       expectSuccess("(cond (#f 1) (#f 2))","");
       expectSuccess("(cond ((equal? 3 4) 1) ((equal? 5 (+ 2 3)) 2))","2");
+      expectSuccess("(cond (#f) (#t 2))","2");
+      expectSuccess("(cond (#f) (#t))","#t");
+      expectSuccess("(cond (#f) (7))","7");
       if ( false )
       {
          // You know, "else" is really special-casey, special-syntaxy.
@@ -670,7 +673,6 @@ public class Test
       }
 
       JhwScm.SILENT = false;
-      if ( true ) return;
 
       // TODO: control special form: case
       //

@@ -1386,13 +1386,22 @@ public class JhwScm
             break;
 
          case sub_cond:
-            // Expects each arg to be a list.  .... Err, does this:
+            // Does this:
             //
-            //   (cond (#f 1) (#f 2) (#t 3))
+            //   (cond (#f 1) (#f 2) (#t 3))  ==> 3
+            //
+            // That is, expects the args to be a list of lists, each
+            // of which is a test expression followed by a body.
             //
             // Evaluates the tests in order until one is true,
             // whereupon it evaluates the body of that clause as an
             // implicit (begin) statement.  If no args, returns VOID.
+            //
+            // Where the body of a clause is empty, returns the value
+            // of the test e.g.:
+            //
+            //   (cond (#f) (#t))   ==> 1
+            //   (cond (3)  (#t 1)) ==> 3
             //
             if ( NIL == reg[regArg0] )
             {
@@ -1423,6 +1432,12 @@ public class JhwScm
                logrec("rest",reg[regTmp2]);
                reg[regArg0] = reg[regTmp2];
                gosub(sub_cond,blk_tail_call);
+            }
+            else if ( NIL == reg[regTmp1] )
+            {
+               log("no body");
+               reg[regRetval] = reg[regRetval];
+               returnsub();
             }
             else
             {
