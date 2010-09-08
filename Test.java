@@ -601,9 +601,9 @@ public class Test
       expectSuccess("(equal? 0 268435456)", "#t");
       expectSuccess("(equal? 0 (* 100 268435456))", "#t");
 
-      JhwScm.SILENT = false;
-
       // let, local scopes:
+      // 
+      // TODO: let*, letrec
       expectSemantic("(let ())");
       expectSuccess("(let () 32)","32");
       expectSuccess("(let()32)","32");
@@ -631,6 +631,8 @@ public class Test
          expectSuccess("(fact 5)", "120",scm);
          expectSuccess("(fact 6)", "720",scm);
       }
+
+      JhwScm.SILENT = false;
 
       {
          // inner defines
