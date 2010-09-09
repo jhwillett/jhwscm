@@ -2266,7 +2266,11 @@ public class JhwScm
             gosub(sub_eval,blk_tail_call);
             break;
 
-         case sub_define:
+         case sub_defineX:
+            raiseError(ERR_NOT_IMPL);
+            break;
+
+         case sub_define2:
             // If a variable is bound in the current environment
             // *frame*, changes it.  Else creates a new binding in the
             // current *frame*.
@@ -2665,9 +2669,10 @@ public class JhwScm
    private static final int sub_list             = TYPE_SUBP | AX |  0x7500;
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
-   private static final int sub_define           = TYPE_SUBS | A2 |  0x7800;
+   private static final int sub_define2          = TYPE_SUBS | A2 |  0x7800;
+   private static final int sub_defineX          = TYPE_SUBS | AX |  0x7810;
+   private static final int sub_define           = sub_define2;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
-   // TODO: sub_define should be variadic
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
@@ -3434,7 +3439,9 @@ public class JhwScm
          case sub_list:             buf.append("sub_list");             break;
          case sub_if:               buf.append("sub_if");               break;
          case sub_quote:            buf.append("sub_quote");            break;
-         case sub_define:           buf.append("sub_define");           break;
+            //case sub_define:      buf.append("sub_define");           break;
+         case sub_define2:          buf.append("sub_define2");          break;
+         case sub_defineX:          buf.append("sub_defineX");          break;
          case sub_lambda:           buf.append("sub_lambda");           break;
          default:
             buf.append("sub_"); 

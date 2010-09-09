@@ -450,6 +450,7 @@ public class Test
       expectSuccess("(read)(+ 1 2)","(+ 1 2)");
       
       // defining symbols
+      //JhwScm.SILENT = false;
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define a 100)","",   scm);
@@ -733,13 +734,10 @@ public class Test
 
       // variadic (lambda) and (define), inner defines, etc.
       // 
+      expectSuccess("(lambda () (+ 1 2) 7)","???");
+      expectSuccess("((lambda () (+ 1 2) 7))","7");
+      expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
       if ( true )
-      {
-         expectSuccess("(lambda () (+ 1 2) 7)","???");
-         expectSuccess("((lambda () (+ 1 2) 7))","7");
-         expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
-      }
-      if ( false )
       {
          JhwScm.SILENT = false;
          final JhwScm scm = new JhwScm();
