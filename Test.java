@@ -689,8 +689,8 @@ public class Test
       expectSuccess("(case  (+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
       expectSuccess("(case '(+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
       expectSuccess("(case 7 (() 10) ((7) 20))","20"); // empty label ok
-      JhwScm.SILENT = false;
       expectSemantic("(case 7 ((2 3) 100) ((6 7)))");  // bad clause
+      expectSemantic("(case 7 ((2 3)) ((6 7) 1))");    // bad clause
       expectSemantic("(case 7 (()) ((7) 20))");        // bad clause
       expectSemantic("(case 7 (10) ((7) 20))");        // bad clause
       expectSuccess("(case '7 ((2 3) 100) ((6 '7) 200) ((4 5) 300))","");
@@ -710,6 +710,10 @@ public class Test
          expectSemantic("(case 7 ((5 3) 100) ((4 5) 200))");
       }
 
+      JhwScm.SILENT = false;
+      
+      if ( true ) return;
+      
       {
          // inner defines
          // 

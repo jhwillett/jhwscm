@@ -1550,6 +1550,13 @@ public class JhwScm
             logrec("key:         ",reg[regArg0]);
             logrec("rest clauses:",reg[regArg1]);
             logrec("matchup:     ",reg[regRetval]);
+            logrec("body:        ",reg[regTmp3]);
+            if ( TYPE_CELL != type(reg[regTmp3]) )
+            {
+               // empty bodies are not cool in (case)
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
             if ( FALSE == reg[regRetval] )
             {
                gosub(sub_case_search,blk_tail_call);
