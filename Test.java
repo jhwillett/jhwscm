@@ -733,16 +733,20 @@ public class Test
       expectSuccess("(lambda () (+ 1 2) 7)","???");
       expectSuccess("((lambda () (+ 1 2) 7))","7");
       expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
-      if ( true )
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
          expectSuccess("(a 10)",                              "12",  scm);
          expectSuccess("a",                                   "???", scm);
          expectSemantic("b",                                         scm);
-         JhwScm.SILENT = false;
+      }
+      {
+         final JhwScm scm = new JhwScm();
          expectSuccess("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expectSuccess("(f)","3",scm);
+      }
+      {
+         final JhwScm scm = new JhwScm();
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
@@ -759,7 +763,21 @@ public class Test
          expectSuccess("(fact 6)", "720",scm);
          selfTest(scm);
       }
-
+      {
+         final JhwScm scm = new JhwScm();
+         final String def = 
+            "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
+         expectSuccess(def,"",scm);
+         expectSuccess("(f)","83",scm);
+      }
+      {
+         final JhwScm scm = new JhwScm();
+         final String def = 
+            "(define (f b) (define a 1) (display 8) (+ a b))";
+         expectSuccess(def,"",scm);
+         expectSuccess("(f 4)","85",scm);
+         expectSuccess("(f 3)","84",scm);
+      }
    }
 
    private static void selfTest ( final JhwScm scm )
