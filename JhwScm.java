@@ -2275,91 +2275,7 @@ public class JhwScm
             gosub(sub_eval,blk_tail_call);
             break;
 
-         case sub_define2:
-            // If a variable is bound in the current environment
-            // *frame*, changes it.  Else creates a new binding in the
-            // current *frame*.
-            //
-            // That is - at the top-level define creates or mutates a
-            // top-level binding, and an inner define creates or
-            // mutates an inner binding, but an inner define will not
-            // create or (most importantly) mutate a higher-level
-            // binding.
-            //
-            // Also - we have two forms of define, the one with a
-            // symbol arg which just defines a variable:
-            //
-            //   (define x 1)
-            //
-            // and the one with a list arg which is sugar:
-            //
-            //   (define (x) 1) equivalent to (define x (lambda () 1))
-            //
-            // sub_define is variadic.  The first form must have
-            // exactly two args.  The second form must have at least
-            // two args, which form the body of the method being
-            // defined within an implicit (begin) block.
-            //
-            if ( TYPE_CELL != type(reg[regArg0]) )
-            {
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            if ( IS_SYMBOL == car(reg[regArg0]) )
-            {
-               reg[regTmp0] = reg[regArg0];
-               reg[regTmp1] = reg[regArg1];
-            }
-            else
-            {
-               // TODO: By putting sub_list here is like putting
-               // sub_quote in other lists: forces the hand on other
-               // design decisions.
-               //
-               reg[regTmp0] = car(reg[regArg0]);
-               reg[regTmp1] = cons(reg[regArg1],NIL);
-               reg[regTmp2] = cons(cdr(reg[regArg0]),reg[regTmp1]);
-               reg[regTmp1] = cons(sub_lambda,reg[regTmp2]);
-            }
-            logrec("DEFINE SYMBOL: ",reg[regTmp0]);
-            logrec("DEFINE BODY:   ",reg[regTmp1]);
-            store(reg[regTmp0]);              // store the symbol
-            reg[regArg0] = reg[regTmp1];      // eval the body
-            reg[regArg1] = reg[regEnv];       // we need an env arg here!
-            gosub(sub_eval,sub_define2+0x1);
-            break;
-         case sub_define2+0x1:
-            reg[regTmp0] = restore();         // restore the symbol
-            store(reg[regTmp0]);              // store the symbol INEFFICIENT
-            store(reg[regRetval]);            // store the body's value
-            reg[regArg0] = reg[regTmp0];      // lookup the binding
-            reg[regArg1] = car(reg[regEnv]);  // we need an env arg here!
-            gosub(sub_eval_look_frame,sub_define2+0x2);
-            break;
-         case sub_define2+0x2:
-            reg[regTmp1] = restore();         // restore the body's value
-            reg[regTmp0] = restore();         // restore the symbol
-            if ( NIL == reg[regRetval] )
-            {
-               // create a new binding        // we need an env arg here!
-               reg[regTmp1] = cons(reg[regTmp0],reg[regTmp1]);
-               reg[regTmp2] = cons(reg[regTmp1],car(reg[regEnv]));
-               setcar(reg[regEnv],reg[regTmp2]);
-               log("define new binding");
-               
-            }
-            else
-            {
-               // change the existing binding
-               setcdr(reg[regRetval],reg[regTmp1]);
-               log("define old binding");
-            }
-            //logrec("define B",reg[regEnv]);
-            reg[regRetval] = VOID;
-            returnsub();
-            break;
-
-         case sub_defineX:
+         case sub_define:
             // If a variable is bound in the current environment
             // *frame*, changes it.  Else creates a new binding in the
             // current *frame*.
@@ -2446,17 +2362,17 @@ public class JhwScm
             store(reg[regTmp0]);              // store the symbol
             reg[regArg0] = reg[regTmp1];      // eval the body
             reg[regArg1] = reg[regEnv];       // we need an env arg here!
-            gosub(sub_eval,sub_defineX+0x1);
+            gosub(sub_eval,sub_define+0x1);
             break;
-         case sub_defineX+0x1:
+         case sub_define+0x1:
             reg[regTmp0] = restore();         // restore the symbol
             store(reg[regTmp0]);              // store the symbol INEFFICIENT
             store(reg[regRetval]);            // store the body's value
             reg[regArg0] = reg[regTmp0];      // lookup the binding
             reg[regArg1] = car(reg[regEnv]);  // we need an env arg here!
-            gosub(sub_eval_look_frame,sub_defineX+0x2);
+            gosub(sub_eval_look_frame,sub_define+0x2);
             break;
-         case sub_defineX+0x2:
+         case sub_define+0x2:
             reg[regTmp1] = restore();         // restore the body's value
             reg[regTmp0] = restore();         // restore the symbol
             if ( NIL == reg[regRetval] )
@@ -2794,9 +2710,7 @@ public class JhwScm
    private static final int sub_list             = TYPE_SUBP | AX |  0x7500;
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
-   private static final int sub_define2          = TYPE_SUBS | A2 |  0x7800;
-   private static final int sub_defineX          = TYPE_SUBS | AX |  0x7810;
-   private static final int sub_define           = sub_defineX;
+   private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
@@ -3564,9 +3478,7 @@ public class JhwScm
          case sub_list:             buf.append("sub_list");             break;
          case sub_if:               buf.append("sub_if");               break;
          case sub_quote:            buf.append("sub_quote");            break;
-            //case sub_define:      buf.append("sub_define");           break;
-         case sub_define2:          buf.append("sub_define2");          break;
-         case sub_defineX:          buf.append("sub_defineX");          break;
+         case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
          default:
             buf.append("sub_"); 
