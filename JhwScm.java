@@ -640,6 +640,15 @@ public class JhwScm
             // sub_quote needs to be self-evaluating (if not all
             // sub_foo).
             //
+            // Note: by leveraging sub_quote in this way, putting the
+            // literal value sub_quote at the head of a constructed
+            // expression which is en route to sub_eval, we force the
+            // hand on other design decisions about the direct
+            // (eval)ability and (apply)ability of sub_foo in general.
+            //
+            // We do the same in sub_define with sub_lambda, so
+            // clearly I'm getting comfortable with this decision.
+            //
             // Also - how should it print?
             //
             reg[regTmp0]   = cons(reg[regRetval],NIL);
@@ -2375,32 +2384,63 @@ public class JhwScm
             // two args, which form the body of the method being
             // defined within an implicit (begin) block.
             //
-            if ( true )
-            {
-               raiseError(ERR_NOT_IMPL);
-               break;
-            }
+            logrec("args: ",reg[regArg0]);
             if ( TYPE_CELL != type(reg[regArg0]) )
             {
-               raiseError(ERR_INTERNAL);
+               raiseError(ERR_SEMANTIC);  // variadic with at least 2 args
                break;
             }
-            if ( IS_SYMBOL == car(reg[regArg0]) )
+            reg[regTmp0] = car(reg[regArg0]);
+            reg[regTmp1] = cdr(reg[regArg0]);
+            logrec("head: ",reg[regTmp0]);
+            logrec("rest: ",reg[regTmp1]);
+            if ( TYPE_CELL != type(reg[regTmp0]) )
             {
-               reg[regTmp0] = reg[regArg0];
-               reg[regTmp1] = reg[regArg1];
+               raiseError(ERR_SEMANTIC);  // first is symbol or arg list
+               break;
+            }
+            if ( TYPE_CELL != type(reg[regTmp1]) )
+            {
+               raiseError(ERR_SEMANTIC);  // variadic with at least 2 args
+               break;
+            }
+            if ( IS_SYMBOL == car(reg[regTmp0]) )
+            {
+               if ( NIL != cdr(reg[regTmp1]) )
+               {
+                  raiseError(ERR_SEMANTIC); // simple form takes exactly 2 args
+                  break;
+               }
+               // reg[regTmp0] is already the symbol, how we want it
+               // for this case.
+               reg[regTmp1] = car(reg[regTmp1]);
             }
             else
             {
-               // TODO: By putting sub_list here is like putting
-               // sub_quote in other lists: forces the hand on other
-               // design decisions.
+               // Note: by leveraging sub_lambda in this way, putting
+               // the literal value sub_lambda at the head of a
+               // constructed expression which is en route to
+               // sub_eval, we force the hand on other design
+               // decisions about the direct (eval)ability and
+               // (apply)ability of sub_foo in general.
                //
-               reg[regTmp0] = car(reg[regArg0]);
-               reg[regTmp1] = cons(reg[regArg1],NIL);
-               reg[regTmp2] = cons(cdr(reg[regArg0]),reg[regTmp1]);
+               // We do the same in sub_read_atom with sub_quote, so
+               // clearly I'm getting comfortable with this decision.
+               //
+               reg[regTmp2] = car(reg[regTmp0]); // actual symbol
+               reg[regTmp3] = cdr(reg[regTmp0]); // actual arg list
+               reg[regTmp0] = reg[regTmp2];      // regTmp0 good, regTmp2 free
+               logrec("proc symbol: ",reg[regTmp0]);
+               logrec("proc args:   ",reg[regTmp3]);
+               logrec("proc body:   ",reg[regTmp1]);
+               reg[regTmp2] = cons(reg[regTmp3],reg[regTmp1]);
+               logrec("partial:     ",reg[regTmp2]);
                reg[regTmp1] = cons(sub_lambda,reg[regTmp2]);
+               logrec("proc lambda: ",reg[regTmp1]);
             }
+            // By here, reg[regTmp0] should be the the symbol,
+            // reg[regTmp1] the expr whose value we will bind to the
+            // symbol.
             logrec("DEFINE SYMBOL: ",reg[regTmp0]);
             logrec("DEFINE BODY:   ",reg[regTmp1]);
             store(reg[regTmp0]);              // store the symbol
@@ -3107,7 +3147,7 @@ public class JhwScm
     * @returns NIL in event of error (in which case an error is
     * raised), else a newly allocated and initialize cons cell.
     *
-    * TODO: I feel funny about using NIL this way
+    * TODO: I feel funny about using NIL this way: use UNDEFINED?
     */
    private int cons ( final int car, final int cdr )
    {

@@ -450,7 +450,6 @@ public class Test
       expectSuccess("(read)(+ 1 2)","(+ 1 2)");
       
       // defining symbols
-      JhwScm.SILENT = false;
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define a 100)","",   scm);
@@ -499,7 +498,6 @@ public class Test
          selfTest(scm);
       }
 
-      if ( true )
       {
          // ambition: nontrivial user-defined recursive function
          // 
@@ -528,7 +526,6 @@ public class Test
          System.out.println("  numCallsToCons: " + scm.numCallsToCons);
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
       }
-      if ( true )
       {
          final String help = 
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
@@ -553,7 +550,6 @@ public class Test
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
       }
 
-      if ( true )
       {
          // ambition: nontrivial user-defined recursive function
          // 
@@ -739,12 +735,12 @@ public class Test
       expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
       if ( true )
       {
-         JhwScm.SILENT = false;
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
          expectSuccess("(a 10)",                              "12",  scm);
          expectSuccess("a",                                   "???", scm);
          expectSemantic("b",                                         scm);
+         JhwScm.SILENT = false;
          expectSuccess("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expectSuccess("(f)","3",scm);
          final String fact = 
