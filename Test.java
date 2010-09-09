@@ -734,6 +734,8 @@ public class Test
       expectSuccess("((lambda () (+ 1 2) 7))","7");
       expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
       {
+         // Are the nested-define defined symbols in scope of the
+         // "real" body?
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
          expectSuccess("(a 10)",                              "12",  scm);
@@ -741,11 +743,13 @@ public class Test
          expectSemantic("b",                                         scm);
       }
       {
+         // Can we do more than one?
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expectSuccess("(f)","3",scm);
       }
       {
+         // Can we do it for an inner helper function?
          final JhwScm scm = new JhwScm();
          final String fact = 
             "(define (fact n)"                                            +
@@ -764,6 +768,7 @@ public class Test
          selfTest(scm);
       }
       {
+         // Do nested defines really act like (begin)?
          final JhwScm scm = new JhwScm();
          final String def = 
             "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
@@ -771,12 +776,42 @@ public class Test
          expectSuccess("(f)","83",scm);
       }
       {
+         // Do nested defines really act like (begin) when we have args?
          final JhwScm scm = new JhwScm();
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
          expectSuccess(def,"",scm);
          expectSuccess("(f 4)","85",scm);
          expectSuccess("(f 3)","84",scm);
+      }
+      {
+         // Are nested defines in one another's scope, in any order?
+         final JhwScm scm = new JhwScm();
+         final String F = 
+            "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
+         final String G = 
+            "(define (G b) (define (g x) (+ a x)) (define a 1) (g b))";
+         expectSuccess(F,"",scm);
+         expectSuccess("(F 4)","5",scm);
+         expectSuccess(G,"",scm);
+         expectSuccess("(G 4)","5",scm);
+      }
+      {
+         // What about defines in lambdas?
+         final JhwScm scm = new JhwScm();
+         final String def = 
+            "((lambda (x) (define a 7) (+ x a)) 5)";
+         expectSuccess(def,"12",scm);
+      }
+      {
+         // What about closures?
+         final JhwScm scm = new JhwScm();
+         final String def = 
+            "(define (f x) (define (h y) (+ x y)) h)";
+         expectSuccess(def,"",scm);
+         expectSuccess("(f 10)","???",scm);
+         JhwScm.SILENT = false;
+         expectSuccess("((f 10) 7)","17",scm);
       }
    }
 
