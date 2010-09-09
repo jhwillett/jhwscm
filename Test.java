@@ -808,6 +808,14 @@ public class Test
          // What about closures?
          final JhwScm scm = new JhwScm();
          final String def = 
+            "(((lambda (x) (lambda (y) (+ x y))) 10) 7)";
+         expectSuccess(def,"17",scm);
+      }
+      if ( true )
+      {
+         // What about closures?
+         final JhwScm scm = new JhwScm();
+         final String def = 
             "(define (f x) (lambda (y) (+ x y)))";
          expectSuccess(def,"",scm);
          expectSuccess("(f 10)","???",scm);
