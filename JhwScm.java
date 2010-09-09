@@ -1775,11 +1775,11 @@ public class JhwScm
                log("MAKING THE LEAP");
                store(reg[regEnv]);
                reg[regEnv] = reg[regTmp2];
-               gosub(sub_eval, sub_apply_user+0x2);
+               gosub(sub_begin, sub_apply_user+0x2);
             }
             else
             {
-               gosub(sub_eval, blk_tail_call);
+               gosub(sub_begin, blk_tail_call);
             }
             break;
          case sub_apply_user+0x2:
@@ -2372,9 +2372,30 @@ public class JhwScm
             // remaining args are the body of the new procedure, in an
             // implicit (begin) block.
             //
+            logrec("lambda args: ",reg[regArg0]);
+            if ( TYPE_CELL != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);  // must have at least 2 args
+               break;
+            }
+            reg[regTmp0] = car(reg[regArg0]);
+            logrec("proc args:   ",reg[regTmp0]);
+            if ( TYPE_NIL  != type(reg[regTmp0]) &&
+                 TYPE_CELL != type(reg[regTmp0])  )
+            {
+               raiseError(ERR_SEMANTIC);  // must have at least 2 args
+               break;
+            }
+            reg[regTmp1] = cdr(reg[regArg0]);
+            logrec("proc body:   ",reg[regTmp1]);
+            if ( TYPE_CELL != type(reg[regTmp1]) )
+            {
+               raiseError(ERR_SEMANTIC);  // must have at least 2 args
+               break;
+            }
             reg[regRetval] = cons(reg[regEnv], NIL);
-            reg[regRetval] = cons(reg[regArg1],reg[regRetval]);
-            reg[regRetval] = cons(reg[regArg0],reg[regRetval]);
+            reg[regRetval] = cons(reg[regTmp1],reg[regRetval]);
+            reg[regRetval] = cons(reg[regTmp0],reg[regRetval]);
             reg[regRetval] = cons(IS_PROCEDURE,reg[regRetval]);
             returnsub();
             break;
@@ -2645,8 +2666,8 @@ public class JhwScm
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
    private static final int sub_define           = TYPE_SUBS | A2 |  0x7800;
-   private static final int sub_lambda           = TYPE_SUBS | A2 |  0x7900;
-   // TODO: sub_define and sub_lambda should really be variadic
+   private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
+   // TODO: sub_define should be variadic
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;

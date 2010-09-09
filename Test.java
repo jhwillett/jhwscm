@@ -490,7 +490,6 @@ public class Test
       expectSemantic("((lambda (a) 1) 10 20)");
       expectSuccess("(lambda (a b) (* a b))",       "???");
       expectSuccess("((lambda (a b) (* a b)) 13 5)","65");
-
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
@@ -499,7 +498,7 @@ public class Test
          selfTest(scm);
       }
 
-      if ( true ) // slow
+      if ( true )
       {
          // ambition: nontrivial user-defined recursive function
          // 
@@ -528,7 +527,7 @@ public class Test
          System.out.println("  numCallsToCons: " + scm.numCallsToCons);
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
       }
-      if ( true ) // slow
+      if ( true )
       {
          final String help = 
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
@@ -553,7 +552,7 @@ public class Test
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
       }
 
-      if ( true ) // slow
+      if ( true )
       {
          // ambition: nontrivial user-defined recursive function
          // 
@@ -734,9 +733,8 @@ public class Test
 
       // variadic (lambda) and (define), inner defines, etc.
       // 
-      if ( false )
+      if ( true )
       {
-         JhwScm.SILENT = false;
          expectSuccess("(lambda () (+ 1 2) 7)","???");
          expectSuccess("((lambda () (+ 1 2) 7))","7");
          expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
