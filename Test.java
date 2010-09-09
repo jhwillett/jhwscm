@@ -479,7 +479,6 @@ public class Test
       }
 
       // defining functions
-      JhwScm.SILENT = false;
       expectSemantic("(lambda)");
       expectSemantic("(lambda ())");
       expectSuccess("(lambda () 1)","???");
@@ -491,10 +490,6 @@ public class Test
       expectSemantic("((lambda (a) 1) 10 20)");
       expectSuccess("(lambda (a b) (* a b))",       "???");
       expectSuccess("((lambda (a b) (* a b)) 13 5)","65");
-
-      expectSuccess("(lambda () (+ 1 2) 7)","???");
-      expectSuccess("((lambda () (+ 1 2) 7))","7");
-      expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
 
       {
          final JhwScm scm = new JhwScm();
@@ -737,11 +732,18 @@ public class Test
          expectSemantic("(case 7 ((5 3) 100) ((4 5) 200))");
       }
 
-      JhwScm.SILENT = false;
-      
+      // variadic (lambda) and (define), inner defines, etc.
+      // 
+      if ( false )
       {
-         // inner defines
-         // 
+         JhwScm.SILENT = false;
+         expectSuccess("(lambda () (+ 1 2) 7)","???");
+         expectSuccess("((lambda () (+ 1 2) 7))","7");
+         expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
+      }
+      if ( false )
+      {
+         JhwScm.SILENT = false;
          final JhwScm scm = new JhwScm();
          expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
          expectSuccess("(a 10)",                              "12",  scm);
