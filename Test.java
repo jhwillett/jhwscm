@@ -803,6 +803,7 @@ public class Test
             "((lambda (x) (define a 7) (+ x a)) 5)";
          expectSuccess(def,"12",scm);
       }
+      JhwScm.SILENT = false;
       if ( true )
       {
          // What about closures?
@@ -821,7 +822,7 @@ public class Test
          expectSuccess("(f 10)","???",scm);
          expectSuccess("((f 10) 7)","17",scm);
       }
-      if ( false )
+      if ( true )
       {
          // What about closures?
          final JhwScm scm = new JhwScm();
@@ -829,7 +830,6 @@ public class Test
             "(define (f x) (define (h y) (+ x y)) h)";
          expectSuccess(def,"",scm);
          expectSuccess("(f 10)","???",scm);
-         JhwScm.SILENT = false;
          expectSuccess("((f 10) 7)","17",scm);
       }
    }
