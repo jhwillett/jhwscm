@@ -436,6 +436,18 @@ public class Test
       // that?
       //
       expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
+
+      // (read) and (print) are exposed, though of course print is
+      // exposed as (display) via R5RS.  I am displeased, b/c
+      // "read-eval-display" loop doesn't have the same robust
+      // tradition.  SICP uses (print)...
+      //
+      expectSuccess("(display 5)","5");
+      expectSuccess("(display 5)2","52");
+      expectSuccess("(display (+ 3 4))(+ 1 2)","73");
+      expectSuccess("(display '(+ 3 4))(+ 1 2)","(+ 3 4)3");
+      expectSuccess("(read)5","5");
+      expectSuccess("(read)(+ 1 2)","(+ 1 2)");
       
       // defining symbols
       {
@@ -453,6 +465,7 @@ public class Test
          expectSemantic("(+ a c)",            scm);
          selfTest(scm);
       }
+      expectSemantic("(define a)");
 
       // redefining symbols
       expectSuccess("(define a 1)a(define a 2)a","12");
@@ -466,8 +479,22 @@ public class Test
       }
 
       // defining functions
+      JhwScm.SILENT = false;
+      expectSemantic("(lambda)");
+      expectSemantic("(lambda ())");
+      expectSuccess("(lambda () 1)","???");
+      expectSuccess("((lambda () 1))","1");
+      expectSemantic("((lambda () 1) 10)");
+      expectSuccess("(lambda (a) 1)","???");
+      expectSuccess("((lambda (a) 1) 10)","1");
+      expectSemantic("((lambda (a) 1))");
+      expectSemantic("((lambda (a) 1) 10 20)");
       expectSuccess("(lambda (a b) (* a b))",       "???");
       expectSuccess("((lambda (a b) (* a b)) 13 5)","65");
+
+      expectSuccess("(lambda () (+ 1 2) 7)","???");
+      expectSuccess("((lambda () (+ 1 2) 7))","7");
+      expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
 
       {
          final JhwScm scm = new JhwScm();
@@ -711,8 +738,6 @@ public class Test
       }
 
       JhwScm.SILENT = false;
-      
-      if ( true ) return;
       
       {
          // inner defines

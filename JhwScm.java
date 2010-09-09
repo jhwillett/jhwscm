@@ -111,6 +111,15 @@ public class JhwScm
       prebind("begin",  sub_begin);
       prebind("cond",   sub_cond);
       prebind("case",   sub_case);
+      prebind("read",   sub_read);
+      if ( false )
+      {
+         prebind("print",sub_print);   // SICP, my preference from tradition
+      }
+      else
+      {
+         prebind("display",sub_print); // R5RS, Guile, Scsh, get off my lawn!
+      }
    }
 
    /**
@@ -788,7 +797,7 @@ public class JhwScm
             // A helper for sub_read_symbol, but still a sub_ in its
             // own right.
             //
-            // Return value undefined, works via side-effects.
+            // Return value VOID, works via side-effects.
             //
             if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
@@ -800,7 +809,7 @@ public class JhwScm
             if ( EOF == c0 )
             {
                if ( verb ) log("eof: returning");
-               reg[regRetval] = UNDEFINED;
+               reg[regRetval] = VOID;
                returnsub();
                break;
             }
@@ -915,7 +924,7 @@ public class JhwScm
             c = queuePeekFront(reg[regIn]);
             if ( EOF == c )
             {
-               reg[regRetval] = UNDEFINED;
+               reg[regRetval] = VOID;
                returnsub();
                break;
             }
@@ -929,7 +938,7 @@ public class JhwScm
                gosub(sub_read_burn_space,blk_tail_call);
                break;
             default:
-               reg[regRetval] = UNDEFINED;
+               reg[regRetval] = VOID;
                returnsub();
                break;
             }
@@ -1841,6 +1850,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
+                  reg[regRetval] = VOID;
                   returnsub();
                   break;
                default:
@@ -1874,7 +1884,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],c);
                   break;
                }
-               reg[regRetval] = UNDEFINED;
+               reg[regRetval] = VOID;
                returnsub();
                break;
             case TYPE_BOOLEAN:
@@ -1883,10 +1893,12 @@ public class JhwScm
                {
                case TRUE:
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'t'));
+                  reg[regRetval] = VOID;
                   returnsub();
                   break;
                case FALSE:
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'f'));
+                  reg[regRetval] = VOID;
                   returnsub();
                   break;
                default:
@@ -1906,7 +1918,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],
                                 code(TYPE_CHAR,str.charAt(tmp0)));
                }
-               reg[regRetval] = UNDEFINED;
+               reg[regRetval] = VOID;
                returnsub();
                break;
             case TYPE_SUBP:
@@ -1918,7 +1930,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],
                                 code(TYPE_CHAR,str2.charAt(tmp0)));
                }
-               reg[regRetval] = UNDEFINED;
+               reg[regRetval] = VOID;
                returnsub();
                break;
             case TYPE_ERROR:
@@ -1927,7 +1939,7 @@ public class JhwScm
             case TYPE_SENTINEL:
                if ( VOID == c )
                {
-                  reg[regRetval] = UNDEFINED;
+                  reg[regRetval] = VOID;
                   returnsub();
                   break;
                }
@@ -1939,6 +1951,7 @@ public class JhwScm
                   // TODO: clearly having rules about TYPE_SENTINEL
                   // break down, and UNDEFINED vs VOID vs NIL really
                   // needs to be thought out.
+                  logrec("print falls down: ",c);
                   raiseError(ERR_INTERNAL);
                   break;
                }
@@ -1958,7 +1971,7 @@ public class JhwScm
             break;
          case sub_print_string+0x1:
             queuePushBack(reg[regOut],code(TYPE_CHAR,'"'));
-            reg[regRetval] = UNDEFINED;
+            reg[regRetval] = VOID;
             returnsub();
             break;
 
@@ -1969,6 +1982,7 @@ public class JhwScm
             c = reg[regArg0];
             if ( NIL == c )
             {
+               reg[regRetval] = VOID;
                returnsub();
                break;
             }
@@ -2002,6 +2016,7 @@ public class JhwScm
             break;
          case sub_print_list+0x1:
             queuePushBack(reg[regOut],code(TYPE_CHAR,')'));
+            reg[regRetval] = VOID;
             returnsub();
             break;
 
@@ -2017,7 +2032,7 @@ public class JhwScm
             //
             if ( NIL == reg[regArg0] )
             {
-               reg[regRetval] = UNDEFINED;
+               reg[regRetval] = VOID;
                returnsub();
                break;
             }
@@ -2263,9 +2278,18 @@ public class JhwScm
             // binding.
             //
             // Also - we have two forms of define, the one with a
-            // symbol arg which just defines a variable (define x 1),
-            // and the one with a list arg which is sugar (define (x)
-            // 1) is (define x (lambda () 1)).
+            // symbol arg which just defines a variable:
+            //
+            //   (define x 1)
+            //
+            // and the one with a list arg which is sugar:
+            //
+            //   (define (x) 1) equivalent to (define x (lambda () 1))
+            //
+            // sub_define is variadic.  The first form must have
+            // exactly two args.  The second form must have at least
+            // two args, which form the body of the method being
+            // defined within an implicit (begin) block.
             //
             if ( TYPE_CELL != type(reg[regArg0]) )
             {
@@ -2343,7 +2367,10 @@ public class JhwScm
             //
             // OK, done!
             //
-            // TODO: gotta get that current environment here...
+            // sub_lambda is variadic and must have at least two args.
+            // The first must be a list, possibly empty.  The
+            // remaining args are the body of the new procedure, in an
+            // implicit (begin) block.
             //
             reg[regRetval] = cons(reg[regEnv], NIL);
             reg[regRetval] = cons(reg[regArg1],reg[regRetval]);
@@ -2619,6 +2646,7 @@ public class JhwScm
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
    private static final int sub_define           = TYPE_SUBS | A2 |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | A2 |  0x7900;
+   // TODO: sub_define and sub_lambda should really be variadic
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
