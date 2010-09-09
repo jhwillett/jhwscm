@@ -450,7 +450,7 @@ public class Test
       expectSuccess("(read)(+ 1 2)","(+ 1 2)");
       
       // defining symbols
-      //JhwScm.SILENT = false;
+      JhwScm.SILENT = false;
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define a 100)","",   scm);
