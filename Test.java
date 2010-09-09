@@ -803,6 +803,17 @@ public class Test
             "((lambda (x) (define a 7) (+ x a)) 5)";
          expectSuccess(def,"12",scm);
       }
+      if ( true )
+      {
+         // What about closures?
+         final JhwScm scm = new JhwScm();
+         final String def = 
+            "(define (f x) (lambda (y) (+ x y)))";
+         expectSuccess(def,"",scm);
+         expectSuccess("(f 10)","???",scm);
+         expectSuccess("((f 10) 7)","17",scm);
+      }
+      if ( false )
       {
          // What about closures?
          final JhwScm scm = new JhwScm();
