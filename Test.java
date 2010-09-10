@@ -643,7 +643,6 @@ public class Test
          expectSuccess("(fact -1)","1",  scm);
          expectSuccess("(fact 0)", "1",  scm);
          expectSuccess("(fact 1)", "1",  scm);
-         JhwScm.SILENT = false;
          expectSuccess("(fact 2)", "2",  scm);
          expectSuccess("(fact 3)", "6",  scm);
          expectSuccess("(fact 4)", "24", scm);
