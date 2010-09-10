@@ -970,7 +970,7 @@ public class JhwScm
                break;
             case TYPE_CELL:
                tmp0 = car(reg[regArg0]);
-               if ( verb ) log("h: " + pp(tmp0));
+               //if ( verb ) log("h: " + pp(tmp0));
                switch (tmp0)
                {
                case IS_STRING:
@@ -983,6 +983,7 @@ public class JhwScm
                   //
                   //   reg[regArg0] already contains the symbol
                   //   reg[regArg1] already contains the env
+                  logrec("looking up symbol: ",reg[regArg0]);
                   gosub(sub_eval_look_env,sub_eval+0x1);
                   break;
                default:
@@ -1031,6 +1032,7 @@ public class JhwScm
             // following symbol lookup
             if ( NIL == reg[regRetval] )
             {
+               log("sub_eval+0x1 unbound symbol");
                raiseError(ERR_SEMANTIC);
                break;
             }
@@ -1154,14 +1156,14 @@ public class JhwScm
             //             (sub_eval_look_env sym (cdr env))
             //             bind))))
             //
-            if ( true )
+            if ( false )
             {
                logrec("sub_eval_look_env SYM",reg[regArg0]);
                log(   "sub_eval_look_env ENV " + pp(reg[regArg1]));
             }
             if ( NIL == reg[regArg1] )
             {
-               if ( verb ) log("empty env: symbol not found");
+               logrec("sub_eval_look_env symbol not found",reg[regArg0]);
                reg[regRetval] = NIL;
                returnsub();
                break;
@@ -1176,7 +1178,7 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( NIL != reg[regRetval] )
             {
-               if ( verb ) log("symbol found w/ bind: " + pp(reg[regRetval]));
+               //logrec("sub_eval_look_env symbol found: ",reg[regRetval]);
                returnsub();
                break;
             }
@@ -1205,13 +1207,15 @@ public class JhwScm
             //             (car frame)
             //             (sub_eval_look_frame (cdr frame))))))
             //
-            if ( true )
+            if ( false )
             {
-               logrec("FRAME SYM   ",reg[regArg0]);
-               //logrec("FRAME FRAME ",reg[regArg1]);
+               logrec("sub_eval_look_frame SYM   ",reg[regArg0]);
+               log(   "sub_eval_look_frame ENV   " + pp(reg[regArg1]));
+               //logrec("sub_eval_look_frame FRAME ",reg[regArg1]);
             }
             if ( NIL == reg[regArg1] )
             {
+               logrec("sub_eval_look_frame symbol not found",reg[regArg0]);
                reg[regRetval] = NIL;
                returnsub();
                break;
@@ -1226,6 +1230,7 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( TRUE == reg[regRetval] )
             {
+               //log("sub_eval_look_frame symbol found");
                reg[regRetval] = car(reg[regArg1]);
                returnsub();
                break;
@@ -1248,30 +1253,30 @@ public class JhwScm
             //
             // NOTE: this is meant to be the equal? described in R5RS.
             //
-            if ( verb ) log("arg0: " + pp(reg[regArg0]));
-            if ( verb ) log("arg1: " + pp(reg[regArg1]));
+            //if ( verb ) log("arg0: " + pp(reg[regArg0]));
+            //if ( verb ) log("arg1: " + pp(reg[regArg1]));
             if ( reg[regArg0] == reg[regArg1] )
             {
-               if ( verb ) log("identical");
+               //if ( verb ) log("identical");
                reg[regRetval] = TRUE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != type(reg[regArg1]) )
             {
-               if ( verb ) log("different types");
+               //if ( verb ) log("different types");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != TYPE_CELL )
             {
-               if ( verb ) log("not cells");
+               //if ( verb ) log("not cells");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
-            if ( verb ) log("checking car");
+            //if ( verb ) log("checking car");
             store(reg[regArg0]);
             store(reg[regArg1]);
             reg[regArg0] = car(reg[regArg0]);
@@ -1283,11 +1288,11 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( FALSE == reg[regRetval] )
             {
-               if ( verb ) log("car mismatch");
+               //if ( verb ) log("car mismatch");
                returnsub();
                break;
             }
-            if ( verb ) log("checking cdr");
+            //if ( verb ) log("checking cdr");
             reg[regArg0] = cdr(reg[regArg0]);
             reg[regArg1] = cdr(reg[regArg1]);
             gosub(sub_equal_p,blk_tail_call);
@@ -1298,13 +1303,10 @@ public class JhwScm
             gosub(sub_let_bindings,sub_let+0x1);
             break;
          case sub_let+0x1:
-            reg[regTmp0] = restore();         // re body
-            reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
-            reg[regEnv]  = reg[regTmp1];
-            reg[regArg0] = reg[regTmp0];
-            reg[regArg1] = reg[regEnv];
+            reg[regArg0] = restore();         // restore body
+            reg[regArg1] = cons(reg[regRetval],reg[regEnv]); // new env
             logrec("sub_let body ",reg[regArg0]);
-            logrec("sub_let frame",reg[regRetval]);
+            //logrec("sub_let frame",reg[regRetval]);
             gosub(sub_eval,blk_tail_call);
             break;
 
@@ -1366,7 +1368,7 @@ public class JhwScm
             reg[regTmp0] = restore();         // restore symbol
             reg[regTmp2] = cons(reg[regTmp0],reg[regRetval]); // new binding
             logrec("sub_let_bindings symbol",reg[regTmp0]);
-            logrec("sub_let_bindings value ",reg[regRetval]);
+            //logrec("sub_let_bindings value ",reg[regRetval]);
             store(reg[regTmp2]);
             reg[regArg0] = reg[regTmp1];
             gosub(sub_let_bindings,blk_tail_call_m_cons);
@@ -1770,20 +1772,35 @@ public class JhwScm
          case sub_apply_user+0x1:
             reg[regArg1] = restore();                   // restore args UNUSED!
             reg[regArg0] = restore();                   // restore operator
-            reg[regTmp0] = reg[regRetval];              // extract env frame
-            reg[regTmp1] = car(cdr(cdr(reg[regArg0]))); // extract body
-            reg[regTmp2] = cons(reg[regTmp0],reg[regEnv]);
+            reg[regTmp0] = reg[regRetval];              // arg-binding frame
+            reg[regTmp1] = car(cdr(cdr(reg[regArg0]))); // body
+            reg[regTmp3] = car(cdr(cdr(cdr(reg[regArg0])))); // lexical env
+            if ( false )
+            {
+               reg[regTmp2] = cons(reg[regTmp0],reg[regEnv]);   // apply env
+            }
+            else
+            {
+               reg[regTmp2] = cons(reg[regTmp0],reg[regTmp3]);  // apply env
+            }
             logrec("sub_apply_user BODY ",reg[regTmp1]);
             logrec("sub_apply_user FRAME",reg[regTmp0]);
-            log("sub_apply_user ENV  " + pp(reg[regTmp2]));
+            logrec("sub_apply_user ENV  ",reg[regTmp2]);
+            //logrec("sub_apply_user YO   ",cons(reg[regTmp0],reg[regTmp3]));
+            //log("sub_apply_user ENV  " + pp(reg[regTmp2]));
+            //log("sub_apply_user ENVa " + pp(car(reg[regTmp2])));
+            //log("sub_apply_user ENVd " + pp(cdr(reg[regTmp2])));
+            //log("sub_apply_user ENVad" + pp(car(cdr(reg[regTmp2]))));
             reg[regArg0] = reg[regTmp1];
             reg[regArg1] = reg[regTmp2];
             if ( true )
             {
                // TODO: should this be eval's job?
-               log("MAKING THE LEAP");
+               log("sub_apply_user stashing:  " + pp(reg[regEnv]));
+               log("sub_apply_user pushing:   " + pp(reg[regTmp2]));
                store(reg[regEnv]);
                reg[regEnv] = reg[regTmp2];
+               //logrec("sub_apply_user THE REAL ENV",reg[regEnv]);
                gosub(sub_begin, sub_apply_user+0x2);
             }
             else
@@ -1795,8 +1812,9 @@ public class JhwScm
             // I am so sad that pushing that env above means we cannot
             // be tail recursive.
             //
-            log("LANDING!!!");
+            log("sub_apply_user landing:   " + pp(reg[regEnv]));
             reg[regEnv] = restore();
+            log("sub_apply_user unstashed: " + pp(reg[regEnv]));
             returnsub();
             break;
 
@@ -2417,14 +2435,14 @@ public class JhwScm
             // remaining args are the body of the new procedure, in an
             // implicit (begin) block.
             //
-            logrec("lambda args: ",reg[regArg0]);
+            logrec("sub_lambda args: ",reg[regArg0]);
             if ( TYPE_CELL != type(reg[regArg0]) )
             {
                raiseError(ERR_SEMANTIC);  // must have at least 2 args
                break;
             }
             reg[regTmp0] = car(reg[regArg0]);
-            logrec("proc args:   ",reg[regTmp0]);
+            logrec("sub_lambda list:   ",reg[regTmp0]);
             if ( TYPE_NIL  != type(reg[regTmp0]) &&
                  TYPE_CELL != type(reg[regTmp0])  )
             {
@@ -2432,12 +2450,14 @@ public class JhwScm
                break;
             }
             reg[regTmp1] = cdr(reg[regArg0]);
-            logrec("proc body:   ",reg[regTmp1]);
+            logrec("sub_lambda body:   ",reg[regTmp1]);
             if ( TYPE_CELL != type(reg[regTmp1]) )
             {
                raiseError(ERR_SEMANTIC);  // must have at least 2 args
                break;
             }
+            log("sub_lambda ENV:    "+ pp(reg[regEnv]));
+            logrec("sub_lambda FR:     ",car(reg[regEnv]));
             reg[regRetval] = cons(reg[regEnv], NIL);
             reg[regRetval] = cons(reg[regTmp1],reg[regRetval]);
             reg[regRetval] = cons(reg[regTmp0],reg[regRetval]);
@@ -2857,8 +2877,9 @@ public class JhwScm
          // optimization if we haven't stashed the continuation
          // someplace.  
          //
-         // This optimization may not be sustainable in the
-         // medium-term.
+         // For now, the only place we stash continuations when we
+         // enter an error state, but this optimization may not be
+         // sustainable in the medium-term.
          setcdr(cell,reg[regFreeCellList]);
          reg[regFreeCellList] = cell;
       }
@@ -3376,6 +3397,12 @@ public class JhwScm
                buf.append((char)value(car(c)));
             }
             log(tag + pp(first) + " " + buf);
+            break;
+         case IS_PROCEDURE:
+         case IS_SPECIAL_FORM:
+            log(tag + pp(first));
+            tag += " ";
+            logrec(tag,car(cdr(c))); // just show the arg list
             break;
          default:
             log(tag + pp(c));
