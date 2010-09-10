@@ -631,6 +631,7 @@ public class Test
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");
 
       // nested lexical scopes:
+      JhwScm.SILENT = false;
       expectSuccess("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
       {
          final String fact = 

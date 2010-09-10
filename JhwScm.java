@@ -50,7 +50,7 @@ public class JhwScm
    public static final boolean DEBUG                     = true;
    public static final boolean PROFILE                   = true;
    public static final boolean DEFER_HEAP_INIT           = true;
-   public static final boolean PROPERLY_TAIL_RECURSIVE   = false;
+   public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
@@ -1246,30 +1246,30 @@ public class JhwScm
             //
             // NOTE: this is meant to be the equal? described in R5RS.
             //
-            if ( verb ) log("arg0: " + pp(reg[regArg0]));
-            if ( verb ) log("arg1: " + pp(reg[regArg1]));
+            //if ( verb ) log("arg0: " + pp(reg[regArg0]));
+            //if ( verb ) log("arg1: " + pp(reg[regArg1]));
             if ( reg[regArg0] == reg[regArg1] )
             {
-               if ( verb ) log("identical");
+               //if ( verb ) log("identical");
                reg[regRetval] = TRUE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != type(reg[regArg1]) )
             {
-               if ( verb ) log("different types");
+               //if ( verb ) log("different types");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
             if ( type(reg[regArg0]) != TYPE_CELL )
             {
-               if ( verb ) log("not cells");
+               //if ( verb ) log("not cells");
                reg[regRetval] = FALSE;
                returnsub();
                break;
             }
-            if ( verb ) log("checking car");
+            //if ( verb ) log("checking car");
             store(reg[regArg0]);
             store(reg[regArg1]);
             reg[regArg0] = car(reg[regArg0]);
@@ -1281,11 +1281,11 @@ public class JhwScm
             reg[regArg0] = restore();
             if ( FALSE == reg[regRetval] )
             {
-               if ( verb ) log("car mismatch");
+               //if ( verb ) log("car mismatch");
                returnsub();
                break;
             }
-            if ( verb ) log("checking cdr");
+            //if ( verb ) log("checking cdr");
             reg[regArg0] = cdr(reg[regArg0]);
             reg[regArg1] = cdr(reg[regArg1]);
             gosub(sub_equal_p,blk_tail_call);
@@ -1298,7 +1298,7 @@ public class JhwScm
          case sub_let+0x1:
             reg[regTmp0] = restore();         // restore body
             reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
-            if ( true )
+            if ( false )
             {
                // TODO: why set regEnv here?  Isn't that sub_eval's
                // job?
@@ -1308,6 +1308,29 @@ public class JhwScm
                reg[regEnv]  = reg[regTmp1];
                reg[regArg0] = reg[regTmp0];
                reg[regArg1] = reg[regEnv];
+
+               // HEY DUDE!!!!!!!!!!!
+               //
+               // (let) is *not* fundamental.  It is a syntax over
+               // (lambda).  
+               //
+               // That this first impl was so simple means either this
+               // impl is insufficient, or that sub_lambda is overly
+               // complicated.
+               //
+               // I doubt sub_lambda is overly complicated.  Try
+               // reimplementing this as an expansion to a lambda
+               // form.
+               //
+               // Side comment: I was thinking that (define) was also
+               // non-fundamental.  Only half true.  The simple form
+               // of it is needed b/c it creates new symbol bindings
+               // in existing environment frames, wheras lambda
+               // creates new frames.  The procedure style of
+               // (define), however, is just a syntax over the simple
+               // form of (define) and (lambda) - which of course is
+               // how it is implemented now.
+               //
             }
             else
             {
