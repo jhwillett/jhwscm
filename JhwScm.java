@@ -1044,7 +1044,7 @@ public class JhwScm
             break;
          case sub_eval+0x2:
             // following eval of the first elem
-
+            //
             // If it's a function, evaluate the args next, following
             // up with apply.
             //
@@ -1053,15 +1053,15 @@ public class JhwScm
             //
             reg[regTmp1] = restore();         // restore the env
             reg[regTmp0] = restore();         // restore the arg exprs
-            reg[regTmp2] = reg[regRetval];    // the value of the operator
+            reg[regTmp2] = reg[regRetval];    // value of the operator
             tmp0 = type(reg[regTmp2]);
             if ( TYPE_SUBP == tmp0 || 
                  TYPE_CELL == tmp0 && IS_PROCEDURE == car(reg[regTmp2]) )
             {
-               // eval args
+               // procedure: evaluate the args and then apply op to
+               // args values
                // 
-               // apply op to args
-               store(reg[regTmp2]);      // store the value of the operator
+               store(reg[regTmp2]);           // store value of the operator
                reg[regArg0] = reg[regTmp0];
                reg[regArg1] = reg[regTmp1];
                gosub(sub_eval_list,sub_eval+0x3);
@@ -1070,14 +1070,15 @@ public class JhwScm
             if ( TYPE_SUBS == tmp0 || 
                  TYPE_CELL == tmp0 && IS_SPECIAL_FORM == car(reg[regTmp2]) )
             {
-               // apply op to args
+               // special: apply op directly to args exprs
+               //
                reg[regArg0] = reg[regTmp2];
                reg[regArg1] = reg[regTmp0];
                gosub(sub_apply,blk_tail_call);
                break;
             }
             logrec("wtf",tmp0);
-            raiseError(ERR_SEMANTIC);
+            raiseError(ERR_SEMANTIC); // TODO: or ERR_INTERNAL? Try "('(a))".
             break;
          case sub_eval+0x3:
             // following eval of the args
@@ -1205,11 +1206,7 @@ public class JhwScm
             //             (car frame)
             //             (sub_eval_look_frame (cdr frame))))))
             //
-            if ( true )
-            {
-               logrec("FRAME SYM   ",reg[regArg0]);
-               //logrec("FRAME FRAME ",reg[regArg1]);
-            }
+            logrec("sub_eval_look_frame SYM ",reg[regArg0]);
             if ( NIL == reg[regArg1] )
             {
                reg[regRetval] = NIL;
@@ -1219,6 +1216,7 @@ public class JhwScm
             store(reg[regArg0]);
             store(reg[regArg1]);
             reg[regArg1] = car(car(reg[regArg1]));
+            logrec("sub_eval_look_frame CMP ",reg[regArg1]);
             gosub(sub_equal_p,sub_eval_look_frame+0x1);
             break;
          case sub_eval_look_frame+0x1:
@@ -1298,11 +1296,25 @@ public class JhwScm
             gosub(sub_let_bindings,sub_let+0x1);
             break;
          case sub_let+0x1:
-            reg[regTmp0] = restore();         // re body
+            reg[regTmp0] = restore();         // restore body
             reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
-            reg[regEnv]  = reg[regTmp1];
-            reg[regArg0] = reg[regTmp0];
-            reg[regArg1] = reg[regEnv];
+            if ( true )
+            {
+               // TODO: why set regEnv here?  Isn't that sub_eval's
+               // job?
+               // 
+               // If we must set it, why aren't we restoring it
+               // afterwards?
+               reg[regEnv]  = reg[regTmp1];
+               reg[regArg0] = reg[regTmp0];
+               reg[regArg1] = reg[regEnv];
+            }
+            else
+            {
+               // TODO: and yet this totally fails...
+               reg[regArg0] = reg[regTmp0];
+               reg[regArg1] = reg[regTmp1];
+            }
             logrec("sub_let body ",reg[regArg0]);
             logrec("sub_let frame",reg[regRetval]);
             gosub(sub_eval,blk_tail_call);
@@ -1762,25 +1774,40 @@ public class JhwScm
                break;
             }
             store(reg[regArg0]);
-            store(reg[regArg1]);
             reg[regArg0] = car(cdr(reg[regArg0]));
             reg[regArg1] = reg[regArg1];
             gosub(sub_zip,sub_apply_user+0x1);
             break;
          case sub_apply_user+0x1:
-            reg[regArg1] = restore();                   // restore args UNUSED!
-            reg[regArg0] = restore();                   // restore operator
-            reg[regTmp0] = reg[regRetval];              // extract env frame
-            reg[regTmp1] = car(cdr(cdr(reg[regArg0]))); // extract body
-            reg[regTmp2] = cons(reg[regTmp0],reg[regEnv]);
-            logrec("sub_apply_user BODY ",reg[regTmp1]);
-            logrec("sub_apply_user FRAME",reg[regTmp0]);
-            log("sub_apply_user ENV  " + pp(reg[regTmp2]));
+            reg[regArg0] = restore();                        // restore op
+            reg[regTmp0] = reg[regRetval];                   // args frame
+            reg[regTmp1] = car(cdr(cdr(reg[regArg0])));      // op body
+            reg[regTmp3] = car(cdr(cdr(cdr(reg[regArg0])))); // op lexical env
+            reg[regTmp2] = cons(reg[regTmp0],reg[regEnv]);   // apply env
+            logrec("sub_apply_user BODY   ",reg[regTmp1]);
+            logrec("sub_apply_user FRAME  ",reg[regTmp0]);
+            //logrec("sub_apply_user CUR ENV",reg[regEnv]);
+            //logrec("sub_apply_user LEX ENV",reg[regTmp3]);
+            if ( true ) 
+            {
+               // going w/ lexical frame
+               reg[regTmp2] = cons(reg[regTmp0],reg[regTmp3]);
+            }
+            logrec("sub_apply_user ENV    ",reg[regTmp2]);
             reg[regArg0] = reg[regTmp1];
             reg[regArg1] = reg[regTmp2];
             if ( true )
             {
-               // TODO: should this be eval's job?
+               // TODO: should this be eval's job?  Eval gets an
+               // environment argument, after all.
+               //
+               // Update: maybe not.  We certainly wouldn't want
+               // (eval) to push/pop the env on any call - besides,
+               // only sub_apply_user and sub_let know what the new
+               // frames are, and only sub_apply_user knows where to
+               // find the lexical scope of a procedure or special
+               // form.
+               //
                log("MAKING THE LEAP");
                store(reg[regEnv]);
                reg[regEnv] = reg[regTmp2];
@@ -3376,6 +3403,12 @@ public class JhwScm
                buf.append((char)value(car(c)));
             }
             log(tag + pp(first) + " " + buf);
+            break;
+         case IS_PROCEDURE:
+         case IS_SPECIAL_FORM:
+            log(tag + pp(first));
+            tag += " ";
+            logrec(tag,car(cdr(c))); // just show the arg list, env might cycle
             break;
          default:
             log(tag + pp(c));
