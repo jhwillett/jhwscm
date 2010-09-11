@@ -629,7 +629,7 @@ public class Test
       expectSuccess("(let ((a 10)) (+ a 32))","42");
       expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");
-      if ( false)
+      if ( true )
       {
          // Heh, guard that those names stay buried.  
          //
@@ -641,9 +641,9 @@ public class Test
       }
 
       // nested lexical scopes:
-      //JhwScm.SILENT = false;
-      if ( false )
+      if ( true )
       {
+         JhwScm.SILENT = false;
          expectSuccess("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
       }
       {

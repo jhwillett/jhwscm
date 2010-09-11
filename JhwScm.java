@@ -1400,15 +1400,32 @@ public class JhwScm
                // OK, so the lamba expansion looks correct, for better
                // or worse.  Which is a relief.
                //
-               
-         final JhwScm scm = new JhwScm();
             }
             else
             {
                // TODO: and yet this totally fails on a nested let
                // expression.
                //
-
+               // Why?  Shouldn't this be enough?  Shouldn't sub_eval
+               // and sub_apply be conspiring to maintain the stack?
+               //
+               // No!  Only sub_lambda makes a closure, and I haven't
+               // done anything here to route through sub_lambda.
+               //
+               // Wait, but why does a nested let need a closure?
+               //
+               //   (let ((a 10)) a
+               //     a)
+               //
+               //   (let ((a 10)) 
+               //     (let ((b 32)) 
+               //       (+ a b)))
+               //
+               // OK, the first expresion succeeds, finding a.  The
+               // second expression fails looking up a.
+               //
+               // Hmm...
+               //
                reg[regArg0] = reg[regTmp0];
                reg[regArg1] = reg[regTmp1];
             }
