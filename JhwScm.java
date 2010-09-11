@@ -1295,6 +1295,11 @@ public class JhwScm
          case sub_let:
             if ( true )
             {
+               // Extra glue here since sub_let isn't AX yet...
+               //
+               reg[regTmp0] = cons(reg[regArg1],NIL);
+               reg[regTmp2] = cons(reg[regArg0],reg[regTmp0]);
+               reg[regArg0] = reg[regTmp2];
                gosub(sub_let_rewrite,sub_let+0x3);
             }
             else
@@ -1347,6 +1352,16 @@ public class JhwScm
             //           (values (map cadr (cadr expr)))
             //           (body   (caddr expr)))
             //       (cons (list 'lambda params body) values)))
+            //
+            // or perhaps better reflecting what I will do with the
+            // stack here:
+            //
+            //   (define (rewrite expr)
+            //     (let ((locals (cadr expr))
+            //           (body   (caddr expr)))
+            //       (let ((params (map car locals)))
+            //         (let ((values (map cadr locals)))
+            //           (cons (list 'lambda params body) values)))))
             //
             raiseError(ERR_NOT_IMPL);
             break;
