@@ -1076,8 +1076,9 @@ public class JhwScm
                gosub(sub_apply,blk_tail_call);
                break;
             }
-            logrec("wtf",tmp0);
-            raiseError(ERR_SEMANTIC); // TODO: or ERR_INTERNAL? Try "('(a))".
+            // We get here, for instance, evaluating the expr (1).
+            logrec("non-operator in sub_eval: ",tmp0);
+            raiseError(ERR_SEMANTIC);
             break;
          case sub_eval+0x3:
             // following eval of the args
@@ -1302,6 +1303,12 @@ public class JhwScm
             reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
             log("LET LET LET OLD ENV: " + pp(reg[regEnv]));
             log("LET LET LET NEW ENV: " + pp(reg[regTmp1]));
+            reg[regArg0] = reg[regTmp0];
+            reg[regArg1] = reg[regTmp1];
+            logrec("sub_let body ",reg[regArg0]);
+            logrec("sub_let frame",reg[regRetval]);
+            gosub(sub_eval,blk_tail_call);
+            break;
             // TODO: and yet this totally fails on a nested let
             // expression.
             //
@@ -1329,12 +1336,32 @@ public class JhwScm
             // binding for b, then continues with what I recognize
             // as the top-level environment.
             //
-            reg[regArg0] = reg[regTmp0];
-            reg[regArg1] = reg[regTmp1];
-            logrec("sub_let body ",reg[regArg0]);
-            logrec("sub_let frame",reg[regRetval]);
-            gosub(sub_eval,blk_tail_call);
-            break;
+            // AHA!  I think this may be because sub_apply_user
+            // manages regEnv, because it manipulates lexical scopes,
+            // but sub_apply_builtin does *not*.
+            // 
+            // So the first impulse is to make sub_apply_builtin
+            // symetric w/ its sibling sub_apply_user in this regard
+            // but two problems arise.
+            //
+            //   1. That extra pushing and popping is expensive in and
+            //      of itself.
+            //
+            //   2. That extra pushing and popping means we lose a
+            //      tail recursion in a critical high-frequency code
+            //      path.
+            //
+            //   3. What env would sub_apply_builtin push?  Where is
+            //      it recorded?
+            //
+            // Arguments (2) and (3) also apply to the option of
+            // making sub_env responsible for this.
+            //
+            // So we're looking at two options: make sub_let push and
+            // pop the env, or make sub_let work by rewriting as a
+            // lambda form.
+            //
+            // I think I'd like to explore both...
 
          case sub_let_bindings:
             // reg[regArg0] is expected to be a list of lists of the

@@ -429,34 +429,8 @@ HEY DUDE!!!!!!!!!!!
 That this first impl was so simple means either this impl is
 insufficient, or that sub_lambda is overly complicated.
 
-   * Sidebar: the first impl was:
-
-     case sub_let:
-        store(reg[regArg1]);              // store body
-        gosub(sub_let_bindings,sub_let+0x1);
-        break;
-     case sub_let+0x1:
-        reg[regTmp0] = restore();         // restore body
-        reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
-        reg[regEnv]  = reg[regTmp1];
-        reg[regArg0] = reg[regTmp0];
-        reg[regArg1] = reg[regEnv];
-        gosub(sub_eval,blk_tail_call);
-        break;
-
-     Several problems here:
-  
-       1. It only accepted a single expression for the body (instead
-          of many expressions evaluated in an implicit (begin)).
-
-       2. It sets reg[regEnv] which is supposed to be the job of
-          sub_apply or sub_eval.
-
-       3. It never restores reg[regEnv] when finished, effectively
-          "leaking" an environment frame and exposing its symbols to
-          its continuation.
-
-       I was wary of (1) and (2) when I wrote this, but missed (3).
+[For reference, see the first version of sub_let in the sidebar,
+below.]
 
 I doubt sub_lambda is overly complicated.  Try reimplementing this as
 an expansion to a lambda form.
@@ -529,5 +503,61 @@ Right?  Ho-ho!  Guile rejects it!  (fact 1) works fine, (fact 2) gets
 OK, so the lambda expansion looks correct, for better or worse.  Which
 is a relief.
 
+   * Sidebar: the first impl was:
 
+     case sub_let:
+        store(reg[regArg1]);              // store body
+        gosub(sub_let_bindings,sub_let+0x1);
+        break;
+     case sub_let+0x1:
+        reg[regTmp0] = restore();         // restore body
+        reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
+        reg[regEnv]  = reg[regTmp1];
+        reg[regArg0] = reg[regTmp0];
+        reg[regArg1] = reg[regEnv];
+        gosub(sub_eval,blk_tail_call);
+        break;
 
+     Several problems here:
+  
+       1. It only accepted a single expression for the body (instead
+          of many expressions evaluated in an implicit (begin)).
+
+       2. It sets reg[regEnv] which is supposed to be the job of
+          sub_apply or sub_eval.
+
+       3. It never restores reg[regEnv] when finished, effectively
+          "leaking" an environment frame and exposing its symbols to
+          its continuation.
+
+       I was wary of (1) and (2) when I wrote this, but missed (3).
+
+   * Sidebar: the second impl was:
+
+     case sub_let:
+        store(reg[regArg1]);              // store body
+        gosub(sub_let_bindings,sub_let+0x1);
+        break;
+     case sub_let+0x1:
+        reg[regTmp0] = restore();         // restore body
+        reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
+        reg[regArg0] = reg[regTmp0];
+        reg[regArg1] = reg[regTmp1];
+        gosub(sub_eval,blk_tail_call);
+        break;
+
+     Still not variadic, per (1) of the first version, but clean
+     regarding (2) and (3).  Unlike the first version, this correctly
+     failed for both of:
+
+       (let ((a 10)) a) ===> 10  ; both vers ok
+       a                ===> bad ; 2nd ver fails, 1st evaluates to 10
+
+       (define (fact n)
+         (let ((help
+                (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))
+               ))
+           (help n 1)))
+       (fact 1)         ===> 1   ; both vers ok
+       (fact 2)         ===> bad ; 2nd ver fails, 1st evaluates to 2
+       (fact 3)         ===> bad ; 2nd ver fails, 1st evaluates to 6
