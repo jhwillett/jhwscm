@@ -1295,9 +1295,13 @@ public class JhwScm
          case sub_let:
             // Extra glue here since sub_let isn't AX yet...
             //
-            reg[regTmp0] = cons(reg[regArg1],NIL);
-            reg[regTmp2] = cons(reg[regArg0],reg[regTmp0]);
-            reg[regArg0] = reg[regTmp2];
+            logrec("REWRITE INPUT: ",reg[regArg0]);
+            if ( false )
+            {
+               reg[regTmp0] = cons(reg[regArg1],NIL);
+               reg[regTmp2] = cons(reg[regArg0],reg[regTmp0]);
+               reg[regArg0] = reg[regTmp2];
+            }
             gosub(sub_let_rewrite,sub_let+0x3);
             break;
 
@@ -1340,8 +1344,14 @@ public class JhwScm
             //
             // Wow, but that is fiendishly tail-recursive!
             //
+            logrec("REWRITE INPUT: ",reg[regArg0]);
             reg[regTmp0] = car(reg[regArg0]); // regTmp0 is locals
             reg[regTmp2] = cdr(reg[regArg0]);
+            if ( TYPE_CELL != type(reg[regTmp2]) ) 
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
             reg[regTmp1] = car(reg[regTmp2]); // regTmp1 is body
             store(reg[regTmp0]);
             store(reg[regTmp1]);
@@ -2765,8 +2775,8 @@ public class JhwScm
 
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
-   private static final int sub_let              = TYPE_SUBS | A2 |  0x6200;
-   private static final int sub_let_rewrite      = TYPE_SUBS | A2 |  0x6220;
+   private static final int sub_let              = TYPE_SUBS | AX |  0x6200;
+   private static final int sub_let_rewrite      = TYPE_SUBS | A1 |  0x6220;
    private static final int sub_begin            = TYPE_SUBS | AX |  0x6300;
    private static final int sub_case             = TYPE_SUBS | AX |  0x6400;
    private static final int sub_case_search      = TYPE_SUBS | A2 |  0x6410;
