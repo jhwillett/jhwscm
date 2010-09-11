@@ -261,7 +261,6 @@ public class JhwScm
       //
       // TODO: render these as registers!
       //
-      int v0   = 0;
       int tmp0 = 0;
       int tmp1 = 0;
       int tmp2 = 0;
@@ -690,8 +689,7 @@ public class JhwScm
                raiseError(ERR_LEXICAL);
                break;
             }
-            v0 = value(reg[regTmp1]);
-            switch (v0)
+            switch (value(reg[regTmp1]))
             {
             case ' ':
             case '\t':
@@ -699,19 +697,19 @@ public class JhwScm
             case '\n':
             case '(':
             case ')':
-               if ( verb ) log("terminator: " + pp(reg[regTmp1]) + " return " + pp(reg[regArg0]));
+               // terminator
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             default:
-               if ( v0 < '0' || v0 > '9' )
+               if ( value(reg[regTmp1]) < '0' || value(reg[regTmp1]) > '9' )
                {
                   if ( verb ) log("non-digit in input: " + pp(reg[regTmp1]));
                   raiseError(ERR_LEXICAL);
                   break;
                }
-               tmp0 = 10*value(reg[regTmp2]) + (v0-'0');
-               if ( verb ) log("first char: " + (char)v0);
+               tmp0 = 10 * value(reg[regTmp2]) + (value(reg[regTmp1]) - '0');
+               if ( verb ) log("first char: " + (char)value(reg[regTmp1]));
                if ( verb ) log("old accum:  " +       value(reg[regTmp2]));
                if ( verb ) log("new accum:  " +       tmp0);
                queuePopFront(reg[regIn]);
@@ -1970,9 +1968,10 @@ public class JhwScm
                // We trick out the sign extension of our 28-bit
                // twos-complement FIXINTs to match Java's 32 bits
                // before proceeding.
-               v0 = (value(reg[regTmp0]) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
+               reg[regTmp1] = 
+                  (value(reg[regTmp0]) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
                // TODO: this is a huge cop-out, implement it right
-               final String str = "" + v0;
+               final String str = "" + reg[regTmp1];
                for ( tmp0 = 0; tmp0 < str.length(); ++tmp0 )
                {
                   queuePushBack(reg[regOut],
