@@ -1293,42 +1293,12 @@ public class JhwScm
             break;
 
          case sub_let:
-            if ( true )
-            {
-               // Extra glue here since sub_let isn't AX yet...
-               //
-               reg[regTmp0] = cons(reg[regArg1],NIL);
-               reg[regTmp2] = cons(reg[regArg0],reg[regTmp0]);
-               reg[regArg0] = reg[regTmp2];
-               gosub(sub_let_rewrite,sub_let+0x3);
-            }
-            else
-            {
-               // TODO: should be variadic, like other things with a body
-               // that is evaluated as an implicit (begin).
-               //
-               store(reg[regArg1]);         // store body
-               gosub(sub_let_bindings,sub_let+0x1);
-            }
-            break;
-         case sub_let+0x1:
-            reg[regTmp0] = restore();    // restore body
-            reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
-            reg[regArg0] = reg[regTmp0];
-            reg[regArg1] = reg[regTmp1];
-            store(reg[regEnv]);          // store env
-            log("LET ENV PREPUSH:  " + pp(reg[regEnv]));
-            reg[regEnv] = reg[regTmp1];
-            log("LET ENV POSTPUSH: " + pp(reg[regEnv]));
-            //logrec("sub_let body ",reg[regArg0]);
-            //logrec("sub_let frame",reg[regRetval]);
-            gosub(sub_eval,sub_let+0x2);
-            break;
-         case sub_let+0x2:
-            log("LET ENV PREPOP:   " + pp(reg[regEnv]));
-            reg[regEnv] = restore();     // restore env
-            log("LET ENV POSTPOP:  " + pp(reg[regEnv]));
-            returnsub();
+            // Extra glue here since sub_let isn't AX yet...
+            //
+            reg[regTmp0] = cons(reg[regArg1],NIL);
+            reg[regTmp2] = cons(reg[regArg0],reg[regTmp0]);
+            reg[regArg0] = reg[regTmp2];
+            gosub(sub_let_rewrite,sub_let+0x3);
             break;
          case sub_let+0x3:
             // after rewrite
@@ -1438,70 +1408,6 @@ public class JhwScm
             reg[regArg0] = restore();  // restore operator
             store(reg[regRetval]);     // feed blk_tail_call_m_cons
             gosub(sub_map,blk_tail_call_m_cons);
-            break;
-
-         case sub_let_bindings:
-            // reg[regArg0] is expected to be a list of lists of the
-            // form:
-            //
-            //   ((symbol expr) (symbol expr) (symbol expr))
-            // 
-            // Each expr is evaluated in the current env (with none of
-            // the symbols bound).  Returns a new frame with each
-            // symbol bound to the results of evaluating each expr.
-            //
-            if ( NIL == reg[regArg0] )
-            {
-               reg[regRetval] = NIL;
-               returnsub();
-               break;
-            }
-            if ( TYPE_CELL != type(reg[regArg0]) )
-            {
-               logrec("let dang A",reg[regArg0]);
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg[regTmp0] = car(reg[regArg0]); // first binding
-            if ( TYPE_CELL != type(reg[regTmp0]) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg[regTmp1] = car(reg[regTmp0]); // first symbol
-            if ( TYPE_CELL != type(reg[regTmp1]) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( IS_SYMBOL != car(reg[regTmp1]) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg[regTmp2] = cdr(reg[regTmp0]);
-            if ( TYPE_CELL != type(reg[regTmp2]) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            store(reg[regTmp1]);              // store symbol
-            store(cdr(reg[regArg0]));         // store rest of bindings
-            reg[regArg0] = car(reg[regTmp2]); // first expr
-            reg[regArg1] = reg[regEnv];       // current env
-            logrec("sub_let_bindings symbol",reg[regTmp1]);
-            logrec("sub_let_bindings expr  ",reg[regArg0]);
-            gosub(sub_eval,sub_let_bindings+0x1);
-            break;
-         case sub_let_bindings+0x1:
-            reg[regTmp1] = restore();         // restore rest of bindings
-            reg[regTmp0] = restore();         // restore symbol
-            reg[regTmp2] = cons(reg[regTmp0],reg[regRetval]); // new binding
-            logrec("sub_let_bindings symbol",reg[regTmp0]);
-            logrec("sub_let_bindings value ",reg[regRetval]);
-            store(reg[regTmp2]);
-            reg[regArg0] = reg[regTmp1];
-            gosub(sub_let_bindings,blk_tail_call_m_cons);
             break;
 
          case sub_begin:
@@ -2859,7 +2765,6 @@ public class JhwScm
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
    private static final int sub_let              = TYPE_SUBS | A2 |  0x6200;
-   private static final int sub_let_bindings     = TYPE_SUBS | A2 |  0x6210;
    private static final int sub_let_rewrite      = TYPE_SUBS | A2 |  0x6220;
    private static final int sub_begin            = TYPE_SUBS | AX |  0x6300;
    private static final int sub_case             = TYPE_SUBS | AX |  0x6400;
@@ -3640,7 +3545,6 @@ public class JhwScm
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_let:              buf.append("sub_let");              break;
-         case sub_let_bindings:     buf.append("sub_let_bindings");     break;
          case sub_let_rewrite:      buf.append("sub_let_rewrite");      break;
          case sub_begin:            buf.append("sub_begin");            break;
          case sub_case:             buf.append("sub_case");             break;
