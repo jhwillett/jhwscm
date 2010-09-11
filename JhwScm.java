@@ -2595,13 +2595,13 @@ public class JhwScm
    private static final int SHIFT_TYPE   = 28;         // matches MASK_TYPE
    private static final int MASK_VALUE   = ~MASK_TYPE;
 
-   private static final int TYPE_NIL      = 0x10000000;
+   private static final int TYPE_NIL      = 0x10000000; // TODO: TYPE_SENTINEL?
    private static final int TYPE_FIXINT   = 0x20000000;
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
-   private static final int TYPE_ERROR    = 0x50000000;
-   private static final int TYPE_BOOLEAN  = 0x60000000;
-   private static final int TYPE_SENTINEL = 0x70000000;
+   private static final int TYPE_ERROR    = 0x50000000; // TODO: TYPE_SENTINEL?
+   private static final int TYPE_BOOLEAN  = 0x60000000; // TODO: TYPE_SENTINEL?
+   private static final int TYPE_SENTINEL = 0x70000000; // TODO: TYPE_SENTINEL?
    private static final int TYPE_SUBP     = 0x80000000; // procedure-like
    private static final int TYPE_SUBS     = 0x90000000; // special-form-like
 
@@ -2625,6 +2625,14 @@ public class JhwScm
    // would be more efficient to use 0, 1, 2, ...etc.
 
    private static final int NIL                 = TYPE_NIL      | 37;
+
+   // TODO: should UNDEFINED and VOID fold together?
+
+   // TODO: distinct from EOF, do we need an NO_INPUT to indicate when
+   // no input is ready, but the port isn't closed?
+   //
+   // Should explore ports and how we do input() and output() here,
+   // get down to a lower level.
 
    private static final int EOF                 = TYPE_SENTINEL | 97;
    private static final int UNDEFINED           = TYPE_SENTINEL | 16;
@@ -2943,6 +2951,11 @@ public class JhwScm
       if ( verb ) log("  err:   " + pp(err));
       if ( verb ) log("  pc:    " + pp(reg[regPc]));
       if ( verb ) log("  stack: " + pp(reg[regStack]));
+      if ( DEBUG && TYPE_ERROR != type(err) )
+      {
+         // TODO: Bad call to raiseError()! Are we out of tricks?
+         throw new RuntimeException("bogus error code: " + pp(err));
+      }
       if ( verb )
       {
          final Thread              thread = Thread.currentThread();
@@ -2962,7 +2975,7 @@ public class JhwScm
          }
          for ( int c = reg[regStack]; NIL != c; c = cdr(c) )
          {
-            // TODO: hopefully the stack isn't corrupt....
+            // TODO: protect against corrupt cyclic stack
             if ( verb ) log("  scm:   " + pp(car(c)));
          }
       }
@@ -2979,15 +2992,6 @@ public class JhwScm
       }
       reg[regPc]    = blk_error;
       reg[regStack] = NIL;
-      if ( DEBUG && TYPE_ERROR != type(err) )
-      {
-         // TODO: Bad call to raiseError()? Are we out of tricks?
-         throw new RuntimeException("bogus error code: " + pp(err));
-      }
-      if ( DEBUG && ERR_INTERNAL == err )
-      {
-         throw new RuntimeException("internal error");
-      }
    }
 
    /**
