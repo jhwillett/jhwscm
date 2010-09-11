@@ -1293,11 +1293,18 @@ public class JhwScm
             break;
 
          case sub_let:
-            // TODO: should be variadic, like other things with a body
-            // that is evaluated as an implicit (begin).
-            //
-            store(reg[regArg1]);         // store body
-            gosub(sub_let_bindings,sub_let+0x1);
+            if ( true )
+            {
+               gosub(sub_let_rewrite,sub_let+0x3);
+            }
+            else
+            {
+               // TODO: should be variadic, like other things with a body
+               // that is evaluated as an implicit (begin).
+               //
+               store(reg[regArg1]);         // store body
+               gosub(sub_let_bindings,sub_let+0x1);
+            }
             break;
          case sub_let+0x1:
             reg[regTmp0] = restore();    // restore body
@@ -1317,6 +1324,31 @@ public class JhwScm
             reg[regEnv] = restore();     // restore env
             log("LET ENV POSTPOP:  " + pp(reg[regEnv]));
             returnsub();
+            break;
+         case sub_let+0x3:
+            // after rewrite
+            if ( true )
+            {
+               raiseError(ERR_NOT_IMPL);
+            }
+            else
+            {
+               reg[regArg0] = reg[regRetval];
+               reg[regArg1] = reg[regEnv];
+               gosub(sub_eval,blk_tail_call);
+            }
+            break;
+
+         case sub_let_rewrite:
+            // Does a rewrite:
+            //
+            //   (define (rewrite expr)
+            //     (let ((params (map car  (cadr expr)))
+            //           (values (map cadr (cadr expr)))
+            //           (body   (caddr expr)))
+            //       (cons (list 'lambda params body) values)))
+            //
+            raiseError(ERR_NOT_IMPL);
             break;
 
          case sub_let_bindings:
@@ -2718,6 +2750,7 @@ public class JhwScm
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
    private static final int sub_let              = TYPE_SUBS | A2 |  0x6200;
    private static final int sub_let_bindings     = TYPE_SUBS | A2 |  0x6210;
+   private static final int sub_let_rewrite      = TYPE_SUBS | A2 |  0x6220;
    private static final int sub_begin            = TYPE_SUBS | AX |  0x6300;
    private static final int sub_case             = TYPE_SUBS | AX |  0x6400;
    private static final int sub_case_search      = TYPE_SUBS | A2 |  0x6410;
@@ -3493,6 +3526,7 @@ public class JhwScm
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_let:              buf.append("sub_let");              break;
          case sub_let_bindings:     buf.append("sub_let_bindings");     break;
+         case sub_let_rewrite:      buf.append("sub_let_rewrite");      break;
          case sub_begin:            buf.append("sub_begin");            break;
          case sub_case:             buf.append("sub_case");             break;
          case sub_case_search:      buf.append("sub_case_search");      break;
