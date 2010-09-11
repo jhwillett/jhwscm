@@ -263,7 +263,6 @@ public class JhwScm
       //
       int tmp0 = 0;
       int tmp1 = 0;
-      int tmp2 = 0;
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
@@ -1709,7 +1708,7 @@ public class JhwScm
             // strength of a LISP system, and I shouldn't let it tweak
             // me out at the lowest levels.
             //
-            tmp2         = regArg0;
+            tmp1         = regArg0;
             switch (arity << SHIFT_ARITY)
             {
             case AX:
@@ -1723,10 +1722,10 @@ public class JhwScm
                   raiseError(ERR_SEMANTIC);
                   break;
                }
-               reg[tmp2]    = car(reg[regTmp0]);
+               reg[tmp1]    = car(reg[regTmp0]);
                reg[regTmp0] = cdr(reg[regTmp0]);
                log("pop arg: " + pp(reg[regArg0]));
-               tmp2++;
+               tmp1++;
                // fall through
             case A2:
                if ( NIL == reg[regTmp0] )
@@ -1735,10 +1734,10 @@ public class JhwScm
                   raiseError(ERR_SEMANTIC);
                   break;
                }
-               reg[tmp2]    = car(reg[regTmp0]);
+               reg[tmp1]    = car(reg[regTmp0]);
                reg[regTmp0] = cdr(reg[regTmp0]);
                log("pop arg: " + pp(reg[regArg0]));
-               tmp2++;
+               tmp1++;
             case A1:
                if ( NIL == reg[regTmp0] )
                {
@@ -1746,10 +1745,10 @@ public class JhwScm
                   raiseError(ERR_SEMANTIC);
                   break;
                }
-               reg[tmp2]    = car(reg[regTmp0]);
+               reg[tmp1]    = car(reg[regTmp0]);
                reg[regTmp0] = cdr(reg[regTmp0]);
                log("pop arg: " + pp(reg[regArg0]));
-               tmp2++;
+               tmp1++;
             case A0:
                if ( NIL != reg[regTmp0] )
                {
@@ -2161,16 +2160,20 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
-            tmp0 = value(reg[regArg0]);
-            tmp1 = value(reg[regArg1]);
-            tmp2 = value(reg[regArg2]);
-            tmp0 <<= (32-SHIFT_TYPE);
-            tmp0 >>= (32-SHIFT_TYPE);
-            tmp1 <<= (32-SHIFT_TYPE);
-            tmp1 >>= (32-SHIFT_TYPE);
-            tmp2 <<= (32-SHIFT_TYPE);
-            tmp2 >>= (32-SHIFT_TYPE);
-            reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1+tmp2));
+            reg[regTmp0] = value(reg[regArg0]);
+            reg[regTmp1] = value(reg[regArg1]);
+            reg[regTmp2] = value(reg[regArg2]);
+            reg[regTmp0] <<= (32-SHIFT_TYPE);
+            reg[regTmp0] >>= (32-SHIFT_TYPE);
+            reg[regTmp1] <<= (32-SHIFT_TYPE);
+            reg[regTmp1] >>= (32-SHIFT_TYPE);
+            reg[regTmp2] <<= (32-SHIFT_TYPE);
+            reg[regTmp2] >>= (32-SHIFT_TYPE);
+            reg[regTmp3]  = 0;
+            reg[regTmp3] += reg[regTmp0];
+            reg[regTmp3] += reg[regTmp1];
+            reg[regTmp3] += reg[regTmp2];
+            reg[regRetval] = code(TYPE_FIXINT,reg[regTmp3]);
             returnsub();
             break;
 
