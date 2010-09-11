@@ -883,6 +883,8 @@ public class Test
       // (let ((a 10) (x 1) (b 20) (x 2)) 1)
       // (let ((x 1) (a 10) (x 2) (b 20)) 1)
 
+      System.out.println();
+      System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
    }
 
    private static void selfTest ( final JhwScm scm )

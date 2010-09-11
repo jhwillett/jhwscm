@@ -2800,6 +2800,9 @@ public class JhwScm
    public  int         numCallsToCons = 0;
    public  int         maxHeapTop     = 0;
 
+   public static int   UNIVERSAL_NUM_CONS = 0;
+
+
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
    // get names, and must be a multiple of 0x10.
@@ -3240,6 +3243,7 @@ public class JhwScm
       if ( PROFILE )
       {
          numCallsToCons++;
+         UNIVERSAL_NUM_CONS++;
       }
       int cell = reg[regFreeCellList];
       if ( NIL == cell )
