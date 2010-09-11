@@ -2003,9 +2003,6 @@ public class JhwScm
                reg[regRetval] = VOID;
                returnsub();
                break;
-            case TYPE_ERROR:
-               raiseError(ERR_INTERNAL);
-               break;
             default:
                raiseError(ERR_INTERNAL);
                break;
@@ -2600,8 +2597,7 @@ public class JhwScm
    private static final int TYPE_FIXINT   = 0x20000000;
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
-   private static final int TYPE_ERROR    = 0x50000000; // TODO: TYPE_SENTINEL?
-   private static final int TYPE_SENTINEL = 0x70000000; // TODO: TYPE_SENTINEL?
+   private static final int TYPE_SENTINEL = 0x70000000;
    private static final int TYPE_SUBP     = 0x80000000; // procedure-like
    private static final int TYPE_SUBS     = 0x90000000; // special-form-like
 
@@ -2615,7 +2611,7 @@ public class JhwScm
    // code() a macro and be done with it.
    //
    // Also, I'm using randomish values for the differentiators among
-   // TYPE_SENTINEL and TYPE_ERROR.
+   // TYPE_SENTINEL.
    //
    // Since each of these has only a finite, definite number of valid
    // values, using junk there is a good error-detection mechanism
@@ -2647,18 +2643,18 @@ public class JhwScm
    private static final int TRUE                = TYPE_SENTINEL | 37;
    private static final int FALSE               = TYPE_SENTINEL | 91;
 
-   private static final int ERR_OOM             = TYPE_ERROR    | 42;
-   private static final int ERR_INTERNAL        = TYPE_ERROR    | 18;
-   private static final int ERR_LEXICAL         = TYPE_ERROR    | 11;
-   private static final int ERR_SEMANTIC        = TYPE_ERROR    |  7;
-   private static final int ERR_NOT_IMPL        = TYPE_ERROR    | 87;
+   private static final int ERR_OOM             = TYPE_SENTINEL | 42;
+   private static final int ERR_INTERNAL        = TYPE_SENTINEL | 18;
+   private static final int ERR_LEXICAL         = TYPE_SENTINEL | 11;
+   private static final int ERR_SEMANTIC        = TYPE_SENTINEL |  7;
+   private static final int ERR_NOT_IMPL        = TYPE_SENTINEL | 87;
 
    private static final int regFreeCellList     =   0; // unused cells
 
    private static final int regStack            =   1; // the runtime stack
    private static final int regPc               =   2; // opcode to return to
 
-   private static final int regError            =   3; // NIL or a TYPE_ERROR
+   private static final int regError            =   3; // NIL or an ERR_foo
    private static final int regErrorPc          =   4; // reg[regPc] of err
    private static final int regErrorStack       =   5; // reg[regStack] of err
 
@@ -2953,11 +2949,6 @@ public class JhwScm
       if ( verb ) log("  err:   " + pp(err));
       if ( verb ) log("  pc:    " + pp(reg[regPc]));
       if ( verb ) log("  stack: " + pp(reg[regStack]));
-      if ( DEBUG && TYPE_ERROR != type(err) )
-      {
-         // TODO: Bad call to raiseError()! Are we out of tricks?
-         throw new RuntimeException("bogus error code: " + pp(err));
-      }
       if ( verb )
       {
          final Thread              thread = Thread.currentThread();
@@ -3380,7 +3371,6 @@ public class JhwScm
       case TYPE_FIXINT:   buf.append("fixint");   break;
       case TYPE_CELL:     buf.append("cell");     break;
       case TYPE_CHAR:     buf.append("char");     break;
-      case TYPE_ERROR:    buf.append("error");    break;
       case TYPE_SENTINEL: buf.append("sentinel"); break;
       case TYPE_SUBP:
       case TYPE_SUBS:
