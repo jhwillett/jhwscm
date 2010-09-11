@@ -970,7 +970,6 @@ public class JhwScm
                break;
             case TYPE_CELL:
                tmp0 = car(reg[regArg0]);
-               if ( verb ) log("h: " + pp(tmp0));
                switch (tmp0)
                {
                case IS_STRING:
@@ -1301,134 +1300,37 @@ public class JhwScm
          case sub_let+0x1:
             reg[regTmp0] = restore();         // restore body
             reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
-            if ( false )
-            {
-               // TODO: why set regEnv here?  Isn't that sub_eval's
-               // job?
-               // 
-               // If we must set it, why aren't we restoring it
-               // afterwards?
-               reg[regEnv]  = reg[regTmp1];
-               reg[regArg0] = reg[regTmp0];
-               reg[regArg1] = reg[regEnv];
-               // HEY DUDE!!!!!!!!!!!
-               //
-               // (let) is *not* fundamental.  It is a syntax over
-               // (lambda).  
-               //
-               // That this first impl was so simple means either this
-               // impl is insufficient, or that sub_lambda is overly
-               // complicated.
-               //
-               // I doubt sub_lambda is overly complicated.  Try
-               // reimplementing this as an expansion to a lambda
-               // form.
-               //
-               // Side comment: I was thinking that (define) was also
-               // non-fundamental.  Only half true.  The simple form
-               // of it is needed b/c it creates new symbol bindings
-               // in existing environment frames, wheras lambda
-               // creates new frames.  The procedure style of
-               // (define), however, is just a syntax over the simple
-               // form of (define) and (lambda) - which of course is
-               // how it is implemented now.
-               //
-               // Exploring let-as-syntax
-               //
-               //   (let ((a 1)) (+ a 2)) 
-               //
-               //   ((lambda (a) (+ a 2)) 1)
-               //
-               //   (let ((a 1) (b 2)) (+ a b))
-               //
-               //   ((lambda (a b) (+ a b)) 1 2)
-               //
-               // I notice a couple things that are good.  
-               //
-               // One, in each equivalent pair both the let and lambda
-               // expressions have identical numbers of atoms.
-               //
-               // Two, in the first pair there are an equal number of
-               // '(', and in the second pair the lambda expression
-               // has fewer '('.
-               //
-               // So the lambda form Pareto dominates the let form for
-               // space: same number of leaves, less internal nesting.
-               //
-               // Three, the second lambda form reassuringly creates a
-               // single environment frame holding both a and b, but
-               // evaluates the bound values in the outer environment.
-               // So neither a nor be could be a simple expression
-               // involving a or b, but both could be procedure
-               // defines invoking both a and be.  E.g. a and b could
-               // be a metacircular mutually recursive pair, and this
-               // would work.  Which is what I expect from (let) - I
-               // think.  Or would that be letrec?  
-               //
-               // Quick, to the Bat-R5RS!
-               //
-               //   In a let expression, the initial values are
-               //   computed before any of the variables become bound;
-               //   in a let* expression, the bindings and evaluations
-               //   are performed sequentially; while in a letrec
-               //   expression, all the bindings are in effect while
-               //   their initial values are being computed, thus
-               //   allowing mutually recursive definitions.
-               //
-               // OK, I got all worked up, our (let)==>(lambda)
-               // examples above are right.  In:
-               //
-               //   ((lambda (a b) (+ a b)) 1 2)
-               //
-               // If the expressions 1 or 2 were instead lambda
-               // expressions, their lexical scopes would *not* enjoy
-               // bindings for either a or b.
-               //
-               // Hmmm, OK, so they can't be mutually recursive, but
-               // shouldn't one of the be able to be self-recursive? I
-               // mean, this works:
-               //
-               //   (define (fact n) 
-               //     (let ((h 
-               //            (lambda (n a) (if (< n 2) a (h (- n 1) (* n a))))
-               //          ))
-               //       (help n 1)))
-               //
-               // Right?  Ho-ho!  Guile rejects it!  (fact 1) works
-               // fine, (fact 2) gets "Unbound variable: h".
-               //
-               // OK, so the lamba expansion looks correct, for better
-               // or worse.  Which is a relief.
-               //
-            }
-            else
-            {
-               // TODO: and yet this totally fails on a nested let
-               // expression.
-               //
-               // Why?  Shouldn't this be enough?  Shouldn't sub_eval
-               // and sub_apply be conspiring to maintain the stack?
-               //
-               // No!  Only sub_lambda makes a closure, and I haven't
-               // done anything here to route through sub_lambda.
-               //
-               // Wait, but why does a nested let need a closure?
-               //
-               //   (let ((a 10)) a
-               //     a)
-               //
-               //   (let ((a 10)) 
-               //     (let ((b 32)) 
-               //       (+ a b)))
-               //
-               // OK, the first expresion succeeds, finding a.  The
-               // second expression fails looking up a.
-               //
-               // Hmm...
-               //
-               reg[regArg0] = reg[regTmp0];
-               reg[regArg1] = reg[regTmp1];
-            }
+            log("LET LET LET OLD ENV: " + pp(reg[regEnv]));
+            log("LET LET LET NEW ENV: " + pp(reg[regTmp1]));
+            // TODO: and yet this totally fails on a nested let
+            // expression.
+            //
+            // Why?  Shouldn't this be enough?  Shouldn't sub_eval
+            // and sub_apply be conspiring to maintain the stack?
+            //
+            // No!  Only sub_lambda makes a closure, and I haven't
+            // done anything here to route through sub_lambda.
+            //
+            // Wait, but why does a nested let need a closure?
+            //
+            //   (let ((a 10)) a
+            //     a)
+            //
+            //   (let ((a 10)) 
+            //     (let ((b 32)) 
+            //       (+ a b)))
+            //
+            // OK, the first expresion succeeds, finding a.  The
+            // second expression fails looking up a.
+            //
+            // Hmm... OK, I trace evaluation of the second form,
+            // and when it is trying to evaluate the a in (+ a b) I
+            // see it walk an environment that starts with a
+            // binding for b, then continues with what I recognize
+            // as the top-level environment.
+            //
+            reg[regArg0] = reg[regTmp0];
+            reg[regArg1] = reg[regTmp1];
             logrec("sub_let body ",reg[regArg0]);
             logrec("sub_let frame",reg[regRetval]);
             gosub(sub_eval,blk_tail_call);
