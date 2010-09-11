@@ -30,8 +30,6 @@ public class Test
          assertEquals("output(null) is a bad arg",JhwScm.BAD_ARG,code);
       }
 
-      selfTest(new JhwScm());
-
       // empty args are OK
       {
          final int code = new JhwScm().input("");
@@ -66,7 +64,6 @@ public class Test
          final int           ocode = scm.output(buf);
          assertEquals(msg,JhwScm.SUCCESS,ocode);
          assertEquals(msg,0,buf.length());
-         selfTest(scm);
       }
 
       // first content: simple integer expressions are self-evaluating
@@ -115,7 +112,6 @@ public class Test
          final int           ocode  = scm.output(buf);
          assertEquals(JhwScm.SUCCESS, ocode);
          assertEquals("0",buf.toString());
-         selfTest(scm);
       }
 
       // boolean literals are self-evaluating
@@ -453,17 +449,11 @@ public class Test
       {
          final JhwScm scm = new JhwScm();
          expectSuccess("(define a 100)","",   scm);
-         selfTest(scm);
          expectSuccess("a",             "100",scm);
-         selfTest(scm);
          expectSuccess("(define a 100)","",   scm);
-         selfTest(scm);
          expectSuccess("(define b   2)","",   scm);
-         selfTest(scm);
          expectSuccess("(+ a b)",       "102",scm);
-         selfTest(scm);
          expectSemantic("(+ a c)",            scm);
-         selfTest(scm);
       }
       expectSemantic("(define a)");
 
@@ -475,7 +465,6 @@ public class Test
          expectSuccess("(define foo +)","",  scm);
          expectSuccess("(foo 13 18)",   "31",scm);
          expectSemantic("(foo 13 '())",      scm);
-         selfTest(scm);
       }
 
       // defining functions
@@ -496,7 +485,6 @@ public class Test
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
          expectSuccess("(foo 13 18)",               "31",scm);
          expectSemantic("(foo 13 '())",                  scm);
-         selfTest(scm);
       }
 
       {
@@ -523,7 +511,6 @@ public class Test
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         selfTest(scm);
          System.out.println("fact simple:");
          System.out.println("  numCallsToCons: " + scm.numCallsToCons);
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
@@ -547,7 +534,6 @@ public class Test
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         selfTest(scm);        
          System.out.println("fact 2/ help:");
          System.out.println("  numCallsToCons: " + scm.numCallsToCons);
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
@@ -594,7 +580,6 @@ public class Test
             // Takes like a minute...
             expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         selfTest(scm);
          System.out.println("fib:");
          System.out.println("  numCallsToCons: " + scm.numCallsToCons);
          System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
@@ -803,7 +788,6 @@ public class Test
          expectSuccess("(fact 4)", "24", scm);
          expectSuccess("(fact 5)", "120",scm);
          expectSuccess("(fact 6)", "720",scm);
-         selfTest(scm);
       }
       {
          // Do nested defines really act like (begin)?
@@ -940,11 +924,6 @@ public class Test
       System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
    }
 
-   private static void selfTest ( final JhwScm scm )
-   {
-      assertEquals("self-test",JhwScm.SUCCESS,scm.selfTest());
-   }
-
    private static void expectSuccess ( final String expr, final String expect )
    {
       expectSuccess(expr,expect,null);
@@ -986,7 +965,6 @@ public class Test
          System.out.print("\"");
          System.out.println("\"");
       }
-      selfTest(scm);
    }
 
    private static void expectLexical ( final String expr )
@@ -1036,6 +1014,5 @@ public class Test
       assertEquals("should fail evaluating \"" + expr + "\":",
                    expectedError, 
                    dcode);
-      selfTest(scm);
    }
 }
