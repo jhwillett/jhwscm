@@ -880,6 +880,26 @@ public class Test
          final String def = "(define (f x) (+ x 10))";
          expectSuccess("(map display '())",      "()");      // list of VOIDs?
          expectSuccess("(map display '(1 2 3))", "123(  )"); // yep, VOIDS.
+
+         // TODO: On the preceeding, Guile sez:
+         //
+         //   guile> (map display '(1 2 3))
+         //   123(#<unspecified> #<unspecified> #<unspecified>)
+         //
+         // So when we get fancier, maybe we want VOID to be
+         // nonprinting at the top level, but somehow printing at
+         // other levels.
+         //
+         // In any case, it is clear that Guile *does* have a concept
+         // of (display) having a concrete return value instead of
+         // just C-style void, and that that value is not the same as
+         // the empty list, or the same as false.
+         //
+         // I am reconciled with VOID and/or UNDEFINED.  They mean we
+         // need a couple of special cases in sub_eval and sub_print,
+         // but we avoid the more frequent special case of dealing
+         // with subs-that-return-nothing.
+
          expectSuccess(def,                      "",           scm);
          expectSuccess("f",                      "???",        scm);
          expectSuccess("(f 13)",                 "23",         scm);

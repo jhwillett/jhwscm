@@ -1695,10 +1695,14 @@ public class JhwScm
             reg[regArg0] = UNDEFINED;
             reg[regArg1] = UNDEFINED;
             reg[regArg2] = UNDEFINED;
-            // TODO: icky dependency on reg order
-            // 
-            // TODO: on the other hand, first use of
-            // register-index-as-variable.... hmmm
+            //
+            // Note tricky dependency on reg order here.  At first
+            // this creeped me out, but it works good, and I got
+            // excited when I realized it was the first use of
+            // register-index-as-variable, and reflected that
+            // homoiconicity and "self-awareness" is part of the
+            // strength of a LISP system, and I shouldn't let it tweak
+            // me out at the lowest levels.
             //
             tmp2         = regArg0;
             switch (arity << SHIFT_ARITY)
@@ -1806,32 +1810,28 @@ public class JhwScm
             logrec("sub_apply_user ENV    ",reg[regTmp2]);
             reg[regArg0] = reg[regTmp1];
             reg[regArg1] = reg[regTmp2];
-            if ( true )
-            {
-               // TODO: should this be eval's job?  Eval gets an
-               // environment argument, after all.
-               //
-               // Update: maybe not.  We certainly wouldn't want
-               // (eval) to push/pop the env on any call - besides,
-               // only sub_apply_user and sub_let know what the new
-               // frames are, and only sub_apply_user knows where to
-               // find the lexical scope of a procedure or special
-               // form.
-               //
-               log("LEXICAL ENV PREPUSH:  " + pp(reg[regEnv]));
-               store(reg[regEnv]);
-               reg[regEnv] = reg[regTmp2];
-               log("LEXICAL ENV POSTPUSH: " + pp(reg[regEnv]));
-               gosub(sub_begin, sub_apply_user+0x2);
-            }
-            else
-            {
-               gosub(sub_begin, blk_tail_call);
-            }
+            //
+            // At first glance, this env manip feels like it should
+            // be the job of sub_eval. After all, sub_eval gets an
+            // environment arg, and sub_apply does not.
+            //
+            // After deeper soul searching, this is not true.  We
+            // certainly would not want (eval) to push/pop the env
+            // on *every* call, but only sub_apply_user and sub_let
+            // know what the new frames are, and only
+            // sub_apply_user knows where to find the lexical scope
+            // of a procedure or special form.
+            //
+            log("LEXICAL ENV PREPUSH:  " + pp(reg[regEnv]));
+            store(reg[regEnv]);
+            reg[regEnv] = reg[regTmp2];
+            log("LEXICAL ENV POSTPUSH: " + pp(reg[regEnv]));
+            gosub(sub_begin, sub_apply_user+0x2);
             break;
          case sub_apply_user+0x2:
             // I am so sad that pushing that env above means we cannot
-            // be tail recursive.
+            // be tail recursive.  At least this that is not true on
+            // every sub_eval.
             //
             log("LEXICAL ENV PREPOP:  " + pp(reg[regEnv]));
             reg[regEnv] = restore();
@@ -2893,19 +2893,19 @@ public class JhwScm
       if ( NIL != reg[regError] )
       {
          if ( verb ) log("restore(): flow suspended for error");
-         return NIL; // TODO: don't like this use of NIL
+         return UNDEFINED;
       }
       if ( DEBUG && NIL == reg[regStack] )
       {
          if ( verb ) log("restore(): stack underflow");
          raiseError(ERR_INTERNAL);
-         return NIL; // TODO: don't like this use of NIL
+         return UNDEFINED;
       }
       if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
       {
          if ( verb ) log("restore(): corrupt stack");
          raiseError(ERR_INTERNAL);
-         return NIL; // TODO: don't like this use of NIL
+         return UNDEFINED;
       }
       final int cell = reg[regStack];
       final int head = car(cell);
@@ -3123,8 +3123,6 @@ public class JhwScm
    /**
     * @returns NIL in event of error (in which case an error is
     * raised), else a newly allocated and initialize cons cell.
-    *
-    * TODO: I feel funny about using NIL this way: use UNDEFINED?
     */
    private int cons ( final int car, final int cdr )
    {
@@ -3139,7 +3137,7 @@ public class JhwScm
          if ( heapTop >= heap.length )
          {
             raiseError(ERR_OOM);
-            return NIL;
+            return UNDEFINED;
          }
          final int top;
          if (DEFER_HEAP_INIT )
@@ -3162,16 +3160,10 @@ public class JhwScm
          final int lim = (top < heap.length) ? top : heap.length;
          for ( ; heapTop < lim; heapTop += 2 )
          {
-            // TODO: is the car of free list, e.g. heap[i+0], superfluous
-            // here?  Don't we always assign it before returning it from
-            // cons()?
-            //
-            // Hmmm.  Suggests there might be a lot of extra space
-            // sitting in the free cell list... we could maintain it as a
-            // heap and prefer pulling lower indices, to improve locality
-            // of reference and reduce the work required for heap
-            // compaction...
-            heap[heapTop+0]      = NIL;
+            // Notice that how half the space in the free cell list,
+            // the car()s, is unused.  Is this an opportunity for
+            // something?
+            heap[heapTop+0]      = UNDEFINED;
             heap[heapTop+1]      = reg[regFreeCellList];
             reg[regFreeCellList] = code(TYPE_CELL,(heapTop >>> 1));
          }
@@ -3188,7 +3180,7 @@ public class JhwScm
       if ( DEBUG && TYPE_CELL != t )
       {
          raiseError(ERR_INTERNAL);
-         return NIL;
+         return UNDEFINED;
       }
       final int v          = value(cell);
       final int ar         = v << 1;
@@ -3203,7 +3195,7 @@ public class JhwScm
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
-         return NIL;
+         return UNDEFINED;
       }
       return heap[(value(cell) << 1) + 0];
    }
@@ -3212,7 +3204,7 @@ public class JhwScm
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
-         return NIL;
+         return UNDEFINED;
       }
       return heap[(value(cell) << 1) + 1];
    }
@@ -3262,16 +3254,10 @@ public class JhwScm
    //
    ////////////////////////////////////////////////////////////////////
 
-   /**
-    * @returns a new, empty queue, or NIL on failure
-    *
-    * TODO: I feel funny about using NIL this way
-    */
    private int queueCreate ()
    {
-      final boolean verb = false;
       final int queue = cons(NIL,NIL);
-      if ( verb ) log("  queueCreate(): returning " + pp(queue));
+      if ( false ) log("  queueCreate(): returning " + pp(queue));
       return queue;
    }
 
