@@ -1402,6 +1402,12 @@ public class JhwScm
             reg[regTmp2] = restore();         // restore params
             reg[regTmp1] = restore();         // restore body
             reg[regTmp0] = restore();         // restore locals
+            reg[regTmp4] = cons( reg[regTmp1], NIL          );
+            reg[regTmp5] = cons( reg[regTmp2], reg[regTmp4] );
+            reg[regTmp6] = cons( sub_lambda,   reg[regTmp5] );
+            reg[regTmp7] = cons( reg[regTmp6], reg[regTmp3] );
+            reg[regArg0] = reg[regTmp7];
+            logrec("REWRITE: ",reg[regArg0]);
             raiseError(ERR_NOT_IMPL);
             break;
 
@@ -2751,20 +2757,27 @@ public class JhwScm
    private static final int regErrorPc          =   4; // reg[regPc] of err
    private static final int regErrorStack       =   5; // reg[regStack] of err
 
-   private static final int regIn               =   6; // input char queue
-   private static final int regOut              =   7; // output char queue
+   private static final int regEnv              =   6; // list of env frames
 
-   private static final int regArg0             =   8; // argument
-   private static final int regArg1             =   9; // argument
-   private static final int regArg2             =  10; // argument
-   private static final int regTmp0             =  11; // temporary
-   private static final int regTmp1             =  12; // temporary
-   private static final int regTmp2             =  13; // temporary
-   private static final int regTmp3             =  14; // temporary
-   private static final int reg_Unused          =  15; // temporary
-   private static final int regRetval           =  16; // return value
+   private static final int regIn               =   7; // input char queue
+   private static final int regOut              =   8; // output char queue
 
-   private static final int regEnv              =  17; // list of env frames
+   private static final int regRetval           =   9; // return value
+
+   private static final int regArg0             =  10; // argument
+   private static final int regArg1             =  11; // argument
+   private static final int regArg2             =  12; // argument
+
+   private static final int regTmp0             =  20; // temporary
+   private static final int regTmp1             =  21; // temporary
+   private static final int regTmp2             =  22; // temporary
+   private static final int regTmp3             =  23; // temporary
+   private static final int regTmp4             =  24; // temporary
+   private static final int regTmp5             =  25; // temporary
+   private static final int regTmp6             =  26; // temporary
+   private static final int regTmp7             =  27; // temporary
+   private static final int regTmp8             =  28; // temporary
+   private static final int regTmp9             =  29; // temporary
 
    private static final int numRegisters        =  32;          // in slots
    private static final int heapSize            =   4 * 1024;   // in cells
