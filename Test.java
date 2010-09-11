@@ -629,6 +629,15 @@ public class Test
       expectSuccess("(let ((a 10)) (+ a 32))","42");
       expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");
+      {
+         // Heh, guard that those names stay buried.  
+         //
+         // An overly simple early form of sub_let pushed frames onto
+         // the env, but didn't pop them.
+         final JhwScm scm = new JhwScm();
+         expectSuccess("(let ((a 10)) a)", "10", scm);
+         expectSemantic("a",scm);
+      }
 
       // nested lexical scopes:
       JhwScm.SILENT = false;
@@ -835,6 +844,31 @@ public class Test
          expectSuccess("(f 10)","???",scm);
          expectSuccess("((f 10) 7)","17",scm);
       }
+
+      // TODO: user-level variadics
+      //
+      // ((lambda x x) 3 4 5 6)              ===> (3 4 5 6)
+      // ((lambda (x y . z) z) 3 4 5 6)      ===> (5 6)
+      //
+      // (define (f x y . z) z)(foo 3 4 5 6) ===> (5 6)
+
+      // TODO: error for names to collide in formals:
+      //
+      // (lambda (x x) 1)
+      // (lambda (x a x) 1)
+      // (lambda (a x b x) 1)
+      // (lambda (x a x x) 1)
+      // (define (f x x) 1)
+      // (define (f x a x) 1)
+      // (define (f a x b x) 1)
+      // (define (f x a x x) 1)
+      //
+      // (let ((x 1) (x 2)) 1)
+      // (let ((x 1) (x 2)) 1)
+      // (let ((x 1) (a 10) (x 2)) 1)
+      // (let ((a 10) (x 1) (b 20) (x 2)) 1)
+      // (let ((x 1) (a 10) (x 2) (b 20)) 1)
+
    }
 
    private static void selfTest ( final JhwScm scm )

@@ -1292,6 +1292,9 @@ public class JhwScm
             break;
 
          case sub_let:
+            // TODO: (let) should be variadic, like other things with
+            // a body that is evaluated as an implicit (begin).
+            //
             store(reg[regArg1]);              // store body
             gosub(sub_let_bindings,sub_let+0x1);
             break;
@@ -1308,7 +1311,6 @@ public class JhwScm
                reg[regEnv]  = reg[regTmp1];
                reg[regArg0] = reg[regTmp0];
                reg[regArg1] = reg[regEnv];
-
                // HEY DUDE!!!!!!!!!!!
                //
                // (let) is *not* fundamental.  It is a syntax over
@@ -1331,10 +1333,46 @@ public class JhwScm
                // form of (define) and (lambda) - which of course is
                // how it is implemented now.
                //
+               // Exploring let-as-syntax
+               //
+               //   (let ((a 1)) (+ a 2)) 
+               //
+               //   ((lambda (a) (+ a 2)) 1)
+               //
+               //   (let ((a 1) (b 2)) (+ a b))
+               //
+               //   ((lambda (a b) (+ a b)) 1 2)
+               //
+               // I notice a couple things that are good.  
+               //
+               // One, in each equivalent pair both the let and lambda
+               // expressions have identical numbers of atoms.
+               //
+               // Two, in the first pair there are an equal number of
+               // '(', and in the second pair the lambda expression
+               // has fewer '('.
+               //
+               // So the lambda form Pareto dominates the let form for
+               // space: same number of leaves, less internal nesting.
+               //
+               // Three, the second lambda form reassuringly creates a
+               // single environment frame holding both a and b, but
+               // evaluates the bound values in the outer environment.
+               // So neither a nor be could be a simple expression
+               // involving a or b, but both could be procedure
+               // defines invoking both a and be.  E.g. a and b could
+               // be a metacircular mutually recursive pair, and this
+               // would work.  Which is what I expect from (let) - I
+               // think.  Or would that be letrec*?  Quick, to the
+               // Bat-R5RS!
+               
             }
             else
             {
-               // TODO: and yet this totally fails...
+               // TODO: and yet this totally fails on a nested let
+               // expression.
+               //
+
                reg[regArg0] = reg[regTmp0];
                reg[regArg1] = reg[regTmp1];
             }
