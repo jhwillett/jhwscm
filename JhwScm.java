@@ -802,7 +802,7 @@ public class JhwScm
             // A helper for sub_read_symbol, but still a sub_ in its
             // own right.
             //
-            // Return value VOID, works via side-effects.
+            // Return value UNSPECIFIED, works via side-effects.
             //
             if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
@@ -814,7 +814,7 @@ public class JhwScm
             if ( EOF == reg[regTmp1] )
             {
                if ( verb ) log("eof: returning");
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -925,7 +925,7 @@ public class JhwScm
             reg[regTmp0] = queuePeekFront(reg[regIn]);
             if ( EOF == reg[regTmp0] )
             {
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -939,7 +939,7 @@ public class JhwScm
                gosub(sub_read_burn_space,blk_tail_call);
                break;
             default:
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -1400,11 +1400,11 @@ public class JhwScm
 
          case sub_begin:
             // Evaluates all its args, returning the result of the
-            // last.  If no args, returns VOID.
+            // last.  If no args, returns UNSPECIFIED.
             //
             if ( NIL == reg[regArg0] )
             {
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -1412,7 +1412,7 @@ public class JhwScm
             reg[regTmp1] = cdr(reg[regArg0]);
             reg[regArg0] = reg[regTmp0];
             reg[regArg1] = reg[regEnv];
-            reg[regTmp2] = UNDEFINED;
+            reg[regTmp2] = UNSPECIFIED;
             if ( NIL == reg[regTmp1] )
             {
                reg[regTmp2] = blk_tail_call;
@@ -1439,7 +1439,8 @@ public class JhwScm
             //
             // Evaluates the tests in order until one is true,
             // whereupon it evaluates the body of that clause as an
-            // implicit (begin) statement.  If no args, returns VOID.
+            // implicit (begin) statement.  If no args, returns
+            // UNSPECIFIED.
             //
             // Where the body of a clause is empty, returns the value
             // of the test e.g.:
@@ -1449,7 +1450,7 @@ public class JhwScm
             //
             if ( NIL == reg[regArg0] )
             {
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -1496,7 +1497,7 @@ public class JhwScm
             //
             //   (case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300)) ==> 300
             //
-            // Returns VOID if no match is found.
+            // Returns UNSPECIFIED if no match is found.
             //
             // Note: the key gets evaluated, and the body of the
             // matching clause gets evaluated as an implicit (begin)
@@ -1559,7 +1560,7 @@ public class JhwScm
             logrec("clause list: ",reg[regArg1]);
             if ( NIL == reg[regArg1] ) 
             {
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -1696,9 +1697,9 @@ public class JhwScm
             log("arity: " + arity);
             log("arg1:  " + pp(reg[regArg1]));
             reg[regTmp0] = reg[regArg1];
-            reg[regArg0] = UNDEFINED;
-            reg[regArg1] = UNDEFINED;
-            reg[regArg2] = UNDEFINED;
+            reg[regArg0] = UNSPECIFIED;
+            reg[regArg1] = UNSPECIFIED;
+            reg[regArg2] = UNSPECIFIED;
             //
             // Note tricky dependency on reg order here.  At first
             // this creeped me out, but it works good, and I got
@@ -1885,8 +1886,8 @@ public class JhwScm
             case TYPE_SENTINEL:
                switch (reg[regTmp0])
                {
-               case VOID:
-                  reg[regRetval] = VOID;
+               case UNSPECIFIED:
+                  reg[regRetval] = UNSPECIFIED;
                   returnsub();
                   break;
                case NIL:
@@ -1895,13 +1896,13 @@ public class JhwScm
                case TRUE:
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'t'));
-                  reg[regRetval] = VOID;
+                  reg[regRetval] = UNSPECIFIED;
                   returnsub();
                   break;
                case FALSE:
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'f'));
-                  reg[regRetval] = VOID;
+                  reg[regRetval] = UNSPECIFIED;
                   returnsub();
                   break;
                default:
@@ -1927,7 +1928,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
-                  reg[regRetval] = VOID;
+                  reg[regRetval] = UNSPECIFIED;
                   returnsub();
                   break;
                default:
@@ -1961,7 +1962,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],reg[regTmp0]);
                   break;
                }
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             case TYPE_FIXINT:
@@ -1977,7 +1978,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],
                                 code(TYPE_CHAR,str.charAt(tmp0)));
                }
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             case TYPE_SUBP:
@@ -1989,7 +1990,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],
                                 code(TYPE_CHAR,str2.charAt(tmp0)));
                }
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             default:
@@ -2008,7 +2009,7 @@ public class JhwScm
             break;
          case sub_print_string+0x1:
             queuePushBack(reg[regOut],code(TYPE_CHAR,'"'));
-            reg[regRetval] = VOID;
+            reg[regRetval] = UNSPECIFIED;
             returnsub();
             break;
 
@@ -2018,7 +2019,7 @@ public class JhwScm
             //
             if ( NIL == reg[regArg0] )
             {
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -2052,7 +2053,7 @@ public class JhwScm
             break;
          case sub_print_list+0x1:
             queuePushBack(reg[regOut],code(TYPE_CHAR,')'));
-            reg[regRetval] = VOID;
+            reg[regRetval] = UNSPECIFIED;
             returnsub();
             break;
 
@@ -2068,7 +2069,7 @@ public class JhwScm
             //
             if ( NIL == reg[regArg0] )
             {
-               reg[regRetval] = VOID;
+               reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
             }
@@ -2429,7 +2430,7 @@ public class JhwScm
                log("define old binding");
             }
             //logrec("define B",reg[regEnv]);
-            reg[regRetval] = VOID;
+            reg[regRetval] = UNSPECIFIED;
             returnsub();
             break;
 
@@ -2610,8 +2611,6 @@ public class JhwScm
    // where it would be more efficient to use 0, 1, 2, etc. I choose
    // not to to encourage this code to fail hard and fast.
 
-   // TODO: should UNDEFINED and VOID fold together?
-
    // TODO: distinct from EOF, do we need an NO_INPUT to indicate when
    // no input is ready, but the port isn't closed?
    //
@@ -2621,8 +2620,7 @@ public class JhwScm
    private static final int NIL                 = TYPE_SENTINEL | 39;
 
    private static final int EOF                 = TYPE_SENTINEL | 97;
-   private static final int UNDEFINED           = TYPE_SENTINEL | 16;
-   private static final int VOID                = TYPE_SENTINEL | 65;
+   private static final int UNSPECIFIED         = TYPE_SENTINEL | 65;
    private static final int IS_SYMBOL           = TYPE_SENTINEL | 79;
    private static final int IS_STRING           = TYPE_SENTINEL | 32;
    private static final int IS_PROCEDURE        = TYPE_SENTINEL | 83;
@@ -2887,19 +2885,19 @@ public class JhwScm
       if ( NIL != reg[regError] )
       {
          if ( verb ) log("restore(): flow suspended for error");
-         return UNDEFINED;
+         return UNSPECIFIED;
       }
       if ( DEBUG && NIL == reg[regStack] )
       {
          if ( verb ) log("restore(): stack underflow");
          raiseError(ERR_INTERNAL);
-         return UNDEFINED;
+         return UNSPECIFIED;
       }
       if ( DEBUG && TYPE_CELL != type(reg[regStack]) )
       {
          if ( verb ) log("restore(): corrupt stack");
          raiseError(ERR_INTERNAL);
-         return UNDEFINED;
+         return UNSPECIFIED;
       }
       final int cell = reg[regStack];
       final int head = car(cell);
@@ -3018,7 +3016,7 @@ public class JhwScm
          if ( heapTop >= heap.length )
          {
             raiseError(ERR_OOM);
-            return UNDEFINED;
+            return UNSPECIFIED;
          }
          final int top;
          if (DEFER_HEAP_INIT )
@@ -3044,7 +3042,7 @@ public class JhwScm
             // Notice that how half the space in the free cell list,
             // the car()s, is unused.  Is this an opportunity for
             // something?
-            heap[heapTop+0]      = UNDEFINED;
+            heap[heapTop+0]      = UNSPECIFIED;
             heap[heapTop+1]      = reg[regFreeCellList];
             reg[regFreeCellList] = code(TYPE_CELL,(heapTop >>> 1));
          }
@@ -3061,7 +3059,7 @@ public class JhwScm
       if ( DEBUG && TYPE_CELL != t )
       {
          raiseError(ERR_INTERNAL);
-         return UNDEFINED;
+         return UNSPECIFIED;
       }
       final int v          = value(cell);
       final int ar         = v << 1;
@@ -3076,7 +3074,7 @@ public class JhwScm
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
-         return UNDEFINED;
+         return UNSPECIFIED;
       }
       return heap[(value(cell) << 1) + 0];
    }
@@ -3085,7 +3083,7 @@ public class JhwScm
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
-         return UNDEFINED;
+         return UNSPECIFIED;
       }
       return heap[(value(cell) << 1) + 1];
    }
@@ -3334,8 +3332,7 @@ public class JhwScm
       {
       case NIL:                  return "NIL";
       case EOF:                  return "EOF";
-      case UNDEFINED:            return "UNDEFINED";
-      case VOID:                 return "VOID";
+      case UNSPECIFIED:          return "UNSPECIFIED";
       case IS_STRING:            return "IS_STRING";
       case IS_SYMBOL:            return "IS_SYMBOL";
       case IS_PROCEDURE:         return "IS_PROCEDURE";

@@ -862,8 +862,8 @@ public class Test
       {
          final JhwScm scm = new JhwScm();
          final String def = "(define (f x) (+ x 10))";
-         expectSuccess("(map display '())",      "()");      // list of VOIDs?
-         expectSuccess("(map display '(1 2 3))", "123(  )"); // yep, VOIDS.
+         expectSuccess("(map display '())",      "()");     
+         expectSuccess("(map display '(1 2 3))", "123(  )");
 
          // TODO: On the preceeding, Guile sez:
          //
@@ -883,6 +883,8 @@ public class Test
          // need a couple of special cases in sub_eval and sub_print,
          // but we avoid the more frequent special case of dealing
          // with subs-that-return-nothing.
+         //
+         // Update: I have merged VOID and UNDEFINED into UNSPECIFIED.
 
          expectSuccess(def,                      "",           scm);
          expectSuccess("f",                      "???",        scm);
