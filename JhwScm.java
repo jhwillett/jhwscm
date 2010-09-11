@@ -1293,24 +1293,7 @@ public class JhwScm
             break;
 
          case sub_let:
-            // Extra glue here since sub_let isn't AX yet...
-            //
-            logrec("REWRITE INPUT: ",reg[regArg0]);
-            if ( false )
-            {
-               reg[regTmp0] = cons(reg[regArg1],NIL);
-               reg[regTmp2] = cons(reg[regArg0],reg[regTmp0]);
-               reg[regArg0] = reg[regTmp2];
-            }
-            gosub(sub_let_rewrite,sub_let+0x3);
-            break;
-
-         case sub_let+0x3:
-            // after rewrite
-            logrec("REWRITE: ",reg[regRetval]);
-            reg[regArg0] = reg[regRetval];
-            reg[regArg1] = reg[regEnv];
-            gosub(sub_eval,blk_tail_call);
+            gosub(sub_let_rewrite,blk_tail_call);
             break;
 
          case sub_let_rewrite:
@@ -1381,8 +1364,10 @@ public class JhwScm
             reg[regTmp5] = cons( reg[regTmp2], reg[regTmp4] );
             reg[regTmp6] = cons( sub_lambda,   reg[regTmp5] );
             reg[regTmp7] = cons( reg[regTmp6], reg[regTmp3] );
-            reg[regRetval] = reg[regTmp7];
-            returnsub();
+            logrec("REWRITE OUTPUT: ",reg[regTmp7]);
+            reg[regArg0] = reg[regTmp7];
+            reg[regArg1] = reg[regEnv];
+            gosub(sub_eval,blk_tail_call);
             break;
 
          case sub_map:
