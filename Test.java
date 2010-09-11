@@ -866,6 +866,7 @@ public class Test
          // variadic stress on the body of let
          expectSuccess("(let ((a 1)) (define b 2) (+ a b))","3");
          expectSuccess("(let ((a 1)) (display 7) (define b 2) (+ a b))","73");
+         expectSemantic("(let ((a 1)))");
       }
 
       // TODO: user-level variadics
