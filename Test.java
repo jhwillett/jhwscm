@@ -141,6 +141,7 @@ public class Test
       expectSemantic("(()()))");     // fails on expr before reaching extra ')'
       expectSemantic(" ( () ())) "); // fails on expr before reaching extra ')'
       expectLexical("((()())");
+      expectSemantic("(())");
 
       expectSuccess("-",   "-",  new JhwScm(false));
       expectSuccess("-",   null);
@@ -623,13 +624,14 @@ public class Test
 
       // let, local scopes:
       // 
-      // TODO: let*, letrec
       expectSemantic("(let ())");
       expectSuccess("(let () 32)","32");
       expectSuccess("(let()32)","32");
       expectSuccess("(let ((a 10)) (+ a 32))","42");
       expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");
+      expectSemantic("(let ((a 10) (b a)) b)");
+      expectSemantic("(let ((a 10) (b (+ a 1))) b)");
       if ( true )
       {
          // Heh, guard that those names stay buried.  
@@ -645,6 +647,7 @@ public class Test
       if ( true )
       {
          expectSuccess("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
+         expectSuccess("(let ((a 10)) (let ((b (+ 32 a))) b))","42");
       }
       {
          // SURPRISE!  This is SUPPOSED to fail for (fact 2) or higher!!!!!
@@ -720,6 +723,10 @@ public class Test
          expectSuccess("(cond ((equal? 3 4) 1) (else 2))","2");
          expectSemantic("else"); // else is *not* just bound to #t!
       }
+
+      // TODO: let*, letrec
+      //
+      // Totally not fundamental, even less so than let.  Wait.
 
       // TODO: control special form: case
       //
@@ -867,6 +874,19 @@ public class Test
          expectSemantic("(let ((a 1)))");
       }
 
+      // check that map works w/ both builtins and user-defineds
+      {
+         final JhwScm scm = new JhwScm();
+         final String def = "(define (f x) (+ x 10))";
+         expectSuccess("(map display '())",      "()");      // list of VOIDs?
+         expectSuccess("(map display '(1 2 3))", "123(  )"); // yep, VOIDS.
+         expectSuccess(def,                      "",           scm);
+         expectSuccess("f",                      "???",        scm);
+         expectSuccess("(f 13)",                 "23",         scm);
+         expectSuccess("(map f '())",            "()",         scm);
+         expectSuccess("(map f '(1 2 3))",       "(11 12 13)", scm);
+      }
+      
       // TODO: user-level variadics
       if ( false )
       {

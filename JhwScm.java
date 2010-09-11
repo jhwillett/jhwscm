@@ -43,6 +43,9 @@
 
 public class JhwScm
 {
+   // TODO: permeable abstraction barrier
+   public static boolean SILENT = false;
+
    // DEBUG instruments checks of things which ought *never* happen
    // e.g. errors which theoretically can only arise due to bugs in
    // JhwScm, not user errors or JVM resource exhaustion.
@@ -53,9 +56,6 @@ public class JhwScm
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
-
-   // TODO: permeable abstraction barrier
-   public static boolean SILENT = false;
 
    public static final int     SUCCESS          = 0;
    public static final int     INCOMPLETE       = 1;
@@ -121,6 +121,7 @@ public class JhwScm
       {
          prebind("display",sub_print); // R5RS, Guile, Scsh, get off my lawn!
       }
+      prebind("map",    sub_map);
    }
 
    /**
@@ -969,6 +970,13 @@ public class JhwScm
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
+            case TYPE_NIL:
+               // The *value* for the empty list is not
+               // self-evaluating.
+               //
+               // Covers expressions like "()" and "(())"..
+               raiseError(ERR_SEMANTIC);
+               break;
             case TYPE_CELL:
                tmp0 = car(reg[regArg0]);
                switch (tmp0)
@@ -996,30 +1004,6 @@ public class JhwScm
                   gosub(sub_eval,sub_eval+0x2);
                   break;
                }
-               break;
-            case TYPE_NIL:
-               // TODO: it may be that NIL is self-evaluating
-               //
-               // Guile is weird, it gives different errors for
-               // top-level () vs ()-in-op-position:
-               //
-               //   guile> ()
-               //   ERROR: In procedure memoization:
-               //   ERROR: Illegal empty combination ().
-               //   ABORT: (syntax-error)
-               //   guile> (())
-               //   
-               //   Backtrace:
-               //   In current input:
-               //      2: 0* [()]
-               //   
-               //   <unnamed port>:2:1: In expression (()):
-               //   <unnamed port>:2:1: Wrong type to apply: ()
-               //   ABORT: (misc-error)
-               //
-               // Don't know what to make of this.
-               //
-               raiseError(ERR_SEMANTIC);
                break;
             default:
                if ( verb ) log("unexpected type in eval: " + pp(reg[regArg0]));
@@ -1113,7 +1097,9 @@ public class JhwScm
             // Using something most like the second varsion: I get to
             // exploit blk_tail_call_m_cons again! :)
             //
-            // TODO: is this almost sub_map? ;)
+            // NOTE: This almost sub_map e.g. (map eval list), except
+            // except sub_eval is binary and sub_map works with unary
+            // functions.
             //
             if ( NIL == reg[regArg0] )
             {
@@ -1385,7 +1371,7 @@ public class JhwScm
             //
             // I would prefer it if this sub_map worked with
             // either/both of builtins and user-defineds, and this way
-            // it does. TODO: test that it does ;)
+            // it does.
             //
             if ( NIL == reg[regArg1] )
             {
