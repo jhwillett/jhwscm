@@ -379,12 +379,11 @@ public class Test
       if ( false )
       {
          // See the quote-quote-quote discussion in DIARY.txt.
-
+         //
          // TODO: the quoted-quote question, and how to print it
          expectSuccess("''9",      "(quote 9)");
          expectSuccess("'''9",     "(quote (quote 9))");
          expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
-
       }
 
       expectSuccess("(equal? 10  10)","#t");
@@ -512,16 +511,17 @@ public class Test
          final String fact = 
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
          final JhwScm scm = new JhwScm();
-         expectSuccess(fact,       "",   scm);
-         expectSuccess("fact",     "???",scm);
-         expectSuccess("(fact -1)","1",  scm);  // OOM at 2 kcells
-         expectSuccess("(fact 0)", "1",  scm);
-         expectSuccess("(fact 1)", "1",  scm);
-         expectSuccess("(fact 2)", "2",  scm);
-         expectSuccess("(fact 3)", "6",  scm);  // OOM at 4 kcells
-         expectSuccess("(fact 4)", "24", scm);  // OOM at 8 kcells
-         expectSuccess("(fact 5)", "120",scm);
-         expectSuccess("(fact 6)", "720",scm);  // OOM at 16 kcells
+         expectSuccess(fact,        "",       scm);
+         expectSuccess("fact",      "???",    scm);
+         expectSuccess("(fact -1)", "1",      scm);
+         expectSuccess("(fact 0)",  "1",      scm);
+         expectSuccess("(fact 1)",  "1",      scm);
+         expectSuccess("(fact 2)",  "2",      scm);
+         expectSuccess("(fact 3)",  "6",      scm);
+         expectSuccess("(fact 4)",  "24",     scm);
+         expectSuccess("(fact 5)",  "120",    scm);
+         expectSuccess("(fact 6)",  "720",    scm);
+         expectSuccess("(fact 10)", "3628800",scm);
          selfTest(scm);
          System.out.println("fact simple:");
          System.out.println("  numCallsToCons: " + scm.numCallsToCons);
@@ -533,18 +533,19 @@ public class Test
          final String fact = 
             "(define (fact n) (help n 1))";
          final JhwScm scm = new JhwScm();
-         expectSuccess(help,       "",   scm);
-         expectSuccess(fact,       "",   scm);
-         expectSuccess("help",     "???",scm);
-         expectSuccess("fact",     "???",scm);
-         expectSuccess("(fact -1)","1",  scm);
-         expectSuccess("(fact 0)", "1",  scm);
-         expectSuccess("(fact 1)", "1",  scm);
-         expectSuccess("(fact 2)", "2",  scm);
-         expectSuccess("(fact 3)", "6",  scm);
-         expectSuccess("(fact 4)", "24", scm);
-         expectSuccess("(fact 5)", "120",scm);
-         expectSuccess("(fact 6)", "720",scm);
+         expectSuccess(fact,        "",       scm);
+         expectSuccess(help,        "",       scm); // note, define help 2nd ;)
+         expectSuccess("fact",      "???",    scm);
+         expectSuccess("help",      "???",    scm);
+         expectSuccess("(fact -1)", "1",      scm);
+         expectSuccess("(fact 0)",  "1",      scm);
+         expectSuccess("(fact 1)",  "1",      scm);
+         expectSuccess("(fact 2)",  "2",      scm);
+         expectSuccess("(fact 3)",  "6",      scm);
+         expectSuccess("(fact 4)",  "24",     scm);
+         expectSuccess("(fact 5)",  "120",    scm);
+         expectSuccess("(fact 6)",  "720",    scm);
+         expectSuccess("(fact 10)", "3628800",scm);
          selfTest(scm);        
          System.out.println("fact 2/ help:");
          System.out.println("  numCallsToCons: " + scm.numCallsToCons);
@@ -859,9 +860,6 @@ public class Test
          expectSuccess("((f 10) 7)","17",scm);
       }
 
-      System.out.println();
-      System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
-
       {
          // variadic stress on the body of let
          expectSuccess("(let ((a 1)) (define b 2) (+ a b))","3");
@@ -897,6 +895,9 @@ public class Test
          expectSemantic("(let ((a 10) (x 1) (b 20) (x 2)) 1)");
          expectSemantic("(let ((x 1) (a 10) (x 2) (b 20)) 1)");
       }
+
+      System.out.println();
+      System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
    }
 
    private static void selfTest ( final JhwScm scm )
