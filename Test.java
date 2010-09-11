@@ -624,9 +624,9 @@ public class Test
       // 
       // TODO: let*, letrec
       expectSemantic("(let ())");
-      JhwScm.SILENT = false;
       expectSuccess("(let () 32)","32");
       expectSuccess("(let()32)","32");
+      JhwScm.SILENT = false;
       expectSuccess("(let ((a 10)) (+ a 32))","42");
       expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");

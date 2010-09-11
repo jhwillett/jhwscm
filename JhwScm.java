@@ -1420,7 +1420,14 @@ public class JhwScm
             store(reg[regArg0]);
             store(reg[regTmp1]);
             reg[regArg0] = reg[regArg0];
-            reg[regArg1] = reg[regTmp1];
+            // This surplus cons() is perhaps regrettable, but the
+            // rather than let more complexity into sub_apply, I chose
+            // to just work around its variadicity checking and
+            // globbing here.
+            //
+            // I would prefer it if this sub_map worked with
+            // either/both of builtins and user-defineds.
+            reg[regArg1] = cons(reg[regTmp0],NIL);
             gosub(sub_apply,sub_map+0x1);
             break;
          case sub_map+0x1:
