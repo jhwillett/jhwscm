@@ -629,6 +629,7 @@ public class Test
       expectSuccess("(let ((a 10)) (+ a 32))","42");
       expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");
+      if ( false)
       {
          // Heh, guard that those names stay buried.  
          //
@@ -643,6 +644,13 @@ public class Test
       JhwScm.SILENT = false;
       expectSuccess("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
       {
+         // SURPRISE!  This is SUPPOSED to fail for (fact 2) or higher!!!!!
+         //
+         // My new-and-improved closures are not broken, they're right!
+         //
+         // Of course, in the meantime I've still discovered that
+         // sub_let is broken....
+         //
          final String fact = 
             "(define (fact n)"                                               +
             "  (let ((help"                                                  +
@@ -655,7 +663,7 @@ public class Test
          expectSuccess("(fact 0)", "1",  scm);
          expectSuccess("(fact 1)", "1",  scm);
          JhwScm.SILENT = false;
-         expectSuccess("(fact 2)", "2",  scm);
+         expectSuccess("(fact 2)", "2",  scm); // HAHAHHAHHAHAHA
          expectSuccess("(fact 3)", "6",  scm);
          expectSuccess("(fact 4)", "24", scm);
          expectSuccess("(fact 5)", "120",scm);

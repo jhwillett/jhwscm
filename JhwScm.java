@@ -1363,9 +1363,45 @@ public class JhwScm
                // defines invoking both a and be.  E.g. a and b could
                // be a metacircular mutually recursive pair, and this
                // would work.  Which is what I expect from (let) - I
-               // think.  Or would that be letrec*?  Quick, to the
-               // Bat-R5RS!
+               // think.  Or would that be letrec?  
+               //
+               // Quick, to the Bat-R5RS!
+               //
+               //   In a let expression, the initial values are
+               //   computed before any of the variables become bound;
+               //   in a let* expression, the bindings and evaluations
+               //   are performed sequentially; while in a letrec
+               //   expression, all the bindings are in effect while
+               //   their initial values are being computed, thus
+               //   allowing mutually recursive definitions.
+               //
+               // OK, I got all worked up, our (let)==>(lambda)
+               // examples above are right.  In:
+               //
+               //   ((lambda (a b) (+ a b)) 1 2)
+               //
+               // If the expressions 1 or 2 were instead lambda
+               // expressions, their lexical scopes would *not* enjoy
+               // bindings for either a or b.
+               //
+               // Hmmm, OK, so they can't be mutually recursive, but
+               // shouldn't one of the be able to be self-recursive? I
+               // mean, this works:
+               //
+               //   (define (fact n) 
+               //     (let ((h 
+               //            (lambda (n a) (if (< n 2) a (h (- n 1) (* n a))))
+               //          ))
+               //       (help n 1)))
+               //
+               // Right?  Ho-ho!  Guile rejects it!  (fact 1) works
+               // fine, (fact 2) gets "Unbound variable: h".
+               //
+               // OK, so the lamba expansion looks correct, for better
+               // or worse.  Which is a relief.
+               //
                
+         final JhwScm scm = new JhwScm();
             }
             else
             {
