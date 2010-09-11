@@ -1326,7 +1326,7 @@ public class JhwScm
             // Not shown in this pseudo-code, is of course the
             // evaluation of that rewritten expression.
             //
-            logrec("REWRITE INPUT: ",reg[regArg0]);
+            logrec("REWRITE INPUT:  ",reg[regArg0]);
             reg[regTmp0] = car(reg[regArg0]); // regTmp0 is locals
             reg[regTmp2] = cdr(reg[regArg0]);
             if ( TYPE_CELL != type(reg[regTmp2]) ) 
@@ -1334,7 +1334,8 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
-            reg[regTmp1] = car(reg[regTmp2]); // regTmp1 is body
+            reg[regTmp1] = reg[regTmp2];      // regTmp1 is body
+            logrec("REWRITE BODY A: ",reg[regTmp1]);
             store(reg[regTmp0]);
             store(reg[regTmp1]);
             reg[regArg0] = sub_car;
@@ -1346,6 +1347,7 @@ public class JhwScm
             // here, and a peek operation would be welcome, too.
             reg[regTmp2] = reg[regRetval];    // regTmp2 is params
             reg[regTmp1] = restore();         // restore body
+            logrec("REWRITE BODY B: ",reg[regTmp1]);
             reg[regTmp0] = restore();         // restore locals
             store(reg[regTmp0]);
             store(reg[regTmp1]);
@@ -1358,8 +1360,9 @@ public class JhwScm
             reg[regTmp3] = reg[regRetval];    // regTmp3 is values
             reg[regTmp2] = restore();         // restore params
             reg[regTmp1] = restore();         // restore body
+            logrec("REWRITE BODY C: ",reg[regTmp1]);
             reg[regTmp0] = restore();         // restore locals
-            reg[regTmp4] = cons( reg[regTmp1], NIL          );
+            reg[regTmp4] = reg[regTmp1];
             reg[regTmp5] = cons( reg[regTmp2], reg[regTmp4] );
             reg[regTmp6] = cons( sub_lambda,   reg[regTmp5] );
             reg[regTmp7] = cons( reg[regTmp6], reg[regTmp3] );

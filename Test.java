@@ -859,6 +859,15 @@ public class Test
          expectSuccess("((f 10) 7)","17",scm);
       }
 
+      System.out.println();
+      System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
+
+      {
+         // variadic stress on the body of let
+         expectSuccess("(let ((a 1)) (define b 2) (+ a b))","3");
+         expectSuccess("(let ((a 1)) (display 7) (define b 2) (+ a b))","73");
+      }
+
       // TODO: user-level variadics
       //
       // ((lambda x x) 3 4 5 6)              ===> (3 4 5 6)
@@ -882,9 +891,6 @@ public class Test
       // (let ((x 1) (a 10) (x 2)) 1)
       // (let ((a 10) (x 1) (b 20) (x 2)) 1)
       // (let ((x 1) (a 10) (x 2) (b 20)) 1)
-
-      System.out.println();
-      System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
    }
 
    private static void selfTest ( final JhwScm scm )
