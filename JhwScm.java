@@ -235,7 +235,9 @@ public class JhwScm
     *
     * @param numSteps the number of VM steps to execute.  If numSteps
     * < 0, runs to completion.
+    *
     * @throws nothing, not ever
+    *
     * @returns SUCCESS on success, INCOMPLETE if more cycles are
     * needed, otherwise an error code.
     */
@@ -259,7 +261,7 @@ public class JhwScm
       //
       // TODO: render these as registers!
       //
-      int c    = 0;
+      //int c    = 0;
       int c0   = 0;
       int v0   = 0;
       int c1   = 0;
@@ -369,20 +371,20 @@ public class JhwScm
             gosub(sub_read_burn_space,sub_read+0x1);
             break;
          case sub_read+0x1:
-            c = queuePeekFront(reg[regIn]);
-            if ( EOF == c )
+            reg[regTmp0] = queuePeekFront(reg[regIn]);
+            if ( EOF == reg[regTmp0] )
             {
                reg[regRetval] = EOF;
                returnsub();
                break;
             }
-            if ( DEBUG && TYPE_CHAR != type(c) )
+            if ( DEBUG && TYPE_CHAR != type(reg[regTmp0]) )
             {
-               if ( verb ) log("non-char in input: " + pp(c));
+               if ( verb ) log("non-char in input: " + pp(reg[regTmp0]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            switch (value(c))
+            switch (value(reg[regTmp0]))
             {
             case ')':
                if ( verb ) log("mismatch close paren");
@@ -465,14 +467,14 @@ public class JhwScm
             gosub(sub_read_burn_space,sub_read_list_open+0x1);
             break;
          case sub_read_list_open+0x1:
-            c = queuePeekFront(reg[regIn]);
-            if ( EOF == c )
+            reg[regTmp0] = queuePeekFront(reg[regIn]);
+            if ( EOF == reg[regTmp0] )
             {
                if ( verb ) log("eof in list expr");
                raiseError(ERR_LEXICAL);
                break;
             }
-            if ( code(TYPE_CHAR,')') == c )
+            if ( code(TYPE_CHAR,')') == reg[regTmp0] )
             {
                if ( verb ) log("matching close-paren");
                queuePopFront(reg[regIn]);
@@ -544,15 +546,14 @@ public class JhwScm
             //                    (else (prepend #\- 
             //                                   (sub_read_symbol_body))))))))))
             //
-            c = queuePeekFront(reg[regIn]);
-            v0 = value(c);
-            if ( DEBUG && TYPE_CHAR != type(c) )
+            reg[regTmp0] = queuePeekFront(reg[regIn]);
+            if ( DEBUG && TYPE_CHAR != type(reg[regTmp0]) )
             {
-               if ( verb ) log("non-char in input: " + pp(c));
+               if ( verb ) log("non-char in input: " + pp(reg[regTmp0]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            switch (v0)
+            switch (value(reg[regTmp0]))
             {
             case '\'':
                if ( verb ) log("quote (not belong here in sub_read_atom?)");
@@ -608,14 +609,13 @@ public class JhwScm
             }
             break;
          case sub_read_atom+0x1:
-            c = reg[regRetval];
-            if ( TYPE_FIXINT != type(c) )
+            if ( TYPE_FIXINT != type(reg[regRetval]) )
             {
                raiseError(ERR_INTERNAL);
                break;
             }
-            if ( verb ) log("negating: " + pp(c));
-            reg[regRetval] = code(TYPE_FIXINT,-value(c));
+            if ( verb ) log("negating: " + pp(reg[regRetval]));
+            reg[regRetval] = code(TYPE_FIXINT,-value(reg[regRetval]));
             if ( verb ) log("  to:       " + pp(reg[regRetval]));
             returnsub();
             break;
@@ -623,13 +623,11 @@ public class JhwScm
             reg[regTmp0]   = restore();
             reg[regTmp1]   = car(reg[regTmp0]);
             reg[regRetval] = cons(IS_SYMBOL,reg[regTmp1]);
-            if ( verb ) log("YO YO YO: " + pp(reg[regTmp0]) + " " + pp(reg[regTmp1]));
             if ( DEBUG )
             {
                reg[regTmp1] = reg[regTmp0];
                while ( NIL != reg[regTmp1] )
                {
-                  if ( verb ) log("  YO: " + pp(car(reg[regTmp1])));
                   reg[regTmp1] = cdr(reg[regTmp1]);
                }
             }
@@ -730,8 +728,8 @@ public class JhwScm
          case sub_read_octo_tok:
             // Parses the next octothorpe literal reg[regIn].
             //
-            c = queuePeekFront(reg[regIn]);
-            if ( c != code(TYPE_CHAR,'#') )
+            reg[regTmp0] = queuePeekFront(reg[regIn]);
+            if ( reg[regTmp0] != code(TYPE_CHAR,'#') )
             {
                raiseError(ERR_INTERNAL);
                break;
@@ -856,10 +854,10 @@ public class JhwScm
          case sub_read_string:
             // Parses the next string literal from reg[regIn].
             //
-            c = queuePeekFront(reg[regIn]);
-            if ( code(TYPE_CHAR,'"') != c )
+            reg[regTmp0] = queuePeekFront(reg[regIn]);
+            if ( code(TYPE_CHAR,'"') != reg[regTmp0] )
             {
-               if ( verb ) log("non-\" leading string literal: " + pp(c));
+               log("non-\" leading string literal: " + pp(reg[regTmp0]));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -871,10 +869,10 @@ public class JhwScm
          case sub_read_string+0x1:
             reg[regTmp0]   = restore();
             reg[regRetval] = cons(IS_STRING,car(reg[regTmp0]));
-            c = queuePeekFront(reg[regIn]);
-            if ( code(TYPE_CHAR,'"') != c )
+            reg[regTmp0] = queuePeekFront(reg[regIn]);
+            if ( code(TYPE_CHAR,'"') != reg[regTmp0] )
             {
-               if ( verb ) log("non-\" terminating string literal: " + pp(c));
+               log("non-\" terminating string literal: " + pp(reg[regTmp0]));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -934,14 +932,14 @@ public class JhwScm
             //
             // Return value undefined.
             //
-            c = queuePeekFront(reg[regIn]);
-            if ( EOF == c )
+            reg[regTmp0] = queuePeekFront(reg[regIn]);
+            if ( EOF == reg[regTmp0] )
             {
                reg[regRetval] = VOID;
                returnsub();
                break;
             }
-            switch (value(c))
+            switch (value(reg[regTmp0]))
             {
             case ' ':
             case '\t':
@@ -1890,12 +1888,12 @@ public class JhwScm
             //
             // Return value undefined.
             //
-            c = reg[regArg0];
-            if ( verb ) log("printing: " + pp(c));
-            switch (type(c))
+            reg[regTmp0] = reg[regArg0];
+            if ( verb ) log("printing: " + pp(reg[regTmp0]));
+            switch (type(reg[regTmp0]))
             {
             case TYPE_SENTINEL:
-               switch (c)
+               switch (reg[regTmp0])
                {
                case VOID:
                   reg[regRetval] = VOID;
@@ -1917,14 +1915,14 @@ public class JhwScm
                   returnsub();
                   break;
                default:
-                  log("bogus sentinel: " + pp(c));
+                  log("bogus sentinel: " + pp(reg[regTmp0]));
                   raiseError(ERR_INTERNAL);
                   break;
                }
                break;
             case TYPE_CELL:
-               c0 = car(c);
-               c1 = cdr(c);
+               c0 = car(reg[regTmp0]);
+               c1 = cdr(reg[regTmp0]);
                switch (c0)
                {
                case IS_STRING:
@@ -1943,7 +1941,7 @@ public class JhwScm
                   returnsub();
                   break;
                default:
-                  reg[regArg0] = c;
+                  reg[regArg0] = reg[regTmp0];
                   gosub(sub_print_list,blk_tail_call);
                   break;
                }
@@ -1951,7 +1949,7 @@ public class JhwScm
             case TYPE_CHAR:
                queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
                queuePushBack(reg[regOut],code(TYPE_CHAR,'\\'));
-               switch (value(c))
+               switch (value(reg[regTmp0]))
                {
                case ' ':
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'s'));
@@ -1970,7 +1968,7 @@ public class JhwScm
                   queuePushBack(reg[regOut],code(TYPE_CHAR,'e'));
                   break;
                default:
-                  queuePushBack(reg[regOut],c);
+                  queuePushBack(reg[regOut],reg[regTmp0]);
                   break;
                }
                reg[regRetval] = VOID;
@@ -1980,7 +1978,7 @@ public class JhwScm
                // We trick out the sign extension of our 28-bit
                // twos-complement FIXINTs to match Java's 32 bits
                // before proceeding.
-               v0 = (value(c) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
+               v0 = (value(reg[regTmp0]) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
                // TODO: this is a huge cop-out, implement it right
                final String str = "" + v0;
                for ( tmp0 = 0; tmp0 < str.length(); ++tmp0 )
@@ -1994,7 +1992,7 @@ public class JhwScm
             case TYPE_SUBP:
             case TYPE_SUBS:
                // TODO: this is a huge cop-out, implement it right
-               final String str2 = pp(c);
+               final String str2 = pp(reg[regTmp0]);
                for ( tmp0 = 0; tmp0 < str2.length(); ++tmp0 )
                {
                   queuePushBack(reg[regOut],
@@ -2027,21 +2025,20 @@ public class JhwScm
             // Prints the list in reg[regArg0], whose elements are
             // expected to all be TYPE_CHAR, to reg[regOut].
             //
-            c = reg[regArg0];
-            if ( NIL == c )
+            if ( NIL == reg[regArg0] )
             {
                reg[regRetval] = VOID;
                returnsub();
                break;
             }
-            if ( TYPE_CELL != type(c) )
+            if ( TYPE_CELL != type(reg[regArg0]) )
             {
-               if ( verb ) log("bogus non-cell: " + pp(c));
+               if ( verb ) log("bogus non-cell: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            c0 = car(c);
-            c1 = cdr(c);
+            c0 = car(reg[regArg0]);
+            c1 = cdr(reg[regArg0]);
             if ( TYPE_CHAR != type(c0) )
             {
                if ( verb ) log("bogus: " + pp(c0));
