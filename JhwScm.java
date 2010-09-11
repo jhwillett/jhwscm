@@ -1293,10 +1293,6 @@ public class JhwScm
             break;
 
          case sub_let:
-            gosub(sub_let_rewrite,blk_tail_call);
-            break;
-
-         case sub_let_rewrite:
             // Does a rewrite:
             //
             //   (define (rewrite expr)
@@ -1327,6 +1323,9 @@ public class JhwScm
             //
             // Wow, but that is fiendishly tail-recursive!
             //
+            // Not shown in this pseudo-code, is of course the
+            // evaluation of that rewritten expression.
+            //
             logrec("REWRITE INPUT: ",reg[regArg0]);
             reg[regTmp0] = car(reg[regArg0]); // regTmp0 is locals
             reg[regTmp2] = cdr(reg[regArg0]);
@@ -1340,9 +1339,9 @@ public class JhwScm
             store(reg[regTmp1]);
             reg[regArg0] = sub_car;
             reg[regArg1] = reg[regTmp0];
-            gosub(sub_map,sub_let_rewrite+0x1);
+            gosub(sub_map,sub_let+0x1);
             break;
-         case sub_let_rewrite+0x1:
+         case sub_let+0x1:
             // Note: Acknowledged, there is some wasteful stack manips
             // here, and a peek operation would be welcome, too.
             reg[regTmp2] = reg[regRetval];    // regTmp2 is params
@@ -1353,9 +1352,9 @@ public class JhwScm
             store(reg[regTmp2]);
             reg[regArg0] = sub_cadr;
             reg[regArg1] = reg[regTmp0];
-            gosub(sub_map,sub_let_rewrite+0x2);
+            gosub(sub_map,sub_let+0x2);
             break;
-         case sub_let_rewrite+0x2:
+         case sub_let+0x2:
             reg[regTmp3] = reg[regRetval];    // regTmp3 is values
             reg[regTmp2] = restore();         // restore params
             reg[regTmp1] = restore();         // restore body
@@ -2761,7 +2760,6 @@ public class JhwScm
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
    private static final int sub_let              = TYPE_SUBS | AX |  0x6200;
-   private static final int sub_let_rewrite      = TYPE_SUBS | A1 |  0x6220;
    private static final int sub_begin            = TYPE_SUBS | AX |  0x6300;
    private static final int sub_case             = TYPE_SUBS | AX |  0x6400;
    private static final int sub_case_search      = TYPE_SUBS | A2 |  0x6410;
@@ -3541,7 +3539,6 @@ public class JhwScm
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_let:              buf.append("sub_let");              break;
-         case sub_let_rewrite:      buf.append("sub_let_rewrite");      break;
          case sub_begin:            buf.append("sub_begin");            break;
          case sub_case:             buf.append("sub_case");             break;
          case sub_case_search:      buf.append("sub_case_search");      break;
