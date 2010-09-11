@@ -1332,16 +1332,10 @@ public class JhwScm
             break;
          case sub_let+0x3:
             // after rewrite
-            if ( true )
-            {
-               raiseError(ERR_NOT_IMPL);
-            }
-            else
-            {
-               reg[regArg0] = reg[regRetval];
-               reg[regArg1] = reg[regEnv];
-               gosub(sub_eval,blk_tail_call);
-            }
+            logrec("REWRITE: ",reg[regRetval]);
+            reg[regArg0] = reg[regRetval];
+            reg[regArg1] = reg[regEnv];
+            gosub(sub_eval,blk_tail_call);
             break;
 
          case sub_let_rewrite:
@@ -1406,9 +1400,8 @@ public class JhwScm
             reg[regTmp5] = cons( reg[regTmp2], reg[regTmp4] );
             reg[regTmp6] = cons( sub_lambda,   reg[regTmp5] );
             reg[regTmp7] = cons( reg[regTmp6], reg[regTmp3] );
-            reg[regArg0] = reg[regTmp7];
-            logrec("REWRITE: ",reg[regArg0]);
-            raiseError(ERR_NOT_IMPL);
+            reg[regRetval] = reg[regTmp7];
+            returnsub();
             break;
 
          case sub_map:
