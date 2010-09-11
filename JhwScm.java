@@ -261,8 +261,6 @@ public class JhwScm
       //
       // TODO: render these as registers!
       //
-      //int c    = 0;
-      int c0   = 0;
       int v0   = 0;
       int c1   = 0;
       int v1   = 0;
@@ -672,21 +670,21 @@ public class JhwScm
             // A helper for sub_read_num, but still a sub_ in its own
             // right.
             //
-            c0 = queuePeekFront(reg[regIn]);
-            v0 = value(c0);
-            if ( EOF == c0 )
+            reg[regTmp1] = queuePeekFront(reg[regIn]);
+            if ( EOF == reg[regTmp1] )
             {
                if ( verb ) log("eof: returning " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             }
-            if ( TYPE_CHAR != type(c0) )
+            if ( TYPE_CHAR != type(reg[regTmp1]) )
             {
-               if ( verb ) log("non-char in input: " + pp(c0));
+               if ( verb ) log("non-char in input: " + pp(reg[regTmp1]));
                raiseError(ERR_INTERNAL);
                break;
             }
+            v0 = value(reg[regTmp1]);
             c1 = reg[regArg0];
             v1 = value(c1);
             if ( TYPE_FIXINT != type(c1) )
@@ -703,14 +701,14 @@ public class JhwScm
             case '\n':
             case '(':
             case ')':
-               if ( verb ) log("terminator: " + pp(c0) + " return " + pp(reg[regArg0]));
+               if ( verb ) log("terminator: " + pp(reg[regTmp1]) + " return " + pp(reg[regArg0]));
                reg[regRetval] = reg[regArg0];
                returnsub();
                break;
             default:
                if ( v0 < '0' || v0 > '9' )
                {
-                  if ( verb ) log("non-digit in input: " + pp(c0));
+                  if ( verb ) log("non-digit in input: " + pp(reg[regTmp1]));
                   raiseError(ERR_LEXICAL);
                   break;
                }
@@ -735,21 +733,21 @@ public class JhwScm
                break;
             }
             queuePopFront(reg[regIn]);
-            c0 = queuePeekFront(reg[regIn]);
-            if ( EOF == c0 )
+            reg[regTmp1] = queuePeekFront(reg[regIn]);
+            if ( EOF == reg[regTmp1] )
             {
                if ( verb ) log("eof after octothorpe");
                raiseError(ERR_LEXICAL);
                break;
             }
-            if ( DEBUG && TYPE_CHAR != type(c0) )
+            if ( DEBUG && TYPE_CHAR != type(reg[regTmp1]) )
             {
-               if ( verb ) log("non-char in input: " + pp(c0));
+               if ( verb ) log("non-char in input: " + pp(reg[regTmp1]));
                raiseError(ERR_INTERNAL);
                break;
             }
             queuePopFront(reg[regIn]);
-            switch (value(c0))
+            switch (value(reg[regTmp1]))
             {
             case 't':
                if ( verb ) log("true");
@@ -782,7 +780,7 @@ public class JhwScm
                // TODO: so far, we only handle the 1-char sequences...
                break;
             default:
-               if ( verb ) log("unexpected after octothorpe: " + pp(c0));
+               log("unexpected after octothorpe: " + pp(reg[regTmp1]));
                raiseError(ERR_LEXICAL);
                break;
             }
@@ -816,21 +814,21 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            c0 = queuePeekFront(reg[regIn]);
-            if ( EOF == c0 )
+            reg[regTmp1] = queuePeekFront(reg[regIn]);
+            if ( EOF == reg[regTmp1] )
             {
                if ( verb ) log("eof: returning");
                reg[regRetval] = VOID;
                returnsub();
                break;
             }
-            if ( TYPE_CHAR != type(c0) )
+            if ( TYPE_CHAR != type(reg[regTmp1]) )
             {
-               if ( verb ) log("non-char in input: " + pp(c0));
+               if ( verb ) log("non-char in input: " + pp(reg[regTmp1]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            switch (value(c0))
+            switch (value(reg[regTmp1]))
             {
             case ' ':
             case '\t':
@@ -839,12 +837,10 @@ public class JhwScm
             case '(':
             case ')':
             case '"':
-               if ( verb ) log("eot: returning");
                returnsub();
                break;
             default:
-               if ( verb ) log("pushing: " + pp(c0) + " onto " + pp(reg[regArg0]));
-               queuePushBack(reg[regArg0],c0);
+               queuePushBack(reg[regArg0],reg[regTmp1]);
                queuePopFront(reg[regIn]);
                gosub(sub_read_symbol_body,blk_tail_call);
                break;
@@ -893,33 +889,31 @@ public class JhwScm
             //
             if ( DEBUG && TYPE_CELL != type(reg[regArg0]) )
             {
-               if ( verb ) log("non-queue in arg: " + pp(reg[regArg0]));
+               log("non-queue in arg: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            c0 = queuePeekFront(reg[regIn]);
-            if ( EOF == c0 )
+            reg[regTmp1] = queuePeekFront(reg[regIn]);
+            if ( EOF == reg[regTmp1] )
             {
-               if ( verb ) log("eof in string literal");
+               log("eof in string literal");
                raiseError(ERR_LEXICAL);
                break;
             }
-            if ( TYPE_CHAR != type(c0) )
+            if ( TYPE_CHAR != type(reg[regTmp1]) )
             {
-               if ( verb ) log("non-char in input: " + pp(c0));
+               log("non-char in input: " + pp(reg[regTmp1]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            switch (value(c0))
+            switch (value(reg[regTmp1]))
             {
             case '"':
                reg[regRetval] = car(reg[regArg0]);
-               if ( verb ) log("eot, returning: " + pp(reg[regRetval]));
                returnsub();
                break;
             default:
-               if ( verb ) log("pushing: " + pp(c0));
-               queuePushBack(reg[regArg0],c0);
+               queuePushBack(reg[regArg0],reg[regTmp1]);
                queuePopFront(reg[regIn]);
                gosub(sub_read_string_body,blk_tail_call);
                break;
@@ -1921,9 +1915,9 @@ public class JhwScm
                }
                break;
             case TYPE_CELL:
-               c0 = car(reg[regTmp0]);
+               reg[regTmp1] = car(reg[regTmp0]);
                c1 = cdr(reg[regTmp0]);
-               switch (c0)
+               switch (reg[regTmp1])
                {
                case IS_STRING:
                   reg[regArg0] = c1;
@@ -2037,15 +2031,15 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            c0 = car(reg[regArg0]);
+            reg[regTmp1] = car(reg[regArg0]);
             c1 = cdr(reg[regArg0]);
-            if ( TYPE_CHAR != type(c0) )
+            if ( TYPE_CHAR != type(reg[regTmp1]) )
             {
-               if ( verb ) log("bogus: " + pp(c0));
+               if ( verb ) log("bogus: " + pp(reg[regTmp1]));
                raiseError(ERR_INTERNAL);
                break;
             }
-            queuePushBack(reg[regOut],c0);
+            queuePushBack(reg[regOut],reg[regTmp1]);
             reg[regArg0] = c1;
             gosub(sub_print_chars,blk_tail_call);
             break;
