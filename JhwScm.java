@@ -257,6 +257,8 @@ public class JhwScm
       // Any data which must survive a block transition should be
       // saved in registers and on the stack instead.
       //
+      // TODO: render these as registers!
+      //
       int c    = 0;
       int c0   = 0;
       int v0   = 0;
@@ -961,21 +963,35 @@ public class JhwScm
             //
             switch (type(reg[regArg0]))
             {
+            case TYPE_SENTINEL:
+               switch (reg[regArg0])
+               {
+               case TRUE:
+               case FALSE:
+                  // these values are self-evaluating
+                  reg[regRetval] = reg[regArg0];
+                  returnsub();
+                  break;
+               case NIL:
+                  // The *value* for the empty list is not
+                  // self-evaluating.
+                  //
+                  // Covers expressions like "()" and "(())"..
+                  raiseError(ERR_SEMANTIC);
+                  break;
+               default:
+                  if ( verb ) log("unexpected value: " + pp(reg[regArg0]));
+                  raiseError(ERR_INTERNAL);
+                  break;
+               }
+               break;
             case TYPE_CHAR:
             case TYPE_FIXINT:
-            case TYPE_BOOLEAN:
             case TYPE_SUBS:    // TODO: is this a valid decision?  Off-spec?
             case TYPE_SUBP:    // TODO: is this a valid decision?  Off-spec?
                // these types are self-evaluating
                reg[regRetval] = reg[regArg0];
                returnsub();
-               break;
-            case TYPE_NIL:
-               // The *value* for the empty list is not
-               // self-evaluating.
-               //
-               // Covers expressions like "()" and "(())"..
-               raiseError(ERR_SEMANTIC);
                break;
             case TYPE_CELL:
                tmp0 = car(reg[regArg0]);
@@ -1006,7 +1022,7 @@ public class JhwScm
                }
                break;
             default:
-               if ( verb ) log("unexpected type in eval: " + pp(reg[regArg0]));
+               if ( verb ) log("unexpected type: " + pp(reg[regArg0]));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -1878,8 +1894,33 @@ public class JhwScm
             if ( verb ) log("printing: " + pp(c));
             switch (type(c))
             {
-            case TYPE_NIL:
-               gosub(sub_print_list,blk_tail_call);
+            case TYPE_SENTINEL:
+               switch (c)
+               {
+               case VOID:
+                  reg[regRetval] = VOID;
+                  returnsub();
+                  break;
+               case NIL:
+                  gosub(sub_print_list,blk_tail_call);
+                  break;
+               case TRUE:
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'t'));
+                  reg[regRetval] = VOID;
+                  returnsub();
+                  break;
+               case FALSE:
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'f'));
+                  reg[regRetval] = VOID;
+                  returnsub();
+                  break;
+               default:
+                  log("bogus sentinel: " + pp(c));
+                  raiseError(ERR_INTERNAL);
+                  break;
+               }
                break;
             case TYPE_CELL:
                c0 = car(c);
@@ -1935,25 +1976,6 @@ public class JhwScm
                reg[regRetval] = VOID;
                returnsub();
                break;
-            case TYPE_BOOLEAN:
-               queuePushBack(reg[regOut],code(TYPE_CHAR,'#'));
-               switch (c)
-               {
-               case TRUE:
-                  queuePushBack(reg[regOut],code(TYPE_CHAR,'t'));
-                  reg[regRetval] = VOID;
-                  returnsub();
-                  break;
-               case FALSE:
-                  queuePushBack(reg[regOut],code(TYPE_CHAR,'f'));
-                  reg[regRetval] = VOID;
-                  returnsub();
-                  break;
-               default:
-                  raiseError(ERR_INTERNAL);
-                  break;
-               }
-               break;
             case TYPE_FIXINT:
                // We trick out the sign extension of our 28-bit
                // twos-complement FIXINTs to match Java's 32 bits
@@ -1984,25 +2006,6 @@ public class JhwScm
             case TYPE_ERROR:
                raiseError(ERR_INTERNAL);
                break;
-            case TYPE_SENTINEL:
-               if ( VOID == c )
-               {
-                  reg[regRetval] = VOID;
-                  returnsub();
-                  break;
-               }
-               else
-               {
-                  // TYPE_SENTINEL is used by sub_print, true, but should
-                  // not come up in a top-level argument to sub_print.
-                  //
-                  // TODO: clearly having rules about TYPE_SENTINEL
-                  // break down, and UNDEFINED vs VOID vs NIL really
-                  // needs to be thought out.
-                  logrec("print falls down: ",c);
-                  raiseError(ERR_INTERNAL);
-                  break;
-               }
             default:
                raiseError(ERR_INTERNAL);
                break;
@@ -2475,8 +2478,7 @@ public class JhwScm
             }
             reg[regTmp0] = car(reg[regArg0]);
             logrec("proc args:   ",reg[regTmp0]);
-            if ( TYPE_NIL  != type(reg[regTmp0]) &&
-                 TYPE_CELL != type(reg[regTmp0])  )
+            if ( NIL != reg[regTmp0] && TYPE_CELL != type(reg[regTmp0])  )
             {
                raiseError(ERR_SEMANTIC);  // must have at least 2 args
                break;
@@ -2595,12 +2597,10 @@ public class JhwScm
    private static final int SHIFT_TYPE   = 28;         // matches MASK_TYPE
    private static final int MASK_VALUE   = ~MASK_TYPE;
 
-   private static final int TYPE_NIL      = 0x10000000; // TODO: TYPE_SENTINEL?
    private static final int TYPE_FIXINT   = 0x20000000;
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
    private static final int TYPE_ERROR    = 0x50000000; // TODO: TYPE_SENTINEL?
-   private static final int TYPE_BOOLEAN  = 0x60000000; // TODO: TYPE_SENTINEL?
    private static final int TYPE_SENTINEL = 0x70000000; // TODO: TYPE_SENTINEL?
    private static final int TYPE_SUBP     = 0x80000000; // procedure-like
    private static final int TYPE_SUBS     = 0x90000000; // special-form-like
@@ -2614,17 +2614,17 @@ public class JhwScm
    // resultant names in switch statements.  In C, I'd just make
    // code() a macro and be done with it.
    //
-   // Also, I'm using fairly random values for the differentiators
-   // among TYPE_NIL, TYPE_SENTINEL, TYPE_BOOLEAN, and TYPE_ERROR.
+   // Also, I'm using randomish values for the differentiators among
+   // TYPE_SENTINEL and TYPE_ERROR.
    //
    // Since each of these has only a finite, definite number of valid
    // values, using junk there is a good error-detection mechanism
    // which validates that my checks are precise and I'm not doing any
-   // silly arithmetic or confusing, say, TYPE_NIL with the value NIL
-   // - although one imagines lower-level implementations where it
-   // would be more efficient to use 0, 1, 2, ...etc.
-
-   private static final int NIL                 = TYPE_NIL      | 37;
+   // silly arithmetic or confusing, say, NIL with the Java value 0.
+   //
+   // Even though one can easily imagine lower-level implementations
+   // where it would be more efficient to use 0, 1, 2, etc. I choose
+   // not to to encourage this code to fail hard and fast.
 
    // TODO: should UNDEFINED and VOID fold together?
 
@@ -2634,6 +2634,8 @@ public class JhwScm
    // Should explore ports and how we do input() and output() here,
    // get down to a lower level.
 
+   private static final int NIL                 = TYPE_SENTINEL | 39;
+
    private static final int EOF                 = TYPE_SENTINEL | 97;
    private static final int UNDEFINED           = TYPE_SENTINEL | 16;
    private static final int VOID                = TYPE_SENTINEL | 65;
@@ -2642,8 +2644,8 @@ public class JhwScm
    private static final int IS_PROCEDURE        = TYPE_SENTINEL | 83;
    private static final int IS_SPECIAL_FORM     = TYPE_SENTINEL | 54;
 
-   private static final int TRUE                = TYPE_BOOLEAN  | 37;
-   private static final int FALSE               = TYPE_BOOLEAN  | 91;
+   private static final int TRUE                = TYPE_SENTINEL | 37;
+   private static final int FALSE               = TYPE_SENTINEL | 91;
 
    private static final int ERR_OOM             = TYPE_ERROR    | 42;
    private static final int ERR_INTERNAL        = TYPE_ERROR    | 18;
@@ -3375,12 +3377,10 @@ public class JhwScm
       final StringBuilder buf = new StringBuilder();
       switch (t)
       {
-      case TYPE_NIL:      buf.append("nil");      break;
       case TYPE_FIXINT:   buf.append("fixint");   break;
       case TYPE_CELL:     buf.append("cell");     break;
       case TYPE_CHAR:     buf.append("char");     break;
       case TYPE_ERROR:    buf.append("error");    break;
-      case TYPE_BOOLEAN:  buf.append("boolean");  break;
       case TYPE_SENTINEL: buf.append("sentinel"); break;
       case TYPE_SUBP:
       case TYPE_SUBS:
@@ -3452,9 +3452,6 @@ public class JhwScm
       buf.append("|");
       switch (t)
       {
-      case TYPE_NIL:    
-         buf.append("nil");  
-         break;
       case TYPE_CHAR:   
          if ( ' ' <= v && v < '~' )
          {
@@ -3472,23 +3469,6 @@ public class JhwScm
             buf.append('?'); 
             buf.append(v); 
             buf.append('?'); 
-         }
-         break;
-      case TYPE_BOOLEAN:   
-         buf.append('#'); 
-         switch (code)
-         {
-         case TRUE:  
-            buf.append('t'); 
-            break;
-         case FALSE: 
-            buf.append('f'); 
-            break;
-         default:    
-            buf.append('?'); 
-            buf.append(v); 
-            buf.append('?'); 
-            break;
          }
          break;
       case TYPE_SUBP:   
