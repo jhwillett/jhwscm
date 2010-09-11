@@ -262,7 +262,6 @@ public class JhwScm
       // TODO: render these as registers!
       //
       int v0   = 0;
-      int c1   = 0;
       int v1   = 0;
       int tmp0 = 0;
       int tmp1 = 0;
@@ -576,14 +575,14 @@ public class JhwScm
                // *again* before we can decide whether it is part of a
                // symbol or part of a number.
                queuePopFront(reg[regIn]);
-               c1 = queuePeekFront(reg[regIn]);
-               v1 = value(c1);
-               if ( TYPE_CHAR == type(c1) && '0' <= v1 && v1 <= '9' )
+               reg[regTmp2] = queuePeekFront(reg[regIn]);
+               v1 = value(reg[regTmp2]);
+               if ( TYPE_CHAR == type(reg[regTmp2]) && '0' <= v1 && v1 <= '9' )
                {
                   if ( verb ) log("minus-starting-number");
                   gosub(sub_read_num,sub_read_atom+0x1);
                }
-               else if ( EOF == c1 )
+               else if ( EOF == reg[regTmp2] )
                {
                   if ( verb ) log("lonliest minus in the world");
                   reg[regTmp0]   = cons(code(TYPE_CHAR,'-'),NIL);
@@ -684,15 +683,15 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            v0 = value(reg[regTmp1]);
-            c1 = reg[regArg0];
-            v1 = value(c1);
-            if ( TYPE_FIXINT != type(c1) )
+            reg[regTmp2] = reg[regArg0];
+            if ( TYPE_FIXINT != type(reg[regTmp2]) )
             {
-               if ( verb ) log("non-fixint in arg: " + pp(c1));
+               if ( verb ) log("non-fixint in arg: " + pp(reg[regTmp2]));
                raiseError(ERR_LEXICAL);
                break;
             }
+            v0 = value(reg[regTmp1]);
+            v1 = value(reg[regTmp2]);
             switch (v0)
             {
             case ' ':
@@ -760,22 +759,22 @@ public class JhwScm
                returnsub();
                break;
             case '\\':
-               c1 = queuePeekFront(reg[regIn]);
-               if ( EOF == c1 )
+               reg[regTmp2] = queuePeekFront(reg[regIn]);
+               if ( EOF == reg[regTmp2] )
                {
                   if ( verb ) log("eof after octothorpe slash");
                   raiseError(ERR_LEXICAL);
                   break;
                }
-               if ( DEBUG && TYPE_CHAR != type(c1) )
+               if ( DEBUG && TYPE_CHAR != type(reg[regTmp2]) )
                {
-                  if ( verb ) log("non-char in input: " + pp(c1));
+                  if ( verb ) log("non-char in input: " + pp(reg[regTmp2]));
                   raiseError(ERR_INTERNAL);
                   break;
                }
-               if ( verb ) log("character literal: " + pp(c1));
+               if ( verb ) log("character literal: " + pp(reg[regTmp2]));
                queuePopFront(reg[regIn]);
-               reg[regRetval] = c1;
+               reg[regRetval] = reg[regTmp2];
                returnsub();
                // TODO: so far, we only handle the 1-char sequences...
                break;
@@ -1916,15 +1915,15 @@ public class JhwScm
                break;
             case TYPE_CELL:
                reg[regTmp1] = car(reg[regTmp0]);
-               c1 = cdr(reg[regTmp0]);
+               reg[regTmp2] = cdr(reg[regTmp0]);
                switch (reg[regTmp1])
                {
                case IS_STRING:
-                  reg[regArg0] = c1;
+                  reg[regArg0] = reg[regTmp2];
                   gosub(sub_print_string,blk_tail_call);
                   break;
                case IS_SYMBOL:
-                  reg[regArg0] = c1;
+                  reg[regArg0] = reg[regTmp2];
                   gosub(sub_print_chars,blk_tail_call);
                   break;
                case IS_PROCEDURE:
@@ -2032,7 +2031,7 @@ public class JhwScm
                break;
             }
             reg[regTmp1] = car(reg[regArg0]);
-            c1 = cdr(reg[regArg0]);
+            reg[regTmp2] = cdr(reg[regArg0]);
             if ( TYPE_CHAR != type(reg[regTmp1]) )
             {
                if ( verb ) log("bogus: " + pp(reg[regTmp1]));
@@ -2040,7 +2039,7 @@ public class JhwScm
                break;
             }
             queuePushBack(reg[regOut],reg[regTmp1]);
-            reg[regArg0] = c1;
+            reg[regArg0] = reg[regTmp2];
             gosub(sub_print_chars,blk_tail_call);
             break;
 
