@@ -1363,8 +1363,71 @@ public class JhwScm
             //         (let ((values (map cadr locals)))
             //           (cons (list 'lambda params body) values)))))
             //
+            // Of course, note that the 'let is already stripped from
+            // the input by the time we get here, so this is really:
+            //
+            //   (define (rewrite expr)
+            //     (let ((locals (car expr))
+            //           (body   (cadr expr)))
+            //       (let ((params (map car locals)))
+            //         (let ((values (map cadr locals)))
+            //           (cons (list 'lambda params body) values)))))
+            //
+            // Wow, but that is fiendishly tail-recursive!
+            //
+            reg[regTmp0] = car(reg[regArg0]); // regTmp0 is locals
+            reg[regTmp2] = cdr(reg[regArg0]);
+            reg[regTmp1] = car(reg[regTmp2]); // regTmp1 is body
+            store(reg[regTmp0]);
+            store(reg[regTmp1]);
+            reg[regArg0] = sub_car;
+            reg[regArg1] = reg[regTmp0];
+            gosub(sub_map,sub_let_rewrite+0x1);
+            break;
+         case sub_let_rewrite+0x1:
+            // Note: Acknowledged, there is some wasteful stack manips
+            // here, and a peek operation would be welcome, too.
+            reg[regTmp2] = reg[regRetval];    // regTmp2 is params
+            reg[regTmp1] = restore();         // restore body
+            reg[regTmp0] = restore();         // restore locals
+            store(reg[regTmp0]);
+            store(reg[regTmp1]);
+            store(reg[regTmp2]);
+            reg[regArg0] = sub_cadr;
+            reg[regArg1] = reg[regTmp0];
+            gosub(sub_map,sub_let_rewrite+0x2);
+            break;
+         case sub_let_rewrite+0x2:
+            reg[regTmp3] = reg[regRetval];    // regTmp3 is values
+            reg[regTmp2] = restore();         // restore params
+            reg[regTmp1] = restore();         // restore body
+            reg[regTmp0] = restore();         // restore locals
             raiseError(ERR_NOT_IMPL);
             break;
+
+         case sub_map:
+            // Applies the operator in reg[regArg0] to each element of
+            // the list in reg[regArg1], and returns a list of the
+            // results in order.
+            //
+            if ( NIL == reg[regArg1] )
+            {
+               reg[regRetval] = NIL;
+               returnsub();
+               break;
+            }
+            reg[regTmp0] = car(reg[regArg1]); // head
+            reg[regTmp1] = cdr(reg[regArg1]); // rest
+            store(reg[regArg0]);
+            store(reg[regTmp1]);
+            reg[regArg0] = reg[regArg0];
+            reg[regArg1] = reg[regTmp1];
+            gosub(sub_apply,sub_map+0x1);
+            break;
+         case sub_map+0x1:
+            raiseError(ERR_NOT_IMPL);
+            break;
+            
 
          case sub_let_bindings:
             // reg[regArg0] is expected to be a list of lists of the
@@ -2313,6 +2376,17 @@ public class JhwScm
             returnsub();
             break;
 
+         case sub_cadr:
+            log("cadr: " + pp(reg[regArg0]));
+            if ( TYPE_CELL != type(reg[regArg0]) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg[regRetval] = car(cdr(reg[regArg0]));
+            returnsub();
+            break;
+
          case sub_list:
          case sub_quote:
             // Commentary: I *love* how sub_quote and sub_list are the
@@ -2781,13 +2855,17 @@ public class JhwScm
    private static final int sub_lt_p             = TYPE_SUBP | A2 |  0x7060;
 
    private static final int sub_cons             = TYPE_SUBP | A2 |  0x7200;
-   private static final int sub_car              = TYPE_SUBP | A1 |  0x7300;
-   private static final int sub_cdr              = TYPE_SUBP | A1 |  0x7400;
-   private static final int sub_list             = TYPE_SUBP | AX |  0x7500;
+   private static final int sub_car              = TYPE_SUBP | A1 |  0x7210;
+   private static final int sub_cdr              = TYPE_SUBP | A1 |  0x7220;
+   private static final int sub_cadr             = TYPE_SUBP | A1 |  0x7230;
+   private static final int sub_list             = TYPE_SUBP | AX |  0x7240;
+
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
+
+   private static final int sub_map              = TYPE_SUBP | A2 |  0x8000;
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
@@ -3558,11 +3636,13 @@ public class JhwScm
          case sub_cons:             buf.append("sub_cons");             break;
          case sub_car:              buf.append("sub_car");              break;
          case sub_cdr:              buf.append("sub_cdr");              break;
+         case sub_cadr:             buf.append("sub_cadr");             break;
          case sub_list:             buf.append("sub_list");             break;
          case sub_if:               buf.append("sub_if");               break;
          case sub_quote:            buf.append("sub_quote");            break;
          case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
+         case sub_map:              buf.append("sub_map");              break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
