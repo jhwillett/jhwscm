@@ -2119,13 +2119,16 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
-            tmp0 = value(reg[regArg0]);
-            tmp1 = value(reg[regArg1]);
-            tmp0 <<= (32-SHIFT_TYPE);
-            tmp0 >>= (32-SHIFT_TYPE);
-            tmp1 <<= (32-SHIFT_TYPE);
-            tmp1 >>= (32-SHIFT_TYPE);
-            reg[regRetval] = code(TYPE_FIXINT,(tmp0+tmp1));
+            reg[regTmp0]     = value(reg[regArg0]);
+            reg[regTmp1]     = value(reg[regArg1]);
+            reg[regTmp0]   <<= (32-SHIFT_TYPE);
+            reg[regTmp0]   >>= (32-SHIFT_TYPE);
+            reg[regTmp1]   <<= (32-SHIFT_TYPE);
+            reg[regTmp1]   >>= (32-SHIFT_TYPE);
+            reg[regTmp3]     = 0;
+            reg[regTmp3]    += reg[regTmp0];
+            reg[regTmp3]    += reg[regTmp1];
+            reg[regRetval]   = code(TYPE_FIXINT,reg[regTmp3]);
             returnsub();
             break;
 
@@ -2160,20 +2163,20 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
-            reg[regTmp0] = value(reg[regArg0]);
-            reg[regTmp1] = value(reg[regArg1]);
-            reg[regTmp2] = value(reg[regArg2]);
-            reg[regTmp0] <<= (32-SHIFT_TYPE);
-            reg[regTmp0] >>= (32-SHIFT_TYPE);
-            reg[regTmp1] <<= (32-SHIFT_TYPE);
-            reg[regTmp1] >>= (32-SHIFT_TYPE);
-            reg[regTmp2] <<= (32-SHIFT_TYPE);
-            reg[regTmp2] >>= (32-SHIFT_TYPE);
-            reg[regTmp3]  = 0;
-            reg[regTmp3] += reg[regTmp0];
-            reg[regTmp3] += reg[regTmp1];
-            reg[regTmp3] += reg[regTmp2];
-            reg[regRetval] = code(TYPE_FIXINT,reg[regTmp3]);
+            reg[regTmp0]     = value(reg[regArg0]);
+            reg[regTmp1]     = value(reg[regArg1]);
+            reg[regTmp2]     = value(reg[regArg2]);
+            reg[regTmp0]   <<= (32-SHIFT_TYPE);
+            reg[regTmp0]   >>= (32-SHIFT_TYPE);
+            reg[regTmp1]   <<= (32-SHIFT_TYPE);
+            reg[regTmp1]   >>= (32-SHIFT_TYPE);
+            reg[regTmp2]   <<= (32-SHIFT_TYPE);
+            reg[regTmp2]   >>= (32-SHIFT_TYPE);
+            reg[regTmp3]     = 0;
+            reg[regTmp3]    += reg[regTmp0];
+            reg[regTmp3]    += reg[regTmp1];
+            reg[regTmp3]    += reg[regTmp2];
+            reg[regRetval]   = code(TYPE_FIXINT,reg[regTmp3]);
             returnsub();
             break;
 
@@ -2188,13 +2191,16 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
-            tmp0 = value(reg[regArg0]);
-            tmp1 = value(reg[regArg1]);
-            tmp0 <<= (32-SHIFT_TYPE);
-            tmp0 >>= (32-SHIFT_TYPE);
-            tmp1 <<= (32-SHIFT_TYPE);
-            tmp1 >>= (32-SHIFT_TYPE);
-            reg[regRetval] = code(TYPE_FIXINT,(tmp0*tmp1));
+            reg[regTmp0]     = value(reg[regArg0]);
+            reg[regTmp1]     = value(reg[regArg1]);
+            reg[regTmp0]   <<= (32-SHIFT_TYPE);
+            reg[regTmp0]   >>= (32-SHIFT_TYPE);
+            reg[regTmp1]   <<= (32-SHIFT_TYPE);
+            reg[regTmp1]   >>= (32-SHIFT_TYPE);
+            reg[regTmp3]     = 1;
+            reg[regTmp3]    *= reg[regTmp0];
+            reg[regTmp3]    *= reg[regTmp1];
+            reg[regRetval]   = code(TYPE_FIXINT,reg[regTmp3]);
             returnsub();
             break;
 
@@ -2209,13 +2215,16 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
-            tmp0 = value(reg[regArg0]);
-            tmp1 = value(reg[regArg1]);
-            tmp0 <<= (32-SHIFT_TYPE);
-            tmp0 >>= (32-SHIFT_TYPE);
-            tmp1 <<= (32-SHIFT_TYPE);
-            tmp1 >>= (32-SHIFT_TYPE);
-            reg[regRetval] = code(TYPE_FIXINT,(tmp0-tmp1));
+            reg[regTmp0]     = value(reg[regArg0]);
+            reg[regTmp1]     = value(reg[regArg1]);
+            reg[regTmp0]   <<= (32-SHIFT_TYPE);
+            reg[regTmp0]   >>= (32-SHIFT_TYPE);
+            reg[regTmp1]   <<= (32-SHIFT_TYPE);
+            reg[regTmp1]   >>= (32-SHIFT_TYPE);
+            reg[regTmp3]     = 0;
+            reg[regTmp3]    += reg[regTmp0];
+            reg[regTmp3]    -= reg[regTmp1];
+            reg[regRetval]   = code(TYPE_FIXINT,reg[regTmp3]);
             returnsub();
             break;
 
@@ -2230,13 +2239,13 @@ public class JhwScm
                raiseError(ERR_SEMANTIC);
                break;
             }
-            tmp0 = value(reg[regArg0]);
-            tmp1 = value(reg[regArg1]);
-            tmp0 <<= (32-SHIFT_TYPE);
-            tmp0 >>= (32-SHIFT_TYPE);
-            tmp1 <<= (32-SHIFT_TYPE);
-            tmp1 >>= (32-SHIFT_TYPE);
-            reg[regRetval] = (tmp0 < tmp1) ? TRUE : FALSE;
+            reg[regTmp0]     = value(reg[regArg0]);
+            reg[regTmp1]     = value(reg[regArg1]);
+            reg[regTmp0]   <<= (32-SHIFT_TYPE);
+            reg[regTmp0]   >>= (32-SHIFT_TYPE);
+            reg[regTmp1]   <<= (32-SHIFT_TYPE);
+            reg[regTmp1]   >>= (32-SHIFT_TYPE);
+            reg[regRetval]   = (reg[regTmp0] < reg[regTmp1]) ? TRUE : FALSE;
             returnsub();
             break;
 
