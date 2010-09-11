@@ -420,7 +420,7 @@ Wait, did I just describe an implementation of dynamic scoping?  Well,
 we'll try it and see.
 
 
-*** Struggles with (let)
+*** Struggles with (let), part I
 
 HEY DUDE!!!!!!!!!!!
 
@@ -532,6 +532,8 @@ is a relief.
 
        I was wary of (1) and (2) when I wrote this, but missed (3).
 
+*** Struggles with (let), part II
+
    * Sidebar: the second impl was:
 
      case sub_let:
@@ -546,9 +548,11 @@ is a relief.
         gosub(sub_eval,blk_tail_call);
         break;
 
-     Still not variadic, per (1) of the first version, but clean
-     regarding (2) and (3).  Unlike the first version, this correctly
-     failed for both of:
+     Much cleaner, satisfyingly brief, clean regarding problems (2)
+     and (3) with the first version, but still not variadic, per (1)
+     of the first version.
+     
+     Unlike the first version, this correctly failed for both of:
 
        (let ((a 10)) a) ===> 10  ; both vers ok
        a                ===> bad ; 2nd ver fails, 1st evaluates to 10
@@ -561,3 +565,53 @@ is a relief.
        (fact 1)         ===> 1   ; both vers ok
        (fact 2)         ===> bad ; 2nd ver fails, 1st evaluates to 2
        (fact 3)         ===> bad ; 2nd ver fails, 1st evaluates to 6
+
+
+And yet, this totally fails on a nested let expression.
+
+Why?  Shouldn't this be enough?  Shouldn't sub_eval and sub_apply be
+conspiring to maintain the stack?
+
+No!  Only sub_lambda makes a closure, and I haven't done anything here
+to route through sub_lambda.
+
+Wait, but why does a nested let need a closure?
+
+  (let ((a 10)) a
+    a)
+
+  (let ((a 10)) 
+    (let ((b 32)) 
+      (+ a b)))
+
+OK, the first expresion succeeds, finding a.  The second expression
+fails looking up a.
+
+Hmm... OK, I trace evaluation of the second form, and when it is
+trying to evaluate the a in (+ a b) I see it walk an environment that
+starts with a binding for b, then continues with what I recognize as
+the top-level environment.
+
+AHA!  I think this may be because sub_apply_user manages regEnv,
+because it manipulates lexical scopes, but sub_apply_builtin does
+*not*.
+
+So the first impulse is to make sub_apply_builtin symetric w/ its
+sibling sub_apply_user in this regard but two problems arise.
+
+  1. That extra pushing and popping is expensive in and of itself.
+
+  2. That extra pushing and popping means we lose a tail recursion in
+     a critical high-frequency code path.
+
+  3. What env would sub_apply_builtin push?  Where is it recorded?
+
+Arguments (2) and (3) also apply to the option of making sub_env
+responsible for this.
+
+So we're looking at two options: make sub_let push and pop the env, or
+make sub_let work by rewriting as a lambda form.
+
+I think I'd like to explore both...
+
+

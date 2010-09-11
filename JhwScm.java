@@ -1292,8 +1292,8 @@ public class JhwScm
             break;
 
          case sub_let:
-            // TODO: (let) should be variadic, like other things with
-            // a body that is evaluated as an implicit (begin).
+            // TODO: should be variadic, like other things with a body
+            // that is evaluated as an implicit (begin).
             //
             store(reg[regArg1]);              // store body
             gosub(sub_let_bindings,sub_let+0x1);
@@ -1309,59 +1309,6 @@ public class JhwScm
             logrec("sub_let frame",reg[regRetval]);
             gosub(sub_eval,blk_tail_call);
             break;
-            // TODO: and yet this totally fails on a nested let
-            // expression.
-            //
-            // Why?  Shouldn't this be enough?  Shouldn't sub_eval
-            // and sub_apply be conspiring to maintain the stack?
-            //
-            // No!  Only sub_lambda makes a closure, and I haven't
-            // done anything here to route through sub_lambda.
-            //
-            // Wait, but why does a nested let need a closure?
-            //
-            //   (let ((a 10)) a
-            //     a)
-            //
-            //   (let ((a 10)) 
-            //     (let ((b 32)) 
-            //       (+ a b)))
-            //
-            // OK, the first expresion succeeds, finding a.  The
-            // second expression fails looking up a.
-            //
-            // Hmm... OK, I trace evaluation of the second form,
-            // and when it is trying to evaluate the a in (+ a b) I
-            // see it walk an environment that starts with a
-            // binding for b, then continues with what I recognize
-            // as the top-level environment.
-            //
-            // AHA!  I think this may be because sub_apply_user
-            // manages regEnv, because it manipulates lexical scopes,
-            // but sub_apply_builtin does *not*.
-            // 
-            // So the first impulse is to make sub_apply_builtin
-            // symetric w/ its sibling sub_apply_user in this regard
-            // but two problems arise.
-            //
-            //   1. That extra pushing and popping is expensive in and
-            //      of itself.
-            //
-            //   2. That extra pushing and popping means we lose a
-            //      tail recursion in a critical high-frequency code
-            //      path.
-            //
-            //   3. What env would sub_apply_builtin push?  Where is
-            //      it recorded?
-            //
-            // Arguments (2) and (3) also apply to the option of
-            // making sub_env responsible for this.
-            //
-            // So we're looking at two options: make sub_let push and
-            // pop the env, or make sub_let work by rewriting as a
-            // lambda form.
-            //
-            // I think I'd like to explore both...
 
          case sub_let_bindings:
             // reg[regArg0] is expected to be a list of lists of the
