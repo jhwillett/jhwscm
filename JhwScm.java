@@ -1300,6 +1300,7 @@ public class JhwScm
             reg[regArg0] = reg[regTmp2];
             gosub(sub_let_rewrite,sub_let+0x3);
             break;
+
          case sub_let+0x3:
             // after rewrite
             logrec("REWRITE: ",reg[regRetval]);
