@@ -262,7 +262,6 @@ public class JhwScm
       // TODO: render these as registers!
       //
       int v0   = 0;
-      int v1   = 0;
       int tmp0 = 0;
       int tmp1 = 0;
       int tmp2 = 0;
@@ -576,8 +575,9 @@ public class JhwScm
                // symbol or part of a number.
                queuePopFront(reg[regIn]);
                reg[regTmp2] = queuePeekFront(reg[regIn]);
-               v1 = value(reg[regTmp2]);
-               if ( TYPE_CHAR == type(reg[regTmp2]) && '0' <= v1 && v1 <= '9' )
+               if ( TYPE_CHAR == type(reg[regTmp2]) && 
+                    '0' <= value(reg[regTmp2])      && 
+                    '9' >= value(reg[regTmp2])       )
                {
                   if ( verb ) log("minus-starting-number");
                   gosub(sub_read_num,sub_read_atom+0x1);
@@ -691,7 +691,6 @@ public class JhwScm
                break;
             }
             v0 = value(reg[regTmp1]);
-            v1 = value(reg[regTmp2]);
             switch (v0)
             {
             case ' ':
@@ -711,9 +710,9 @@ public class JhwScm
                   raiseError(ERR_LEXICAL);
                   break;
                }
-               tmp0 = 10*v1 + (v0-'0');
+               tmp0 = 10*value(reg[regTmp2]) + (v0-'0');
                if ( verb ) log("first char: " + (char)v0);
-               if ( verb ) log("old accum:  " +       v1);
+               if ( verb ) log("old accum:  " +       value(reg[regTmp2]));
                if ( verb ) log("new accum:  " +       tmp0);
                queuePopFront(reg[regIn]);
                reg[regArg0] = code(TYPE_FIXINT,tmp0);
