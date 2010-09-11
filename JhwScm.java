@@ -1409,6 +1409,16 @@ public class JhwScm
             // the list in reg[regArg1], and returns a list of the
             // results in order.
             //
+            // The surplus cons() before we call sub_apply is perhaps
+            // regrettable, but the rather than squeeze more
+            // complexity into the sub_apply family, I choose here to
+            // work around the variadicity checking and globbing in
+            // sub_appy.
+            //
+            // I would prefer it if this sub_map worked with
+            // either/both of builtins and user-defineds, and this way
+            // it does. TODO: test that it does ;)
+            //
             if ( NIL == reg[regArg1] )
             {
                reg[regRetval] = NIL;
@@ -1420,20 +1430,15 @@ public class JhwScm
             store(reg[regArg0]);
             store(reg[regTmp1]);
             reg[regArg0] = reg[regArg0];
-            // This surplus cons() is perhaps regrettable, but the
-            // rather than let more complexity into sub_apply, I chose
-            // to just work around its variadicity checking and
-            // globbing here.
-            //
-            // I would prefer it if this sub_map worked with
-            // either/both of builtins and user-defineds.
             reg[regArg1] = cons(reg[regTmp0],NIL);
             gosub(sub_apply,sub_map+0x1);
             break;
          case sub_map+0x1:
-            raiseError(ERR_NOT_IMPL);
+            reg[regArg1] = restore();  // restore rest of operands
+            reg[regArg0] = restore();  // restore operator
+            store(reg[regRetval]);     // feed blk_tail_call_m_cons
+            gosub(sub_map,blk_tail_call_m_cons);
             break;
-            
 
          case sub_let_bindings:
             // reg[regArg0] is expected to be a list of lists of the
