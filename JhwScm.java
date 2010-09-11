@@ -90,6 +90,7 @@ public class JhwScm
       reg[regIn]  = queueCreate();
       reg[regOut] = queueCreate();
       reg[regEnv] = cons(NIL,NIL);
+      log("INITIAL ENV: " + pp(reg[regEnv]));
 
       prebind("+",      sub_add);
       prebind("*",      sub_mul);
@@ -1295,19 +1296,27 @@ public class JhwScm
             // TODO: should be variadic, like other things with a body
             // that is evaluated as an implicit (begin).
             //
-            store(reg[regArg1]);              // store body
+            store(reg[regArg1]);         // store body
             gosub(sub_let_bindings,sub_let+0x1);
             break;
          case sub_let+0x1:
-            reg[regTmp0] = restore();         // restore body
+            reg[regTmp0] = restore();    // restore body
             reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
-            log("LET LET LET OLD ENV: " + pp(reg[regEnv]));
-            log("LET LET LET NEW ENV: " + pp(reg[regTmp1]));
             reg[regArg0] = reg[regTmp0];
             reg[regArg1] = reg[regTmp1];
-            logrec("sub_let body ",reg[regArg0]);
-            logrec("sub_let frame",reg[regRetval]);
-            gosub(sub_eval,blk_tail_call);
+            store(reg[regEnv]);          // store env
+            log("LET ENV PREPUSH:  " + pp(reg[regEnv]));
+            reg[regEnv] = reg[regTmp1];
+            log("LET ENV POSTPUSH: " + pp(reg[regEnv]));
+            //logrec("sub_let body ",reg[regArg0]);
+            //logrec("sub_let frame",reg[regRetval]);
+            gosub(sub_eval,sub_let+0x2);
+            break;
+         case sub_let+0x2:
+            log("LET ENV PREPOP:   " + pp(reg[regEnv]));
+            reg[regEnv] = restore();     // restore env
+            log("LET ENV POSTPOP:  " + pp(reg[regEnv]));
+            returnsub();
             break;
 
          case sub_let_bindings:
@@ -1798,9 +1807,10 @@ public class JhwScm
                // find the lexical scope of a procedure or special
                // form.
                //
-               log("MAKING THE LEAP");
+               log("LEXICAL ENV PREPUSH:  " + pp(reg[regEnv]));
                store(reg[regEnv]);
                reg[regEnv] = reg[regTmp2];
+               log("LEXICAL ENV POSTPUSH: " + pp(reg[regEnv]));
                gosub(sub_begin, sub_apply_user+0x2);
             }
             else
@@ -1812,8 +1822,9 @@ public class JhwScm
             // I am so sad that pushing that env above means we cannot
             // be tail recursive.
             //
-            log("LANDING!!!");
+            log("LEXICAL ENV PREPOP:  " + pp(reg[regEnv]));
             reg[regEnv] = restore();
+            log("LEXICAL ENV POSTPOP: " + pp(reg[regEnv]));
             returnsub();
             break;
 

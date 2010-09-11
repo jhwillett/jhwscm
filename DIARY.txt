@@ -610,8 +610,74 @@ Arguments (2) and (3) also apply to the option of making sub_env
 responsible for this.
 
 So we're looking at two options: make sub_let push and pop the env, or
-make sub_let work by rewriting as a lambda form.
+make sub_let work by rewriting as a lambda form.  
+
+If making sub_let push and pop works, it will probably be simpler than
+rewriting as a lambda form: but I suspect rewriting as a lambda form
+will prove more tail recursive, and in the long run might even be more
+efficient, depending on how syntax rules work.
 
 I think I'd like to explore both...
 
+[For posterity: at this point, I have almost no idea how syntax rules
+work, have never written one, have read a few but don't understand
+them, and have only the dimmest memory of SICP's macros].
 
+Boo-ya.  Third version passes all unit tests so far:
+
+   * Sidebar: the third, working impl was:
+
+     case sub_let:
+        store(reg[regArg1]);         // store body
+        gosub(sub_let_bindings,sub_let+0x1);
+        break;
+     case sub_let+0x1:
+        reg[regTmp0] = restore();    // restore body
+        reg[regTmp1] = cons(reg[regRetval],reg[regEnv]);
+        reg[regArg0] = reg[regTmp0];
+        reg[regArg1] = reg[regTmp1];
+        store(reg[regEnv]);          // store env
+        reg[regEnv] = reg[regTmp1];
+        gosub(sub_eval,sub_let+0x2);
+        break;
+     case sub_let+0x2:
+        reg[regEnv] = restore();     // restore env
+        returnsub();
+        break;
+
+This raises some questions.  If sub_let can be so simple, why is
+sub_lambda so complicated?
+
+     case sub_lambda:
+        if ( TYPE_CELL != type(reg[regArg0]) )
+        {
+           raiseError(ERR_SEMANTIC);  // must have at least 2 args
+           break;
+        }
+        reg[regTmp0] = car(reg[regArg0]);
+        if ( TYPE_NIL  != type(reg[regTmp0]) &&
+             TYPE_CELL != type(reg[regTmp0])  )
+        {
+           raiseError(ERR_SEMANTIC);  // must have at least 2 args
+           break;
+        }
+        reg[regTmp1] = cdr(reg[regArg0]);
+        if ( TYPE_CELL != type(reg[regTmp1]) )
+        {
+           raiseError(ERR_SEMANTIC);  // must have at least 2 args
+           break;
+        }
+        reg[regRetval] = cons(reg[regEnv], NIL);
+        reg[regRetval] = cons(reg[regTmp1],reg[regRetval]);
+        reg[regRetval] = cons(reg[regTmp0],reg[regRetval]);
+        reg[regRetval] = cons(IS_PROCEDURE,reg[regRetval]);
+        returnsub();
+        break;
+
+No, my bad.  When you consider sub_let_bindings contributing to the
+complexity of sub_let, and when you consider that sub_lambda properly
+supports variadicity *and* has more robust error checking, sub_lambda
+comes out ahead.
+
+*Way* ahead.  sub_let_bindings is about 60 lines, too long to even
+include in a sidebar here.

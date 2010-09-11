@@ -643,7 +643,6 @@ public class Test
       // nested lexical scopes:
       if ( true )
       {
-         JhwScm.SILENT = false;
          expectSuccess("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
       }
       {
