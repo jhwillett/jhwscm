@@ -444,13 +444,9 @@ is how it is implemented now.
 
 Exploring let-as-syntax
 
-  (let ((a 1)) (+ a 2)) 
+  (let ((a 1)) (+ a 2))       rewrites to ((lambda (a) (+ a 2)) 1)
 
-  ((lambda (a) (+ a 2)) 1)
-
-  (let ((a 1) (b 2)) (+ a b))
-
-  ((lambda (a b) (+ a b)) 1 2)
+  (let ((a 1) (b 2)) (+ a b)) rewrites to ((lambda (a b) (+ a b)) 1 2)
 
 I notice a couple things that are good.  
 
@@ -681,3 +677,52 @@ comes out ahead.
 
 *Way* ahead.  sub_let_bindings is about 60 lines, too long to even
 include in a sidebar here.
+
+Hmm, leaving aside that I am as-yet ignorant of how Scheme's syntax
+rules work, how would I write a let-to-lambda expansion in Scheme?
+
+  (define (rewrite expr)
+    (let ((params (mapcar car  (cadr expr)))
+          (values (mapcar cadr (cadr expr)))
+          (body   (caddr expr)))
+      (cons (list 'lambda params body) values)))
+
+  (rewrite '(let ((a 1) (b 2)) (+ a b))) =?=> ((lambda (a b) (+ a b) 1 2)
+
+Hmm.  There are other places in the present code where I have
+wondered, even if map or mapcar are nonfundamental, maybe I really
+want them available for implementing some of the things that actually
+*are* fundamental.  (let), of course, is not fundamental, but still...
+
+Doh!  I notice Guile's "map" is SICP's "mapcar".  No, my mistake.
+"mapcar" is an early exercise, and it works on a function and a list.
+"map" is similar, but generalized: it works on a function and any
+stream.
+
+So reworking the above into something acceptable to Guile:
+
+  (define (rewrite expr)
+    (let ((params (map car  (cadr expr)))
+          (values (map cadr (cadr expr)))
+          (body   (caddr expr)))
+      (cons (list 'lambda params body) values)))
+  (define let-expr '(let ((a 1) (b 2)) (+ a b)))
+  (define lambda-expr (rewrite let-expr))
+  (display let-expr)
+  (newline)
+  (display lambda-expr)
+  (newline)
+
+results in output:
+
+  (let ((a 1) (b 2)) (+ a b))
+  ((lambda (a b) (+ a b)) 1 2)
+
+both of which evaluate to 3 when I plug them back into Guile.
+
+So I have a gameplan.
+
+
+
+
+          
