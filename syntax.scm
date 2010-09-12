@@ -10,7 +10,7 @@
 ;;
 ;; Good man, Will Donnelly!
 
-(use-modules (ice-9 r5rs))
+;;(use-modules (ice-9 r5rs))
 (use-syntax (ice-9 syncase))
 
 ;; Guile lacks a prior definition for (print), no problem!
@@ -60,12 +60,36 @@
              (loop))
            #f)))))
 
+(define-syntax wdWhile2
+  (syntax-rules ()
+    ((wdWhile2 condition body ...)
+     (let ((loop (lambda ()
+                   (if condition
+                       (begin
+                         body ...
+                         (loop))
+                       #f))))
+       (loop)))))
+
 ;; Calling WD's form.  Note x is still live from before, w/ value 5,
 ;; so this should print 5 lines: 6, 7, 8, 9, 10.
 ;;
+;; Sadly, I see the two sentinel prints "GOT ... FAR", but nothing
+;; from within the loop.
+;;
+;; My rewrite wdWhile2, out of paranoia of the weird (let), has the
+;; same behavior.
 ;;
 (print "GOT THIS FAR")
 (wdWhile (< x 5)
   (set! x (+ x 1))
   (print x))
 (print "GOT ULTIMA FAR")
+(wdWhile2 (< x 5)
+  (set! x (+ x 1))
+  (print x))
+(print "CHECK IT")
+(print x) ;; is still 5
+
+
+
