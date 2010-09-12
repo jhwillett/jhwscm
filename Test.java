@@ -922,6 +922,47 @@ public class Test
          expectSemantic("(let ((x 1) (a 10) (x 2) (b 20)) 1)");
       }
 
+      // Here's an interesting thing:
+      //
+      // Guile:
+      //
+      //   guile> (display (read)).(newline)
+      //   #{.}#
+      //
+      // Scsh:
+      //
+      //   > (display (read)).(newline)
+      //   
+      //   Error: unexpected " . "
+      //          #{Input-fdport #{Input-channel "standard input"}}
+      //
+      // I wonder about what Guile is doing.  Could #{.}# be the
+      // external representation of the special syntactic token used
+      // for dotted lists?  No:
+      //
+      // Guile:
+      //
+      //   guile> .
+      //   ERROR: Unbound variable: #{.}#
+      //   ABORT: (unbound-variable)
+      //   guile> #{.}#
+      //   ERROR: Unbound variable: #{.}#
+      //   ABORT: (unbound-variable)
+      //
+      // Seems that #{.}# means .-as-symbol.  However:
+      //
+      //   guile> (define #{.}# 10)
+      //   
+      //   Backtrace:
+      //   In current input:
+      //   2: 0* (define . 10)
+      //   
+      //   <unnamed port>:2:1: In procedure memoization in expression (define . 10):
+      //   <unnamed port>:2:1: In line 1: Bad expression (define . 10).
+      //   ABORT: (syntax-error)
+      //
+      // Weird.  So is it or is it not a symbol?
+
       System.out.println();
       System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
    }
