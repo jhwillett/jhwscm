@@ -994,6 +994,14 @@ public class JhwScm
                   //
                   //   reg[regArg0] already contains the symbol
                   //   reg[regArg1] already contains the env
+                  //
+                  // TODO: w/ a different variant of
+                  // sub_eval_look_env, could this be a tail call?
+                  // And I don't just mean making a new function that
+                  // calls sub_eval_look_env that has our same
+                  // continuation sub_eval+0x1... I mean something
+                  // that tail-recurses all the way to the
+                  // success-or-symbol-not-found logic.
                   gosub(sub_eval_look_env,sub_eval+0x1);
                   break;
                default:
@@ -1018,12 +1026,13 @@ public class JhwScm
             // following symbol lookup
             if ( NIL == reg[regRetval] )
             {
+               // symbol not found: unbound variable
                raiseError(ERR_SEMANTIC);
                break;
             }
             if ( DEBUG && TYPE_CELL != type(reg[regRetval]) )
             {
-               raiseError(ERR_SEMANTIC);
+               raiseError(ERR_INTERNAL);
                break;
             }
             reg[regRetval] = cdr(reg[regRetval]);
