@@ -252,6 +252,23 @@ as a function to 3, and I can't do that.  So... both of them have 'X
 expand to (quote X) via the *symbol* "quote", not the builtin
 operation to which "quote" is commonly bound.  Interesting.
 
+[
+UPADTE Sun Sep 12: Chicken lets me define quote, but afterwards '1 and
+(quote 1) still work, but quote evaluates as what I told it to be:
+
+  #;1> (define quote 3)
+  #;2> '1
+  1
+  #;3> (quote 1)
+  1
+  #;4> quote
+  3
+  #;5> (+ 8 quote)
+  11
+
+Weird.
+]
+
 In the LISP-2s I don't know quite what to expect, but whatever happens
 I do not think it is applicable, since LISP-2's have complex symbols
 and, if I recall, a different slot in the symbols for each of values,
@@ -722,7 +739,6 @@ both of which evaluate to 3 when I plug them back into Guile.
 
 So I have a gameplan.
 
+UPDATE Sun Sept 12: The gameplan worked.
 
 
-
-          
