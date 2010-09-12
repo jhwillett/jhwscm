@@ -1,6 +1,10 @@
 #!/usr/bin/guile
 !#
 
+;; A little ditty I wrote to see what a rewrite rule for transforming
+;; let expressions into a lambda-based expression.  Guided the
+;; maturation of sub_let.
+
 (define (rewrite expr)
   (let ((params (map car  (cadr expr)))
         (values (map cadr (cadr expr)))
