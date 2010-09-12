@@ -10,7 +10,7 @@
 ;;
 ;; Good man, Will Donnelly!
 
-;;(use-modules (ice-9 r5rs))
+(use-modules (ice-9 r5rs))
 (use-syntax (ice-9 syncase))
 
 ;; Guile lacks a prior definition for (print), no problem!
