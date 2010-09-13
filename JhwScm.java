@@ -41,6 +41,8 @@
  * All rights reserved.
  */
 
+import java.util.Random;
+
 public class JhwScm
 {
    // TODO: permeable abstraction barrier
@@ -57,14 +59,18 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final int     SUCCESS          = 0;
-   public static final int     INCOMPLETE       = 1;
-   public static final int     BAD_ARG          = 2;
-   public static final int     OUT_OF_MEMORY    = 3;
-   public static final int     FAILURE_LEXICAL  = 4;
-   public static final int     FAILURE_SEMANTIC = 5;
-   public static final int     UNIMPLEMENTED    = 6;
-   public static final int     INTERNAL_ERROR   = 7;
+   public static final int     STRESS_OUTPUT_PERCENT     = 13;
+
+   public static final int     SUCCESS          =  0;
+   public static final int     INCOMPLETE       = -1;
+   public static final int     BAD_ARG          = -2;
+   public static final int     OUT_OF_MEMORY    = -3;
+   public static final int     FAILURE_LEXICAL  = -4;
+   public static final int     FAILURE_SEMANTIC = -5;
+   public static final int     UNIMPLEMENTED    = -6;
+   public static final int     INTERNAL_ERROR   = -7;
+
+   private final Random debugRand = new Random(1234);
 
    public JhwScm ()
    {
@@ -185,49 +191,114 @@ public class JhwScm
     * @throws nothing, not ever
     * @returns SUCCESS on success, otherwise an error code.
     */
-   public int output ( final Appendable output ) 
+   public int output ( final Appendable out ) 
    {
       final boolean verb = true && !SILENT;
-      if ( DEBUG ) javaDepth = 0;
-      if ( null == output )
+      if ( null == out )
       {
          if ( verb ) log("output(): null arg");
          return BAD_ARG;
       }
-      if ( NIL == reg[regOut] )
+      final byte[] buf = new byte[1+debugRand.nextInt(10)];
+      int off = 0;
+      while (true)
       {
-         raiseError(ERR_INTERNAL);
-         return INTERNAL_ERROR;
-      }
-      // TODO: make this all-or-nothing, like input()?
-      for ( int f = 0; EOF != ( f = queuePeekFront(reg[regOut]) ); /*below*/ )
-      {
-         final int  v = value(f);
-         final char c = (char)(MASK_VALUE & v);
-         try
+         final int n = output(buf,off,buf.length-off);
+         if ( -1 > n )
          {
-            output.append(c);
+            if ( verb ) log("output(): error: " + n);
+            return n; // error code
          }
-         catch ( Throwable e )
+         if ( -1 == n )
          {
-            // TODO: change signature so we don't need this guard here?
-            return OUT_OF_MEMORY;
+            if ( verb ) log("output(): done \"" + out + "\"");
+            return SUCCESS;
          }
-         queuePopFront(reg[regOut]);
+         if ( verb ) log("out: " + off + " vs " + buf.length + " n " + n);
+         for ( int i = off; i < off+n; ++i )
+         {
+            try
+            {
+               out.append((char)buf[i]);
+            }
+            catch ( Throwable e )
+            {
+               if ( verb ) log("output(): failed to append");
+               return OUT_OF_MEMORY;
+            }
+         }
+         off += n;
+         if ( off >= buf.length )
+         {
+            off = 0;
+         }
       }
-      if ( verb ) log("output(): \"" + output + "\"");
-      return SUCCESS;
    }
 
    /**
-    * Drives all pending computation to completion.
+    * Transfers up to len bytes from the VM's output buffer and copies
+    * them to out[off..len-1].
     *
-    * @throws nothing, not ever
-    * @returns SUCCESS on success, otherwise an error code.
+    * @returns the number of bytes written, or -1 if none were written
+    * and the VM's output buffer is empty, else an error code <= -2.
     */
-   public int drive ()
+   public int output ( final byte[] out, final int off, final int len ) 
    {
-      return drive(-1);
+      final boolean verb = true && !SILENT;
+      if ( DEBUG ) javaDepth = 0;
+      if ( verb ) log("output(): " + off + "+" + len + " / " + out.length);
+      if ( null == out )
+      {
+         if ( verb ) log("output(): null arg");
+         return BAD_ARG;
+      }
+      if ( off < 0 )
+      {
+         if ( verb ) log("output(): bad off: " + off);
+         return BAD_ARG;
+      }
+      if ( len < 0 )
+      {
+         if ( verb ) log("output(): bad len: " + len);
+         return BAD_ARG;
+      }
+      if ( off+len > out.length )
+      {
+         if ( verb ) log("output(): " + off + "+" + len + " / " + out.length);
+         return BAD_ARG;
+      }
+      if ( NIL == reg[regOut] )
+      {
+         if ( verb ) log("output(): internal");
+         raiseError(ERR_INTERNAL);
+         return INTERNAL_ERROR;
+      }
+      for ( int i = 0; i < len; ++i )
+      {
+         final int f = queuePeekFront(reg[regOut]);
+         if ( EOF == f )
+         {
+            if ( verb ) log("output(): eof: " + i);
+            if ( 0 == i )
+            {
+               return -1;
+            }
+            else
+            {
+               return i;
+            }
+         }
+         if ( DEBUG && debugRand.nextInt(100) < STRESS_OUTPUT_PERCENT )
+         {
+            if ( verb ) log("output(): stress: " + i);
+            return i;
+         }
+         out[off+i] = (byte)value(f);
+         if ( verb ) log("output(): popping: " + (char)out[off+i] + " at " + (off+i) );
+         queuePopFront(reg[regOut]);
+      }
+      if ( verb ) log("output(): done: " + len);
+      return len;
    }
 
    /**
