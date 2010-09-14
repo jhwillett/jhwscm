@@ -17,98 +17,110 @@ public class Test
 
    private static final Random debugRand = new Random(1234);
 
+   private static boolean DO_REP = true;
+   private static boolean SILENT = true;
+   private static boolean DEBUG  = true;
+
+   private static JhwScm newScm ( final boolean do_rep )
+   {
+      return new JhwScm(do_rep,SILENT,DEBUG);
+   }
+
+   private static JhwScm newScm ()
+   {
+      return new JhwScm(DO_REP,SILENT,DEBUG);
+   }
+
    public static void main ( final String[] argv )
       throws java.io.IOException
    {
-      JhwScm.SILENT = true;
-
       // bogus args to entry points result in BAD_ARG, not an exception
       {
-         final int code = new JhwScm().input(null,0,0);
+         final int code = newScm().input(null,0,0);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().input(new byte[0],0,0);
+         final int code = newScm().input(new byte[0],0,0);
          assertEquals(JhwScm.SUCCESS,code);
       }
       {
-         final int code = new JhwScm().input(new byte[0],-1,0);
+         final int code = newScm().input(new byte[0],-1,0);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().input(new byte[0],0,-1);
+         final int code = newScm().input(new byte[0],0,-1);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().input(new byte[0],3,2);
+         final int code = newScm().input(new byte[0],3,2);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().input(new byte[0],2,3);
+         final int code = newScm().input(new byte[0],2,3);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().output(null,0,0);
+         final int code = newScm().output(null,0,0);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().output(new byte[0],0,0);
+         final int code = newScm().output(new byte[0],0,0);
          assertEquals(0,code);
       }
       {
-         final int code = new JhwScm().output(new byte[0],-1,0);
+         final int code = newScm().output(new byte[0],-1,0);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().output(new byte[0],0,-1);
+         final int code = newScm().output(new byte[0],0,-1);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().output(new byte[0],3,2);
+         final int code = newScm().output(new byte[0],3,2);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().output(new byte[0],2,3);
+         final int code = newScm().output(new byte[0],2,3);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().output(new byte[3],2,3);
+         final int code = newScm().output(new byte[3],2,3);
          assertEquals(JhwScm.BAD_ARG,code);
       }
       {
-         final int code = new JhwScm().output(new byte[5],2,3);
+         final int code = newScm().output(new byte[5],2,3);
          assertEquals(-1,code);
       }
       {
-         final int code = new JhwScm().drive(-2);
+         final int code = newScm().drive(-2);
          assertEquals(JhwScm.BAD_ARG,code);
       }
 
 
       // empty args are OK
       {
-         final int code = new JhwScm().input(new byte[0],0,0);
+         final int code = newScm().input(new byte[0],0,0);
          assertEquals("input(\"\")",JhwScm.SUCCESS,code);
       }
       {
-         final int code = new JhwScm().input(new byte[0],0,0);
+         final int code = newScm().input(new byte[0],0,0);
          assertEquals("input(\"\")",JhwScm.SUCCESS,code);
       }
       {
-         final int code = new JhwScm().input(new byte[1],1,0);
+         final int code = newScm().input(new byte[1],1,0);
          assertEquals("input(\"\")",JhwScm.SUCCESS,code);
       }
       {
-         final int code = new JhwScm().drive(0);
+         final int code = newScm().drive(0);
          assertEquals("drive(0)",JhwScm.INCOMPLETE,code);
       }
       {
-         final int code = new JhwScm().drive(-1);
+         final int code = newScm().drive(-1);
          assertEquals("drive(-1) (w/ empty input)",JhwScm.SUCCESS,code);
       }
       {
          final StringBuilder buf  = new StringBuilder();
-         final int           code = output(new JhwScm(),buf);
+         final int           code = output(newScm(),buf);
          assertEquals("output()",JhwScm.SUCCESS,code);
          assertEquals("output is empty",0,buf.length());
       }
@@ -119,7 +131,7 @@ public class Test
       {
          final String        msg   = "cycles: " + numCycles;
          final StringBuilder buf   = new StringBuilder();
-         final JhwScm        scm   = new JhwScm();
+         final JhwScm        scm   = newScm();
          final int           icode = input(scm,"");
          assertEquals(msg,JhwScm.SUCCESS,icode);
          final int           dcode = scm.drive(numCycles);
@@ -161,7 +173,7 @@ public class Test
       // first computation: even simple integer take nonzero cycles
       {
          final StringBuilder buf    = new StringBuilder();
-         final JhwScm        scm    = new JhwScm();
+         final JhwScm        scm    = newScm();
          final int           icode  = input(scm,"0");
          assertEquals(JhwScm.SUCCESS, icode);
          final int           dcode1 = scm.drive(0);
@@ -202,9 +214,9 @@ public class Test
       expectLexical("((()())");
       expectSemantic("(())");
 
-      expectSuccess("-",   "-",  new JhwScm(false));
+      expectSuccess("-",   "-",  newScm(false));
       expectSuccess("-",   null);
-      expectSuccess("-asd", "-asd",  new JhwScm(false));
+      expectSuccess("-asd", "-asd",  newScm(false));
       expectSemantic("-as");
       
       expectSemantic("(a b c)");
@@ -214,43 +226,43 @@ public class Test
       expectLexical("((a b) c");
       expectLexical("((a b c)");
 
-      expectSuccess("(a b c)",      "(a b c)",   new JhwScm(false));
-      expectSuccess("(a (b c))",    "(a (b c))", new JhwScm(false));
-      expectSuccess("((a b) c)",    "((a b) c)", new JhwScm(false));
-      expectSuccess("((a b c))",    "((a b c))", new JhwScm(false));
-      expectSuccess("((a)b)",       "((a) b)",   new JhwScm(false));
-      expectSuccess("((a )b)",      "((a) b)",   new JhwScm(false));
-      expectSuccess("((a ) b)",     "((a) b)",   new JhwScm(false));
-      expectSuccess("( (a )b)",     "((a) b)",   new JhwScm(false));
-      expectSuccess("( (a) b)",     "((a) b)",   new JhwScm(false));
-      expectSuccess("( (a)b )",     "((a) b)",   new JhwScm(false));
-      expectLexical("((a b) c",                  new JhwScm(false));
-      expectLexical("((a b c)",                  new JhwScm(false));
-      expectSuccess("()",           "()",        new JhwScm(false));
-      expectSuccess("\r(\t)\n",     "()",        new JhwScm(false));
-      expectLexical("(",                         new JhwScm(false));
-      expectLexical(" (  ",                      new JhwScm(false));
-      expectLexical(")",                         new JhwScm(false));
-      expectSuccess("(()())",       "(() ())",   new JhwScm(false));
-      expectSuccess(" ( ( ) ( ) )", "(() ())",   new JhwScm(false));
-      expectLexical("(()()))",                   new JhwScm(false));
-      expectLexical(" ( () ())) ",               new JhwScm(false));
-      expectLexical("((()())",                   new JhwScm(false));
+      expectSuccess("(a b c)",      "(a b c)",   newScm(false));
+      expectSuccess("(a (b c))",    "(a (b c))", newScm(false));
+      expectSuccess("((a b) c)",    "((a b) c)", newScm(false));
+      expectSuccess("((a b c))",    "((a b c))", newScm(false));
+      expectSuccess("((a)b)",       "((a) b)",   newScm(false));
+      expectSuccess("((a )b)",      "((a) b)",   newScm(false));
+      expectSuccess("((a ) b)",     "((a) b)",   newScm(false));
+      expectSuccess("( (a )b)",     "((a) b)",   newScm(false));
+      expectSuccess("( (a) b)",     "((a) b)",   newScm(false));
+      expectSuccess("( (a)b )",     "((a) b)",   newScm(false));
+      expectLexical("((a b) c",                  newScm(false));
+      expectLexical("((a b c)",                  newScm(false));
+      expectSuccess("()",           "()",        newScm(false));
+      expectSuccess("\r(\t)\n",     "()",        newScm(false));
+      expectLexical("(",                         newScm(false));
+      expectLexical(" (  ",                      newScm(false));
+      expectLexical(")",                         newScm(false));
+      expectSuccess("(()())",       "(() ())",   newScm(false));
+      expectSuccess(" ( ( ) ( ) )", "(() ())",   newScm(false));
+      expectLexical("(()()))",                   newScm(false));
+      expectLexical(" ( () ())) ",               newScm(false));
+      expectLexical("((()())",                   newScm(false));
 
       // improper list experssions: yay!
-      expectSuccess("(1 . 2)",      "(1 . 2)",   new JhwScm(false));
-      expectSuccess("(1 2 . 3)",    "(1 2 . 3)", new JhwScm(false));
-      expectLexical("(1 . 2 3)",                 new JhwScm(false));
-      expectLexical("( . 2 3)",                  new JhwScm(false));
-      expectLexical("(1 . )",                    new JhwScm(false));
-      expectLexical("(1 .)",                     new JhwScm(false));
+      expectSuccess("(1 . 2)",      "(1 . 2)",   newScm(false));
+      expectSuccess("(1 2 . 3)",    "(1 2 . 3)", newScm(false));
+      expectLexical("(1 . 2 3)",                 newScm(false));
+      expectLexical("( . 2 3)",                  newScm(false));
+      expectLexical("(1 . )",                    newScm(false));
+      expectLexical("(1 .)",                     newScm(false));
       expectLexical("(1 . 2 3)");
       expectLexical("( . 2 3)");
       expectLexical("(1 . )");
       expectLexical("(1 .)");
 
-      expectSuccess("(1 . ())",     "(1)",       new JhwScm(false));
-      expectSuccess("(1 .())",      "(1)",       new JhwScm(false));
+      expectSuccess("(1 . ())",     "(1)",       newScm(false));
+      expectSuccess("(1 .())",      "(1)",       newScm(false));
 
       // Guile does this, with nothing before the dot in a dotted list
       // but I do not quite understand why it works.
@@ -268,17 +280,17 @@ public class Test
       // Still, this demands I meditate on it to understand fully why
       // this is so.
       //
-      expectSuccess("( . 2 )",    "2",           new JhwScm(false));
-      expectSuccess("( . 2 )",    "2",           new JhwScm(true));
-      expectSuccess("( . () )",   "()",          new JhwScm(false));
+      expectSuccess("( . 2 )",    "2",           newScm(false));
+      expectSuccess("( . 2 )",    "2",           newScm(true));
+      expectSuccess("( . () )",   "()",          newScm(false));
       expectLexical("( . 2 3 )");
-      expectSuccess("(. abc )",   "abc",         new JhwScm(false));
+      expectSuccess("(. abc )",   "abc",         newScm(false));
 
       if ( false )
       {
          // Probably not until I handle floats!
-         JhwScm.SILENT = false;
-         expectSuccess("(1 .2)",       "(1 0.2)",   new JhwScm(false));
+         SILENT = false;
+         expectSuccess("(1 .2)",       "(1 0.2)",   newScm(false));
       }
 
       // character literals are self-evaluating - though some of them
@@ -510,7 +522,7 @@ public class Test
       
       // defining symbols
       {
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess("(define a 100)","",   scm);
          expectSuccess("a",             "100",scm);
          expectSuccess("(define a 100)","",   scm);
@@ -524,7 +536,7 @@ public class Test
       expectSuccess("(define a 1)a(define a 2)a","12");
 
       {
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess("(define foo +)","",  scm);
          expectSuccess("(foo 13 18)",   "31",scm);
          expectSemantic("(foo 13 '())",      scm);
@@ -544,7 +556,7 @@ public class Test
       expectSuccess("((lambda (a) (* 3 a)) 13)",    "39");
       expectSuccess("((lambda (a b) (* a b)) 13 5)","65");
       {
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess("(define (foo a b) (+ a b))","",  scm);
          expectSuccess("(foo 13 18)",               "31",scm);
          expectSemantic("(foo 13 '())",                  scm);
@@ -562,7 +574,7 @@ public class Test
          // scale.
          final String fact = 
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess(fact,        "",       scm);
          expectSuccess("fact",      "???",    scm);
          expectSuccess("(fact -1)", "1",      scm);
@@ -583,7 +595,7 @@ public class Test
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
          final String fact = 
             "(define (fact n) (help n 1))";
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess(fact,        "",       scm);
          expectSuccess(help,        "",       scm); // note, define help 2nd ;)
          expectSuccess("fact",      "???",    scm);
@@ -617,7 +629,7 @@ public class Test
          //
          final String fib = 
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess(fib,"",scm);
          expectSuccess("fib","???",scm);
          expectSuccess("(fib 0)","0",scm);
@@ -686,7 +698,7 @@ public class Test
          //
          // An overly simple early form of sub_let pushed frames onto
          // the env, but didn't pop them.
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess("(let ((a 10)) a)", "10", scm);
          expectSemantic("a",scm);
       }
@@ -710,7 +722,7 @@ public class Test
             "  (let ((help"                                                  +
             "        (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))))" +
             "    (help n 1)))";
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess(fact,       "",   scm);
          expectSuccess("fact",     "???",scm);
          expectSuccess("(fact -1)","1",  scm);
@@ -723,7 +735,7 @@ public class Test
          else
          {
             // TODO: save it for letrec*
-            JhwScm.SILENT = false;
+            SILENT = false;
             expectSuccess("(fact 2)", "2",  scm); // HAHAHHAHHAHAHA
             expectSuccess("(fact 3)", "6",  scm);
             expectSuccess("(fact 4)", "24", scm);
@@ -767,7 +779,7 @@ public class Test
          //
          // So it probably should be cut from the microcode layer.
          // But in any case, I'm not implementing "else" for now.
-         JhwScm.SILENT = false;
+         SILENT = false;
          expectSuccess("(cond ((equal? 3 4) 1) (else 2))","2");
          expectSemantic("else"); // else is *not* just bound to #t!
       }
@@ -822,7 +834,7 @@ public class Test
       {
          // Are the nested-define defined symbols in scope of the
          // "real" body?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
          expectSuccess("(a 10)",                              "12",  scm);
          expectSuccess("a",                                   "???", scm);
@@ -830,13 +842,13 @@ public class Test
       }
       {
          // Can we do more than one?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          expectSuccess("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expectSuccess("(f)","3",scm);
       }
       {
          // Can we do it for an inner helper function?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
@@ -854,7 +866,7 @@ public class Test
       }
       {
          // Do nested defines really act like (begin)?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String def = 
             "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
          expectSuccess(def,"",scm);
@@ -862,7 +874,7 @@ public class Test
       }
       {
          // Do nested defines really act like (begin) when we have args?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
          expectSuccess(def,"",scm);
@@ -871,7 +883,7 @@ public class Test
       }
       {
          // Are nested defines in one another's scope, in any order?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String F = 
             "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
          final String G = 
@@ -883,21 +895,21 @@ public class Test
       }
       {
          // What about defines in lambdas?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String def = 
             "((lambda (x) (define a 7) (+ x a)) 5)";
          expectSuccess(def,"12",scm);
       }
       {
          // What about closures?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String def = 
             "(((lambda (x) (lambda (y) (+ x y))) 10) 7)";
          expectSuccess(def,"17",scm);
       }
       {
          // What about closures?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String def = 
             "(define (f x) (lambda (y) (+ x y)))";
          expectSuccess(def,"",scm);
@@ -906,7 +918,7 @@ public class Test
       }
       {
          // What about closures?
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String def = 
             "(define (f x) (define (h y) (+ x y)) h)";
          expectSuccess(def,"",scm);
@@ -923,7 +935,7 @@ public class Test
 
       // check that map works w/ both builtins and user-defineds
       {
-         final JhwScm scm = new JhwScm();
+         final JhwScm scm = newScm();
          final String def = "(define (f x) (+ x 10))";
          expectSuccess("(map display '())",      "()");     
          expectSuccess("(map display '(1 2 3))", "123(  )");
@@ -959,7 +971,7 @@ public class Test
       // TODO: user-level variadics
       if ( false )
       {
-         JhwScm.SILENT = false;
+         SILENT = false;
          expectSuccess("((lambda x x) 3 4 5 6)",              "(3 4 5 6)");
          expectSuccess("((lambda ( . x)) 3 4 5 6)",           "(3 4 5 6)");
          expectSuccess("((lambda (x y . z) z) 3 4 5 6)",      "(5 6)");
@@ -969,7 +981,7 @@ public class Test
       // TODO: error for names to collide in formals:
       if ( false )
       {
-         JhwScm.SILENT = false;
+         SILENT = false;
          expectSemantic("(lambda (x x) 1)");
          expectSemantic("(lambda (x a x) 1)");
          expectSemantic("(lambda (a x b x) 1)");
@@ -1044,7 +1056,7 @@ public class Test
       final StringBuilder buf = new StringBuilder();
       if ( null == scm )
       {
-         scm = new JhwScm();
+         scm = newScm();
       }
       final int icode = input(scm,expr);
       assertEquals("input failure on \"" + expr + "\":",
@@ -1106,7 +1118,7 @@ public class Test
    {
       if ( null == scm )
       {
-         scm = new JhwScm();
+         scm = newScm();
       }
       final int icode = input(scm,expr);
       assertEquals("input failure on \"" + expr + "\":",

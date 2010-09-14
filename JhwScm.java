@@ -45,14 +45,11 @@ import java.util.Random; // TODO: this doesn't belong here
 
 public class JhwScm
 {
-   // TODO: permeable abstraction barrier
-   public static boolean SILENT = false;
 
    // DEBUG instruments checks of things which ought *never* happen
    // e.g. errors which theoretically can only arise due to bugs in
    // JhwScm, not user errors or JVM resource exhaustion.
    //
-   public static final boolean DEBUG                     = true;
    public static final boolean PROFILE                   = true;
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
@@ -72,13 +69,16 @@ public class JhwScm
 
    private static final Random debugRand = new Random(1234);
 
-   public JhwScm ()
-   {
-      this(true);
-   }
+   private final boolean SILENT;
+   private final boolean DEBUG;
 
-   public JhwScm ( final boolean doREP )
+   public JhwScm ( final boolean doREP, 
+                   final boolean SILENT, 
+                   final boolean DEBUG )
    {
+      this.SILENT = SILENT;
+      this.DEBUG  = DEBUG;
+
       final boolean verb = false;
 
       if ( verb ) log("JhwScm.JhwScm()");
