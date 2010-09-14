@@ -41,7 +41,7 @@
  * All rights reserved.
  */
 
-import java.util.Random;
+import java.util.Random; // TODO: this doesn't belong here
 
 public class JhwScm
 {
@@ -165,7 +165,8 @@ public class JhwScm
    }
 
    /**
-    * Transfers up to len bytes from in[off..len-1] to the VM's input.
+    * Transfers up to len bytes from in[off..len-1] to the VM's input
+    * port buffer.
     *
     * @returns the number of bytes copied, else an error code <= -2.
     */
@@ -228,60 +229,8 @@ public class JhwScm
    }
 
    /**
-    * Pulls all pending characters in the VM's output queue into the
-    * output argument.
-    *
-    * @param output where the output is copied to.
-    * @throws nothing, not ever
-    * @returns SUCCESS on success, otherwise an error code.
-    */
-   public int output ( final Appendable out ) 
-   {
-      final boolean verb = true && !SILENT;
-      if ( null == out )
-      {
-         if ( verb ) log("output(): null arg");
-         return BAD_ARG;
-      }
-      final byte[] buf = new byte[1+debugRand.nextInt(10)];
-      int off = 0;
-      while (true)
-      {
-         final int n = output(buf,off,buf.length-off);
-         if ( -1 > n )
-         {
-            if ( verb ) log("output(): error: " + n);
-            return n; // error code
-         }
-         if ( -1 == n )
-         {
-            if ( verb ) log("output(): done \"" + out + "\"");
-            return SUCCESS;
-         }
-         if ( verb ) log("out: " + off + " vs " + buf.length + " n " + n);
-         for ( int i = off; i < off+n; ++i )
-         {
-            try
-            {
-               out.append((char)buf[i]);
-            }
-            catch ( Throwable e )
-            {
-               if ( verb ) log("output(): failed to append");
-               return OUT_OF_MEMORY;
-            }
-         }
-         off += n;
-         if ( off >= buf.length )
-         {
-            off = 0;
-         }
-      }
-   }
-
-   /**
-    * Transfers up to len bytes from the VM's output buffer and copies
-    * them to buf[off..len-1].
+    * Transfers up to len bytes from the VM's output port buffer and
+    * copies them to buf[off..len-1].
     *
     * @returns the number of bytes written, or -1 if none were written
     * and the VM's output buffer is empty, else an error code <= -2.

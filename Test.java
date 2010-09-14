@@ -8,27 +8,82 @@
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Random;
+import java.io.IOException;
+
 public class Test
 {
    private static final boolean verbose = false;
 
+   private static final Random debugRand = new Random(1234);
+
    public static void main ( final String[] argv )
+      throws java.io.IOException
    {
       JhwScm.SILENT = true;
 
       // bogus args to entry points result in BAD_ARG, not an exception
       {
-         final int code = new JhwScm().input(null);
-         assertEquals("input(null) is a bad arg",JhwScm.BAD_ARG,code);
+         final int code = new JhwScm().input(null,0,0);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().input(new byte[0],0,0);
+         assertEquals(JhwScm.SUCCESS,code);
+      }
+      {
+         final int code = new JhwScm().input(new byte[0],-1,0);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().input(new byte[0],0,-1);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().input(new byte[0],3,2);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().input(new byte[0],2,3);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().output(null,0,0);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().output(new byte[0],0,0);
+         assertEquals(0,code);
+      }
+      {
+         final int code = new JhwScm().output(new byte[0],-1,0);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().output(new byte[0],0,-1);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().output(new byte[0],3,2);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().output(new byte[0],2,3);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().output(new byte[3],2,3);
+         assertEquals(JhwScm.BAD_ARG,code);
+      }
+      {
+         final int code = new JhwScm().output(new byte[5],2,3);
+         assertEquals(-1,code);
       }
       {
          final int code = new JhwScm().drive(-2);
-         assertEquals("drive(-2) is a bad arg",JhwScm.BAD_ARG,code);
+         assertEquals(JhwScm.BAD_ARG,code);
       }
-      {
-         final int code = new JhwScm().output(null);
-         assertEquals("output(null) is a bad arg",JhwScm.BAD_ARG,code);
-      }
+
 
       // empty args are OK
       {
@@ -45,7 +100,7 @@ public class Test
       }
       {
          final StringBuilder buf  = new StringBuilder();
-         final int           code = new JhwScm().output(buf);
+         final int           code = output(new JhwScm(),buf);
          assertEquals("output()",JhwScm.SUCCESS,code);
          assertEquals("output is empty",0,buf.length());
       }
@@ -61,7 +116,7 @@ public class Test
          assertEquals(msg,JhwScm.SUCCESS,icode);
          final int           dcode = scm.drive(numCycles);
          assertEquals(msg,JhwScm.SUCCESS,dcode);
-         final int           ocode = scm.output(buf);
+         final int           ocode = output(scm,buf);
          assertEquals(msg,JhwScm.SUCCESS,ocode);
          assertEquals(msg,0,buf.length());
       }
@@ -109,7 +164,7 @@ public class Test
          assertEquals("should be successful",       JhwScm.SUCCESS,   dcode3);
          final int           dcode4 = scm.drive(0);
          assertEquals("should be incomplete again",JhwScm.INCOMPLETE, dcode4);
-         final int           ocode  = scm.output(buf);
+         final int           ocode  = output(scm,buf);
          assertEquals(JhwScm.SUCCESS, ocode);
          assertEquals("0",buf.toString());
       }
@@ -968,6 +1023,7 @@ public class Test
    }
 
    private static void expectSuccess ( final String expr, final String expect )
+      throws java.io.IOException
    {
       expectSuccess(expr,expect,null);
    }
@@ -975,6 +1031,7 @@ public class Test
    private static void expectSuccess ( final String expr, 
                                        final String expect,
                                        JhwScm       scm )
+      throws java.io.IOException
    {
       final StringBuilder buf = new StringBuilder();
       if ( null == scm )
@@ -989,7 +1046,7 @@ public class Test
       assertEquals("drive failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    dcode);
-      final int ocode = scm.output(buf);
+      final int ocode = output(scm,buf);
       assertEquals("output failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    ocode);
@@ -1011,21 +1068,25 @@ public class Test
    }
 
    private static void expectLexical ( final String expr )
+      throws java.io.IOException
    {
       expectFailure(expr,null,JhwScm.FAILURE_LEXICAL);
    }
 
    private static void expectLexical ( final String expr, JhwScm scm )
+      throws java.io.IOException
    {
       expectFailure(expr,scm,JhwScm.FAILURE_LEXICAL);
    }
 
    private static void expectSemantic ( final String expr )
+      throws java.io.IOException
    {
       expectFailure(expr,null,JhwScm.FAILURE_SEMANTIC);
    }
 
    private static void expectSemantic ( final String expr, JhwScm scm )
+      throws java.io.IOException
    {
       expectFailure(expr,scm,JhwScm.FAILURE_SEMANTIC);
    }
@@ -1033,6 +1094,7 @@ public class Test
    private static void expectFailure ( final String expr, 
                                        JhwScm       scm,
                                        final int    expectedError )
+      throws java.io.IOException
    {
       if ( null == scm )
       {
@@ -1046,7 +1108,7 @@ public class Test
       if ( JhwScm.SUCCESS == dcode )
       {
          final StringBuilder buf = new StringBuilder();
-         final int ocode         = scm.output(buf);
+         final int ocode         = output(scm,buf);
          System.out.print("unexpected success: expr \"");
          System.out.print(expr);
          System.out.print("\" evaluated to \"");
@@ -1058,4 +1120,35 @@ public class Test
                    expectedError, 
                    dcode);
    }
+
+   /**
+    * Convenience wrapper around JhwScm.output(byte[],int,int).
+    */
+   private static int output ( final JhwScm scm, final Appendable out ) 
+      throws IOException
+   {
+      final byte[] buf = new byte[1+debugRand.nextInt(10)];
+      for ( int off = 0; true; )
+      {
+         final int n = scm.output(buf,off,buf.length-off);
+         if ( -1 > n )
+         {
+            return n; // error code
+         }
+         if ( -1 == n )
+         {
+            return JhwScm.SUCCESS;
+         }
+         for ( int i = off; i < off+n; ++i )
+         {
+            out.append((char)buf[i]);
+         }
+         off += n;
+         if ( off >= buf.length )
+         {
+            off = 0;
+         }
+      }
+   }
+
 }
