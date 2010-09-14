@@ -248,8 +248,8 @@ public class JhwScm
          buf[off+i] = (byte)value(f);
          if ( verb ) log("output(): popping: " + (char)buf[off+i] + " at " + (off+i) );
          queuePopFront(reg[regOut]);
-         if ( PROFILE ) numInput++;
-         if ( PROFILE ) universalNumInput++;
+         if ( PROFILE ) numOutput++;
+         if ( PROFILE ) universalNumOutput++;
       }
       if ( verb ) log("output(): done: " + len);
       return len;
@@ -2746,16 +2746,16 @@ public class JhwScm
    private final int[] heap    = new int[2*heapSize];
    private int         heapTop        = 0; // in slots
 
-   public        int numCycles           = 0; // DEBUG only
-   public        int numCons             = 0; // DEBUG only
-   public        int maxHeapTop          = 0; // DEBUG only
-   public        int numInput            = 0; // DEBUG only
-   public        int numOutput           = 0; // DEBUG only
-   public static int universalNumCycles  = 0; // DEBUG only
-   public static int universalNumCons    = 0; // DEBUG only
-   public static int universalMaxHeapTop = 0; // DEBUG only
-   public static int universalNumInput   = 0; // DEBUG only
-   public static int universalNumOuput   = 0; // DEBUG only
+   public        int numCycles           = 0; // PROFILE only
+   public        int numCons             = 0; // PROFILE only
+   public        int maxHeapTop          = 0; // PROFILE only
+   public        int numInput            = 0; // PROFILE only
+   public        int numOutput           = 0; // PROFILE only
+   public static int universalNumCycles  = 0; // PROFILE only
+   public static int universalNumCons    = 0; // PROFILE only
+   public static int universalMaxHeapTop = 0; // PROFILE only
+   public static int universalNumInput   = 0; // PROFILE only
+   public static int universalNumOutput  = 0; // PROFILE only
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
