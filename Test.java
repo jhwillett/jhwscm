@@ -590,6 +590,8 @@ public class Test
          System.out.println("  numCycles:  " + scm.numCycles);
          System.out.println("  numCons:    " + scm.numCons);
          System.out.println("  maxHeapTop: " + scm.maxHeapTop);
+         System.out.println("  numInput:   " + scm.numInput);
+         System.out.println("  numOutput:  " + scm.numOutput);
       }
       {
          final String help = 
@@ -614,6 +616,8 @@ public class Test
          System.out.println("  numCycles:  " + scm.numCycles);
          System.out.println("  numCons:    " + scm.numCons);
          System.out.println("  maxHeapTop: " + scm.maxHeapTop);
+         System.out.println("  numInput:   " + scm.numInput);
+         System.out.println("  numOutput:  " + scm.numOutput);
       }
 
       {
@@ -661,6 +665,8 @@ public class Test
          System.out.println("  numCycles:  " + scm.numCycles);
          System.out.println("  numCons:    " + scm.numCons);
          System.out.println("  maxHeapTop: " + scm.maxHeapTop);
+         System.out.println("  numInput:   " + scm.numInput);
+         System.out.println("  numOutput:  " + scm.numOutput);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1045,6 +1051,8 @@ public class Test
       System.out.println("universalNumCycles:  " + JhwScm.universalNumCycles);
       System.out.println("universalNumCons:    " + JhwScm.universalNumCons);
       System.out.println("universalMaxHeapTop: " + JhwScm.universalMaxHeapTop);
+      System.out.println("universalNumInput:   " + JhwScm.universalNumInput);
+      System.out.println("universalNumOutput:  " + JhwScm.universalNumOutput);
    }
 
    private static void expectSuccess ( final String expr, final String expect )

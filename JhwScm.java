@@ -45,11 +45,6 @@ import java.util.Random; // TODO: this doesn't belong here
 
 public class JhwScm
 {
-
-   // DEBUG instruments checks of things which ought *never* happen
-   // e.g. errors which theoretically can only arise due to bugs in
-   // JhwScm, not user errors or JVM resource exhaustion.
-   //
    public static final boolean PROFILE                   = true;
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
@@ -69,7 +64,7 @@ public class JhwScm
    private static final Random debugRand             = new Random(1234);
 
    private final boolean SILENT;
-   private final boolean DEBUG;
+   private final boolean DEBUG;  // check things which should never happen
 
    public JhwScm ( final boolean doREP, 
                    final boolean SILENT, 
@@ -186,6 +181,8 @@ public class JhwScm
             setcdr(reg[regIn],oldCdr);
             return INTERNAL_ERROR; // TODO: proper proxy for reg[regError]
          }
+         if ( PROFILE ) numInput++;
+         if ( PROFILE ) universalNumInput++;
       }
       return num;
    }
@@ -230,6 +227,11 @@ public class JhwScm
       }
       for ( int i = 0; i < len; ++i )
       {
+         if ( DEBUG && debugRand.nextInt(100) < STRESS_OUTPUT_PERCENT )
+         {
+            if ( verb ) log("output(): stress: " + i);
+            return i;
+         }
          final int f = queuePeekFront(reg[regOut]);
          if ( EOF == f )
          {
@@ -243,14 +245,11 @@ public class JhwScm
                return i;
             }
          }
-         if ( DEBUG && debugRand.nextInt(100) < STRESS_OUTPUT_PERCENT )
-         {
-            if ( verb ) log("output(): stress: " + i);
-            return i;
-         }
          buf[off+i] = (byte)value(f);
          if ( verb ) log("output(): popping: " + (char)buf[off+i] + " at " + (off+i) );
          queuePopFront(reg[regOut]);
+         if ( PROFILE ) numInput++;
+         if ( PROFILE ) universalNumInput++;
       }
       if ( verb ) log("output(): done: " + len);
       return len;
@@ -292,11 +291,11 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
+         if ( PROFILE ) numCycles          += 1;
+         if ( PROFILE ) universalNumCycles += 1;
          if ( DEBUG ) javaDepth = 1;
          if ( verb ) log("step: " + pp(reg[regPc]));
          if ( DEBUG ) javaDepth = 2;
-         if ( DEBUG ) numCycles          += 1;
-         if ( DEBUG ) universalNumCycles += 1;
          switch ( reg[regPc] )
          {
          case sub_rep:
@@ -2750,9 +2749,13 @@ public class JhwScm
    public        int numCycles           = 0; // DEBUG only
    public        int numCons             = 0; // DEBUG only
    public        int maxHeapTop          = 0; // DEBUG only
+   public        int numInput            = 0; // DEBUG only
+   public        int numOutput           = 0; // DEBUG only
    public static int universalNumCycles  = 0; // DEBUG only
    public static int universalNumCons    = 0; // DEBUG only
    public static int universalMaxHeapTop = 0; // DEBUG only
+   public static int universalNumInput   = 0; // DEBUG only
+   public static int universalNumOuput   = 0; // DEBUG only
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
