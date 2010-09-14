@@ -70,7 +70,7 @@ public class JhwScm
    public static final int     UNIMPLEMENTED    = -6;
    public static final int     INTERNAL_ERROR   = -7;
 
-   private final Random debugRand = new Random(1234);
+   private static final Random debugRand = new Random(1234);
 
    public JhwScm ()
    {
@@ -143,14 +143,57 @@ public class JhwScm
    public int input ( final CharSequence input ) 
    {
       final boolean verb = true && !SILENT;
-
       if ( DEBUG ) javaDepth = 0;
       if ( null == input )
       {
          if ( verb ) log("input():  null arg");
          return BAD_ARG;
       }
-      if ( verb ) log("input():  \"" + input + "\"");
+      final byte[] buf = input.toString().getBytes();
+      int off = 0;
+      while ( off < buf.length )
+      {
+         final int len = buf.length - off;
+         final int n   = input(buf,off,len);
+         if ( n < 0 )
+         {
+            return n;
+         }
+         off += n;
+      }
+      return SUCCESS;
+   }
+
+   /**
+    * Transfers up to len bytes from in[off..len-1] to the VM's input.
+    *
+    * @returns the number of bytes copied, else an error code <= -2.
+    */
+   public int input ( final byte[] buf, final int off, final int len ) 
+   {
+      final boolean verb = true && !SILENT;
+      if ( DEBUG ) javaDepth = 0;
+      if ( verb ) log("input(): " + off + "+" + len + " / " + buf.length);
+      if ( null == buf )
+      {
+         if ( verb ) log("input():  null arg");
+         return BAD_ARG;
+      }
+      if ( off < 0 )
+      {
+         if ( verb ) log("input(): bad off: " + off);
+         return BAD_ARG;
+      }
+      if ( len < 0 )
+      {
+         if ( verb ) log("input(): bad len: " + len);
+         return BAD_ARG;
+      }
+      if ( off+len > buf.length )
+      {
+         if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
+         return BAD_ARG;
+      }
       if ( DEBUG && TYPE_CELL != type(reg[regIn]) )
       {
          raiseError(ERR_INTERNAL);
@@ -166,12 +209,13 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
+      final int num    = DEBUG ? debugRand.nextInt(len+1) : len;
       final int oldCar = car(reg[regIn]);
       final int oldCdr = car(reg[regIn]);
-      for ( int i = 0; i < input.length(); ++i )
+      for ( int i = 0; i < num; ++i )
       {
-         final char c    = input.charAt(i);
-         final int  code = code(TYPE_CHAR,c);
+         final byte c    = buf[off+i];
+         final int  code = code(TYPE_CHAR,0xFF&c);
          queuePushBack(reg[regIn],code);
          if ( NIL != reg[regError] )
          {
@@ -180,7 +224,7 @@ public class JhwScm
             return INTERNAL_ERROR; // TODO: proper proxy for reg[regError]
          }
       }
-      return SUCCESS;
+      return num;
    }
 
    /**
@@ -237,17 +281,17 @@ public class JhwScm
 
    /**
     * Transfers up to len bytes from the VM's output buffer and copies
-    * them to out[off..len-1].
+    * them to buf[off..len-1].
     *
     * @returns the number of bytes written, or -1 if none were written
     * and the VM's output buffer is empty, else an error code <= -2.
     */
-   public int output ( final byte[] out, final int off, final int len ) 
+   public int output ( final byte[] buf, final int off, final int len ) 
    {
       final boolean verb = true && !SILENT;
       if ( DEBUG ) javaDepth = 0;
-      if ( verb ) log("output(): " + off + "+" + len + " / " + out.length);
-      if ( null == out )
+      if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
+      if ( null == buf )
       {
          if ( verb ) log("output(): null arg");
          return BAD_ARG;
@@ -262,9 +306,9 @@ public class JhwScm
          if ( verb ) log("output(): bad len: " + len);
          return BAD_ARG;
       }
-      if ( off+len > out.length )
+      if ( off+len > buf.length )
       {
-         if ( verb ) log("output(): " + off + "+" + len + " / " + out.length);
+         if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
       if ( NIL == reg[regOut] )
@@ -293,8 +337,8 @@ public class JhwScm
             if ( verb ) log("output(): stress: " + i);
             return i;
          }
-         out[off+i] = (byte)value(f);
-         if ( verb ) log("output(): popping: " + (char)out[off+i] + " at " + (off+i) );
+         buf[off+i] = (byte)value(f);
+         if ( verb ) log("output(): popping: " + (char)buf[off+i] + " at " + (off+i) );
          queuePopFront(reg[regOut]);
       }
       if ( verb ) log("output(): done: " + len);
