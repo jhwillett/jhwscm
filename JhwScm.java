@@ -760,8 +760,8 @@ public class JhwScm
             //
             // We do the same in sub_define with sub_lambda, so
             // clearly I'm getting comfortable with this decision.
-            //
-            // Also - how should it print?
+            // It's a syntax rewrite, nothing more, and sub_read can
+            // stay simple and let the rest of the system handle it.
             //
             reg[regTmp0]   = cons(reg[regRetval],NIL);
             reg[regRetval] = cons(sub_quote,reg[regTmp0]);
@@ -2094,12 +2094,28 @@ public class JhwScm
                // before proceeding.
                reg[regTmp1] = 
                   (value(reg[regTmp0]) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
-               // TODO: this is a huge cop-out, implement it right
-               final String str = "" + reg[regTmp1];
-               for ( tmp0 = 0; tmp0 < str.length(); ++tmp0 )
+               if ( reg[regTmp1] < 0 )
                {
-                  queuePushBack(reg[regOut],
-                                code(TYPE_CHAR,str.charAt(tmp0)));
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'-'));
+                  reg[regTmp1] = -reg[regTmp1];
+               }
+               if ( reg[regTmp1] == 0 )
+               {
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'0'));
+                  returnsub();
+                  break;
+               }
+               int factor = 1000000000; // big enough for 2**32 and less
+               while ( factor > 0 && 0 == reg[regTmp1]/factor )
+               {
+                  factor /= 10;
+               }
+               while ( factor > 0 )
+               {
+                  final int digit  = reg[regTmp1]/factor;
+                  reg[regTmp1]    -= digit * factor;                     
+                  factor          /= 10;
+                  queuePushBack(reg[regOut],code(TYPE_CHAR,'0'+digit));
                }
                reg[regRetval] = UNSPECIFIED;
                returnsub();
