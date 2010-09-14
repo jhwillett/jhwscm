@@ -587,8 +587,9 @@ public class Test
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
          System.out.println("fact simple:");
-         System.out.println("  numCallsToCons: " + scm.numCallsToCons);
-         System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
+         System.out.println("  numCycles:  " + scm.numCycles);
+         System.out.println("  numCons:    " + scm.numCons);
+         System.out.println("  maxHeapTop: " + scm.maxHeapTop);
       }
       {
          final String help = 
@@ -610,8 +611,9 @@ public class Test
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
          System.out.println("fact 2/ help:");
-         System.out.println("  numCallsToCons: " + scm.numCallsToCons);
-         System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
+         System.out.println("  numCycles:  " + scm.numCycles);
+         System.out.println("  numCons:    " + scm.numCons);
+         System.out.println("  maxHeapTop: " + scm.maxHeapTop);
       }
 
       {
@@ -656,8 +658,9 @@ public class Test
             expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
          System.out.println("fib:");
-         System.out.println("  numCallsToCons: " + scm.numCallsToCons);
-         System.out.println("  maxHeapTop:     " + scm.maxHeapTop);
+         System.out.println("  numCycles:  " + scm.numCycles);
+         System.out.println("  numCons:    " + scm.numCons);
+         System.out.println("  maxHeapTop: " + scm.maxHeapTop);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1039,7 +1042,9 @@ public class Test
       // Weird.  So is it or is it not a symbol?
 
       System.out.println();
-      System.out.println("overall num cons: " + JhwScm.UNIVERSAL_NUM_CONS);
+      System.out.println("universalNumCycles:  " + JhwScm.universalNumCycles);
+      System.out.println("universalNumCons:    " + JhwScm.universalNumCons);
+      System.out.println("universalMaxHeapTop: " + JhwScm.universalMaxHeapTop);
    }
 
    private static void expectSuccess ( final String expr, final String expect )

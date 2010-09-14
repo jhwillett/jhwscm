@@ -56,8 +56,6 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final int     STRESS_OUTPUT_PERCENT     = 13;
-
    public static final int     SUCCESS          =  0;
    public static final int     INCOMPLETE       = -1;
    public static final int     BAD_ARG          = -2;
@@ -67,7 +65,8 @@ public class JhwScm
    public static final int     UNIMPLEMENTED    = -6;
    public static final int     INTERNAL_ERROR   = -7;
 
-   private static final Random debugRand = new Random(1234);
+   private static final int    STRESS_OUTPUT_PERCENT = 13;
+   private static final Random debugRand             = new Random(1234);
 
    private final boolean SILENT;
    private final boolean DEBUG;
@@ -88,9 +87,6 @@ public class JhwScm
       }
 
       reg[regFreeCellList] = NIL;
-      heapTop              = 0;
-      numCallsToCons       = 0;
-      maxHeapTop           = 0;
 
       reg[regPc]  = doREP ? sub_rep : sub_rp;
       reg[regIn]  = queueCreate();
@@ -299,6 +295,8 @@ public class JhwScm
          if ( DEBUG ) javaDepth = 1;
          if ( verb ) log("step: " + pp(reg[regPc]));
          if ( DEBUG ) javaDepth = 2;
+         if ( DEBUG ) numCycles          += 1;
+         if ( DEBUG ) universalNumCycles += 1;
          switch ( reg[regPc] )
          {
          case sub_rep:
@@ -2748,11 +2746,13 @@ public class JhwScm
    private final int[] reg     = new int[numRegisters];
    private final int[] heap    = new int[2*heapSize];
    private int         heapTop        = 0; // in slots
-   public  int         numCallsToCons = 0;
-   public  int         maxHeapTop     = 0;
 
-   public static int   UNIVERSAL_NUM_CONS = 0;
-
+   public        int numCycles           = 0; // DEBUG only
+   public        int numCons             = 0; // DEBUG only
+   public        int maxHeapTop          = 0; // DEBUG only
+   public static int universalNumCycles  = 0; // DEBUG only
+   public static int universalNumCons    = 0; // DEBUG only
+   public static int universalMaxHeapTop = 0; // DEBUG only
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -3076,8 +3076,8 @@ public class JhwScm
    {
       if ( PROFILE )
       {
-         numCallsToCons++;
-         UNIVERSAL_NUM_CONS++;
+         numCons++;
+         universalNumCons++;
       }
       int cell = reg[regFreeCellList];
       if ( NIL == cell )
@@ -3121,6 +3121,10 @@ public class JhwScm
             if ( heapTop > maxHeapTop )
             {
                maxHeapTop = heapTop;
+            }
+            if ( heapTop > universalMaxHeapTop )
+            {
+               universalMaxHeapTop = heapTop;
             }
          }
       }
