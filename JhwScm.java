@@ -2122,13 +2122,15 @@ public class JhwScm
                break;
             case TYPE_SUBP:
             case TYPE_SUBS:
-               // TODO: this is a huge cop-out, implement it right
-               final String str2 = pp(reg[regTmp0]);
-               for ( tmp0 = 0; tmp0 < str2.length(); ++tmp0 )
-               {
-                  queuePushBack(reg[regOut],
-                                code(TYPE_CHAR,str2.charAt(tmp0)));
-               }
+               // TODO: some decisions to be made here about how these
+               // really print, but that kind of depends on how I land
+               // about how they lex.
+               //
+               // In the mean time, this is sufficient to meet spec.
+               //
+               queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
+               queuePushBack(reg[regOut],code(TYPE_CHAR,'p'));
+               queuePushBack(reg[regOut],code(TYPE_CHAR,'?'));
                reg[regRetval] = UNSPECIFIED;
                returnsub();
                break;
