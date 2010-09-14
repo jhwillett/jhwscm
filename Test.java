@@ -87,7 +87,15 @@ public class Test
 
       // empty args are OK
       {
-         final int code = new JhwScm().input("");
+         final int code = new JhwScm().input(new byte[0],0,0);
+         assertEquals("input(\"\")",JhwScm.SUCCESS,code);
+      }
+      {
+         final int code = new JhwScm().input(new byte[0],0,0);
+         assertEquals("input(\"\")",JhwScm.SUCCESS,code);
+      }
+      {
+         final int code = new JhwScm().input(new byte[1],1,0);
          assertEquals("input(\"\")",JhwScm.SUCCESS,code);
       }
       {
@@ -112,7 +120,7 @@ public class Test
          final String        msg   = "cycles: " + numCycles;
          final StringBuilder buf   = new StringBuilder();
          final JhwScm        scm   = new JhwScm();
-         final int           icode = scm.input("");
+         final int           icode = input(scm,"");
          assertEquals(msg,JhwScm.SUCCESS,icode);
          final int           dcode = scm.drive(numCycles);
          assertEquals(msg,JhwScm.SUCCESS,dcode);
@@ -154,7 +162,7 @@ public class Test
       {
          final StringBuilder buf    = new StringBuilder();
          final JhwScm        scm    = new JhwScm();
-         final int           icode  = scm.input("0");
+         final int           icode  = input(scm,"0");
          assertEquals(JhwScm.SUCCESS, icode);
          final int           dcode1 = scm.drive(0);
          assertEquals("should be incomplete so far",JhwScm.INCOMPLETE,dcode1);
@@ -1038,7 +1046,7 @@ public class Test
       {
          scm = new JhwScm();
       }
-      final int icode = scm.input(expr);
+      final int icode = input(scm,expr);
       assertEquals("input failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    icode);
@@ -1100,7 +1108,7 @@ public class Test
       {
          scm = new JhwScm();
       }
-      final int icode = scm.input(expr);
+      final int icode = input(scm,expr);
       assertEquals("input failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    icode);
@@ -1120,6 +1128,36 @@ public class Test
                    expectedError, 
                    dcode);
    }
+
+   /**
+    * Convenience wrapper around JhwScm.input(byte[],int,int).
+    *
+    * Places all characters into the VM's input queue.
+    *
+    * On failure, the VM's input queue is left unchanged: input() is
+    * all-or-nothing.
+    *
+    * @param input characters to be copied into the VM's input queue.
+    * @throws nothing, not ever
+    * @returns SUCCESS on success, otherwise an error code.
+    */
+   private static int input ( final JhwScm scm, final CharSequence input ) 
+   {
+      final byte[] buf = input.toString().getBytes();
+      int off = 0;
+      while ( off < buf.length )
+      {
+         final int len = buf.length - off;
+         final int n   = scm.input(buf,off,len);
+         if ( n < 0 )
+         {
+            return n;
+         }
+         off += n;
+      }
+      return JhwScm.SUCCESS;
+   }
+
 
    /**
     * Convenience wrapper around JhwScm.output(byte[],int,int).

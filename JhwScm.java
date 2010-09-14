@@ -131,40 +131,6 @@ public class JhwScm
    }
 
    /**
-    * Places all characters into the VM's input queue.
-    *
-    * On failure, the VM's input queue is left unchanged: input() is
-    * all-or-nothing.
-    *
-    * @param input characters to be copied into the VM's input queue.
-    * @throws nothing, not ever
-    * @returns SUCCESS on success, otherwise an error code.
-    */
-   public int input ( final CharSequence input ) 
-   {
-      final boolean verb = true && !SILENT;
-      if ( DEBUG ) javaDepth = 0;
-      if ( null == input )
-      {
-         if ( verb ) log("input():  null arg");
-         return BAD_ARG;
-      }
-      final byte[] buf = input.toString().getBytes();
-      int off = 0;
-      while ( off < buf.length )
-      {
-         final int len = buf.length - off;
-         final int n   = input(buf,off,len);
-         if ( n < 0 )
-         {
-            return n;
-         }
-         off += n;
-      }
-      return SUCCESS;
-   }
-
-   /**
     * Transfers up to len bytes from in[off..len-1] to the VM's input
     * port buffer.
     *
