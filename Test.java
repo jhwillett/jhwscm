@@ -1200,12 +1200,14 @@ public class Test
       System.out.println("  numCycles:        " + scm.numCycles);
       System.out.println("  numCons:          " + scm.numCons);
       System.out.println("  maxHeapTop:       " + scm.maxHeapTop);
-      System.out.println("  numInput:         " + scm.numInput);
-      System.out.println("  numOutput:        " + scm.numOutput);
-      //System.out.println("  heap.maxNumSlots: " + scm.heap.maxNumSlots);
-      //System.out.println("  heap.numSet:      " + scm.heap.numSet);
-      //System.out.println("  heap.numGet:      " + scm.heap.numGet);
-      //System.out.println("  heap.maxAddr:     " + scm.heap.maxAddr);
+      if ( false )
+      {
+         System.out.println("  numInput:         " + scm.numInput);
+         System.out.println("  numOutput:        " + scm.numOutput);
+      }
+      System.out.println("  heap.numSet:      " + scm.heap.numSet);
+      System.out.println("  heap.numGet:      " + scm.heap.numGet);
+      System.out.println("  heap.maxAddr:     " + scm.heap.maxAddr);
    }
 
    private static void reportUniversal ()
