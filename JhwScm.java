@@ -2732,9 +2732,6 @@ public class JhwScm
    private static final int regTmp8             =  28; // temporary
    private static final int regTmp9             =  29; // temporary
 
-   private static final int numRegisters        =  32;          // in slots
-   private static final int heapSize            =   6 * 1024;   // in slots
-
    //  16 kcells:  0.5 sec
    //  32 kcells:  0.6 sec
    //  64 kcells:  1.0 sec
@@ -2742,9 +2739,9 @@ public class JhwScm
    // 256 kcells: 10.6 sec  *** small nonlinearity up
    // 512 kcells: 11.5 sec  *** small nonlinearity down
 
-   private final int[] reg     = new int[numRegisters];
-   private final int[] heap    = new int[heapSize];
-   private int         heapTop        = 0; // in slots
+   private final int[] reg               = new int[32];
+   private final int[] heap              = new int[6 * 1024];
+   private int         heapTop           = 0; // in slots
 
    public        int numCycles           = 0; // PROFILE only
    public        int numCons             = 0; // PROFILE only
@@ -3085,7 +3082,7 @@ public class JhwScm
       int cell = reg[regFreeCellList];
       if ( NIL == cell )
       {
-         if ( heapTop >= heapSize )
+         if ( heapTop >= heap.length )
          {
             raiseError(ERR_OOM);
             return UNSPECIFIED;
@@ -3106,9 +3103,9 @@ public class JhwScm
             // Even if you're going to use all of it, at least we
             // don't initialize a piece of heap until right before the
             // higher-level program was going to get to it anyhow.
-            top = heapSize;
+            top = heap.length;
          }
-         final int lim = (top < heapSize) ? top : heapSize;
+         final int lim = (top < heap.length) ? top : heap.length;
          for ( ; heapTop < lim; heapTop += 2 )
          {
             // Notice that how half the space in the free cell list,
