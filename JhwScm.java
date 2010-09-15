@@ -3085,13 +3085,13 @@ public class JhwScm
       int cell = reg[regFreeCellList];
       if ( NIL == cell )
       {
-         if ( heapTop >= heap.length )
+         if ( heapTop >= heapSize )
          {
             raiseError(ERR_OOM);
             return UNSPECIFIED;
          }
          final int top;
-         if (DEFER_HEAP_INIT )
+         if ( DEFER_HEAP_INIT )
          {
             // heapTop in slots, 2* for cells, only init a piece of it
             // this pass.
@@ -3106,9 +3106,9 @@ public class JhwScm
             // Even if you're going to use all of it, at least we
             // don't initialize a piece of heap until right before the
             // higher-level program was going to get to it anyhow.
-            top = heap.length;
+            top = heapSize;
          }
-         final int lim = (top < heap.length) ? top : heap.length;
+         final int lim = (top < heapSize) ? top : heapSize;
          for ( ; heapTop < lim; heapTop += 2 )
          {
             // Notice that how half the space in the free cell list,
