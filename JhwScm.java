@@ -299,8 +299,8 @@ public class JhwScm
          switch ( reg.get(regPc) )
          {
          case sub_rep:
-            // Reads the next expr from reg.get(regIn), evaluates it, and
-            // prints the result in reg.get(regOut).
+            // Reads the next expr from reg.get(regIn), evaluates it,
+            // and prints the result in reg.get(regOut).
             //
             // Top-level entry point for the interactive interpreter.
             //
@@ -361,8 +361,8 @@ public class JhwScm
             break;
 
          case sub_read:
-            // Parses the next expr from reg.get(regIn), and
-            // leaves the results in reg.get(regRetval).
+            // Parses the next expr from reg.get(regIn), and leaves
+            // the results in reg.get(regRetval).
             //
             // Top-level entry point for the parser.
             //
@@ -421,15 +421,16 @@ public class JhwScm
             break;
 
          case sub_read_list:
-            // Reads the next list expr from reg.get(regIn), returning the
-            // result in reg.get(regRetval). Also handles dotted lists.
+            // Reads the next list expr from reg.get(regIn), returning
+            // the result in reg.get(regRetval). Also handles dotted
+            // lists.
             // 
-            // On entry, expects the next char from reg.get(regIn) to be
-            // the opening '(' a list expression.
+            // On entry, expects the next char from reg.get(regIn) to
+            // be the opening '(' a list expression.
             // 
             // On exit, precisely the list expression will have been
-            // consumed from reg.get(regIn), up to and including the final
-            // ')'.
+            // consumed from reg.get(regIn), up to and including the
+            // final ')'.
             //
             // (define (sub_read_list)
             //   (if (!= #\( (queue_peek_front))
@@ -448,8 +449,8 @@ public class JhwScm
             break;
 
          case sub_read_list_open:
-            // Reads all exprs from reg.get(regIn) until a loose EOF, a
-            // ')', or a '.' is encountered.
+            // Reads all exprs from reg.get(regIn) until a loose EOF,
+            // a ')', or a '.' is encountered.
             //
             // EOF results in an error (mismatchd paren).
             //
@@ -461,8 +462,8 @@ public class JhwScm
             // the closing ')'.
             // 
             // On exit, precisely the list expression will have been
-            // consumed from reg.get(regIn), up to and including the final
-            // ')'.
+            // consumed from reg.get(regIn), up to and including the
+            // final ')'.
             //  
             // (define (sub_read_list_open)
             //   (burn-space)
@@ -541,11 +542,11 @@ public class JhwScm
             break;
 
          case sub_read_atom:
-            // Reads the next atomic expr from reg.get(regIn), returning
-            // the result in reg.get(regRetval).
+            // Reads the next atomic expr from reg.get(regIn),
+            // returning the result in reg.get(regRetval).
             // 
-            // On entry, expects the next char from reg.get(regIn) to be
-            // the initial character of an atomic expression.
+            // On entry, expects the next char from reg.get(regIn) to
+            // be the initial character of an atomic expression.
             // 
             // On exit, precisely the atomic expression will have been
             // consumed from reg.get(regIn).
@@ -687,8 +688,8 @@ public class JhwScm
             gosub(sub_read_num_loop,blk_tail_call);
             break;
          case sub_read_num_loop:
-            // Parses the next number from reg.get(regIn), expecting the
-            // accumulated value-so-far as a TYPE_FIXINT in
+            // Parses the next number from reg.get(regIn), expecting
+            // the accumulated value-so-far as a TYPE_FIXINT in
             // reg.get(regArg0).
             //
             // A helper for sub_read_num, but still a sub_ in its own
@@ -822,8 +823,9 @@ public class JhwScm
             break;
 
          case sub_read_symbol_body:
-            // Parses the next symbol from reg.get(regIn), expecting the
-            // accumulated value-so-far as a queue in reg.get(regArg0).
+            // Parses the next symbol from reg.get(regIn), expecting
+            // the accumulated value-so-far as a queue in
+            // reg.get(regArg0).
             //
             // A helper for sub_read_symbol, but still a sub_ in its
             // own right.
@@ -899,15 +901,16 @@ public class JhwScm
             break;
 
          case sub_read_string_body:
-            // Parses the next string from reg.get(regIn), expecting the
-            // accumulated value-so-far as a queue in reg.get(regArg0).
+            // Parses the next string from reg.get(regIn), expecting
+            // the accumulated value-so-far as a queue in
+            // reg.get(regArg0).
             //
             // A helper for sub_read_string, but still a sub_ in its
             // own right.
             //
             // Expects that the leading \" has already been consumed,
-            // and stops on the trailing \" (which is left
-            // unconsumed for balance).
+            // and stops on the trailing \" (which is left unconsumed
+            // for balance).
             //
             if ( DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
             {
@@ -943,8 +946,8 @@ public class JhwScm
             break;
 
          case sub_read_burn_space:
-            // Consumes any whitespace from reg.get(regIn).  Returns TRUE
-            // if any was found, false otherwise.
+            // Consumes any whitespace from reg.get(regIn).  Returns
+            // TRUE if any was found, false otherwise.
             //
             // Return value undefined.
             //
@@ -973,7 +976,8 @@ public class JhwScm
 
          case sub_eval:
             // Evaluates the expr in reg.get(regArg0) in the env in
-            // reg.get(regArg1), and leaves the results in reg.get(regRetval).
+            // reg.get(regArg1), and leaves the results in
+            // reg.get(regRetval).
             //
             switch (type(reg.get(regArg0)))
             {
@@ -1071,8 +1075,8 @@ public class JhwScm
             // If it's a function, evaluate the args next, following
             // up with apply.
             //
-            // If it's a special form, don't evaluate the args,
-            // just pass it off to apply.
+            // If it's a special form, don't evaluate the args, just
+            // pass it off to apply.
             //
             reg.set(regTmp1 , restore());         // restore the env
             reg.set(regTmp0 , restore());         // restore the arg exprs
@@ -1212,8 +1216,8 @@ public class JhwScm
             break;
 
          case sub_eval_look_frame:
-            // Looks up the symbol in reg.get(regArg0) in the env frame in
-            // reg.get(regArg1).
+            // Looks up the symbol in reg.get(regArg0) in the env
+            // frame in reg.get(regArg1).
             //
             // Returns NIL if not found, else the binding of the
             // symbol: a cell whose car is a symbol equivalent to the
@@ -1397,9 +1401,9 @@ public class JhwScm
             break;
 
          case sub_map:
-            // Applies the operator in reg.get(regArg0) to each element of
-            // the list in reg.get(regArg1), and returns a list of the
-            // results in order.
+            // Applies the operator in reg.get(regArg0) to each
+            // element of the list in reg.get(regArg1), and returns a
+            // list of the results in order.
             //
             // The surplus cons() before we call sub_apply is perhaps
             // regrettable, but the rather than squeeze more
@@ -1556,8 +1560,8 @@ public class JhwScm
             // syntactic support to be useful - but then again it
             // offers a lookup-table semantics that could potentially
             // be implemented in constant time in the number of
-            // alternative paths. Neither (cond) nor an (if) chain
-            // can offer this.
+            // alternative paths. Neither (cond) nor an (if) chain can
+            // offer this.
             //
             if ( TYPE_CELL != type(reg.get(regArg0)) )
             {
@@ -1648,9 +1652,9 @@ public class JhwScm
             break;
 
          case sub_case_in_list_p:
-            // Returns TRUE if reg.get(regArg0) is hard-equal to any of
-            // the elements in the proper list in reg.get(regArg1), else
-            // FALSE.
+            // Returns TRUE if reg.get(regArg0) is hard-equal to any
+            // of the elements in the proper list in reg.get(regArg1),
+            // else FALSE.
             //
             // Only works w/ lables as per sub_case: fixints,
             // booleans, and characer literals.  Nothing else will
@@ -1849,16 +1853,16 @@ public class JhwScm
             reg.set(regArg0 , reg.get(regTmp1));
             reg.set(regArg1 , reg.get(regTmp2));
             //
-            // At first glance, this env manip feels like it should
-            // be the job of sub_eval. After all, sub_eval gets an
+            // At first glance, this env manip feels like it should be
+            // the job of sub_eval. After all, sub_eval gets an
             // environment arg, and sub_apply does not.
             //
             // After deeper soul searching, this is not true.  We
-            // certainly would not want (eval) to push/pop the env
-            // on *every* call, but only sub_apply_user and sub_let
-            // know what the new frames are, and only
-            // sub_apply_user knows where to find the lexical scope
-            // of a procedure or special form.
+            // certainly would not want (eval) to push/pop the env on
+            // *every* call, but only sub_apply_user and sub_let know
+            // what the new frames are, and only sub_apply_user knows
+            // where to find the lexical scope of a procedure or
+            // special form.
             //
             log("LEXICAL ENV PREPUSH:  " + pp(reg.get(regEnv)));
             store(reg.get(regEnv));
@@ -1879,12 +1883,14 @@ public class JhwScm
 
          case sub_zip:
             // Expects lists of equal lengths in reg.get(regArg0) and
-            // reg.get(regArg1). Returns a new list of the same
-            // length, whose elments are cons() of corresponding
-            // elements from reg.get(regArg0) and reg.get(regArg1)
-            // respectively.
+            // reg.get(regArg1). 
             //
-            // Note, if we had a sub_mapcar, this is really just:
+            // Returns a new list of the same length, whose elments
+            // are cons() of corresponding elements from
+            // reg.get(regArg0) and reg.get(regArg1) respectively.
+            //
+            // TODO: if (when!) we have sub_mapcar, this is really
+            // just:
             //
             //   (mapcar cons listA listB)
             //
@@ -2407,8 +2413,8 @@ public class JhwScm
                   raiseError(ERR_SEMANTIC); // simple form takes exactly 2 args
                   break;
                }
-               // reg.get(regTmp0) is already the symbol, how we want it
-               // for this case.
+               // reg.get(regTmp0) is already the symbol, how we want
+               // it for this case.
                reg.set(regTmp1 , car(reg.get(regTmp1)));
             }
             else
@@ -2435,8 +2441,8 @@ public class JhwScm
                logrec("proc lambda: ",reg.get(regTmp1));
             }
             // By here, reg.get(regTmp0) should be the the symbol,
-            // reg.get(regTmp1) the expr whose value we will bind to the
-            // symbol.
+            // reg.get(regTmp1) the expr whose value we will bind to
+            // the symbol.
             logrec("DEFINE SYMBOL: ",reg.get(regTmp0));
             logrec("DEFINE BODY:   ",reg.get(regTmp1));
             store(reg.get(regTmp0));              // store the symbol
