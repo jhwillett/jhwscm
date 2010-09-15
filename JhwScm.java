@@ -2733,7 +2733,7 @@ public class JhwScm
    private static final int regTmp9             =  29; // temporary
 
    private static final int numRegisters        =  32;          // in slots
-   private static final int heapSize            =   3 * 1024;   // in cells
+   private static final int heapSize            =   6 * 1024;   // in slots
 
    //  16 kcells:  0.5 sec
    //  32 kcells:  0.6 sec
@@ -2743,7 +2743,7 @@ public class JhwScm
    // 512 kcells: 11.5 sec  *** small nonlinearity down
 
    private final int[] reg     = new int[numRegisters];
-   private final int[] heap    = new int[2*heapSize];
+   private final int[] heap    = new int[heapSize];
    private int         heapTop        = 0; // in slots
 
    public        int numCycles           = 0; // PROFILE only
