@@ -1208,6 +1208,9 @@ public class Test
       System.out.println("  heap.numSet:      " + scm.heap.numSet);
       System.out.println("  heap.numGet:      " + scm.heap.numGet);
       System.out.println("  heap.maxAddr:     " + scm.heap.maxAddr);
+      System.out.println("  reg.numSet:       " + scm.reg.numSet);
+      System.out.println("  reg.numGet:       " + scm.reg.numGet);
+      System.out.println("  reg.maxAddr:      " + scm.reg.maxAddr);
    }
 
    private static void reportUniversal ()
@@ -1218,7 +1221,13 @@ public class Test
       System.out.println("  univ MaxHeapTop:  " + JhwScm.universalMaxHeapTop);
       System.out.println("  univ NumInput:    " + JhwScm.universalNumInput);
       System.out.println("  univ NumOutput:   " + JhwScm.universalNumOutput);
+      // TODO: differentiate universal stats for reg and heap...
       System.out.println("Mem:");
+      System.out.println("  univ MaxNumSlots: " + Mem.universalMaxNumSlots);
+      System.out.println("  univ NumSet:      " + Mem.universalNumSet);
+      System.out.println("  univ NumGet:      " + Mem.universalNumGet);
+      System.out.println("  univ MaxAddr:     " + Mem.universalMaxAddr);
+      System.out.println("Reg:");
       System.out.println("  univ MaxNumSlots: " + Mem.universalMaxNumSlots);
       System.out.println("  univ NumSet:      " + Mem.universalNumSet);
       System.out.println("  univ NumGet:      " + Mem.universalNumGet);
