@@ -9,6 +9,10 @@
  * Java costs and for various debugging and machine-architecture
  * experiments.
  *
+ * Because this is a test/support layer, unlike JhwScm this is allowed
+ * to throw exceptions on misuse.  JhwScm is responsible for making
+ * sure that never happens!
+ *
  * @author Jesse H. Willett
  * @copyright (c) 2010 Jesse H. Willett, motherfuckers!
  * All rights reserved.
@@ -34,6 +38,10 @@ public class Mem
                 final boolean DEBUG, 
                 final boolean PROFILE )
    {
+      if ( maxNumSlots < 0 )
+      {
+         throw new IllegalArgumentException("neg maxNumSlots " + maxNumSlots);
+      }
       this.maxNumSlots = maxNumSlots;
       this.DEBUG       = DEBUG;
       this.PROFILE     = PROFILE;
@@ -42,6 +50,11 @@ public class Mem
       {
          universalMaxNumSlots = maxNumSlots;
       }
+   }
+
+   public int length ()
+   {
+      return maxNumSlots;
    }
 
    public void set ( final int addr, final int value )
