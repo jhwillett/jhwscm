@@ -18,12 +18,17 @@ public class Mem
 {
    private final boolean DEBUG;
    private final boolean PROFILE;
-   private final int     maxNumSlots;
+   public  final int     maxNumSlots;
    private final int[]   slots;
 
    public int numSet  = 0;
    public int numGet  = 0;
    public int maxAddr = 0;
+
+   public static int universalMaxNumSlots = 0;
+   public static int universalNumSet      = 0;
+   public static int universalNumGet      = 0;
+   public static int universalMaxAddr     = 0;
 
    public Mem ( final int     maxNumSlots, 
                 final boolean DEBUG, 
@@ -33,6 +38,10 @@ public class Mem
       this.DEBUG       = DEBUG;
       this.PROFILE     = PROFILE;
       this.slots       = new int[maxNumSlots];
+      if ( PROFILE && maxNumSlots > universalMaxNumSlots)
+      {
+         universalMaxNumSlots = maxNumSlots;
+      }
    }
 
    public void set ( final int addr, final int value )
@@ -40,7 +49,9 @@ public class Mem
       if ( PROFILE )
       {
          numSet++;
-         if ( addr > maxAddr ) maxAddr = addr;
+         universalNumSet++;
+         if ( addr > maxAddr )            maxAddr          = addr;
+         if ( maxAddr > universalMaxAddr) universalMaxAddr = maxAddr;
       }
       slots[addr] = value;
    }
@@ -57,7 +68,9 @@ public class Mem
             }
          }
          numGet++;
-         if ( addr > maxAddr ) maxAddr = addr;
+         universalNumGet++;
+         if ( addr > maxAddr )            maxAddr          = addr;
+         if ( maxAddr > universalMaxAddr) universalMaxAddr = maxAddr;
       }
       return slots[addr];
    }

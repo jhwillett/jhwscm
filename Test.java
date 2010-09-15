@@ -586,12 +586,7 @@ public class Test
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         System.out.println("fact simple:");
-         System.out.println("  numCycles:  " + scm.numCycles);
-         System.out.println("  numCons:    " + scm.numCons);
-         System.out.println("  maxHeapTop: " + scm.maxHeapTop);
-         System.out.println("  numInput:   " + scm.numInput);
-         System.out.println("  numOutput:  " + scm.numOutput);
+         report("fact simple:",scm);
       }
       {
          final String help = 
@@ -612,12 +607,7 @@ public class Test
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         System.out.println("fact 2/ help:");
-         System.out.println("  numCycles:  " + scm.numCycles);
-         System.out.println("  numCons:    " + scm.numCons);
-         System.out.println("  maxHeapTop: " + scm.maxHeapTop);
-         System.out.println("  numInput:   " + scm.numInput);
-         System.out.println("  numOutput:  " + scm.numOutput);
+         report("fact 2/ help:",scm);
       }
 
       {
@@ -661,12 +651,7 @@ public class Test
             // Takes like a minute...
             expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         System.out.println("fib:");
-         System.out.println("  numCycles:  " + scm.numCycles);
-         System.out.println("  numCons:    " + scm.numCons);
-         System.out.println("  maxHeapTop: " + scm.maxHeapTop);
-         System.out.println("  numInput:   " + scm.numInput);
-         System.out.println("  numOutput:  " + scm.numOutput);
+         report("fib:",scm);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1047,12 +1032,7 @@ public class Test
       //
       // Weird.  So is it or is it not a symbol?
 
-      System.out.println();
-      System.out.println("universalNumCycles:  " + JhwScm.universalNumCycles);
-      System.out.println("universalNumCons:    " + JhwScm.universalNumCons);
-      System.out.println("universalMaxHeapTop: " + JhwScm.universalMaxHeapTop);
-      System.out.println("universalNumInput:   " + JhwScm.universalNumInput);
-      System.out.println("universalNumOutput:  " + JhwScm.universalNumOutput);
+      reportUniversal();
    }
 
    private static void expectSuccess ( final String expr, final String expect )
@@ -1214,4 +1194,32 @@ public class Test
       }
    }
 
+   private static void report ( final String tag, final JhwScm scm )
+   {
+      System.out.println(tag);
+      System.out.println("  numCycles:        " + scm.numCycles);
+      System.out.println("  numCons:          " + scm.numCons);
+      System.out.println("  maxHeapTop:       " + scm.maxHeapTop);
+      System.out.println("  numInput:         " + scm.numInput);
+      System.out.println("  numOutput:        " + scm.numOutput);
+      //System.out.println("  heap.maxNumSlots: " + scm.heap.maxNumSlots);
+      //System.out.println("  heap.numSet:      " + scm.heap.numSet);
+      //System.out.println("  heap.numGet:      " + scm.heap.numGet);
+      //System.out.println("  heap.maxAddr:     " + scm.heap.maxAddr);
+   }
+
+   private static void reportUniversal ()
+   {
+      System.out.println("JhwScm:");
+      System.out.println("  univ NumCycles:   " + JhwScm.universalNumCycles);
+      System.out.println("  univ NumCons:     " + JhwScm.universalNumCons);
+      System.out.println("  univ MaxHeapTop:  " + JhwScm.universalMaxHeapTop);
+      System.out.println("  univ NumInput:    " + JhwScm.universalNumInput);
+      System.out.println("  univ NumOutput:   " + JhwScm.universalNumOutput);
+      System.out.println("Mem:");
+      System.out.println("  univ MaxNumSlots: " + Mem.universalMaxNumSlots);
+      System.out.println("  univ NumSet:      " + Mem.universalNumSet);
+      System.out.println("  univ NumGet:      " + Mem.universalNumGet);
+      System.out.println("  univ MaxAddr:     " + Mem.universalMaxAddr);
+   }
 }
