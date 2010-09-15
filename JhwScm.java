@@ -2740,7 +2740,8 @@ public class JhwScm
    // 512 kcells: 11.5 sec  *** small nonlinearity down
 
    private final int[] reg               = new int[32];
-   private final int[] heap              = new int[6 * 1024];
+   //private final int[] heap              = new int[6 * 1024];
+   private final Mem   heap              = new Mem(6 * 1024,true,PROFILE);
    private int         heapTop           = 0; // in slots
 
    public        int numCycles           = 0; // PROFILE only
@@ -3082,7 +3083,7 @@ public class JhwScm
       int cell = reg[regFreeCellList];
       if ( NIL == cell )
       {
-         if ( heapTop >= heap.length )
+         if ( heapTop >= heap.length() )
          {
             raiseError(ERR_OOM);
             return UNSPECIFIED;
@@ -3103,16 +3104,16 @@ public class JhwScm
             // Even if you're going to use all of it, at least we
             // don't initialize a piece of heap until right before the
             // higher-level program was going to get to it anyhow.
-            top = heap.length;
+            top = heap.length();
          }
-         final int lim = (top < heap.length) ? top : heap.length;
+         final int lim = (top < heap.length()) ? top : heap.length();
          for ( ; heapTop < lim; heapTop += 2 )
          {
             // Notice that how half the space in the free cell list,
             // the car()s, is unused.  Is this an opportunity for
             // something?
-            heap[heapTop+0]      = UNSPECIFIED;
-            heap[heapTop+1]      = reg[regFreeCellList];
+            heap.set(heapTop+0   , UNSPECIFIED);
+            heap.set(heapTop+1   , reg[regFreeCellList]);
             reg[regFreeCellList] = code(TYPE_CELL,(heapTop >>> 1));
          }
          cell = reg[regFreeCellList];
@@ -3137,9 +3138,9 @@ public class JhwScm
       final int v          = value(cell);
       final int ar         = v << 1;
       final int dr         = ar + 1;
-      reg[regFreeCellList] = heap[dr];
-      heap[ar]             = car;
-      heap[dr]             = cdr;
+      reg[regFreeCellList] = heap.get(dr);
+      heap.set(ar          , car);
+      heap.set(dr          , cdr);
       return cell;
    }
    private int car ( final int cell )
@@ -3149,7 +3150,7 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
-      return heap[(value(cell) << 1) + 0];
+      return heap.get((value(cell) << 1) + 0);
    }
    private int cdr ( final int cell )
    {
@@ -3158,7 +3159,7 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
-      return heap[(value(cell) << 1) + 1];
+      return heap.get((value(cell) << 1) + 1);
    }
    private void setcar ( final int cell, final int value )
    {
@@ -3167,7 +3168,7 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return;
       }
-      heap[(value(cell) << 1) + 0] = value;
+      heap.set( (value(cell) << 1) + 0 , value );
    }
    private void setcdr ( final int cell, final int value )
    {
@@ -3176,7 +3177,7 @@ public class JhwScm
          raiseError(ERR_INTERNAL);
          return;
       }
-      heap[(value(cell) << 1) + 1] = value;
+      heap.set( (value(cell) << 1) + 1 , value );
    }
 
    ////////////////////////////////////////////////////////////////////
