@@ -78,8 +78,11 @@ public class JhwScm
       if ( verb ) log("JhwScm.JhwScm()");
       for ( int i = 0; i < reg.length(); i++ )
       {
-         reg.set(i,NIL);
+         reg.set(i,UNSPECIFIED);
       }
+
+      reg.set(regStack,NIL);
+      reg.set(regError,NIL);
 
       reg.set(regFreeCellList,NIL);
 
@@ -3022,6 +3025,10 @@ public class JhwScm
       }
       reg.set(regPc    , blk_error);
       reg.set(regStack , NIL);
+      if ( true && err == ERR_INTERNAL )
+      {
+         throw new RuntimeException("detonate on ERR_INTERNAL");
+      }
    }
 
    ////////////////////////////////////////////////////////////////////
