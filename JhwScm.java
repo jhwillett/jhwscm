@@ -37,7 +37,7 @@
  * available down below.
  *
  * @author Jesse H. Willett
- * @copyright (c) 2010 Jesse H. Willett, motherfuckers!
+ * @copyright (c) 2010 Jesse H. Willett
  * All rights reserved.
  */
 
@@ -2723,9 +2723,25 @@ public class JhwScm
    // 256 kcells: 10.6 sec  *** small nonlinearity up
    // 512 kcells: 11.5 sec  *** small nonlinearity down
 
-   //private final int[] reg               = new int[32];
-   public  final Mem   reg               = new MemSimple(32,      true,PROFILE);
-   public  final Mem   heap              = new MemSimple(6 * 1024,true,PROFILE);
+   public static final MemStats.Stats univHeapStats = new MemStats.Stats();
+   public static final MemStats.Stats univRegStats  = new MemStats.Stats();
+
+   public        final MemStats.Stats heapStats     = new MemStats.Stats();
+   public        final MemStats.Stats regStats      = new MemStats.Stats();
+
+   public final Mem reg;
+   public final Mem heap;
+   {
+      Mem mem = null;
+
+      mem  = new MemSimple(32);
+      reg  = new MemStats(mem,univRegStats, regStats);
+
+      mem  = new MemSimple(6 * 1024);
+      heap = new MemStats(mem,univHeapStats,heapStats);
+   }
+
+
    private int         heapTop           = 0; // in slots
 
    public        int numCycles           = 0; // PROFILE only

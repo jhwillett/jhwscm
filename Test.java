@@ -2,7 +2,7 @@
  * Test harness for JhwScm.
  *
  * @author Jesse H. Willett
- * @copyright (c) 2010 Jesse H. Willett, motherfuckers!
+ * @copyright (c) 2010 Jesse H. Willett
  * All rights reserved.
  */
 
@@ -1205,12 +1205,12 @@ public class Test
          System.out.println("  numInput:         " + scm.numInput);
          System.out.println("  numOutput:        " + scm.numOutput);
       }
-      System.out.println("  heap.numSet:      " + ((MemSimple)scm.heap).numSet);
-      System.out.println("  heap.numGet:      " + ((MemSimple)scm.heap).numGet);
-      System.out.println("  heap.maxAddr:     " + ((MemSimple)scm.heap).maxAddr);
-      System.out.println("  reg.numSet:       " + ((MemSimple)scm.reg).numSet);
-      System.out.println("  reg.numGet:       " + ((MemSimple)scm.reg).numGet);
-      System.out.println("  reg.maxAddr:      " + ((MemSimple)scm.reg).maxAddr);
+      System.out.println("  heap.numSet:      " + scm.heapStats.numSet);
+      System.out.println("  heap.numGet:      " + scm.heapStats.numGet);
+      System.out.println("  heap.maxAddr:     " + scm.heapStats.maxAddr);
+      System.out.println("  reg.numSet:       " + scm.regStats.numSet);
+      System.out.println("  reg.numGet:       " + scm.regStats.numGet);
+      System.out.println("  reg.maxAddr:      " + scm.regStats.maxAddr);
    }
 
    private static void reportUniversal ()
@@ -1223,14 +1223,12 @@ public class Test
       System.out.println("  univ NumOutput:   " + JhwScm.universalNumOutput);
       // TODO: differentiate universal stats for reg and heap...
       System.out.println("Mem:");
-      System.out.println("  univ MaxNumSlots: " + MemSimple.universalMaxNumSlots);
-      System.out.println("  univ NumSet:      " + MemSimple.universalNumSet);
-      System.out.println("  univ NumGet:      " + MemSimple.universalNumGet);
-      System.out.println("  univ MaxAddr:     " + MemSimple.universalMaxAddr);
+      System.out.println("  univ NumSet:      " + JhwScm.univHeapStats.numSet);
+      System.out.println("  univ NumGet:      " + JhwScm.univHeapStats.numGet);
+      System.out.println("  univ MaxAddr:     " + JhwScm.univHeapStats.maxAddr);
       System.out.println("Reg:");
-      System.out.println("  univ MaxNumSlots: " + MemSimple.universalMaxNumSlots);
-      System.out.println("  univ NumSet:      " + MemSimple.universalNumSet);
-      System.out.println("  univ NumGet:      " + MemSimple.universalNumGet);
-      System.out.println("  univ MaxAddr:     " + MemSimple.universalMaxAddr);
+      System.out.println("  univ NumSet:      " + JhwScm.univRegStats.numSet);
+      System.out.println("  univ NumGet:      " + JhwScm.univRegStats.numGet);
+      System.out.println("  univ MaxAddr:     " + JhwScm.univRegStats.maxAddr);
    }
 }
