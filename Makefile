@@ -4,7 +4,8 @@
 SHELL     := bash
 
 DESTDIR   ?= build
-SRC       := *.java
+SRC       += $(wildcard src/*.java)
+SRC       += $(wildcard test/*.java)
 MAIN      := Test
 MAIN_ARGS := 
 
