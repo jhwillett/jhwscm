@@ -70,6 +70,56 @@ public class JhwScm
    private final boolean SILENT;
    private final boolean DEBUG;  // check things which should never happen
 
+   private int scmDepth  = 0;
+   private int javaDepth = 0;
+   public static final Stats global = new Stats();
+   public        final Stats local  = new Stats();
+
+   public final Mem reg;
+   public final Mem heap;
+   private      int heapTop = 0; // in words
+
+   public static class Stats
+   {
+      public final MemStats.Stats heapStats  = new MemStats.Stats();
+      public final MemStats.Stats regStats   = new MemStats.Stats();
+      public       int            numCycles  = 0;
+      public       int            numCons    = 0;
+      public       int            numInput   = 0;
+      public       int            numOutput  = 0;
+   }
+
+   {
+      Mem mem = null;
+
+      mem  = new MemSimple(32);
+      if ( PROFILE )
+      {
+         mem  = new MemStats(mem,global.regStats,local.regStats);
+      }
+      reg  = mem;
+
+      if ( USE_PAGED_MEM )
+      {
+         mem  = new MemPaged(PAGE_SIZE, PAGE_COUNT);
+      }
+      else
+      {
+         //  16 kcells:  0.5 sec
+         //  32 kcells:  0.6 sec
+         //  64 kcells:  1.0 sec
+         // 128 kcells:  4.2 sec  *** big nonlinearity up
+         // 256 kcells: 10.6 sec  *** small nonlinearity up
+         // 512 kcells: 11.5 sec  *** small nonlinearity down
+         mem  = new MemSimple(PAGE_SIZE * PAGE_COUNT);
+      }
+      if ( PROFILE )
+      {
+         mem  = new MemStats(mem,global.heapStats,local.heapStats);
+      }
+      heap = mem;
+   }
+
    public JhwScm ( final boolean doREP, 
                    final boolean SILENT, 
                    final boolean DEBUG )
@@ -127,6 +177,35 @@ public class JhwScm
       }
       prebind("map",    sub_map);
    }
+
+   private void prebind ( final String name, final int code )
+   {
+      // TODO: this is sloppy, non-LISPy, magic, and has no error
+      // checking.
+      //
+      // Longer-term I want lexical-level bindings for this stuff, and
+      // to just express the "standard" name bindings as a series of
+      // defines against the lexically supported stuff.
+      //
+      // But I did this now because I don't want to go inventing some
+      // off-specification lexical bindings which I will be committed
+      // to maintianging longer term until *after* I've got (eval)
+      // working and the entry points in the microcode tied down more.
+      //
+      final int queue = queueCreate();
+      for ( int i = 0; i < name.length(); i++ )
+      {
+         queuePushBack(queue,code(TYPE_CHAR,name.charAt(i)));
+      }
+      final int symbol   = cons(IS_SYMBOL,car(queue));
+      final int binding  = cons(symbol,code);
+      final int frame    = car(reg.get(regEnv));
+      final int newframe = cons(binding,frame);
+      setcar(reg.get(regEnv),newframe);
+   }
+
+   ///
+
 
    /**
     * Transfers up to len bytes from in[off..len-1] to the VM's input
@@ -2600,6 +2679,12 @@ public class JhwScm
       return INCOMPLETE;
    }
 
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding slots
+   //
+   ////////////////////////////////////////////////////////////////////
+
    // Notes:
    // 
    // A slot is a 32 bit unsigned quantity.  
@@ -2636,6 +2721,23 @@ public class JhwScm
    private static final int MASK_TYPE    = 0xF0000000; // matches SHIFT_TYPE
    private static final int SHIFT_TYPE   = 28;         // matches MASK_TYPE
    private static final int MASK_VALUE   = ~MASK_TYPE;
+
+   private static int type ( final int code )
+   {
+      return MASK_TYPE  & code;
+   }
+   private static int value ( final int code )
+   {
+      return MASK_VALUE & code;
+   }
+   private static int value_fixint ( final int code )
+   {
+      return ((MASK_VALUE & code) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
+   }
+   private static int code ( final int type, final int value )
+   {
+      return (MASK_TYPE & type) | (MASK_VALUE & value);
+   }
 
    private static final int TYPE_FIXINT   = 0x20000000;
    private static final int TYPE_CELL     = 0x30000000;
@@ -2695,8 +2797,8 @@ public class JhwScm
    private static final int regPc               =   2; // opcode to return to
 
    private static final int regError            =   3; // NIL or an ERR_foo
-   private static final int regErrorPc          =   4; // reg.get(regPc) of err
-   private static final int regErrorStack       =   5; // reg.get(regStack) of err
+   private static final int regErrorPc          =   4; // regPc at err
+   private static final int regErrorStack       =   5; // regStack at err
 
    private static final int regEnv              =   6; // list of env frames
 
@@ -2719,55 +2821,6 @@ public class JhwScm
    private static final int regTmp7             =  27; // temporary
    private static final int regTmp8             =  28; // temporary
    private static final int regTmp9             =  29; // temporary
-
-   //  16 kcells:  0.5 sec
-   //  32 kcells:  0.6 sec
-   //  64 kcells:  1.0 sec
-   // 128 kcells:  4.2 sec  *** big nonlinearity up
-   // 256 kcells: 10.6 sec  *** small nonlinearity up
-   // 512 kcells: 11.5 sec  *** small nonlinearity down
-
-   public static class Stats
-   {
-      public final MemStats.Stats heapStats  = new MemStats.Stats();
-      public final MemStats.Stats regStats   = new MemStats.Stats();
-      public       int            numCycles  = 0;
-      public       int            numCons    = 0;
-      public       int            numInput   = 0;
-      public       int            numOutput  = 0;
-   }
-
-   public static final Stats global = new Stats();
-   public        final Stats local  = new Stats();
-
-   public final Mem reg;
-   public final Mem heap;
-   private      int heapTop = 0; // in words
-
-   {
-      Mem mem = null;
-
-      mem  = new MemSimple(32);
-      if ( PROFILE )
-      {
-         mem  = new MemStats(mem,global.regStats,local.regStats);
-      }
-      reg  = mem;
-
-      if ( USE_PAGED_MEM )
-      {
-         mem  = new MemPaged(PAGE_SIZE, PAGE_COUNT);
-      }
-      else
-      {
-         mem  = new MemSimple(PAGE_SIZE * PAGE_COUNT);
-      }
-      if ( PROFILE )
-      {
-         mem  = new MemStats(mem,global.heapStats,local.heapStats);
-      }
-      heap = mem;
-   }
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -2855,6 +2908,269 @@ public class JhwScm
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
    private static final int blk_error            = TYPE_SUBP | A0 | 0x10003;
+
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding cells
+   //
+   ////////////////////////////////////////////////////////////////////
+
+   /**
+    * @returns NIL in event of error (in which case an error is
+    * raised), else a newly allocated and initialize cons cell.
+    */
+   private int cons ( final int car, final int cdr )
+   {
+      if ( PROFILE )
+      {
+         local.numCons++;
+         global.numCons++;
+      }
+      int cell = reg.get(regFreeCellList);
+      if ( NIL == cell )
+      {
+         if ( heapTop >= heap.length() )
+         {
+            raiseError(ERR_OOM);
+            return UNSPECIFIED;
+         }
+         final int top;
+         if ( DEFER_HEAP_INIT )
+         {
+            // heapTop in slots, 2* for cells, only init a piece of it
+            // this pass.
+            top = heapTop + 2*256;
+         }
+         else
+         {
+            // init all of the heap: pretty slow, even if you might
+            // eventually use it, because it's a badly non-local pass
+            // accros the entire heap on startup.
+            //
+            // Even if you're going to use all of it, at least we
+            // don't initialize a piece of heap until right before the
+            // higher-level program was going to get to it anyhow.
+            top = heap.length();
+         }
+         final int lim = (top < heap.length()) ? top : heap.length();
+         for ( ; heapTop < lim; heapTop += 2 )
+         {
+            // Notice that how half the space in the free cell list,
+            // the car()s, is unused.  Is this an opportunity for
+            // something?
+            heap.set(heapTop+0   , UNSPECIFIED);
+            heap.set(heapTop+1   , reg.get(regFreeCellList));
+            reg.set(regFreeCellList , code(TYPE_CELL,(heapTop >>> 1)));
+         }
+         cell = reg.get(regFreeCellList);
+      }
+      final int t          = type(cell);
+      if ( DEBUG && TYPE_CELL != t )
+      {
+         raiseError(ERR_INTERNAL);
+         return UNSPECIFIED;
+      }
+      final int v          = value(cell);
+      final int ar         = v << 1;
+      final int dr         = ar + 1;
+      reg.set(regFreeCellList , heap.get(dr));
+      heap.set(ar          , car);
+      heap.set(dr          , cdr);
+      return cell;
+   }
+
+   private int car ( final int cell )
+   {
+      if ( DEBUG && TYPE_CELL != type(cell) )
+      {
+         if ( true ) throw new RuntimeException("bad cell in car: " + pp(cell));
+         raiseError(ERR_INTERNAL);
+         return UNSPECIFIED;
+      }
+      return heap.get((value(cell) << 1) + 0);
+   }
+
+   private int cdr ( final int cell )
+   {
+      if ( DEBUG && TYPE_CELL != type(cell) )
+      {
+         if ( true ) throw new RuntimeException("bad cell in cdr: " + pp(cell));
+         raiseError(ERR_INTERNAL);
+         return UNSPECIFIED;
+      }
+      return heap.get((value(cell) << 1) + 1);
+   }
+
+   private void setcar ( final int cell, final int value )
+   {
+      if ( DEBUG && TYPE_CELL != type(cell) )
+      {
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      heap.set( (value(cell) << 1) + 0 , value );
+   }
+
+   private void setcdr ( final int cell, final int value )
+   {
+      if ( DEBUG && TYPE_CELL != type(cell) )
+      {
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      heap.set( (value(cell) << 1) + 1 , value );
+   }
+
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding queues
+   //
+   ////////////////////////////////////////////////////////////////////
+
+   private int queueCreate ()
+   {
+      final int queue = cons(NIL,NIL);
+      if ( false ) log("  queueCreate(): returning " + pp(queue));
+      return queue;
+   }
+
+   /**
+    * Pushes value onto the back of the queue.
+    */
+   private void queuePushBack ( final int queue, final int value )
+   {
+      final boolean verb = false;
+      final int queue_t = type(queue);
+      if ( DEBUG && TYPE_CELL != type(queue) ) 
+      {
+         if ( verb ) log("  queuePushBack(): non-queue " + pp(queue));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( DEBUG && EOF == value ) 
+      {
+         // EOF cannot go in queues, lest it confuse the return value
+         // channel in one of the peeks or pops.
+         if ( verb ) log("  queuePushBack(): EOF");
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( DEBUG && TYPE_CHAR != type(value) ) 
+      {
+         // OK, this is BS: I haven't decided for queues to be only of
+         // characters.  But so far I'm only using them as such ...
+         if ( verb ) log("  queuePushBack(): non-char " + pp(value));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+
+      final int new_cell = cons(value,NIL);
+      if ( NIL == new_cell )
+      {
+         if ( verb ) log("  queuePushBack(): oom");
+         return; // avoid further damage
+      }
+
+      // INVARIANT: head and tail are both NIL (e.g. empty) or they
+      // are both cells!
+      final int h = car(queue);
+      final int t = cdr(queue);
+
+      if ( NIL == h || NIL == t )
+      {
+         if ( NIL != h || NIL != t )
+         {
+            if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
+            raiseError(ERR_INTERNAL); // corrupt queue
+            return;
+         }
+         if ( verb ) log("  queuePushBack(): pushing to empty " + pp(value));
+         setcar(queue,new_cell);
+         setcdr(queue,new_cell);
+         return;
+      }
+
+      if ( (TYPE_CELL != type(h)) || (TYPE_CELL != type(t)) )
+      {
+         if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
+         raiseError(ERR_INTERNAL); // corrupt queue
+         return;
+      }
+
+      if ( verb ) log("  queuePushBack(): pushing to nonempty " + pp(value));
+      setcdr(t,    new_cell);
+      setcdr(queue,new_cell);
+   }
+
+   /**
+    * @returns the object at the front of the queue (in which case the
+    * queue is mutated to remove the object), or EOF if empty
+    */
+   private int queuePopFront ( final int queue )
+   {
+      final boolean verb = false;
+      if ( DEBUG && TYPE_CELL != type(queue) ) 
+      {
+         if ( verb ) log("  queuePopFront(): non-queue " + pp(queue));
+         raiseError(ERR_INTERNAL);
+         return EOF;
+      }
+      final int head = car(queue);
+      if ( NIL == head )
+      {
+         if ( verb ) log("  queuePopFront(): empty " + pp(queue));
+         return EOF;
+      }
+      if ( TYPE_CELL != type(head) ) 
+      {
+         if ( verb ) log("  queuePopFront(): corrupt queue " + pp(head));
+         raiseError(ERR_INTERNAL); // corrupt queue
+         return EOF;
+      }
+      final int value = car(head);
+      setcar(queue,cdr(head));
+      if ( NIL == car(queue) )
+      {
+         setcdr(queue,NIL);
+      }
+      if ( verb ) log("  queuePopFront(): popped " + pp(value));
+      return value;
+   }
+
+   /**
+    * @returns the object at the front of the queue, or EOF if empty
+    */
+   private int queuePeekFront ( final int queue )
+   {
+      final boolean verb = false;
+      if ( DEBUG && TYPE_CELL != type(queue) ) 
+      {
+         if ( verb ) log("  queuePeekFront(): non-queue " + pp(queue));
+         raiseError(ERR_INTERNAL);
+         return EOF;
+      }
+      final int head = car(queue);
+      if ( NIL == head )
+      {
+         if ( verb ) log("  queuePeekFront(): empty " + pp(queue));
+         return EOF;
+      }
+      if ( TYPE_CELL != type(head) ) 
+      {
+         if ( verb ) log("  queuePeekFront(): corrupt queue " + pp(head));
+         raiseError(ERR_INTERNAL); // corrupt queue
+         return EOF;
+      }
+      final int value = car(head);
+      if ( verb ) log("  queuePeekFront(): peeked " + pp(value));
+      return value;
+   }
+
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding stack and subroutine discipline and error trapping
+   //
+   ////////////////////////////////////////////////////////////////////
 
    // jump() is icky.  I have deliberately not used it, in favor of
    // tail recursion wherever possible - even *before* the tail
@@ -3063,307 +3379,13 @@ public class JhwScm
 
    ////////////////////////////////////////////////////////////////////
    //
-   // encoding slots
+   // logging and debug utilities
    //
    ////////////////////////////////////////////////////////////////////
-
-   private static int type ( final int code )
-   {
-      return MASK_TYPE  & code;
-   }
-   private static int value ( final int code )
-   {
-      return MASK_VALUE & code;
-   }
-   private static int value_fixint ( final int code )
-   {
-      return ((MASK_VALUE & code) << (32-SHIFT_TYPE)) >> (32-SHIFT_TYPE);
-   }
-   private static int code ( final int type, final int value )
-   {
-      return (MASK_TYPE & type) | (MASK_VALUE & value);
-   }
-   
-
-   ////////////////////////////////////////////////////////////////////
-   //
-   // encoding cells
-   //
-   ////////////////////////////////////////////////////////////////////
-
-   /**
-    * @returns NIL in event of error (in which case an error is
-    * raised), else a newly allocated and initialize cons cell.
-    */
-   private int cons ( final int car, final int cdr )
-   {
-      if ( PROFILE )
-      {
-         local.numCons++;
-         global.numCons++;
-      }
-      int cell = reg.get(regFreeCellList);
-      if ( NIL == cell )
-      {
-         if ( heapTop >= heap.length() )
-         {
-            raiseError(ERR_OOM);
-            return UNSPECIFIED;
-         }
-         final int top;
-         if ( DEFER_HEAP_INIT )
-         {
-            // heapTop in slots, 2* for cells, only init a piece of it
-            // this pass.
-            top = heapTop + 2*256;
-         }
-         else
-         {
-            // init all of the heap: pretty slow, even if you might
-            // eventually use it, because it's a badly non-local pass
-            // accros the entire heap on startup.
-            //
-            // Even if you're going to use all of it, at least we
-            // don't initialize a piece of heap until right before the
-            // higher-level program was going to get to it anyhow.
-            top = heap.length();
-         }
-         final int lim = (top < heap.length()) ? top : heap.length();
-         for ( ; heapTop < lim; heapTop += 2 )
-         {
-            // Notice that how half the space in the free cell list,
-            // the car()s, is unused.  Is this an opportunity for
-            // something?
-            heap.set(heapTop+0   , UNSPECIFIED);
-            heap.set(heapTop+1   , reg.get(regFreeCellList));
-            reg.set(regFreeCellList , code(TYPE_CELL,(heapTop >>> 1)));
-         }
-         cell = reg.get(regFreeCellList);
-      }
-      final int t          = type(cell);
-      if ( DEBUG && TYPE_CELL != t )
-      {
-         raiseError(ERR_INTERNAL);
-         return UNSPECIFIED;
-      }
-      final int v          = value(cell);
-      final int ar         = v << 1;
-      final int dr         = ar + 1;
-      reg.set(regFreeCellList , heap.get(dr));
-      heap.set(ar          , car);
-      heap.set(dr          , cdr);
-      return cell;
-   }
-   private int car ( final int cell )
-   {
-      if ( DEBUG && TYPE_CELL != type(cell) )
-      {
-         if ( true ) throw new RuntimeException("bad cell in car: " + pp(cell));
-         raiseError(ERR_INTERNAL);
-         return UNSPECIFIED;
-      }
-      return heap.get((value(cell) << 1) + 0);
-   }
-   private int cdr ( final int cell )
-   {
-      if ( DEBUG && TYPE_CELL != type(cell) )
-      {
-         if ( true ) throw new RuntimeException("bad cell in cdr: " + pp(cell));
-         raiseError(ERR_INTERNAL);
-         return UNSPECIFIED;
-      }
-      return heap.get((value(cell) << 1) + 1);
-   }
-   private void setcar ( final int cell, final int value )
-   {
-      if ( DEBUG && TYPE_CELL != type(cell) )
-      {
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      heap.set( (value(cell) << 1) + 0 , value );
-   }
-   private void setcdr ( final int cell, final int value )
-   {
-      if ( DEBUG && TYPE_CELL != type(cell) )
-      {
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      heap.set( (value(cell) << 1) + 1 , value );
-   }
-
-   ////////////////////////////////////////////////////////////////////
-   //
-   // encoding lists (mostly same as w/ cons)
-   //
-   ////////////////////////////////////////////////////////////////////
-
-   /**
-    * @returns the length of the list rooted at cell: as a regular
-    * int, not as a TYPE_FIXINT!  Is unsafe about cycles!
-    */
-   private int listLength ( final int cell )
-   {
-      int len = 0;
-      for ( int p = cell; NIL != p; p = cdr(p) )
-      {
-         len++;
-      }   
-      return len;
-   }
-
-
-   ////////////////////////////////////////////////////////////////////
-   //
-   // encoding queues (over laps a lot w/ cons and list)
-   //
-   ////////////////////////////////////////////////////////////////////
-
-   private int queueCreate ()
-   {
-      final int queue = cons(NIL,NIL);
-      if ( false ) log("  queueCreate(): returning " + pp(queue));
-      return queue;
-   }
-
-   /**
-    * Pushes value onto the back of the queue.
-    */
-   private void queuePushBack ( final int queue, final int value )
-   {
-      final boolean verb = false;
-      final int queue_t = type(queue);
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verb ) log("  queuePushBack(): non-queue " + pp(queue));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      if ( DEBUG && EOF == value ) 
-      {
-         // EOF cannot go in queues, lest it confuse the return value
-         // channel in one of the peeks or pops.
-         if ( verb ) log("  queuePushBack(): EOF");
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      if ( DEBUG && TYPE_CHAR != type(value) ) 
-      {
-         // OK, this is BS: I haven't decided for queues to be only of
-         // characters.  But so far I'm only using them as such ...
-         if ( verb ) log("  queuePushBack(): non-char " + pp(value));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-
-      final int new_cell = cons(value,NIL);
-      if ( NIL == new_cell )
-      {
-         if ( verb ) log("  queuePushBack(): oom");
-         return; // avoid further damage
-      }
-
-      // INVARIANT: head and tail are both NIL (e.g. empty) or they
-      // are both cells!
-      final int h = car(queue);
-      final int t = cdr(queue);
-
-      if ( NIL == h || NIL == t )
-      {
-         if ( NIL != h || NIL != t )
-         {
-            if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
-            raiseError(ERR_INTERNAL); // corrupt queue
-            return;
-         }
-         if ( verb ) log("  queuePushBack(): pushing to empty " + pp(value));
-         setcar(queue,new_cell);
-         setcdr(queue,new_cell);
-         return;
-      }
-
-      if ( (TYPE_CELL != type(h)) || (TYPE_CELL != type(t)) )
-      {
-         if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
-         raiseError(ERR_INTERNAL); // corrupt queue
-         return;
-      }
-
-      if ( verb ) log("  queuePushBack(): pushing to nonempty " + pp(value));
-      setcdr(t,    new_cell);
-      setcdr(queue,new_cell);
-   }
-
-   /**
-    * @returns the object at the front of the queue (in which case the
-    * queue is mutated to remove the object), or EOF if empty
-    */
-   private int queuePopFront ( final int queue )
-   {
-      final boolean verb = false;
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verb ) log("  queuePopFront(): non-queue " + pp(queue));
-         raiseError(ERR_INTERNAL);
-         return EOF;
-      }
-      final int head = car(queue);
-      if ( NIL == head )
-      {
-         if ( verb ) log("  queuePopFront(): empty " + pp(queue));
-         return EOF;
-      }
-      if ( TYPE_CELL != type(head) ) 
-      {
-         if ( verb ) log("  queuePopFront(): corrupt queue " + pp(head));
-         raiseError(ERR_INTERNAL); // corrupt queue
-         return EOF;
-      }
-      final int value = car(head);
-      setcar(queue,cdr(head));
-      if ( NIL == car(queue) )
-      {
-         setcdr(queue,NIL);
-      }
-      if ( verb ) log("  queuePopFront(): popped " + pp(value));
-      return value;
-   }
-
-   /**
-    * @returns the object at the front of the queue, or EOF if empty
-    */
-   private int queuePeekFront ( final int queue )
-   {
-      final boolean verb = false;
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verb ) log("  queuePeekFront(): non-queue " + pp(queue));
-         raiseError(ERR_INTERNAL);
-         return EOF;
-      }
-      final int head = car(queue);
-      if ( NIL == head )
-      {
-         if ( verb ) log("  queuePeekFront(): empty " + pp(queue));
-         return EOF;
-      }
-      if ( TYPE_CELL != type(head) ) 
-      {
-         if ( verb ) log("  queuePeekFront(): corrupt queue " + pp(head));
-         raiseError(ERR_INTERNAL); // corrupt queue
-         return EOF;
-      }
-      final int value = car(head);
-      if ( verb ) log("  queuePeekFront(): peeked " + pp(value));
-      return value;
-   }
 
    // scmDepth and javaDepth are ONLY used for debug: they are *not*
    // sanctioned VM state.
    //
-   private int scmDepth  = 0;
-   private int javaDepth = 0;
    private void log ( final Object msg )
    {
       if ( SILENT ) return;
@@ -3569,31 +3591,5 @@ public class JhwScm
       final StringBuilder buf = new StringBuilder();
       hex(buf,code,nibbles);
       return buf.toString();
-   }
-
-   private void prebind ( final String name, final int code )
-   {
-      // TODO: this is sloppy, non-LISPy, magic, and has no error
-      // checking.
-      //
-      // Longer-term I want lexical-level bindings for this stuff, and
-      // to just express the "standard" name bindings as a series of
-      // defines against the lexically supported stuff.
-      //
-      // But I did this now because I don't want to go inventing some
-      // off-specification lexical bindings which I will be committed
-      // to maintianging longer term until *after* I've got (eval)
-      // working and the entry points in the microcode tied down more.
-      //
-      final int queue = queueCreate();
-      for ( int i = 0; i < name.length(); i++ )
-      {
-         queuePushBack(queue,code(TYPE_CHAR,name.charAt(i)));
-      }
-      final int symbol   = cons(IS_SYMBOL,car(queue));
-      final int binding  = cons(symbol,code);
-      final int frame    = car(reg.get(regEnv));
-      final int newframe = cons(binding,frame);
-      setcar(reg.get(regEnv),newframe);
    }
 }
