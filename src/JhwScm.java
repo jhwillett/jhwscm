@@ -70,16 +70,6 @@ public class JhwScm
    private final boolean SILENT;
    private final boolean DEBUG;  // check things which should never happen
 
-   public static final Stats global = new Stats();
-   public        final Stats local  = new Stats();
-
-   public final Mem reg;
-   public final Mem heap;
-
-   private int heapTop   = 0; // allocator support, perhaps should be a reg?
-   private int scmDepth  = 0; // debug
-   private int javaDepth = 0; // debug
-
    public static class Stats
    {
       public final MemStats.Stats heapStats  = new MemStats.Stats();
@@ -89,6 +79,16 @@ public class JhwScm
       public       int            numInput   = 0;
       public       int            numOutput  = 0;
    }
+
+   public static final Stats global = new Stats();
+   public        final Stats local  = new Stats();
+
+   public final Mem reg;
+   public final Mem heap;
+
+   private int heapTop   = 0; // allocator support, perhaps should be a reg?
+   private int scmDepth  = 0; // debug
+   private int javaDepth = 0; // debug
 
    public JhwScm ( final boolean doREP, 
                    final boolean SILENT, 
@@ -201,7 +201,7 @@ public class JhwScm
 
    ////////////////////////////////////////////////////////////////////
    //
-   // public interface: client control points
+   // client control points
    //
    ////////////////////////////////////////////////////////////////////
 
