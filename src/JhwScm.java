@@ -184,8 +184,8 @@ public class JhwScm
             setcdr(reg.get(regIn),oldCdr);
             return INTERNAL_ERROR; // TODO: proper proxy for reg.get(regError)
          }
-         if ( PROFILE ) numInput++;
-         if ( PROFILE ) univNumInput++;
+         if ( PROFILE ) local.numInput++;
+         if ( PROFILE ) global.numInput++;
       }
       return num;
    }
@@ -251,8 +251,8 @@ public class JhwScm
          buf[off+i] = (byte)value(f);
          if ( verb ) log("output(): popping: " + (char)buf[off+i] + " at " + (off+i) );
          queuePopFront(reg.get(regOut));
-         if ( PROFILE ) numOutput++;
-         if ( PROFILE ) univNumOutput++;
+         if ( PROFILE ) local.numOutput++;
+         if ( PROFILE ) global.numOutput++;
       }
       if ( verb ) log("output(): done: " + len);
       return len;
@@ -294,8 +294,8 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
-         if ( PROFILE ) numCycles     += 1;
-         if ( PROFILE ) univNumCycles += 1;
+         if ( PROFILE ) local.numCycles  += 1;
+         if ( PROFILE ) global.numCycles += 1;
          if ( DEBUG ) javaDepth = 1;
          if ( verb ) log("step: " + pp(reg.get(regPc)));
          if ( DEBUG ) javaDepth = 2;
@@ -2723,45 +2723,40 @@ public class JhwScm
    // 256 kcells: 10.6 sec  *** small nonlinearity up
    // 512 kcells: 11.5 sec  *** small nonlinearity down
 
-   public static final MemStats.Stats univHeapStats = new MemStats.Stats();
-   public static final MemStats.Stats univRegStats  = new MemStats.Stats();
+   public static class Stats
+   {
+      public final MemStats.Stats heapStats  = new MemStats.Stats();
+      public final MemStats.Stats regStats   = new MemStats.Stats();
+      public       int            numCycles  = 0;
+      public       int            numCons    = 0;
+      public       int            numInput   = 0;
+      public       int            numOutput  = 0;
+   }
 
-   public        final MemStats.Stats heapStats     = new MemStats.Stats();
-   public        final MemStats.Stats regStats      = new MemStats.Stats();
+   public static final Stats global = new Stats();
+   public        final Stats local  = new Stats();
 
    public final Mem reg;
    public final Mem heap;
+   private      int heapTop = 0; // in words
+
    {
       Mem mem = null;
 
       mem  = new MemSimple(32);
       if ( PROFILE )
       {
-         mem  = new MemStats(mem,univRegStats,regStats);
+         mem  = new MemStats(mem,global.regStats,local.regStats);
       }
       reg  = mem;
 
       mem  = new MemSimple(6 * 1024);
       if ( PROFILE )
       {
-         mem  = new MemStats(mem,univHeapStats,heapStats);
+         mem  = new MemStats(mem,global.heapStats,local.heapStats);
       }
       heap = mem;
    }
-
-
-   private int         heapTop           = 0; // in slots
-
-   public        int numCycles           = 0; // PROFILE only
-   public        int numCons             = 0; // PROFILE only
-   public        int maxHeapTop          = 0; // PROFILE only
-   public        int numInput            = 0; // PROFILE only
-   public        int numOutput           = 0; // PROFILE only
-   public static int univNumCycles       = 0; // PROFILE only
-   public static int univNumCons         = 0; // PROFILE only
-   public static int univMaxHeapTop      = 0; // PROFILE only
-   public static int univNumInput        = 0; // PROFILE only
-   public static int univNumOutput       = 0; // PROFILE only
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -3093,8 +3088,8 @@ public class JhwScm
    {
       if ( PROFILE )
       {
-         numCons++;
-         univNumCons++;
+         local.numCons++;
+         global.numCons++;
       }
       int cell = reg.get(regFreeCellList);
       if ( NIL == cell )
@@ -3133,17 +3128,6 @@ public class JhwScm
             reg.set(regFreeCellList , code(TYPE_CELL,(heapTop >>> 1)));
          }
          cell = reg.get(regFreeCellList);
-         if ( PROFILE )
-         {
-            if ( heapTop > maxHeapTop )
-            {
-               maxHeapTop = heapTop;
-            }
-            if ( heapTop > univMaxHeapTop )
-            {
-               univMaxHeapTop = heapTop;
-            }
-         }
       }
       final int t          = type(cell);
       if ( DEBUG && TYPE_CELL != t )

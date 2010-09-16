@@ -586,7 +586,7 @@ public class Test
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         report("fact simple:",scm);
+         report("fact simple:",scm.local);
       }
       {
          final String help = 
@@ -607,7 +607,7 @@ public class Test
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         report("fact 2/ help:",scm);
+         report("fact 2/ help:",scm.local);
       }
 
       {
@@ -651,7 +651,7 @@ public class Test
             // Takes like a minute...
             expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         report("fib:",scm);
+         report("fib:",scm.local);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1032,7 +1032,7 @@ public class Test
       //
       // Weird.  So is it or is it not a symbol?
 
-      reportUniversal();
+      report("global",JhwScm.global);
    }
 
    private static void expectSuccess ( final String expr, final String expect )
@@ -1194,40 +1194,21 @@ public class Test
       }
    }
 
-   private static void report ( final String tag, final JhwScm scm )
+   private static void report ( final String tag, final JhwScm.Stats stats )
    {
       System.out.println(tag);
-      System.out.println("  numCycles:        " + scm.numCycles);
-      System.out.println("  numCons:          " + scm.numCons);
-      System.out.println("  maxHeapTop:       " + scm.maxHeapTop);
+      System.out.println("  numCycles:        " + stats.numCycles);
+      System.out.println("  numCons:          " + stats.numCons);
       if ( false )
       {
-         System.out.println("  numInput:         " + scm.numInput);
-         System.out.println("  numOutput:        " + scm.numOutput);
+         System.out.println("  numInput:         " + stats.numInput);
+         System.out.println("  numOutput:        " + stats.numOutput);
       }
-      System.out.println("  heap.numSet:      " + scm.heapStats.numSet);
-      System.out.println("  heap.numGet:      " + scm.heapStats.numGet);
-      System.out.println("  heap.maxAddr:     " + scm.heapStats.maxAddr);
-      System.out.println("  reg.numSet:       " + scm.regStats.numSet);
-      System.out.println("  reg.numGet:       " + scm.regStats.numGet);
-      System.out.println("  reg.maxAddr:      " + scm.regStats.maxAddr);
-   }
-
-   private static void reportUniversal ()
-   {
-      System.out.println("JhwScm:");
-      System.out.println("  univ NumCycles:   " + JhwScm.univNumCycles);
-      System.out.println("  univ NumCons:     " + JhwScm.univNumCons);
-      System.out.println("  univ MaxHeapTop:  " + JhwScm.univMaxHeapTop);
-      System.out.println("  univ NumInput:    " + JhwScm.univNumInput);
-      System.out.println("  univ NumOutput:   " + JhwScm.univNumOutput);
-      System.out.println("Mem:");
-      System.out.println("  univ NumSet:      " + JhwScm.univHeapStats.numSet);
-      System.out.println("  univ NumGet:      " + JhwScm.univHeapStats.numGet);
-      System.out.println("  univ MaxAddr:     " + JhwScm.univHeapStats.maxAddr);
-      System.out.println("Reg:");
-      System.out.println("  univ NumSet:      " + JhwScm.univRegStats.numSet);
-      System.out.println("  univ NumGet:      " + JhwScm.univRegStats.numGet);
-      System.out.println("  univ MaxAddr:     " + JhwScm.univRegStats.maxAddr);
+      System.out.println("  heap.numSet:      " + stats.heapStats.numSet);
+      System.out.println("  heap.numGet:      " + stats.heapStats.numGet);
+      System.out.println("  heap.maxAddr:     " + stats.heapStats.maxAddr);
+      System.out.println("  reg.numSet:       " + stats.regStats.numSet);
+      System.out.println("  reg.numGet:       " + stats.regStats.numGet);
+      System.out.println("  reg.maxAddr:      " + stats.regStats.maxAddr);
    }
 }

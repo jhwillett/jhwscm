@@ -9,7 +9,6 @@ SRC       += $(wildcard test/*.java)
 MAIN      := Test
 MAIN_ARGS := 
 
-
 LIBS                 += junit-4.8.2.jar
 HOME-junit-4.8.2.jar := http://github.com/downloads/KentBeck/junit
 MD5-junit-4.8.2.jar  := 8a498c3d820db50cc7255d8c46c1ebd1
