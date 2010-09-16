@@ -1216,12 +1216,11 @@ public class Test
    private static void reportUniversal ()
    {
       System.out.println("JhwScm:");
-      System.out.println("  univ NumCycles:   " + JhwScm.universalNumCycles);
-      System.out.println("  univ NumCons:     " + JhwScm.universalNumCons);
-      System.out.println("  univ MaxHeapTop:  " + JhwScm.universalMaxHeapTop);
-      System.out.println("  univ NumInput:    " + JhwScm.universalNumInput);
-      System.out.println("  univ NumOutput:   " + JhwScm.universalNumOutput);
-      // TODO: differentiate universal stats for reg and heap...
+      System.out.println("  univ NumCycles:   " + JhwScm.univNumCycles);
+      System.out.println("  univ NumCons:     " + JhwScm.univNumCons);
+      System.out.println("  univ MaxHeapTop:  " + JhwScm.univMaxHeapTop);
+      System.out.println("  univ NumInput:    " + JhwScm.univNumInput);
+      System.out.println("  univ NumOutput:   " + JhwScm.univNumOutput);
       System.out.println("Mem:");
       System.out.println("  univ NumSet:      " + JhwScm.univHeapStats.numSet);
       System.out.println("  univ NumGet:      " + JhwScm.univHeapStats.numGet);

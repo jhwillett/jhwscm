@@ -185,7 +185,7 @@ public class JhwScm
             return INTERNAL_ERROR; // TODO: proper proxy for reg.get(regError)
          }
          if ( PROFILE ) numInput++;
-         if ( PROFILE ) universalNumInput++;
+         if ( PROFILE ) univNumInput++;
       }
       return num;
    }
@@ -252,7 +252,7 @@ public class JhwScm
          if ( verb ) log("output(): popping: " + (char)buf[off+i] + " at " + (off+i) );
          queuePopFront(reg.get(regOut));
          if ( PROFILE ) numOutput++;
-         if ( PROFILE ) universalNumOutput++;
+         if ( PROFILE ) univNumOutput++;
       }
       if ( verb ) log("output(): done: " + len);
       return len;
@@ -294,8 +294,8 @@ public class JhwScm
 
       for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
       {
-         if ( PROFILE ) numCycles          += 1;
-         if ( PROFILE ) universalNumCycles += 1;
+         if ( PROFILE ) numCycles     += 1;
+         if ( PROFILE ) univNumCycles += 1;
          if ( DEBUG ) javaDepth = 1;
          if ( verb ) log("step: " + pp(reg.get(regPc)));
          if ( DEBUG ) javaDepth = 2;
@@ -2735,10 +2735,18 @@ public class JhwScm
       Mem mem = null;
 
       mem  = new MemSimple(32);
-      reg  = new MemStats(mem,univRegStats, regStats);
+      if ( PROFILE )
+      {
+         mem  = new MemStats(mem,univRegStats,regStats);
+      }
+      reg  = mem;
 
       mem  = new MemSimple(6 * 1024);
-      heap = new MemStats(mem,univHeapStats,heapStats);
+      if ( PROFILE )
+      {
+         mem  = new MemStats(mem,univHeapStats,heapStats);
+      }
+      heap = mem;
    }
 
 
@@ -2749,11 +2757,11 @@ public class JhwScm
    public        int maxHeapTop          = 0; // PROFILE only
    public        int numInput            = 0; // PROFILE only
    public        int numOutput           = 0; // PROFILE only
-   public static int universalNumCycles  = 0; // PROFILE only
-   public static int universalNumCons    = 0; // PROFILE only
-   public static int universalMaxHeapTop = 0; // PROFILE only
-   public static int universalNumInput   = 0; // PROFILE only
-   public static int universalNumOutput  = 0; // PROFILE only
+   public static int univNumCycles       = 0; // PROFILE only
+   public static int univNumCons         = 0; // PROFILE only
+   public static int univMaxHeapTop      = 0; // PROFILE only
+   public static int univNumInput        = 0; // PROFILE only
+   public static int univNumOutput       = 0; // PROFILE only
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -3086,7 +3094,7 @@ public class JhwScm
       if ( PROFILE )
       {
          numCons++;
-         universalNumCons++;
+         univNumCons++;
       }
       int cell = reg.get(regFreeCellList);
       if ( NIL == cell )
@@ -3131,9 +3139,9 @@ public class JhwScm
             {
                maxHeapTop = heapTop;
             }
-            if ( heapTop > universalMaxHeapTop )
+            if ( heapTop > univMaxHeapTop )
             {
-               universalMaxHeapTop = heapTop;
+               univMaxHeapTop = heapTop;
             }
          }
       }
