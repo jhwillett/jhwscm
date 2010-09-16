@@ -70,14 +70,15 @@ public class JhwScm
    private final boolean SILENT;
    private final boolean DEBUG;  // check things which should never happen
 
-   private int scmDepth  = 0;
-   private int javaDepth = 0;
    public static final Stats global = new Stats();
    public        final Stats local  = new Stats();
 
    public final Mem reg;
    public final Mem heap;
-   private      int heapTop = 0; // in words
+
+   private int heapTop   = 0; // allocator support, perhaps should be a reg?
+   private int scmDepth  = 0; // debug
+   private int javaDepth = 0; // debug
 
    public static class Stats
    {
@@ -89,19 +90,25 @@ public class JhwScm
       public       int            numOutput  = 0;
    }
 
+   public JhwScm ( final boolean doREP, 
+                   final boolean SILENT, 
+                   final boolean DEBUG )
    {
+      this.SILENT = SILENT;
+      this.DEBUG  = DEBUG;
+
       Mem mem = null;
 
-      mem  = new MemSimple(32);
+      mem = new MemSimple(32);
       if ( PROFILE )
       {
-         mem  = new MemStats(mem,global.regStats,local.regStats);
+         mem = new MemStats(mem,global.regStats,local.regStats);
       }
-      reg  = mem;
+      this.reg = mem;
 
       if ( USE_PAGED_MEM )
       {
-         mem  = new MemPaged(PAGE_SIZE, PAGE_COUNT);
+         mem = new MemPaged(PAGE_SIZE, PAGE_COUNT);
       }
       else
       {
@@ -111,25 +118,14 @@ public class JhwScm
          // 128 kcells:  4.2 sec  *** big nonlinearity up
          // 256 kcells: 10.6 sec  *** small nonlinearity up
          // 512 kcells: 11.5 sec  *** small nonlinearity down
-         mem  = new MemSimple(PAGE_SIZE * PAGE_COUNT);
+         mem = new MemSimple(PAGE_SIZE * PAGE_COUNT);
       }
       if ( PROFILE )
       {
-         mem  = new MemStats(mem,global.heapStats,local.heapStats);
+         mem = new MemStats(mem,global.heapStats,local.heapStats);
       }
-      heap = mem;
-   }
+      this.heap = mem;
 
-   public JhwScm ( final boolean doREP, 
-                   final boolean SILENT, 
-                   final boolean DEBUG )
-   {
-      this.SILENT = SILENT;
-      this.DEBUG  = DEBUG;
-
-      final boolean verb = false;
-
-      if ( verb ) log("JhwScm.JhwScm()");
       for ( int i = 0; i < reg.length(); i++ )
       {
          reg.set(i,UNSPECIFIED);
@@ -144,7 +140,6 @@ public class JhwScm
       reg.set(regIn  , queueCreate());
       reg.set(regOut , queueCreate());
       reg.set(regEnv , cons(NIL,NIL));
-      log("INITIAL ENV: " + pp(reg.get(regEnv)));
 
       prebind("+",      sub_add);
       prebind("*",      sub_mul);
@@ -204,8 +199,11 @@ public class JhwScm
       setcar(reg.get(regEnv),newframe);
    }
 
-   ///
-
+   ////////////////////////////////////////////////////////////////////
+   //
+   // public interface: client control points
+   //
+   ////////////////////////////////////////////////////////////////////
 
    /**
     * Transfers up to len bytes from in[off..len-1] to the VM's input
