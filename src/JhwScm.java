@@ -3166,7 +3166,75 @@ public class JhwScm
 
    ////////////////////////////////////////////////////////////////////
    //
-   // encoding stack and subroutine discipline and error trapping
+   // encoding the runtime stack
+   //
+   ////////////////////////////////////////////////////////////////////
+
+   // Pushes value onto the stack at regStack.
+   private void store ( final int value )
+   {
+      final boolean verb = false;
+      if ( NIL != reg.get(regError) )
+      {
+         if ( verb ) log("store(): flow suspended for error");
+         return;
+      }
+      final int cell = cons(value,reg.get(regStack));
+      if ( NIL == cell )
+      {
+         // error already raised in cons()
+         if ( verb ) log("store(): oom");
+         return;
+      }
+      if ( verb ) log("stored:   " + pp(value));
+      reg.set(regStack , cell);
+   }
+
+   // Pops the top value from the stack at regStack.
+   private int restore ()
+   {
+      final boolean verb = false;
+      if ( NIL != reg.get(regError) )
+      {
+         if ( verb ) log("restore(): flow suspended for error");
+         return UNSPECIFIED;
+      }
+      if ( DEBUG && NIL == reg.get(regStack) )
+      {
+         if ( verb ) log("restore(): stack underflow");
+         raiseError(ERR_INTERNAL);
+         return UNSPECIFIED;
+      }
+      if ( DEBUG && TYPE_CELL != type(reg.get(regStack)) )
+      {
+         if ( verb ) log("restore(): corrupt stack");
+         raiseError(ERR_INTERNAL);
+         return UNSPECIFIED;
+      }
+      final int cell = reg.get(regStack);
+      final int head = car(cell);
+      final int rest = cdr(cell);
+      reg.set(regStack  , rest);
+      if ( verb ) log("restored: " + pp(head));
+      if ( CLEVER_STACK_RECYCLING && NIL == reg.get(regError) )
+      {
+         // Recycle stack cell which is unreachable from user code.
+         //
+         // That assertion is only true and this is only a valid
+         // optimization if we haven't stashed the continuation
+         // someplace.  
+         //
+         // This optimization may not be sustainable in the
+         // medium-term.
+         setcdr(cell,reg.get(regFreeCellList));
+         reg.set(regFreeCellList , cell);
+      }
+      return head;
+   }
+
+   ////////////////////////////////////////////////////////////////////
+   //
+   // encoding subroutine discipline and error trapping
    //
    ////////////////////////////////////////////////////////////////////
 
@@ -3256,66 +3324,6 @@ public class JhwScm
          return;
       }
       reg.set(regPc , c);
-   }
-
-   private void store ( final int value )
-   {
-      final boolean verb = false;
-      if ( NIL != reg.get(regError) )
-      {
-         if ( verb ) log("store(): flow suspended for error");
-         return;
-      }
-      final int cell = cons(value,reg.get(regStack));
-      if ( NIL == cell )
-      {
-         // error already raised in cons()
-         if ( verb ) log("store(): oom");
-         return;
-      }
-      if ( verb ) log("stored:   " + pp(value));
-      reg.set(regStack , cell);
-   }
-
-   private int restore ()
-   {
-      final boolean verb = false;
-      if ( NIL != reg.get(regError) )
-      {
-         if ( verb ) log("restore(): flow suspended for error");
-         return UNSPECIFIED;
-      }
-      if ( DEBUG && NIL == reg.get(regStack) )
-      {
-         if ( verb ) log("restore(): stack underflow");
-         raiseError(ERR_INTERNAL);
-         return UNSPECIFIED;
-      }
-      if ( DEBUG && TYPE_CELL != type(reg.get(regStack)) )
-      {
-         if ( verb ) log("restore(): corrupt stack");
-         raiseError(ERR_INTERNAL);
-         return UNSPECIFIED;
-      }
-      final int cell = reg.get(regStack);
-      final int head = car(cell);
-      final int rest = cdr(cell);
-      reg.set(regStack  , rest);
-      if ( verb ) log("restored: " + pp(head));
-      if ( CLEVER_STACK_RECYCLING && NIL == reg.get(regError) )
-      {
-         // Recycle stack cell which is unreachable from user code.
-         //
-         // That assertion is only true and this is only a valid
-         // optimization if we haven't stashed the continuation
-         // someplace.  
-         //
-         // This optimization may not be sustainable in the
-         // medium-term.
-         setcdr(cell,reg.get(regFreeCellList));
-         reg.set(regFreeCellList , cell);
-      }
-      return head;
    }
 
    /**
