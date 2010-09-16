@@ -13,30 +13,23 @@
 
 public class MemPaged implements Mem
 {
-   private final int length;
-   private final int numPages;
-   private final int pageSize;
-
+   private final int     length;
+   private final int     pageSize;
    private final int[][] pages;
 
-   public MemPaged ( final int length, final int pageSize )
+   public MemPaged ( final int pageSize, final int pageCount )
    {
-      if ( length < 0 )
-      {
-         throw new IllegalArgumentException("neg length " + length);
-      }
       if ( pageSize <= 0 )
       {
          throw new IllegalArgumentException("nonpos pageSize " + pageSize);
       }
-      if ( 0 != length%pageSize )
+      if ( pageCount < 0 )
       {
-         throw new IllegalArgumentException("incompatible");
+         throw new IllegalArgumentException("neg pageCount " + pageCount);
       }
-      this.length   = length;
+      this.length   = pageSize * pageCount;
       this.pageSize = pageSize;
-      this.numPages = length/pageSize;
-      this.pages    = new int[numPages][];
+      this.pages    = new int[pageCount][];
    }
 
    public int length ()

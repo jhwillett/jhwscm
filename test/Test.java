@@ -21,7 +21,7 @@ public class Test
    private static boolean SILENT = true;
    private static boolean DEBUG  = false;
 
-   private static boolean REPORT = false;
+   private static boolean REPORT = true;
 
    private static JhwScm newScm ( final boolean do_rep )
    {

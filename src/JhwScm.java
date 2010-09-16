@@ -52,7 +52,8 @@ public class JhwScm
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
    public static final boolean USE_PAGED_MEM             = true;
-   public static final int     HEAP_SIZE                 = 6 * 1024;
+   public static final int     PAGE_SIZE                 = 1024; // slots
+   public static final int     PAGE_COUNT                = 6;
 
    public static final int     SUCCESS          =  0;
    public static final int     INCOMPLETE       = -1;
@@ -2755,11 +2756,11 @@ public class JhwScm
 
       if ( USE_PAGED_MEM )
       {
-         mem  = new MemPaged(HEAP_SIZE, 1024);
+         mem  = new MemPaged(PAGE_SIZE, PAGE_COUNT);
       }
       else
       {
-         mem  = new MemSimple(HEAP_SIZE);
+         mem  = new MemSimple(PAGE_SIZE * PAGE_COUNT);
       }
       if ( PROFILE )
       {
