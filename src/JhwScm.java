@@ -51,6 +51,9 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
+   public static final boolean USE_PAGED_MEM             = true;
+   public static final int     HEAP_SIZE                 = 6 * 1024;
+
    public static final int     SUCCESS          =  0;
    public static final int     INCOMPLETE       = -1;
    public static final int     BAD_ARG          = -2;
@@ -2750,7 +2753,14 @@ public class JhwScm
       }
       reg  = mem;
 
-      mem  = new MemSimple(6 * 1024);
+      if ( USE_PAGED_MEM )
+      {
+         mem  = new MemPaged(HEAP_SIZE, 1024);
+      }
+      else
+      {
+         mem  = new MemSimple(HEAP_SIZE);
+      }
       if ( PROFILE )
       {
          mem  = new MemStats(mem,global.heapStats,local.heapStats);

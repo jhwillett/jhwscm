@@ -1,8 +1,8 @@
 /**
  * MemSimple.java
  *
- * A simple implementation of Mem, which keeps the slots in a single
- * Java array which never resizes.
+ * A simple implementation of Mem.  Words are implemented as a
+ * fixed-size Java int[].
  *
  * @author Jesse H. Willett
  * @copyright (c) 2010 Jesse H. Willett
@@ -11,7 +11,7 @@
 
 public class MemSimple implements Mem
 {
-   private final int[] slots;
+   private final int[] words;
 
    public MemSimple ( final int length )
    {
@@ -19,21 +19,21 @@ public class MemSimple implements Mem
       {
          throw new IllegalArgumentException("neg length " + length);
       }
-      this.slots = new int[length];
+      this.words = new int[length];
    }
 
    public int length ()
    {
-      return slots.length;
+      return words.length;
    }
 
    public void set ( final int addr, final int value )
    {
-      slots[addr] = value;
+      words[addr] = value;
    }
 
    public int get ( final int addr )
    {
-      return slots[addr];
+      return words[addr];
    }
 }
