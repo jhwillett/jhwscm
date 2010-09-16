@@ -2724,8 +2724,8 @@ public class JhwScm
    // 512 kcells: 11.5 sec  *** small nonlinearity down
 
    //private final int[] reg               = new int[32];
-   public  final Mem   reg               = new Mem(32,      true,PROFILE);
-   public  final Mem   heap              = new Mem(6 * 1024,true,PROFILE);
+   public  final Mem   reg               = new MemSimple(32,      true,PROFILE);
+   public  final Mem   heap              = new MemSimple(6 * 1024,true,PROFILE);
    private int         heapTop           = 0; // in slots
 
    public        int numCycles           = 0; // PROFILE only
