@@ -60,7 +60,7 @@ public class TestMem
          new MemCached(new MemSimple(256),1,1),
 
          new MemCached(new MemSimple(256),1,2),
-         //new MemCached(new MemSimple(256),2,1),    // fails!
+         new MemCached(new MemSimple(256),2,1),    // fails!
          new MemCached(new MemSimple(256),1,4),
          //new MemCached(new MemSimple(256),4,1),    // fails
          new MemCached(new MemSimple(256),1,8),
