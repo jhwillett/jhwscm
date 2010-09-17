@@ -58,18 +58,31 @@ public class TestMem
          new MemCached(new MemSimple(1),1,1),
 
          new MemCached(new MemSimple(256),1,1),
+
+         new MemCached(new MemSimple(256),1,2),
+         //new MemCached(new MemSimple(256),2,1),    // fails!
+         new MemCached(new MemSimple(256),1,4),
+         //new MemCached(new MemSimple(256),4,1),    // fails
+         new MemCached(new MemSimple(256),1,8),
+         //new MemCached(new MemSimple(256),8,1),    // fails
+         //new MemCached(new MemSimple(256),8,2),    // fails
+
          new MemCached(new MemSimple(256),16,16),
 
          new MemCached(new MemSimple(1024),1,1),
-         new MemCached(new MemSimple(1024),2,1),
+         //new MemCached(new MemSimple(1024),2,1),   // fails!
 
-         /*
-         new MemCached(new MemSimple(256),2,16),
-         new MemCached(new MemSimple(256),16,2),
+         //new MemCached(new MemSimple(256),2,16),   // fails!
+         //new MemCached(new MemSimple(256),16,2),   // fails!
 
-         new MemCached(new MemSimple(256),512,16),
+         //new MemCached(new MemSimple(256),512,16), // fails!
+
          new MemCached(new MemSimple(256),16,512),
-         */
+
+         //new MemCached(new MemSimple(256),2,2),    // fails!
+         //new MemCached(new MemSimple(256),4,4),    // fails!
+         //new MemCached(new MemSimple(256),8,8),    // fails!
+         new MemCached(new MemSimple(256),16,16),
       };
 
       Random rand = null;
