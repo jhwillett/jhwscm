@@ -50,6 +50,7 @@ public class MemCached implements Mem
 
    public void set ( final int addr, final int value )
    {
+      log("set:     " + addr + "     " + value);
       final int root = addr / lineSize;
       final int off  = addr % lineSize;
       final int line = getRootIntoLine(root);
@@ -59,10 +60,12 @@ public class MemCached implements Mem
 
    public int get ( final int addr )
    {
-      final int root = addr / lineSize;
-      final int off  = addr % lineSize;
-      final int line = getRootIntoLine(root);
-      return lines[line][off];
+      final int root  = addr / lineSize;
+      final int off   = addr % lineSize;
+      final int line  = getRootIntoLine(root);
+      final int value = lines[line][off];
+      log("get:     " + addr + "     " + value);
+      return value;
    }
 
    private int getRootIntoLine ( final int root )
@@ -73,6 +76,7 @@ public class MemCached implements Mem
          if ( root == this.roots[i] )
          {
             // TODO: LRU stuff?
+            //log("  hit:   " + root + " in   " + i);
             return i;
          }
          if ( -1 == this.roots[i] )
@@ -86,14 +90,20 @@ public class MemCached implements Mem
          line = 0; // TODO: LRU stuff?
          if ( dirties[line] )
          {
+            log("  flush: " + roots[line] + " from " + line);
             for ( int i = 0; i < lineSize; ++i )
             {
                main.set(roots[line]+i,lines[line][i]);
             }
+         }         
+         else
+         {
+            log("  drop: " + roots[line] + " from " + line);
          }
       }
 
       roots[line] = root;
+      log("  load:  " + roots[line] + " to   " + line);
       for ( int i = 0; i < lineSize; ++i )
       {
          lines[line][i] = main.get(roots[line]+i);
@@ -101,4 +111,10 @@ public class MemCached implements Mem
 
       return line;
    }
+
+   private static void log ( final Object obj )
+   {
+      System.out.println(obj);
+   }
+
 }
