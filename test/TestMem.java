@@ -52,21 +52,33 @@ public class TestMem
          }
 
          rand = new Random(4321);
-         final int N = 128;
-         for ( int i = 0; i < N; ++i )
+         final int[] addrs = new int[128];
+         for ( int i = 0; i < addrs.length; ++i )
          {
-            final int addr   = rand.nextInt(limit);
+            addrs[i] = i;
+         }
+         for ( int i = addrs.length-1; i > 0; --i )
+         {
+            final int j   = rand.nextInt(i+1);
+            final int tmp = addrs[i];
+            addrs[i]      = addrs[j];
+            addrs[j]      = tmp;
+         }
+         rand = new Random(987);
+         for ( int i = 0; i < addrs.length; ++i )
+         {
+            final int addr   = addrs[i];
             final int value1 = rand.nextInt();
-            log("set " + addr + " to " + value1);
+            //log("set " + addr + " to " + value1);
             mem.set(addr,value1);
          }
-         rand = new Random(4321);
-         for ( int i = 0; i < N; ++i )
+         rand = new Random(987);
+         for ( int i = 0; i < addrs.length; ++i )
          {
-            final int addr   = rand.nextInt(limit);
+            final int addr   = addrs[i];
             final int value1 = rand.nextInt();
             final int value2 = mem.get(addr);
-            log("get " + addr + " to " + value2);
+            //log("get " + addr + " to " + value2);
             assertEquals("addr " + addr,value1,value2);
          }
       }
