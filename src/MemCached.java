@@ -109,12 +109,13 @@ public class MemCached implements Mem
          }
       }
 
-      roots[line] = root;
-      //log("  load:  " + roots[line] + " to   " + line);
+      //log("  load:  " + root + " to   " + line);
       for ( int i = 0; i < lineSize; ++i )
       {
-         lines[line][i] = main.get(roots[line]+i);
+         lines[line][i] = main.get(root+i);
       }
+      roots[line]   = root;
+      dirties[line] = false;
 
       return line;
    }
