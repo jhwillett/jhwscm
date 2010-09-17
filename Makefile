@@ -5,7 +5,11 @@ SHELL     := bash
 
 DESTDIR   ?= build
 SRC       += $(wildcard src/*.java)
-TESTS     += $(wildcard test/*.java)
+
+# Maintaining TESTS explicitly so I can control ordering.
+#
+TESTS     += test/TestMem.java
+#TESTS     += test/TestScm.java
 
 LIBS                 += junit-4.8.2.jar
 HOME-junit-4.8.2.jar := http://github.com/downloads/KentBeck/junit
@@ -17,6 +21,7 @@ DEPS := $(LIBS:%=$(DESTDIR)/%)
 test: $(TESTS:%=test-%)
 $(TESTS:%=test-%): test-%: $(DESTDIR)/%.tested
 $(TESTS:%=build/%.tested): $(DESTDIR)/%.tested: $(DESTDIR)/build.ok
+$(TESTS:%=build/%.tested): $(DESTDIR)/%.tested: 
 	time java -cp $(DESTDIR):$(DEPS) `basename $* | sed 's/.java$$//g'`
 	uptime
 
@@ -24,8 +29,10 @@ $(TESTS:%=build/%.tested): $(DESTDIR)/%.tested: $(DESTDIR)/build.ok
 build: $(DESTDIR)/build.ok
 $(DESTDIR)/build.ok: $(DEPS)
 $(DESTDIR)/build.ok: $(SRC)
+$(DESTDIR)/build.ok: $(TESTS)
+$(DESTDIR)/build.ok:
 	mkdir -p $(dir $@)
-	time javac -cp $(DESTDIR):$(DEPS) -d $(DESTDIR) $(SRC)
+	time javac -cp $(DESTDIR):$(DEPS) -d $(DESTDIR) $(SRC) $(TESTS)
 	touch $@
 
 .PHONY: clean

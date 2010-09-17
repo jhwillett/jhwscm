@@ -11,7 +11,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.Random;
 import java.io.IOException;
 
-public class Test
+public class TestScm
 {
    private static final boolean verbose = false;
 
