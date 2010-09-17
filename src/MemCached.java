@@ -115,7 +115,7 @@ public class MemCached implements Mem
          lines[line][i] = main.get(root+i);
       }
       roots[line]   = root;
-      dirties[line] = false;
+       dirties[line] = false;
 
       return line;
    }
