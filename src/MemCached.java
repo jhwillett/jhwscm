@@ -12,6 +12,7 @@ public class MemCached implements Mem
 {
    private final Mem       main;
    private final int       lineSize;
+   private final int       lineCount;
    private final int[][]   lines;
    private final int[]     roots;
    private final boolean[] dirties;
@@ -28,14 +29,17 @@ public class MemCached implements Mem
       {
          throw new IllegalArgumentException("neg lineCount " + lineCount);
       }
-      this.main     = main;
-      this.lineSize = lineSize;
-      this.lines    = new int[lineCount][];
-      this.roots    = new int[lineCount];
-      this.dirties  = new boolean[lineCount];
+      this.main      = main;
+      this.lineSize  = lineSize;
+      this.lineCount = lineCount;
+      this.lines     = new int[lineCount][];
+      this.roots     = new int[lineCount];
+      this.dirties   = new boolean[lineCount];
       for ( int i = 0; i < lineCount; ++i )
       {
-         this.lines[i] = new int[lineSize];
+         this.lines[i]   = new int[lineSize];
+         this.roots[i]   = -1;
+         this.dirties[i] = false;
       }
    }
 
@@ -46,44 +50,55 @@ public class MemCached implements Mem
 
    public void set ( final int addr, final int value )
    {
-      throw new RuntimeException("unimplemented");
+      final int root = addr / lineSize;
+      final int off  = addr % lineSize;
+      final int line = getRootIntoLine(root);
+      lines[line][off] = value;
+      dirties[line]    = true;
    }
 
    public int get ( final int addr )
    {
       final int root = addr / lineSize;
       final int off  = addr % lineSize;
-      int line = findFreeLine(root);
+      final int line = getRootIntoLine(root);
+      return lines[line][off];
+   }
+
+   private int getRootIntoLine ( final int root )
+   {
+      int line = -1;
+      for ( int i = 0; i < lineCount; ++i )
+      {
+         if ( root == this.roots[i] )
+         {
+            // TODO: LRU stuff?
+            return i;
+         }
+         if ( -1 == this.roots[i] )
+         {
+            line = i;
+         }
+      }
+
       if ( -1 == line )
       {
-         line = purgeLine();
-         loadLine(root,line);
+         line = 0; // TODO: LRU stuff?
+         if ( dirties[line] )
+         {
+            for ( int i = 0; i < lineSize; ++i )
+            {
+               main.set(roots[line]+i,lines[line][i]);
+            }
+         }
       }
-      return lines[root][off];
-   }
 
-   private int findFreeLine ( final int root )
-   {
-      throw new RuntimeException("unimplemented");
-   }
+      roots[line] = root;
+      for ( int i = 0; i < lineSize; ++i )
+      {
+         lines[line][i] = main.get(roots[line]+i);
+      }
 
-   private int purgeLine ()
-   {
-      throw new RuntimeException("unimplemented");
-   }
-
-   private int loadLine ( final int root, final int line )
-   {
-      throw new RuntimeException("unimplemented");
-   }
-
-   private int flushLine ( final int line )
-   {
-      throw new RuntimeException("unimplemented");
-   }
-
-   private int pcLoadLetter ()
-   {
-      throw new RuntimeException("What the fuck is PC LOAD LETTER?");
+      return line;
    }
 }
