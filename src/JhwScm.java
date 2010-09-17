@@ -55,6 +55,10 @@ public class JhwScm
    public static final int     PAGE_SIZE                 = 1024; // slots
    public static final int     PAGE_COUNT                = 6;
 
+   public static final boolean USE_CACHED_MEM            = false;
+   public static final int     LINE_SIZE                 = 64;
+   public static final int     LINE_COUNT                = 32;
+
    public static final int     SUCCESS          =  0;
    public static final int     INCOMPLETE       = -1;
    public static final int     BAD_ARG          = -2;
@@ -123,6 +127,10 @@ public class JhwScm
       if ( PROFILE )
       {
          mem = new MemStats(mem,global.heapStats,local.heapStats);
+      }
+      if ( USE_CACHED_MEM )
+      {
+         mem = new MemCached(mem,LINE_SIZE,LINE_COUNT);
       }
       this.heap = mem;
 
