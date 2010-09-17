@@ -25,9 +25,16 @@ public class MemCached implements Mem
       {
          throw new IllegalArgumentException("nonpos lineSize " + lineSize);
       }
-      if ( lineCount < 0 )
+      if ( lineCount <= 0 )
       {
-         throw new IllegalArgumentException("neg lineCount " + lineCount);
+         throw new IllegalArgumentException("nonpos lineCount " + lineCount);
+      }
+      if ( 0 != main.length()%lineSize )
+      {
+         throw new IllegalArgumentException("nonmodulo lineSize " + 
+                                            lineSize + 
+                                            " vs " + 
+                                            main.length());
       }
       this.main      = main;
       this.lineSize  = lineSize;

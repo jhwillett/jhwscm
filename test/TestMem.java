@@ -20,16 +20,12 @@ public class TestMem
    {
       final MemStats.Stats stats1    = new MemStats.Stats();
       final MemStats.Stats stats2    = new MemStats.Stats();
-      final int            pageSize  = 1024;
-      final int            pageCount = 4;
-      final int            lineSize  = 64;
-      final int            lineCount = 1;
       final Mem mems[] = {
+
          new MemSimple(0),
          new MemSimple(1),
          new MemSimple(256),
-         // new MemPaged(0,0), // nonpos pageSize
-         // new MemPaged(0,1), // nonpos pageSize
+
          new MemPaged(1,0),
          new MemPaged(1,1),
          new MemPaged(1,256),
@@ -37,13 +33,40 @@ public class TestMem
          new MemPaged(16,16),
          new MemPaged(256,4),
          new MemPaged(4,256),
-         new MemStats(new MemSimple(pageSize * pageCount),null,null),
-         new MemStats(new MemSimple(pageSize * pageCount),stats1,null),
-         new MemStats(new MemSimple(pageSize * pageCount),null,stats1),
-         new MemStats(new MemSimple(pageSize * pageCount),stats1,stats2),
-         new MemStats(new MemSimple(pageSize * pageCount),stats1,stats1),
-         //new MemCached(new MemSimple(pageSize * pageCount),lineCount,lineSize),
-         //new MemCached(new MemSimple(pageSize * pageCount),lineSize,lineCount),
+
+         new MemStats(new MemSimple(0),null,null),
+         new MemStats(new MemSimple(0),stats1,null),
+         new MemStats(new MemSimple(0),null,stats1),
+         new MemStats(new MemSimple(0),stats1,stats2),
+         new MemStats(new MemSimple(0),stats1,stats1),
+
+         new MemStats(new MemSimple(1),null,null),
+         new MemStats(new MemSimple(1),stats1,null),
+         new MemStats(new MemSimple(1),null,stats1),
+         new MemStats(new MemSimple(1),stats1,stats2),
+         new MemStats(new MemSimple(1),stats1,stats1),
+
+         new MemStats(new MemSimple(64),null,null),
+         new MemStats(new MemSimple(64),stats1,null),
+         new MemStats(new MemSimple(64),null,stats1),
+         new MemStats(new MemSimple(64),stats1,stats2),
+         new MemStats(new MemSimple(64),stats1,stats1),
+
+         new MemCached(new MemSimple(0),1,1),
+         new MemCached(new MemSimple(0),16,16),
+
+         new MemCached(new MemSimple(1),1,1),
+
+         new MemCached(new MemSimple(256),1,1),
+         new MemCached(new MemSimple(256),16,16),
+
+         /*
+         new MemCached(new MemSimple(256),2,16),
+         new MemCached(new MemSimple(256),16,2),
+
+         new MemCached(new MemSimple(256),512,16),
+         new MemCached(new MemSimple(256),16,512),
+         */
       };
 
       Random rand = null;
