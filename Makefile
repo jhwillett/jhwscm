@@ -5,9 +5,7 @@ SHELL     := bash
 
 DESTDIR   ?= build
 SRC       += $(wildcard src/*.java)
-SRC       += $(wildcard test/*.java)
-MAIN      := Test
-MAIN_ARGS := 
+TESTS     += $(wildcard test/*.java)
 
 LIBS                 += junit-4.8.2.jar
 HOME-junit-4.8.2.jar := http://github.com/downloads/KentBeck/junit
@@ -15,12 +13,14 @@ MD5-junit-4.8.2.jar  := 8a498c3d820db50cc7255d8c46c1ebd1
 
 DEPS := $(LIBS:%=$(DESTDIR)/%)
 
-.PHONY: test build clean getdeps
-
-test: $(DESTDIR)/build.ok
-	time java -cp $(DESTDIR):$(DEPS) $(MAIN) $(MAIN_ARGS)
+.PHONY: test $(TESTS:%=test-%)
+test: $(TESTS:%=test-%)
+$(TESTS:%=test-%): test-%: $(DESTDIR)/%.tested
+$(TESTS:%=build/%.tested): $(DESTDIR)/%.tested: $(DESTDIR)/build.ok
+	time java -cp $(DESTDIR):$(DEPS) `basename $* | sed 's/.java$$//g'`
 	uptime
 
+.PHONY: build
 build: $(DESTDIR)/build.ok
 $(DESTDIR)/build.ok: $(DEPS)
 $(DESTDIR)/build.ok: $(SRC)
@@ -28,9 +28,11 @@ $(DESTDIR)/build.ok: $(SRC)
 	time javac -cp $(DESTDIR):$(DEPS) -d $(DESTDIR) $(SRC)
 	touch $@
 
+.PHONY: clean
 clean:
 	rm -rf $(DESTDIR)
 
+.PHONY: getdeps
 getdeps: $(DEPS)
 $(DEPS): $(DESTDIR)/%: 
 	mkdir -p $(dir $@)
