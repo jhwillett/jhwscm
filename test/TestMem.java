@@ -60,6 +60,9 @@ public class TestMem
          new MemCached(new MemSimple(256),1,1),
          new MemCached(new MemSimple(256),16,16),
 
+         new MemCached(new MemSimple(1024),1,1),
+         new MemCached(new MemSimple(1024),2,1),
+
          /*
          new MemCached(new MemSimple(256),2,16),
          new MemCached(new MemSimple(256),16,2),
