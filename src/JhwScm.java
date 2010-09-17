@@ -476,7 +476,7 @@ public class JhwScm
             gosub(sub_read_burn_space,sub_read+0x1);
             break;
          case sub_read+0x1:
-            reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0, queuePeekFront(reg.get(regIn)));
             if ( EOF == reg.get(regTmp0) )
             {
                reg.set(regRetval , EOF);
@@ -922,7 +922,7 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            reg.set(regTmp1 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp1, queuePeekFront(reg.get(regIn)));
             if ( EOF == reg.get(regTmp1) )
             {
                if ( verb ) log("eof: returning");
@@ -1030,10 +1030,9 @@ public class JhwScm
             break;
 
          case sub_read_burn_space:
-            // Consumes any whitespace from reg.get(regIn).  Returns
-            // TRUE if any was found, false otherwise.
+            // Consumes any whitespace from reg.get(regIn).
             //
-            // Return value undefined.
+            // Returns UNSPECIFIED.
             //
             reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
             if ( EOF == reg.get(regTmp0) )
@@ -1070,13 +1069,12 @@ public class JhwScm
                {
                case TRUE:
                case FALSE:
-                  // these values are self-evaluating
+                  // These values are self-evaluating
                   reg.set(regRetval , reg.get(regArg0));
                   returnsub();
                   break;
                case NIL:
-                  // The *value* for the empty list is not
-                  // self-evaluating.
+                  // The empty list is not self-evaluating.
                   //
                   // Covers expressions like "()" and "(())"..
                   raiseError(ERR_SEMANTIC);
@@ -2001,7 +1999,7 @@ public class JhwScm
          case sub_print:
             // Prints the expr in reg.get(regArg0) to reg.get(regOut).
             //
-            // Return value undefined.
+            // Returns UNSPECIFIED.
             //
             reg.set(regTmp0 , reg.get(regArg0));
             if ( verb ) log("printing: " + pp(reg.get(regTmp0)));
@@ -2207,7 +2205,7 @@ public class JhwScm
             // reg.get(regArg0) is the first item in the list, FALSE
             // otherwise.
             //
-            // Return value is undefined.
+            // Returns UNSPECIFIED.
             //
             if ( NIL == reg.get(regArg0) )
             {
@@ -2774,6 +2772,7 @@ public class JhwScm
    private static final int NIL                 = TYPE_SENTINEL | 39;
 
    private static final int EOF                 = TYPE_SENTINEL | 97;
+   private static final int NO_INPUT            = TYPE_SENTINEL |  3;
    private static final int UNSPECIFIED         = TYPE_SENTINEL | 65;
    private static final int IS_SYMBOL           = TYPE_SENTINEL | 79;
    private static final int IS_STRING           = TYPE_SENTINEL | 32;
@@ -3447,6 +3446,7 @@ public class JhwScm
       {
       case NIL:                  return "NIL";
       case EOF:                  return "EOF";
+      case NO_INPUT:             return "NO_INPUT";
       case UNSPECIFIED:          return "UNSPECIFIED";
       case IS_STRING:            return "IS_STRING";
       case IS_SYMBOL:            return "IS_SYMBOL";
