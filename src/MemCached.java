@@ -10,7 +10,8 @@
 
 public class MemCached implements Mem
 {
-   private static final boolean TRACK_DIRTY = true;
+   // TODO: expose this policy to caller, be sure unit tests stress both
+   private static final boolean TRACK_DIRTY = false;
 
    private final Mem       main;
    private final int       lineSize;
