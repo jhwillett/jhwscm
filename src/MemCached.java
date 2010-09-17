@@ -10,6 +10,8 @@
 
 public class MemCached implements Mem
 {
+   private static final boolean TRACK_DIRTY = true;
+
    private final Mem       main;
    private final int       lineSize;
    private final int       lineCount;
@@ -41,12 +43,15 @@ public class MemCached implements Mem
       this.lineCount = lineCount;
       this.lines     = new int[lineCount][];
       this.roots     = new int[lineCount];
-      this.dirties   = new boolean[lineCount];
+      this.dirties   = TRACK_DIRTY ? new boolean[lineCount] : null;
       for ( int i = 0; i < lineCount; ++i )
       {
-         this.lines[i]   = new int[lineSize];
-         this.roots[i]   = -1;
-         this.dirties[i] = false;
+         this.lines[i]      = new int[lineSize];
+         this.roots[i]      = -1;
+         if ( TRACK_DIRTY )
+         {
+            this.dirties[i] = false;
+         }
       }
    }
 
@@ -62,7 +67,10 @@ public class MemCached implements Mem
       final int off  = addr % lineSize;
       final int line = getRootIntoLine(root);
       lines[line][off] = value;
-      dirties[line]    = true;
+      if ( TRACK_DIRTY )
+      {
+         dirties[line]    = true;
+      }
    }
 
    public int get ( final int addr )
@@ -95,7 +103,7 @@ public class MemCached implements Mem
       if ( -1 == line )
       {
          line = 0; // TODO: LRU stuff?
-         if ( dirties[line] )
+         if ( !TRACK_DIRTY || dirties[line] )
          {
             //log("  flush: " + roots[line] + " from " + line);
             for ( int i = 0; i < lineSize; ++i )
@@ -114,8 +122,11 @@ public class MemCached implements Mem
       {
          lines[line][i] = main.get(root+i);
       }
-      roots[line]   = root;
-       dirties[line] = false;
+      roots[line]       = root;
+      if ( TRACK_DIRTY )
+      {
+         dirties[line]  = false;
+      }
 
       return line;
    }
