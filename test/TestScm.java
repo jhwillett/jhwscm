@@ -213,10 +213,7 @@ public class TestScm
             { "a",  SEMANTIC },
             { "a1", SEMANTIC },
          };
-         ////batch(tests,false,true);
-         //batch(tests,true,true);
-         //batch(tests,REP_INDEPENDANT);
-         batch(tests,REP_DEPENDANT);
+         batch(tests,REP_INDEPENDANT);
       }  
 
 
@@ -1065,12 +1062,15 @@ public class TestScm
     *
     * Runs the tests in sequence.
     *
-    * If reuse is false, runs each test with a new JhwScm instance,
-    * otherwise a single JhwScm is reused for all tests.
+    * If reuse is false, runs each test with an independent JhwScm instance.
+    *
+    * If reuse is true, runs the tests with an single JhwScm instance.
     *
     * If evaluate is true, uses JhwScm instances initialized to the
-    * read-eval-print loop.  Otherwise, uses instances initialized to
-    * just the read-print loop.
+    * read-eval-print loop.  
+    *
+    * If evaluate is false, uses instances initialized to just the
+    * read-print loop.
     */
    private static void batch ( final Object[][] tests, final BatchType type )
       throws java.io.IOException
@@ -1082,7 +1082,7 @@ public class TestScm
          final Object[] test   =         tests[i];
          final String   expr   = (String)test[0];
          final Object   result =         test[1];
-         if ( type.reuse || null == scm )
+         if ( !type.reuse || null == scm )
          {
             scm = newScm(type.do_rep);
          }
