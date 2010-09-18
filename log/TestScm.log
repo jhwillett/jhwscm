@@ -1,8 +1,6 @@
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
-date:   Sat Sep 18 13:07:50 PDT 2010
-uptime:  13:07:50 up 11 days,  6:31,  2 users,  load average: 0.15, 0.14, 0.10
 time java -cp build:build/junit-4.8.2.jar TestScm
 global:
   numCycles:        315862
@@ -45,7 +43,9 @@ numExpects: 540
   unhappy:  97
 numBatches: 10
 
-real	0m2.619s
-user	0m2.621s
-sys	0m0.075s
+real	0m2.594s
+user	0m2.600s
+sys	0m0.066s
+date:   Sat Sep 18 13:09:02 PDT 2010
+uptime:  13:09:02 up 11 days,  6:32,  2 users,  load average: 0.09, 0.13, 0.09
 make[1]: Leaving directory `/home/jwillett/jhwscm'

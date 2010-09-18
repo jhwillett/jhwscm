@@ -18,7 +18,6 @@ MD5-junit-4.8.2.jar  := 8a498c3d820db50cc7255d8c46c1ebd1
 
 DEPS := $(LIBS:%=$(DESTDIR)/%)
 
-
 .PHONY: test $(TESTS:test/%.java=test-%)
 test: $(TESTS:test/%.java=test-%)
 $(TESTS:test/%.java=test-%): test-%: $(LOGDIR)/%.log
@@ -34,9 +33,9 @@ rawtest: $(TESTS:test/%.java=rawtest-%)
 $(TESTS:test/%.java=rawtest-%): rawtest-%:
 	@echo "test:   $*"
 	@echo "host:   `hostname`"
+	time java -cp $(DESTDIR):$(DEPS) $*
 	@echo "date:   `date`"
 	@echo "uptime: `uptime`"
-	time java -cp $(DESTDIR):$(DEPS) $*
 
 .PHONY: build
 build: $(DESTDIR)/build.ok
