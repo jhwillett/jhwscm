@@ -119,10 +119,10 @@ public class TestScm
       };
       for ( final String[] pair : tweakyInts )
       {
-         expectSuccess(pair[0],             pair[1]);
-         expectSuccess(" " + pair[0],       pair[1]);
-         expectSuccess(pair[0] + " " ,      pair[1]);
-         expectSuccess(" " + pair[0] + " ", pair[1]);
+         expect(pair[0],             pair[1]);
+         expect(" " + pair[0],       pair[1]);
+         expect(pair[0] + " " ,      pair[1]);
+         expect(" " + pair[0] + " ", pair[1]);
       }
 
       // first computation: even simple integer take nonzero cycles
@@ -145,11 +145,11 @@ public class TestScm
       }
 
       // boolean literals are self-evaluating
-      expectSuccess("#t",   "#t");
-      expectSuccess("#f",   "#f");
-      expectSuccess(" #t ", "#t");
-      expectSuccess("#f ",  "#f");
-      expectSuccess(" #f",  "#f");
+      expect("#t",   "#t");
+      expect("#f",   "#f");
+      expect(" #t ", "#t");
+      expect("#f ",  "#f");
+      expect(" #f",  "#f");
       expectLexical("#x");
 
       // unbound variables fail
@@ -169,9 +169,9 @@ public class TestScm
       expectLexical("((()())");
       expectSemantic("(())");
 
-      expectSuccess("-",   "-",  newScm(false));
-      expectSuccess("-",   null);
-      expectSuccess("-asd", "-asd",  newScm(false));
+      expect("-",   "-",  newScm(false));
+      expect("-",   null);
+      expect("-asd", "-asd",  newScm(false));
       expectSemantic("-as");
       
       expectSemantic("(a b c)");
@@ -181,32 +181,32 @@ public class TestScm
       expectLexical("((a b) c");
       expectLexical("((a b c)");
 
-      expectSuccess("(a b c)",      "(a b c)",   newScm(false));
-      expectSuccess("(a (b c))",    "(a (b c))", newScm(false));
-      expectSuccess("((a b) c)",    "((a b) c)", newScm(false));
-      expectSuccess("((a b c))",    "((a b c))", newScm(false));
-      expectSuccess("((a)b)",       "((a) b)",   newScm(false));
-      expectSuccess("((a )b)",      "((a) b)",   newScm(false));
-      expectSuccess("((a ) b)",     "((a) b)",   newScm(false));
-      expectSuccess("( (a )b)",     "((a) b)",   newScm(false));
-      expectSuccess("( (a) b)",     "((a) b)",   newScm(false));
-      expectSuccess("( (a)b )",     "((a) b)",   newScm(false));
+      expect("(a b c)",      "(a b c)",   newScm(false));
+      expect("(a (b c))",    "(a (b c))", newScm(false));
+      expect("((a b) c)",    "((a b) c)", newScm(false));
+      expect("((a b c))",    "((a b c))", newScm(false));
+      expect("((a)b)",       "((a) b)",   newScm(false));
+      expect("((a )b)",      "((a) b)",   newScm(false));
+      expect("((a ) b)",     "((a) b)",   newScm(false));
+      expect("( (a )b)",     "((a) b)",   newScm(false));
+      expect("( (a) b)",     "((a) b)",   newScm(false));
+      expect("( (a)b )",     "((a) b)",   newScm(false));
       expectLexical("((a b) c",                  newScm(false));
       expectLexical("((a b c)",                  newScm(false));
-      expectSuccess("()",           "()",        newScm(false));
-      expectSuccess("\r(\t)\n",     "()",        newScm(false));
+      expect("()",           "()",        newScm(false));
+      expect("\r(\t)\n",     "()",        newScm(false));
       expectLexical("(",                         newScm(false));
       expectLexical(" (  ",                      newScm(false));
       expectLexical(")",                         newScm(false));
-      expectSuccess("(()())",       "(() ())",   newScm(false));
-      expectSuccess(" ( ( ) ( ) )", "(() ())",   newScm(false));
+      expect("(()())",       "(() ())",   newScm(false));
+      expect(" ( ( ) ( ) )", "(() ())",   newScm(false));
       expectLexical("(()()))",                   newScm(false));
       expectLexical(" ( () ())) ",               newScm(false));
       expectLexical("((()())",                   newScm(false));
 
       // improper list experssions: yay!
-      expectSuccess("(1 . 2)",      "(1 . 2)",   newScm(false));
-      expectSuccess("(1 2 . 3)",    "(1 2 . 3)", newScm(false));
+      expect("(1 . 2)",      "(1 . 2)",   newScm(false));
+      expect("(1 2 . 3)",    "(1 2 . 3)", newScm(false));
       expectLexical("(1 . 2 3)",                 newScm(false));
       expectLexical("( . 2 3)",                  newScm(false));
       expectLexical("(1 . )",                    newScm(false));
@@ -216,8 +216,8 @@ public class TestScm
       expectLexical("(1 . )");
       expectLexical("(1 .)");
 
-      expectSuccess("(1 . ())",     "(1)",       newScm(false));
-      expectSuccess("(1 .())",      "(1)",       newScm(false));
+      expect("(1 . ())",     "(1)",       newScm(false));
+      expect("(1 .())",      "(1)",       newScm(false));
 
       // Guile does this, with nothing before the dot in a dotted list
       // but I do not quite understand why it works.
@@ -235,17 +235,17 @@ public class TestScm
       // Still, this demands I meditate on it to understand fully why
       // this is so.
       //
-      expectSuccess("( . 2 )",    "2",           newScm(false));
-      expectSuccess("( . 2 )",    "2",           newScm(true));
-      expectSuccess("( . () )",   "()",          newScm(false));
+      expect("( . 2 )",    "2",           newScm(false));
+      expect("( . 2 )",    "2",           newScm(true));
+      expect("( . () )",   "()",          newScm(false));
       expectLexical("( . 2 3 )");
-      expectSuccess("(. abc )",   "abc",         newScm(false));
+      expect("(. abc )",   "abc",         newScm(false));
 
       if ( false )
       {
          // Probably not until I handle floats!
          SILENT = false;
-         expectSuccess("(1 .2)",       "(1 0.2)",   newScm(false));
+         expect("(1 .2)",       "(1 0.2)",   newScm(false));
       }
 
       // character literals are self-evaluating - though some of them
@@ -257,13 +257,13 @@ public class TestScm
       };
       for ( final String expr : simpleChars )
       {
-         expectSuccess(expr,                   expr);
-         expectSuccess(" " + expr,             expr);
-         expectSuccess(expr + " " ,            expr);
-         expectSuccess(" " + expr + " ",       expr);
-         expectSuccess("\n" + expr,            expr);
-         expectSuccess(expr + "\n" ,           expr);
-         expectSuccess("\t" + expr + "\t\r\n", expr);
+         expect(expr,                   expr);
+         expect(" " + expr,             expr);
+         expect(expr + " " ,            expr);
+         expect(" " + expr + " ",       expr);
+         expect("\n" + expr,            expr);
+         expect(expr + "\n" ,           expr);
+         expect("\t" + expr + "\t\r\n", expr);
       }
       final String[][] tweakyChars = { 
          { "#\\ ",      "#\\space"   }, 
@@ -280,10 +280,10 @@ public class TestScm
       };
       for ( final String[] pair : tweakyChars )
       {
-         expectSuccess(pair[0],             pair[1]);
-         expectSuccess(" " + pair[0],       pair[1]);
-         expectSuccess(pair[0] + " " ,      pair[1]);
-         expectSuccess(" " + pair[0] + " ", pair[1]);
+         expect(pair[0],             pair[1]);
+         expect(" " + pair[0],       pair[1]);
+         expect(pair[0] + " " ,      pair[1]);
+         expect(" " + pair[0] + " ", pair[1]);
       }
       expectLexical("#");
       expectLexical("#\\");
@@ -302,13 +302,13 @@ public class TestScm
       };
       for ( final String expr : simpleStrs )
       {
-         expectSuccess(expr,                   expr);
-         expectSuccess(" " + expr,             expr);
-         expectSuccess(expr + " " ,            expr);
-         expectSuccess(" " + expr + " ",       expr);
-         expectSuccess("\n" + expr,            expr);
-         expectSuccess(expr + "\n" ,           expr);
-         expectSuccess("\t" + expr + "\t\r\n", expr);
+         expect(expr,                   expr);
+         expect(" " + expr,             expr);
+         expect(expr + " " ,            expr);
+         expect(" " + expr + " ",       expr);
+         expect("\n" + expr,            expr);
+         expect(expr + "\n" ,           expr);
+         expect("\t" + expr + "\t\r\n", expr);
       }
       expectLexical("\"");
       expectLexical("\"hello");
@@ -320,16 +320,16 @@ public class TestScm
       // neither do I.  So there's no unit test here, just that they
       // evaluate OK.
       //
-      expectSuccess("+",       null);
-      expectSuccess("*",       null);
-      expectSuccess("cons",    null);
-      expectSuccess("car",     null);
-      expectSuccess("cdr",     null);
-      expectSuccess("list",    null);
-      expectSuccess("if",      null);
-      expectSuccess("quote",   null);
-      expectSuccess("define",  null);
-      expectSuccess("lambda",  null);
+      expect("+",       null);
+      expect("*",       null);
+      expect("cons",    null);
+      expect("car",     null);
+      expect("cdr",     null);
+      expect("list",    null);
+      expect("if",      null);
+      expect("quote",   null);
+      expect("define",  null);
+      expect("lambda",  null);
 
       // Dipping my toe into basic edge cases around implied (eval)
       // and some simple arithmetic - more than testing math.
@@ -342,22 +342,22 @@ public class TestScm
       expectSemantic("(1 0)");
       expectSemantic("(\"a\" 0)");
       expectSemantic("(#\\a 0)");
-      expectSuccess("(+ 0 0)", "0");
-      expectSuccess("(+ 0 1)", "1");
-      expectSuccess("(+ 0 2)", "2");
-      expectSuccess("(+ 2 0)", "2");
-      expectSuccess("(+ 2 3)", "5");
-      expectSuccess("(+ 2 -3)","-1");
-      expectSuccess("(+ -2 -3)", "-5");
-      expectSuccess("(- 2  3)","-1");
-      expectSuccess("(- 2 -3)","5");
-      expectSuccess("(- -3 2)","-5");
-      expectSuccess("(+ 100 2)","102");
-      expectSuccess("(+ 100 -2)","98");
-      expectSuccess("(* 97 2)","194");
-      expectSuccess("(* -97 2)","-194");
-      expectSuccess("(* -97 -2)","194");
-      expectSuccess("(* 97 -2)","-194");
+      expect("(+ 0 0)", "0");
+      expect("(+ 0 1)", "1");
+      expect("(+ 0 2)", "2");
+      expect("(+ 2 0)", "2");
+      expect("(+ 2 3)", "5");
+      expect("(+ 2 -3)","-1");
+      expect("(+ -2 -3)", "-5");
+      expect("(- 2  3)","-1");
+      expect("(- 2 -3)","5");
+      expect("(- -3 2)","-5");
+      expect("(+ 100 2)","102");
+      expect("(+ 100 -2)","98");
+      expect("(* 97 2)","194");
+      expect("(* -97 2)","-194");
+      expect("(* -97 -2)","194");
+      expect("(* 97 -2)","-194");
       expectSemantic("(+ a b)");
 
       if ( true )
@@ -372,15 +372,15 @@ public class TestScm
       }
       else
       {
-         expectSuccess("(+ 0)","0");
-         expectSuccess("(+)","0");
-         expectSuccess("(+ 1)","1");
-         expectSuccess("(* 2 3 5)","30");
-         expectSuccess("(*)","1");
+         expect("(+ 0)","0");
+         expect("(+)","0");
+         expect("(+ 1)","1");
+         expect("(* 2 3 5)","30");
+         expect("(*)","1");
       }
-      expectSuccess("(+0)",      "0");
-      expectSuccess("(+1 10)",   "10");
-      expectSuccess("(+3 3 5 7)","15");
+      expect("(+0)",      "0");
+      expect("(+1 10)",   "10");
+      expect("(+3 3 5 7)","15");
       expectSemantic("(+0 1)");
       expectSemantic("(+1)");
       expectSemantic("(+1 1 2)");
@@ -389,41 +389,41 @@ public class TestScm
       expectSemantic("(+3 1 2 3 4)");
 
       // simple special form
-      expectSuccess("(quote ())","()");
-      expectSuccess("(quote (1 2))","(1 2)");
-      expectSuccess("(quote (a b))","(a b)");
+      expect("(quote ())","()");
+      expect("(quote (1 2))","(1 2)");
+      expect("(quote (a b))","(a b)");
       expectSemantic("(+ 1 (quote ()))");
-      expectSuccess("(quote 9)",                "9");
-      expectSuccess("(quote (quote 9))",        "(quote 9)");
-      expectSuccess("(quote (quote (quote 9)))","(quote (quote 9))");
+      expect("(quote 9)",                "9");
+      expect("(quote (quote 9))",        "(quote 9)");
+      expect("(quote (quote (quote 9)))","(quote (quote 9))");
 
       // simple quote sugar
-      expectSuccess("'()","()");
-      expectSuccess("'(1 2)","(1 2)");
-      expectSuccess("'(a b)","(a b)");
+      expect("'()","()");
+      expect("'(1 2)","(1 2)");
+      expect("'(a b)","(a b)");
       expectSemantic("(+ 1 '())");
-      expectSuccess("'9",       "9");
+      expect("'9",       "9");
       if ( false )
       {
          // See the quote-quote-quote discussion in DIARY.txt.
          //
          // TODO: the quoted-quote question, and how to print it
-         expectSuccess("''9",      "(quote 9)");
-         expectSuccess("'''9",     "(quote (quote 9))");
-         expectSuccess(" ' ' ' 9 ","(quote (quote 9))");
+         expect("''9",      "(quote 9)");
+         expect("'''9",     "(quote (quote 9))");
+         expect(" ' ' ' 9 ","(quote (quote 9))");
       }
 
-      expectSuccess("(equal? 10  10)","#t");
-      expectSuccess("(equal? 11  10)","#f");
-      expectSuccess("(equal? 'a  'a)","#t");
-      expectSuccess("(equal? 'a  'b)","#f");
-      expectSuccess("(equal? 10  'b)","#f");
-      expectSuccess("(<       9  10)","#t");
-      expectSuccess("(<      10   9)","#f");
-      expectSuccess("(<      10  10)","#f");
-      expectSuccess("(<     -10   0)","#t");
-      expectSuccess("(<      -1  10)","#t");
-      expectSuccess("(<       0 -10)","#f");
+      expect("(equal? 10  10)","#t");
+      expect("(equal? 11  10)","#f");
+      expect("(equal? 'a  'a)","#t");
+      expect("(equal? 'a  'b)","#f");
+      expect("(equal? 10  'b)","#f");
+      expect("(<       9  10)","#t");
+      expect("(<      10   9)","#f");
+      expect("(<      10  10)","#f");
+      expect("(<     -10   0)","#t");
+      expect("(<      -1  10)","#t");
+      expect("(<       0 -10)","#f");
       expectSemantic("(< 10 'a)");
 
       // simple conditionals: in Scheme, only #f is false
@@ -433,87 +433,87 @@ public class TestScm
       // TODO: when you do mutators, be sure to check that only one
       // alternative in an (if) is executed.
       //
-      expectSuccess("(if #f 2 5)","5");
-      expectSuccess("(if #t 2 5)","2");
-      expectSuccess("(if '() 2 5)","2"); 
-      expectSuccess("(if 0 2 5)","2");
-      expectSuccess("(if 0 (+ 2 1) 5)","3");
-      expectSuccess("(if 0 2 5)","2");
-      expectSuccess("(if #t (+ 2 1) (+ 4 5))","3");
-      expectSuccess("(if #f (+ 2 1) (+ 4 5))","9");
-      expectSuccess("(if (equal? 1 1) 123 321)","123");
-      expectSuccess("(if (equal? 2 1) 123 321)","321");
+      expect("(if #f 2 5)","5");
+      expect("(if #t 2 5)","2");
+      expect("(if '() 2 5)","2"); 
+      expect("(if 0 2 5)","2");
+      expect("(if 0 (+ 2 1) 5)","3");
+      expect("(if 0 2 5)","2");
+      expect("(if #t (+ 2 1) (+ 4 5))","3");
+      expect("(if #f (+ 2 1) (+ 4 5))","9");
+      expect("(if (equal? 1 1) 123 321)","123");
+      expect("(if (equal? 2 1) 123 321)","321");
 
       // cons, car, cdr, and list have a particular relationship
       //
-      expectSuccess("(cons 1 2)","(1 . 2)");
-      expectSuccess("(car (cons 1 2))","1");
-      expectSuccess("(cdr (cons 1 2))","2");
-      expectSuccess("(list)","()");
-      expectSuccess("(list 1 2)","(1 2)");
+      expect("(cons 1 2)","(1 . 2)");
+      expect("(car (cons 1 2))","1");
+      expect("(cdr (cons 1 2))","2");
+      expect("(list)","()");
+      expect("(list 1 2)","(1 2)");
       expectSemantic("(car 1)");
       expectSemantic("(car '())");
       expectSemantic("(cdr 1)");
       expectSemantic("(cdr '())");
-      expectSuccess("(cons 1 '())","(1)");
+      expect("(cons 1 '())","(1)");
 
       // OUCH! w/ no garbage collection, no proper tail recursion, and
       // a 512 cell heap, this goes OOM.  More than 4 KB to interpret
       // that?
       //
-      expectSuccess("(cons 1 (cons 2 '()))","(1 2)");
+      expect("(cons 1 (cons 2 '()))","(1 2)");
 
       // (read) and (print) are exposed, though of course print is
       // exposed as (display) via R5RS.  I am displeased, b/c
       // "read-eval-display" loop doesn't have the same robust
       // tradition.  SICP uses (print)...
       //
-      expectSuccess("(display 5)","5");
-      expectSuccess("(display 5)2","52");
-      expectSuccess("(display (+ 3 4))(+ 1 2)","73");
-      expectSuccess("(display '(+ 3 4))(+ 1 2)","(+ 3 4)3");
-      expectSuccess("(read)5","5");
-      expectSuccess("(read)(+ 1 2)","(+ 1 2)");
+      expect("(display 5)","5");
+      expect("(display 5)2","52");
+      expect("(display (+ 3 4))(+ 1 2)","73");
+      expect("(display '(+ 3 4))(+ 1 2)","(+ 3 4)3");
+      expect("(read)5","5");
+      expect("(read)(+ 1 2)","(+ 1 2)");
       
       // defining symbols
       {
          final JhwScm scm = newScm();
-         expectSuccess("(define a 100)","",   scm);
-         expectSuccess("a",             "100",scm);
-         expectSuccess("(define a 100)","",   scm);
-         expectSuccess("(define b   2)","",   scm);
-         expectSuccess("(+ a b)",       "102",scm);
+         expect("(define a 100)","",   scm);
+         expect("a",             "100",scm);
+         expect("(define a 100)","",   scm);
+         expect("(define b   2)","",   scm);
+         expect("(+ a b)",       "102",scm);
          expectSemantic("(+ a c)",            scm);
       }
       expectSemantic("(define a)");
 
       // redefining symbols
-      expectSuccess("(define a 1)a(define a 2)a","12");
+      expect("(define a 1)a(define a 2)a","12");
 
       {
          final JhwScm scm = newScm();
-         expectSuccess("(define foo +)","",  scm);
-         expectSuccess("(foo 13 18)",   "31",scm);
+         expect("(define foo +)","",  scm);
+         expect("(foo 13 18)",   "31",scm);
          expectSemantic("(foo 13 '())",      scm);
       }
 
       // defining functions
       expectSemantic("(lambda)");
       expectSemantic("(lambda ())");
-      expectSuccess("(lambda () 1)","???");
-      expectSuccess("((lambda () 1))","1");
+      expect("(lambda () 1)","???");
+      expect("((lambda () 1))","1");
       expectSemantic("((lambda () 1) 10)");
-      expectSuccess("(lambda (a) 1)","???");
-      expectSuccess("((lambda (a) 1) 10)","1");
+      expect("(lambda (a) 1)","???");
+      expect("((lambda (a) 1) 10)","1");
       expectSemantic("((lambda (a) 1))");
       expectSemantic("((lambda (a) 1) 10 20)");
-      expectSuccess("(lambda (a b) (* a b))",       "???");
-      expectSuccess("((lambda (a) (* 3 a)) 13)",    "39");
-      expectSuccess("((lambda (a b) (* a b)) 13 5)","65");
+      expect("(lambda (a b) (* a b))",       "???");
+      expect("((lambda (a) (* 3 a)) 13)",    "39");
+      expect("((lambda (a b) (* a b)) 13 5)","65");
       {
          final JhwScm scm = newScm();
-         expectSuccess("(define (foo a b) (+ a b))","",  scm);
-         expectSuccess("(foo 13 18)",               "31",scm);
+         expect("(define (foo a b) (+ a b))","",  scm);
+         expect("(foo 13 18)",               "31",scm);
          expectSemantic("(foo 13 '())",                  scm);
       }
 
@@ -530,17 +530,17 @@ public class TestScm
          final String fact = 
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
          final JhwScm scm = newScm();
-         expectSuccess(fact,        "",       scm);
-         expectSuccess("fact",      "???",    scm);
-         expectSuccess("(fact -1)", "1",      scm);
-         expectSuccess("(fact 0)",  "1",      scm);
-         expectSuccess("(fact 1)",  "1",      scm);
-         expectSuccess("(fact 2)",  "2",      scm);
-         expectSuccess("(fact 3)",  "6",      scm);
-         expectSuccess("(fact 4)",  "24",     scm);
-         expectSuccess("(fact 5)",  "120",    scm);
-         expectSuccess("(fact 6)",  "720",    scm);
-         expectSuccess("(fact 10)", "3628800",scm);
+         expect(fact,        "",       scm);
+         expect("fact",      "???",    scm);
+         expect("(fact -1)", "1",      scm);
+         expect("(fact 0)",  "1",      scm);
+         expect("(fact 1)",  "1",      scm);
+         expect("(fact 2)",  "2",      scm);
+         expect("(fact 3)",  "6",      scm);
+         expect("(fact 4)",  "24",     scm);
+         expect("(fact 5)",  "120",    scm);
+         expect("(fact 6)",  "720",    scm);
+         expect("(fact 10)", "3628800",scm);
          //report("fact simple:",scm.local);
       }
       {
@@ -549,19 +549,19 @@ public class TestScm
          final String fact = 
             "(define (fact n) (help n 1))";
          final JhwScm scm = newScm();
-         expectSuccess(fact,        "",       scm);
-         expectSuccess(help,        "",       scm); // note, define help 2nd ;)
-         expectSuccess("fact",      "???",    scm);
-         expectSuccess("help",      "???",    scm);
-         expectSuccess("(fact -1)", "1",      scm);
-         expectSuccess("(fact 0)",  "1",      scm);
-         expectSuccess("(fact 1)",  "1",      scm);
-         expectSuccess("(fact 2)",  "2",      scm);
-         expectSuccess("(fact 3)",  "6",      scm);
-         expectSuccess("(fact 4)",  "24",     scm);
-         expectSuccess("(fact 5)",  "120",    scm);
-         expectSuccess("(fact 6)",  "720",    scm);
-         expectSuccess("(fact 10)", "3628800",scm);
+         expect(fact,        "",       scm);
+         expect(help,        "",       scm); // note, define help 2nd ;)
+         expect("fact",      "???",    scm);
+         expect("help",      "???",    scm);
+         expect("(fact -1)", "1",      scm);
+         expect("(fact 0)",  "1",      scm);
+         expect("(fact 1)",  "1",      scm);
+         expect("(fact 2)",  "2",      scm);
+         expect("(fact 3)",  "6",      scm);
+         expect("(fact 4)",  "24",     scm);
+         expect("(fact 5)",  "120",    scm);
+         expect("(fact 6)",  "720",    scm);
+         expect("(fact 10)", "3628800",scm);
          //report("fact 2/ help:",scm.local);
       }
 
@@ -581,14 +581,14 @@ public class TestScm
          final String fib = 
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
          final JhwScm scm = newScm();
-         expectSuccess(fib,"",scm);
-         expectSuccess("fib","???",scm);
-         expectSuccess("(fib 0)","0",scm);
-         expectSuccess("(fib 1)","1",scm);
-         expectSuccess("(fib 2)","1",scm);
-         expectSuccess("(fib 3)","2",scm);
-         expectSuccess("(fib 4)","3",scm);
-         expectSuccess("(fib 5)","5",scm);
+         expect(fib,"",scm);
+         expect("fib","???",scm);
+         expect("(fib 0)","0",scm);
+         expect("(fib 1)","1",scm);
+         expect("(fib 2)","1",scm);
+         expect("(fib 3)","2",scm);
+         expect("(fib 4)","3",scm);
+         expect("(fib 5)","5",scm);
          
          // Before gc, (fib 6) would OOM at heapSize 32 kcells, (fib
          // 10) at 128 kcells.
@@ -599,12 +599,12 @@ public class TestScm
          // 400 kwordss, but it burned through 34 mcells on the way
          // there!
          //
-         expectSuccess("(fib 6)","8",scm);     // OOM at 32 kcells
-         expectSuccess("(fib 10)","55",scm);   // OOM at 128 kcells
+         expect("(fib 6)","8",scm);     // OOM at 32 kcells
+         expect("(fib 10)","55",scm);   // OOM at 128 kcells
          if ( false )
          {
             // Takes like a minute...
-            expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
+            expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
          //report("fib:",scm.local);
       }
@@ -618,26 +618,26 @@ public class TestScm
       // Of course, you'd also want that test to be halting if fixints
       // ever started autopromoting to bigints... :)
       //
-      expectSuccess("268435455", "-1");
-      expectSuccess("268435456", "0");
-      expectSuccess("268435457", "1");
-      expectSuccess("(+ 268435455 0)", "-1");
-      expectSuccess("(+ 268435456 0)", "0");
-      expectSuccess("(+ 268435456 1)", "1");
-      expectSuccess("(+ 268435457 1)", "2");
-      expectSuccess("(+ 134217728 134217727)", "-1");
-      expectSuccess("(- 0 268435456)", "0");
-      expectSuccess("(- 0 268435455)", "1");
-      expectSuccess("(equal? 0 268435456)", "#t");
-      expectSuccess("(equal? 0 (* 100 268435456))", "#t");
+      expect("268435455", "-1");
+      expect("268435456", "0");
+      expect("268435457", "1");
+      expect("(+ 268435455 0)", "-1");
+      expect("(+ 268435456 0)", "0");
+      expect("(+ 268435456 1)", "1");
+      expect("(+ 268435457 1)", "2");
+      expect("(+ 134217728 134217727)", "-1");
+      expect("(- 0 268435456)", "0");
+      expect("(- 0 268435455)", "1");
+      expect("(equal? 0 268435456)", "#t");
+      expect("(equal? 0 (* 100 268435456))", "#t");
 
       // let, local scopes:
       // 
       expectSemantic("(let ())");
-      expectSuccess("(let () 32)","32");
-      expectSuccess("(let()32)","32");
-      expectSuccess("(let ((a 10)) (+ a 32))","42");
-      expectSuccess("(let ((a 10) (b 32)) (+ a b))","42");
+      expect("(let () 32)","32");
+      expect("(let()32)","32");
+      expect("(let ((a 10)) (+ a 32))","42");
+      expect("(let ((a 10) (b 32)) (+ a b))","42");
       expectSemantic("(let ((a 10) (b 32)) (+ a c))");
       expectSemantic("(let ((a 10) (b a)) b)");
       expectSemantic("(let ((a 10) (b (+ a 1))) b)");
@@ -648,15 +648,15 @@ public class TestScm
          // An overly simple early form of sub_let pushed frames onto
          // the env, but didn't pop them.
          final JhwScm scm = newScm();
-         expectSuccess("(let ((a 10)) a)", "10", scm);
+         expect("(let ((a 10)) a)", "10", scm);
          expectSemantic("a",scm);
       }
 
       // nested lexical scopes:
       if ( true )
       {
-         expectSuccess("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
-         expectSuccess("(let ((a 10)) (let ((b (+ 32 a))) b))","42");
+         expect("(let ((a 10)) (let ((b 32)) (+ a b)))","42");
+         expect("(let ((a 10)) (let ((b (+ 32 a))) b))","42");
       }
       {
          // SURPRISE!  This is SUPPOSED to fail for (fact 2) or higher!!!!!
@@ -672,11 +672,11 @@ public class TestScm
             "        (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))))" +
             "    (help n 1)))";
          final JhwScm scm = newScm();
-         expectSuccess(fact,       "",   scm);
-         expectSuccess("fact",     "???",scm);
-         expectSuccess("(fact -1)","1",  scm);
-         expectSuccess("(fact 0)", "1",  scm);
-         expectSuccess("(fact 1)", "1",  scm);
+         expect(fact,       "",   scm);
+         expect("fact",     "???",scm);
+         expect("(fact -1)","1",  scm);
+         expect("(fact 0)", "1",  scm);
+         expect("(fact 1)", "1",  scm);
          if ( true )
          {
             expectSemantic("(fact 2)"); // HAHAHHAHHAHAHA
@@ -685,11 +685,11 @@ public class TestScm
          {
             // TODO: save it for letrec*
             SILENT = false;
-            expectSuccess("(fact 2)", "2",  scm); // HAHAHHAHHAHAHA
-            expectSuccess("(fact 3)", "6",  scm);
-            expectSuccess("(fact 4)", "24", scm);
-            expectSuccess("(fact 5)", "120",scm);
-            expectSuccess("(fact 6)", "720",scm);
+            expect("(fact 2)", "2",  scm); // HAHAHHAHHAHAHA
+            expect("(fact 3)", "6",  scm);
+            expect("(fact 4)", "24", scm);
+            expect("(fact 5)", "120",scm);
+            expect("(fact 6)", "720",scm);
          }
       }
 
@@ -700,24 +700,24 @@ public class TestScm
       // pinch we can use (define) for that, but it might confound
       // with other syntactic special cases.
       // 
-      expectSuccess("(begin)",          "");
-      expectSuccess("(begin 1)",        "1");
-      expectSuccess("(begin 1 2 3 4 5)","5");
+      expect("(begin)",          "");
+      expect("(begin 1)",        "1");
+      expect("(begin 1 2 3 4 5)","5");
 
       // control special form: cond 
       //
       // We need user-code-accesible side-effects to detect that (cond)
       // only evaluates the matching clause.
-      expectSuccess("(cond)","");
-      expectSuccess("(cond (#f 2))","");
-      expectSuccess("(cond (#t 1) (#f 2))","1");
-      expectSuccess("(cond (#f 1) (#t 2))","2");
-      expectSuccess("(cond (#t 1) (#t 2))","1");
-      expectSuccess("(cond (#f 1) (#f 2))","");
-      expectSuccess("(cond ((equal? 3 4) 1) ((equal? 5 (+ 2 3)) 2))","2");
-      expectSuccess("(cond (#f) (#t 2))","2");
-      expectSuccess("(cond (#f) (#t))","#t");
-      expectSuccess("(cond (#f) (7))","7");
+      expect("(cond)","");
+      expect("(cond (#f 2))","");
+      expect("(cond (#t 1) (#f 2))","1");
+      expect("(cond (#f 1) (#t 2))","2");
+      expect("(cond (#t 1) (#t 2))","1");
+      expect("(cond (#f 1) (#f 2))","");
+      expect("(cond ((equal? 3 4) 1) ((equal? 5 (+ 2 3)) 2))","2");
+      expect("(cond (#f) (#t 2))","2");
+      expect("(cond (#f) (#t))","#t");
+      expect("(cond (#f) (7))","7");
       if ( false )
       {
          // You know, "else" is really special-casey, special-syntaxy.
@@ -729,7 +729,7 @@ public class TestScm
          // So it probably should be cut from the microcode layer.
          // But in any case, I'm not implementing "else" for now.
          SILENT = false;
-         expectSuccess("(cond ((equal? 3 4) 1) (else 2))","2");
+         expect("(cond ((equal? 3 4) 1) (else 2))","2");
          expectSemantic("else"); // else is *not* just bound to #t!
       }
 
@@ -746,27 +746,27 @@ public class TestScm
       expectSemantic("(case 1 1)");
       expectSemantic("(case 1 (1))");
       expectSemantic("(case 1 (1 1))");
-      expectSuccess("(case 1 ((1) 1))","1");
-      expectSuccess("(case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300))","300");
-      expectSuccess("(case 7 ((2 3) 100) ((6 7) 200) ((4 5) 300))","200");
-      expectSuccess("(case 7 ((2 3) 100) ((4 5) 200))",            "");
-      expectSuccess("(case  (+ 3 4) ((2 3) 100) ((6 7      ) 200))","200");
-      expectSuccess("(case  (+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
-      expectSuccess("(case '(+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
-      expectSuccess("(case 7 (() 10) ((7) 20))","20"); // empty label ok
+      expect("(case 1 ((1) 1))","1");
+      expect("(case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300))","300");
+      expect("(case 7 ((2 3) 100) ((6 7) 200) ((4 5) 300))","200");
+      expect("(case 7 ((2 3) 100) ((4 5) 200))",            "");
+      expect("(case  (+ 3 4) ((2 3) 100) ((6 7      ) 200))","200");
+      expect("(case  (+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
+      expect("(case '(+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
+      expect("(case 7 (() 10) ((7) 20))","20"); // empty label ok
       expectSemantic("(case 7 ((2 3) 100) ((6 7)))");  // bad clause
       expectSemantic("(case 7 ((2 3)) ((6 7) 1))");    // bad clause
       expectSemantic("(case 7 (()) ((7) 20))");        // bad clause
       expectSemantic("(case 7 (10) ((7) 20))");        // bad clause
-      expectSuccess("(case '7 ((2 3) 100) ((6 '7) 200) ((4 5) 300))","");
-      expectSuccess("(case \"7\" ((2 3) 100) ((6 \"7\") 200) ((4 5) 300))","");
-      expectSuccess("(case #t ((2 3) 100) ((6 #t) 200) ((4 5) 300))","200");
-      expectSuccess("(case #f ((2 3) 100) ((6 #f) 200) ((4 5) 300))","200");
-      expectSuccess("(case #\\a ((2 3) 100) ((6 #\\a) 200) ((4 5) 300))","200");
+      expect("(case '7 ((2 3) 100) ((6 '7) 200) ((4 5) 300))","");
+      expect("(case \"7\" ((2 3) 100) ((6 \"7\") 200) ((4 5) 300))","");
+      expect("(case #t ((2 3) 100) ((6 #t) 200) ((4 5) 300))","200");
+      expect("(case #f ((2 3) 100) ((6 #f) 200) ((4 5) 300))","200");
+      expect("(case #\\a ((2 3) 100) ((6 #\\a) 200) ((4 5) 300))","200");
       if ( false )
       {
          // See "else" rant among (cond) tests.
-         expectSuccess("(case 7 ((2 3) 100) ((4 5) 200) (else 300))", "300");
+         expect("(case 7 ((2 3) 100) ((4 5) 200) (else 300))", "300");
       }
       if ( false )
       {
@@ -777,23 +777,23 @@ public class TestScm
 
       // variadic (lambda) and (define), inner defines, etc.
       // 
-      expectSuccess("(lambda () (+ 1 2) 7)","???");
-      expectSuccess("((lambda () (+ 1 2) 7))","7");
-      expectSuccess("((lambda () (display (+ 1 2)) 7))","37");
+      expect("(lambda () (+ 1 2) 7)","???");
+      expect("((lambda () (+ 1 2) 7))","7");
+      expect("((lambda () (display (+ 1 2)) 7))","37");
       {
          // Are the nested-define defined symbols in scope of the
          // "real" body?
          final JhwScm scm = newScm();
-         expectSuccess("(define (a x) (define b 2) (+ x b))", "",    scm);
-         expectSuccess("(a 10)",                              "12",  scm);
-         expectSuccess("a",                                   "???", scm);
+         expect("(define (a x) (define b 2) (+ x b))", "",    scm);
+         expect("(a 10)",                              "12",  scm);
+         expect("a",                                   "???", scm);
          expectSemantic("b",                                         scm);
       }
       {
          // Can we do more than one?
          final JhwScm scm = newScm();
-         expectSuccess("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
-         expectSuccess("(f)","3",scm);
+         expect("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
+         expect("(f)","3",scm);
       }
       {
          // Can we do it for an inner helper function?
@@ -802,33 +802,33 @@ public class TestScm
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
             "  (help n 1))";
-         expectSuccess(fact,       "",   scm);
-         expectSuccess("fact",     "???",scm);
-         expectSuccess("(fact -1)","1",  scm);
-         expectSuccess("(fact 0)", "1",  scm);
-         expectSuccess("(fact 1)", "1",  scm);
-         expectSuccess("(fact 2)", "2",  scm);
-         expectSuccess("(fact 3)", "6",  scm);
-         expectSuccess("(fact 4)", "24", scm);
-         expectSuccess("(fact 5)", "120",scm);
-         expectSuccess("(fact 6)", "720",scm);
+         expect(fact,       "",   scm);
+         expect("fact",     "???",scm);
+         expect("(fact -1)","1",  scm);
+         expect("(fact 0)", "1",  scm);
+         expect("(fact 1)", "1",  scm);
+         expect("(fact 2)", "2",  scm);
+         expect("(fact 3)", "6",  scm);
+         expect("(fact 4)", "24", scm);
+         expect("(fact 5)", "120",scm);
+         expect("(fact 6)", "720",scm);
       }
       {
          // Do nested defines really act like (begin)?
          final JhwScm scm = newScm();
          final String def = 
             "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
-         expectSuccess(def,"",scm);
-         expectSuccess("(f)","83",scm);
+         expect(def,"",scm);
+         expect("(f)","83",scm);
       }
       {
          // Do nested defines really act like (begin) when we have args?
          final JhwScm scm = newScm();
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
-         expectSuccess(def,"",scm);
-         expectSuccess("(f 4)","85",scm);
-         expectSuccess("(f 3)","84",scm);
+         expect(def,"",scm);
+         expect("(f 4)","85",scm);
+         expect("(f 3)","84",scm);
       }
       {
          // Are nested defines in one another's scope, in any order?
@@ -837,48 +837,48 @@ public class TestScm
             "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
          final String G = 
             "(define (G b) (define (g x) (+ a x)) (define a 1) (g b))";
-         expectSuccess(F,"",scm);
-         expectSuccess("(F 4)","5",scm);
-         expectSuccess(G,"",scm);
-         expectSuccess("(G 4)","5",scm);
+         expect(F,"",scm);
+         expect("(F 4)","5",scm);
+         expect(G,"",scm);
+         expect("(G 4)","5",scm);
       }
       {
          // What about defines in lambdas?
          final JhwScm scm = newScm();
          final String def = 
             "((lambda (x) (define a 7) (+ x a)) 5)";
-         expectSuccess(def,"12",scm);
+         expect(def,"12",scm);
       }
       {
          // What about closures?
          final JhwScm scm = newScm();
          final String def = 
             "(((lambda (x) (lambda (y) (+ x y))) 10) 7)";
-         expectSuccess(def,"17",scm);
+         expect(def,"17",scm);
       }
       {
          // What about closures?
          final JhwScm scm = newScm();
          final String def = 
             "(define (f x) (lambda (y) (+ x y)))";
-         expectSuccess(def,"",scm);
-         expectSuccess("(f 10)","???",scm);
-         expectSuccess("((f 10) 7)","17",scm);
+         expect(def,"",scm);
+         expect("(f 10)","???",scm);
+         expect("((f 10) 7)","17",scm);
       }
       {
          // What about closures?
          final JhwScm scm = newScm();
          final String def = 
             "(define (f x) (define (h y) (+ x y)) h)";
-         expectSuccess(def,"",scm);
-         expectSuccess("(f 10)","???",scm);
-         expectSuccess("((f 10) 7)","17",scm);
+         expect(def,"",scm);
+         expect("(f 10)","???",scm);
+         expect("((f 10) 7)","17",scm);
       }
 
       {
          // variadic stress on the body of let
-         expectSuccess("(let ((a 1)) (define b 2) (+ a b))","3");
-         expectSuccess("(let ((a 1)) (display 7) (define b 2) (+ a b))","73");
+         expect("(let ((a 1)) (define b 2) (+ a b))","3");
+         expect("(let ((a 1)) (display 7) (define b 2) (+ a b))","73");
          expectSemantic("(let ((a 1)))");
       }
 
@@ -886,8 +886,8 @@ public class TestScm
       {
          final JhwScm scm = newScm();
          final String def = "(define (f x) (+ x 10))";
-         expectSuccess("(map display '())",      "()");     
-         expectSuccess("(map display '(1 2 3))", "123(  )");
+         expect("(map display '())",      "()");     
+         expect("(map display '(1 2 3))", "123(  )");
 
          // TODO: On the preceeding, Guile sez:
          //
@@ -910,21 +910,21 @@ public class TestScm
          //
          // Update: I have merged VOID and UNDEFINED into UNSPECIFIED.
 
-         expectSuccess(def,                      "",           scm);
-         expectSuccess("f",                      "???",        scm);
-         expectSuccess("(f 13)",                 "23",         scm);
-         expectSuccess("(map f '())",            "()",         scm);
-         expectSuccess("(map f '(1 2 3))",       "(11 12 13)", scm);
+         expect(def,                      "",           scm);
+         expect("f",                      "???",        scm);
+         expect("(f 13)",                 "23",         scm);
+         expect("(map f '())",            "()",         scm);
+         expect("(map f '(1 2 3))",       "(11 12 13)", scm);
       }
       
       // TODO: user-level variadics
       if ( false )
       {
          SILENT = false;
-         expectSuccess("((lambda x x) 3 4 5 6)",              "(3 4 5 6)");
-         expectSuccess("((lambda ( . x)) 3 4 5 6)",           "(3 4 5 6)");
-         expectSuccess("((lambda (x y . z) z) 3 4 5 6)",      "(5 6)");
-         expectSuccess("(define (f x y . z) z)(foo 3 4 5 6)", "(5 6)");
+         expect("((lambda x x) 3 4 5 6)",              "(3 4 5 6)");
+         expect("((lambda ( . x)) 3 4 5 6)",           "(3 4 5 6)");
+         expect("((lambda (x y . z) z) 3 4 5 6)",      "(5 6)");
+         expect("(define (f x y . z) z)(foo 3 4 5 6)", "(5 6)");
       }
 
       // TODO: error for names to collide in formals:
@@ -990,51 +990,6 @@ public class TestScm
       report("global:",JhwScm.global);
    }
 
-   private static void expectSuccess ( final String expr, final String expect )
-      throws java.io.IOException
-   {
-      expectSuccess(expr,expect,null);
-   }
-
-   private static void expectSuccess ( final String expr, 
-                                       final String expect,
-                                       JhwScm       scm )
-      throws java.io.IOException
-   {
-      final StringBuilder buf = new StringBuilder();
-      if ( null == scm )
-      {
-         scm = newScm();
-      }
-      final int icode = input(scm,expr);
-      assertEquals("input failure on \"" + expr + "\":",
-                   JhwScm.SUCCESS,
-                   icode);
-      final int dcode = scm.drive(-1);
-      assertEquals("drive failure on \"" + expr + "\":",
-                   JhwScm.SUCCESS,
-                   dcode);
-      final int ocode = output(scm,buf);
-      assertEquals("output failure on \"" + expr + "\":",
-                   JhwScm.SUCCESS,
-                   ocode);
-      if ( null != expect )
-      {
-         assertEquals("result failure on \"" + expr + "\":",
-                      expect,
-                      buf.toString());
-      }
-      if ( verbose )
-      {
-         System.out.print("pass: expr \"");
-         System.out.print(expr);
-         System.out.print("\" evaluated to \"");
-         System.out.print(buf);
-         System.out.print("\"");
-         System.out.println("\"");
-      }
-   }
-
    /**
     * If result is null, we expect driving to succeed but are
     * indifferent to the output.
@@ -1077,28 +1032,68 @@ public class TestScm
       }
    }
 
+   private static void expectSuccess ( final String expr, 
+                                       final String expect,
+                                       JhwScm       scm )
+      throws java.io.IOException
+   {
+      final StringBuilder buf = new StringBuilder();
+      if ( null == scm )
+      {
+         scm = newScm();
+      }
+      final int icode = input(scm,expr);
+      assertEquals("input failure on \"" + expr + "\":",
+                   JhwScm.SUCCESS,
+                   icode);
+      final int dcode = scm.drive(-1);
+      assertEquals("drive failure on \"" + expr + "\":",
+                   JhwScm.SUCCESS,
+                   dcode);
+      final int ocode = output(scm,buf);
+      assertEquals("output failure on \"" + expr + "\":",
+                   JhwScm.SUCCESS,
+                   ocode);
+      if ( null != expect )
+      {
+         assertEquals("result failure on \"" + expr + "\":",
+                      expect,
+                      buf.toString());
+      }
+      if ( verbose )
+      {
+         System.out.print("pass: expr \"");
+         System.out.print(expr);
+         System.out.print("\" evaluated to \"");
+         System.out.print(buf);
+         System.out.print("\"");
+         System.out.println("\"");
+      }
+   }
+
+
    private static void expectLexical ( final String expr )
       throws java.io.IOException
    {
-      expectFailure(expr,null,JhwScm.FAILURE_LEXICAL);
+      expect(expr,JhwScm.FAILURE_LEXICAL);
    }
 
    private static void expectLexical ( final String expr, final JhwScm scm )
       throws java.io.IOException
    {
-      expectFailure(expr,scm,JhwScm.FAILURE_LEXICAL);
+      expect(expr,JhwScm.FAILURE_LEXICAL,scm);
    }
 
    private static void expectSemantic ( final String expr )
       throws java.io.IOException
    {
-      expectFailure(expr,null,JhwScm.FAILURE_SEMANTIC);
+      expect(expr,JhwScm.FAILURE_SEMANTIC);
    }
 
    private static void expectSemantic ( final String expr, final JhwScm scm )
       throws java.io.IOException
    {
-      expectFailure(expr,scm,JhwScm.FAILURE_SEMANTIC);
+      expect(expr,JhwScm.FAILURE_SEMANTIC);
    }
 
    private static void expectFailure ( final String expr, 
