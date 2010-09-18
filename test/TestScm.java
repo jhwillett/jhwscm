@@ -1121,10 +1121,7 @@ public class TestScm
          expected_dcode  = ((Integer)result).intValue();
          expected_output = null;
       }
-      //
-      // I/O are contracted to never fail, provided their args are
-      // valid, regardless of how crazy drive() gets.
-      //
+
       if ( null == scm )
       {
          scm = newScm(true);
@@ -1134,12 +1131,8 @@ public class TestScm
          final byte[] input_buf = expr.toString().getBytes();
          int input_off = 0;
 
-         final byte[] output_buf = new byte[debugRand.nextInt(13)];
-         int output_off = 0;
-         
          while ( input_off < input_buf.length )
          {
-            //log("input_off: " + input_off + " / " + input_buf.length);
             final int icode = scm.input(input_buf,
                                         input_off,
                                         input_buf.length - input_off);
@@ -1154,42 +1147,40 @@ public class TestScm
          }
       }
 
+      // I/O are contracted to never fail, provided their args are
+      // valid, regardless of how crazy drive() gets.
+      //
+      // So we don't check dcode until after slurping output().
+      //
       final int dcode = scm.drive(-1);
 
       final StringBuilder out = new StringBuilder();
-      final int ocode;
       {
          final byte[] buf = new byte[1+debugRand.nextInt(10)];
          int code = 0;
          for ( int off = 0; true; )
          {
-            final int n = scm.output(buf,off,buf.length-off);
-            if ( -1 > n )
+            final int ocode = scm.output(buf,off,buf.length-off);
+            if ( -1 > ocode )
             {
-               code = n; // error code
+               throw new RuntimeException("output() out of spec: " + ocode);
+            }
+            if ( -1 == ocode )
+            {
                break;
             }
-            if ( -1 == n )
-            {
-               code = JhwScm.SUCCESS;
-               break;
-            }
-            for ( int i = off; i < off+n; ++i )
+            for ( int i = off; i < off + ocode; ++i )
             {
                out.append((char)buf[i]);
             }
-            off += n;
+            off += ocode;
             if ( off >= buf.length )
             {
                off = 0;
             }
          }
-         ocode = code;
       }
 
-      assertEquals("output failure on \"" + expr + "\":",
-                   JhwScm.SUCCESS,
-                   ocode);
       assertEquals("drive failure on \"" + expr + "\":",
                    expected_dcode,
                    dcode);
