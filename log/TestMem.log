@@ -4,8 +4,6 @@ host:   little-man
 time java -cp build:build/junit-4.8.2.jar TestMem
 
 real	0m0.323s
-user	0m0.272s
-sys	0m0.075s
-date:   Sat Sep 18 13:09:00 PDT 2010
-uptime:  13:09:00 up 11 days,  6:32,  2 users,  load average: 0.09, 0.13, 0.09
+user	0m0.289s
+sys	0m0.058s
 make[1]: Leaving directory `/home/jwillett/jhwscm'

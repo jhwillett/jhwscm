@@ -43,9 +43,7 @@ numExpects: 540
   unhappy:  97
 numBatches: 10
 
-real	0m2.594s
-user	0m2.600s
-sys	0m0.066s
-date:   Sat Sep 18 13:09:02 PDT 2010
-uptime:  13:09:02 up 11 days,  6:32,  2 users,  load average: 0.09, 0.13, 0.09
+real	0m2.624s
+user	0m2.599s
+sys	0m0.067s
 make[1]: Leaving directory `/home/jwillett/jhwscm'
