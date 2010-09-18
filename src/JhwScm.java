@@ -60,13 +60,14 @@ public class JhwScm
    public static final int     LINE_COUNT                = 16;
 
    public static final int     SUCCESS          =  0;
-   public static final int     INCOMPLETE       = -1;
+   public static final int     PORT_CLOSED      = -1;
    public static final int     BAD_ARG          = -2;
-   public static final int     OUT_OF_MEMORY    = -3;
-   public static final int     FAILURE_LEXICAL  = -4;
-   public static final int     FAILURE_SEMANTIC = -5;
-   public static final int     UNIMPLEMENTED    = -6;
+   public static final int     INCOMPLETE       = -3;
+   public static final int     OUT_OF_MEMORY    = -4;
+   public static final int     FAILURE_LEXICAL  = -5;
+   public static final int     FAILURE_SEMANTIC = -6;
    public static final int     INTERNAL_ERROR   = -7;
+   public static final int     UNIMPLEMENTED    = -8;
 
    private static final int    STRESS_OUTPUT_PERCENT = 13;
    private static final Random debugRand             = new Random(1234);
@@ -91,6 +92,9 @@ public class JhwScm
 
    private final Mem reg;
    private final Mem heap;
+
+   private final int[] portIn  = new int[13];
+   private final int[] portOut = new int[1];
 
    private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug
@@ -235,7 +239,17 @@ public class JhwScm
     * Transfers up to len bytes from in[off..len-1] to the VM's input
     * port buffer.
     *
-    * @returns the number of bytes copied, else an error code <= -2.
+    * Never results in OUT_OF_MEMORY, FAILURE_SEMANTIC, etc.
+    * PORT_CLOSED and BAD_ARG are the only specified failure modes.
+    *
+    * A return result of 0 frequently indicates more cycles in drive()
+    * are needed to clear out the port buffers.
+    *
+    * TODO: Implement to this new contract!
+    *
+    * @returns BAD_ARGS if any of the arguments are invalid,
+    * PORT_CLOSED if close() has been called on the port, else the
+    * number of bytes transferred from buf[off..n-1].
     */
    public int input ( final byte[] buf, final int off, final int len ) 
    {
@@ -301,8 +315,17 @@ public class JhwScm
     * Transfers up to len bytes from the VM's output port buffer and
     * copies them to buf[off..len-1].
     *
-    * @returns the number of bytes written, or -1 if none were written
-    * and the VM's output buffer is empty, else an error code <= -2.
+    * Never results in OUT_OF_MEMORY, FAILURE_SEMANTIC, etc.
+    * PORT_CLOSED and BAD_ARG are the only specified failure modes.
+    *
+    * A return result of 0 frequently indicates more cycles in drive()
+    * are needed to clear out the port buffers.
+    *
+    * TODO: Implement to this new contract!
+    *
+    * @returns BAD_ARGS if any of the arguments are invalid,
+    * PORT_CLOSED if close() has been called on the port, else the
+    * number of bytes transferred into buf[off..n-1].
     */
    public int output ( final byte[] buf, final int off, final int len ) 
    {
