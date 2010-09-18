@@ -150,7 +150,7 @@ public class TestScm
       expect(" #t ", "#t");
       expect("#f ",  "#f");
       expect(" #f",  "#f");
-      expectLexical("#x");
+      expect("#x",   JhwScm.FAILURE_LEXICAL);
 
       // unbound variables fail
       expectSemantic("a");
@@ -159,14 +159,14 @@ public class TestScm
       // some lexical, rather than semantic, error case expectations
       expectSemantic("()");
       expectSemantic("\r(\t)\n");
-      expectLexical("(");
-      expectLexical(" (  ");
-      expectLexical(")");
+      expect("(", JhwScm.FAILURE_LEXICAL);
+      expect(" (  ", JhwScm.FAILURE_LEXICAL);
+      expect(")", JhwScm.FAILURE_LEXICAL);
       expectSemantic("(()())");
       expectSemantic("  ( ( )    ( ) )");
       expectSemantic("(()()))");     // fails on expr before reaching extra ')'
       expectSemantic(" ( () ())) "); // fails on expr before reaching extra ')'
-      expectLexical("((()())");
+      expect("((()())", JhwScm.FAILURE_LEXICAL);
       expectSemantic("(())");
 
       expect("-",   "-",  newScm(false));
@@ -178,8 +178,8 @@ public class TestScm
       expectSemantic("(a (b c))");
       expectSemantic("((a b) c)");
       expectSemantic("((a b c))");
-      expectLexical("((a b) c");
-      expectLexical("((a b c)");
+      expect("((a b) c", JhwScm.FAILURE_LEXICAL);
+      expect("((a b c)", JhwScm.FAILURE_LEXICAL);
 
       expect("(a b c)",      "(a b c)",   newScm(false));
       expect("(a (b c))",    "(a (b c))", newScm(false));
@@ -191,18 +191,18 @@ public class TestScm
       expect("( (a )b)",     "((a) b)",   newScm(false));
       expect("( (a) b)",     "((a) b)",   newScm(false));
       expect("( (a)b )",     "((a) b)",   newScm(false));
-      expectLexical("((a b) c",                  newScm(false));
-      expectLexical("((a b c)",                  newScm(false));
+      expect("((a b) c", JhwScm.FAILURE_LEXICAL,                  newScm(false));
+      expect("((a b c)", JhwScm.FAILURE_LEXICAL,                  newScm(false));
       expect("()",           "()",        newScm(false));
       expect("\r(\t)\n",     "()",        newScm(false));
-      expectLexical("(",                         newScm(false));
-      expectLexical(" (  ",                      newScm(false));
-      expectLexical(")",                         newScm(false));
+      expect("(", JhwScm.FAILURE_LEXICAL,                         newScm(false));
+      expect(" (  ", JhwScm.FAILURE_LEXICAL,                      newScm(false));
+      expect(")", JhwScm.FAILURE_LEXICAL,                         newScm(false));
       expect("(()())",       "(() ())",   newScm(false));
       expect(" ( ( ) ( ) )", "(() ())",   newScm(false));
-      expectLexical("(()()))",                   newScm(false));
-      expectLexical(" ( () ())) ",               newScm(false));
-      expectLexical("((()())",                   newScm(false));
+      expect("(()()))", JhwScm.FAILURE_LEXICAL,                   newScm(false));
+      expect(" ( () ())) ", JhwScm.FAILURE_LEXICAL,               newScm(false));
+      expect("((()())", JhwScm.FAILURE_LEXICAL,                   newScm(false));
 
       // improper list experssions: yay!
       expect("(1 . 2)",      "(1 . 2)",   newScm(false));
@@ -1032,6 +1032,30 @@ public class TestScm
       }
    }
 
+   private static void expectLexical ( final String expr )
+      throws java.io.IOException
+   {
+      expect(expr,JhwScm.FAILURE_LEXICAL);
+   }
+
+   private static void expectLexical ( final String expr, final JhwScm scm )
+      throws java.io.IOException
+   {
+      expect(expr,JhwScm.FAILURE_LEXICAL,scm);
+   }
+
+   private static void expectSemantic ( final String expr )
+      throws java.io.IOException
+   {
+      expect(expr,JhwScm.FAILURE_SEMANTIC);
+   }
+
+   private static void expectSemantic ( final String expr, final JhwScm scm )
+      throws java.io.IOException
+   {
+      expect(expr,JhwScm.FAILURE_SEMANTIC);
+   }
+
    private static void expectSuccess ( final String expr, 
                                        final String expect,
                                        JhwScm       scm )
@@ -1069,31 +1093,6 @@ public class TestScm
          System.out.print("\"");
          System.out.println("\"");
       }
-   }
-
-
-   private static void expectLexical ( final String expr )
-      throws java.io.IOException
-   {
-      expect(expr,JhwScm.FAILURE_LEXICAL);
-   }
-
-   private static void expectLexical ( final String expr, final JhwScm scm )
-      throws java.io.IOException
-   {
-      expect(expr,JhwScm.FAILURE_LEXICAL,scm);
-   }
-
-   private static void expectSemantic ( final String expr )
-      throws java.io.IOException
-   {
-      expect(expr,JhwScm.FAILURE_SEMANTIC);
-   }
-
-   private static void expectSemantic ( final String expr, final JhwScm scm )
-      throws java.io.IOException
-   {
-      expect(expr,JhwScm.FAILURE_SEMANTIC);
    }
 
    private static void expectFailure ( final String expr, 
