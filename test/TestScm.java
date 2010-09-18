@@ -74,9 +74,12 @@ public class TestScm
       assertEquals(0,             newScm(true).input(new byte[1],1,0));
       assertEquals(0,             newScm(true).output(new byte[0],0,0));
       
-      if ( !DEBUG )
       {
-         assertEquals(-1,            newScm(true).output(new byte[5],2,3));
+         final int code = newScm(true).output(new byte[5],2,3);
+         if ( -1 != code && 0 != code )
+         {
+            throw new RuntimeException("output() out of spec");
+         }
       }
    }
 
