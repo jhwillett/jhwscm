@@ -1,0 +1,51 @@
+make[1]: Entering directory `/home/jwillett/jhwscm'
+test:   TestScm
+host:   little-man
+date:   Sat Sep 18 13:07:50 PDT 2010
+uptime:  13:07:50 up 11 days,  6:31,  2 users,  load average: 0.15, 0.14, 0.10
+time java -cp build:build/junit-4.8.2.jar TestScm
+global:
+  numCycles:        315862
+  numCons:          416287
+  numInput:         5586
+  numOutput:        1254
+  reg.numSet:       2470287
+  reg.numGet:       4528347
+  reg.maxAddr:      31
+  heap.numSet:      319024
+  heap.numGet:      957824
+  heap.maxAddr:     6143
+  cache.numHits:    3016009
+  cache.numMisses:  52744
+  cache.numFlush:   19939
+  cache.numDrop:    32805
+  cache.numLoad:    59864
+  cacheTop.numSet:  1519479
+  cacheTop.numGet:  1556394
+  cacheTop.maxAddr: 6143
+  reg   ops:        6998634
+  cache ops:        3075873
+  heap  ops:        1276848
+  reg   ops/cell:   225762.38709677418
+  cache ops/cell:   500.7118671658799
+  heap  ops/cell:   207.85414292690868
+  ops   reg/cache:  2.2753325641208204
+  ops   cache/heap: 2.40895783993083
+  ALG:                       4
+  LINE_SIZE:                 16
+  LINE_COUNT:                16
+  PROPERLY_TAIL_RECURSIVE:   true
+  CLEVER_TAIL_CALL_MOD_CONS: true
+  CLEVER_STACK_RECYCLING:    true
+  CLEVER_STACK_RECYCLING:    true
+  cache hit/op:              0.98281256262723
+  cache write/miss:          0.3780335204004247
+numExpects: 540
+  happy:    443
+  unhappy:  97
+numBatches: 10
+
+real	0m2.619s
+user	0m2.621s
+sys	0m0.075s
+make[1]: Leaving directory `/home/jwillett/jhwscm'

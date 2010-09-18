@@ -1,0 +1,11 @@
+make[1]: Entering directory `/home/jwillett/jhwscm'
+test:   TestMem
+host:   little-man
+date:   Sat Sep 18 13:07:49 PDT 2010
+uptime:  13:07:49 up 11 days,  6:31,  2 users,  load average: 0.15, 0.14, 0.10
+time java -cp build:build/junit-4.8.2.jar TestMem
+
+real	0m0.343s
+user	0m0.301s
+sys	0m0.065s
+make[1]: Leaving directory `/home/jwillett/jhwscm'

@@ -4,6 +4,7 @@
 SHELL     := bash
 
 DESTDIR   ?= build
+LOGDIR    ?= log
 SRC       += $(wildcard src/*.java)
 
 # Maintaining TESTS explicitly so I can control ordering.
@@ -17,14 +18,16 @@ MD5-junit-4.8.2.jar  := 8a498c3d820db50cc7255d8c46c1ebd1
 
 DEPS := $(LIBS:%=$(DESTDIR)/%)
 
+
 .PHONY: test $(TESTS:test/%.java=test-%)
 test: $(TESTS:test/%.java=test-%)
-$(TESTS:test/%.java=test-%): test-%: $(DESTDIR)/%.log
-$(TESTS:test/%.java=$(DESTDIR)/%.log): $(DESTDIR)/%.log: Makefile
-$(TESTS:test/%.java=$(DESTDIR)/%.log): $(DESTDIR)/%.log: $(DESTDIR)/build.ok
-$(TESTS:test/%.java=$(DESTDIR)/%.log): $(DESTDIR)/%.log:
+$(TESTS:test/%.java=test-%): test-%: $(LOGDIR)/%.log
+$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile
+$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build.ok
+$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
+	@mkdir -p $(dir $@)
 	$(MAKE) rawtest-$* 2>&1 | tee $@.tmp
-	mv $@.tmp $@
+	@mv $@.tmp $@
 
 .PHONY: rawtest $(TESTS:test/%.java=rawtest-%)
 rawtest: $(TESTS:test/%.java=rawtest-%)
