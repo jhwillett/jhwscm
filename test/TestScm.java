@@ -588,7 +588,7 @@ public class TestScm
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         report("fact simple:",scm.local);
+         //report("fact simple:",scm.local);
       }
       {
          final String help = 
@@ -609,7 +609,7 @@ public class TestScm
          expectSuccess("(fact 5)",  "120",    scm);
          expectSuccess("(fact 6)",  "720",    scm);
          expectSuccess("(fact 10)", "3628800",scm);
-         report("fact 2/ help:",scm.local);
+         //report("fact 2/ help:",scm.local);
       }
 
       {
@@ -653,7 +653,7 @@ public class TestScm
             // Takes like a minute...
             expectSuccess("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         report("fib:",scm.local);
+         //report("fib:",scm.local);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1207,7 +1207,7 @@ public class TestScm
       log(tag);
       log("  numCycles:        " + stats.numCycles);
       log("  numCons:          " + stats.numCons);
-      if ( false )
+      if ( true )
       {
          log("  numInput:         " + stats.numInput);
          log("  numOutput:        " + stats.numOutput);
@@ -1228,6 +1228,49 @@ public class TestScm
          log("  cacheTop.numSet:  " + stats.cacheTopStats.numSet);
          log("  cacheTop.numGet:  " + stats.cacheTopStats.numGet);
          log("  cacheTop.maxAddr: " + stats.cacheTopStats.maxAddr);
+      }
+
+      final int regOps   = stats.regStats.numGet + stats.regStats.numSet;
+      final int cacheOps = stats.cacheTopStats.numGet + stats.cacheTopStats.numSet;
+      final int heapOps  = stats.heapStats.numGet + stats.heapStats.numSet;
+
+      log("  reg   ops:        " + regOps);
+      if ( JhwScm.USE_CACHED_MEM ) 
+      {
+         log("  cache ops:        " + cacheOps);
+      }
+      log("  heap  ops:        " + heapOps);
+
+      log("  reg   ops/cell:   " + (1.0 * regOps / stats.regStats.maxAddr));
+      if ( JhwScm.USE_CACHED_MEM ) 
+      {
+         log("  cache ops/cell:   " + (1.0 * cacheOps / stats.cacheTopStats.maxAddr));
+      }
+      log("  heap  ops/cell:   " + (1.0 * heapOps / stats.heapStats.maxAddr));
+
+      if ( JhwScm.USE_CACHED_MEM ) 
+      {
+         if ( cacheOps > 0 )
+         {
+            log("  ops   reg/cache:  " + ( 1.0 * regOps / cacheOps));
+         }
+         if ( heapOps > 0 )
+         {
+            log("  ops   cache/heap: " + ( 1.0 * cacheOps / heapOps));
+         }
+      }
+      else
+      {
+         if ( heapOps > 0 )
+         {
+            log("  ops   reg/heap:   " + ( 1.0 * regOps / heapOps));
+         }
+      }
+
+      if ( JhwScm.USE_CACHED_MEM ) 
+      {
+         final int hm = stats.cacheStats.numHits + stats.cacheStats.numMisses;
+         log("  cache hit rate:   " + ( 1.0 * stats.cacheStats.numHits / hm));
       }
    }
 }

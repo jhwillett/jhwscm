@@ -8,17 +8,27 @@
  * All rights reserved.
  */
 
+import java.util.Random; // TODO: roll your own LCG
+
 public class MemCached implements Mem
 {
    // TODO: expose this policy to caller, be sure unit tests stress both
    private static final boolean TRACK_DIRTY = false;
 
-   private static final int ALG_DUMB = 0;
-   private static final int ALG_RAND = 1;
-   private static final int ALG_INC  = 2;
-   private static final int ALG      = ALG_DUMB;
+   private static final int ALG_NONE = 0;
+   private static final int ALG_DUMB = 1;
+   private static final int ALG_RAND = 2;
+   private static final int ALG_INC  = 3;
+   private static final int ALG      = ALG_INC;
 
-   private final Mem       main;
+   // Wow: ALG_RAND and ALG_INC are surprisingly effective.
+   //
+   // Naturally when I was in here first I expected this would end up
+   // as LRU.  Now, that may not be true.  Sure, LRU might be a little
+   // better, but ALG_INC is mindblowingly better than nothing and
+   // would be a much easier circuit to write.
+
+   private final Mem       mem;
    private final int       lineSize;
    private final int       lineCount;
    private final int[][]   lines;
@@ -26,6 +36,9 @@ public class MemCached implements Mem
    private final boolean[] dirties;
    private final Stats     global;
    private final Stats     local;
+
+   private final Random    rand;
+   private       int       next = 0;
 
    public static class Stats
    {
@@ -43,7 +56,7 @@ public class MemCached implements Mem
       this(main,lineSize,lineCount,null,null);
    }
 
-   public MemCached ( final Mem   main,
+   public MemCached ( final Mem   mem,
                       final int   lineSize, 
                       final int   lineCount,
                       final Stats global, 
@@ -57,14 +70,14 @@ public class MemCached implements Mem
       {
          throw new IllegalArgumentException("nonpos lineCount " + lineCount);
       }
-      if ( 0 != main.length()%lineSize )
+      if ( 0 != mem.length() % lineSize )
       {
          throw new IllegalArgumentException("nonmodulo lineSize " + 
                                             lineSize + 
                                             " vs " + 
-                                            main.length());
+                                            mem.length());
       }
-      this.main      = main;
+      this.mem       = mem;
       this.lineSize  = lineSize;
       this.lineCount = lineCount;
       this.lines     = new int[lineCount][];
@@ -81,15 +94,28 @@ public class MemCached implements Mem
             this.dirties[i] = false;
          }
       }
+      if ( ALG == ALG_RAND )
+      {
+         rand = new Random(12051973);
+      }
+      else
+      {
+         rand = null;
+      }
    }
 
    public int length ()
    {
-      return main.length();
+      return mem.length();
    }
 
    public void set ( final int addr, final int value )
    {
+      if ( ALG_NONE == ALG )
+      {
+         mem.set(addr,value);
+         return;
+      }
       final int root = addr / lineSize;
       final int off  = addr % lineSize;
       final int line = getRoot(root);
@@ -102,6 +128,10 @@ public class MemCached implements Mem
 
    public int get ( final int addr )
    {
+      if ( ALG_NONE == ALG )
+      {
+         return mem.get(addr);
+      }
       final int root  = addr / lineSize;
       final int off   = addr % lineSize;
       final int line  = getRoot(root);
@@ -116,7 +146,6 @@ public class MemCached implements Mem
       {
          if ( root == roots[i] )
          {
-            // TODO: LRU stuff?
             if ( null != local )  local.numHits++;
             if ( null != global ) global.numHits++;
             return i;
@@ -135,7 +164,13 @@ public class MemCached implements Mem
             line = 0;
             break;
          case ALG_RAND:
+            line = rand.nextInt(lineCount);
+            break;
          case ALG_INC:
+            line  = next;
+            next += 1;
+            next %= lineCount;
+            break;
          default:
             throw new RuntimeException("bogus ALG: " + ALG);
          }
@@ -168,7 +203,7 @@ public class MemCached implements Mem
       //log("  " + line + " <== " + addr );
       for ( int i = 0; i < lineSize; ++i )
       {
-         buf[i] = main.get(addr++);
+         buf[i] = mem.get(addr++);
       }
       roots[line] = root;
       if ( TRACK_DIRTY )
@@ -185,7 +220,7 @@ public class MemCached implements Mem
       //log("  " + line + " ==> " + addr );
       for ( int i = 0; i < lineSize; ++i )
       {
-         main.set(addr++,buf[i]);
+         mem.set(addr++,buf[i]);
       }
       if ( TRACK_DIRTY )
       {
