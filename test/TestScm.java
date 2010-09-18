@@ -216,54 +216,68 @@ public class TestScm
          batch(tests,REP_INDEPENDANT);
       }  
 
-
       // some lexical, rather than semantic, error case expectations
-      expect("()",SEMANTIC);
-      expect("\r(\t)\n",SEMANTIC);
-      expect("(", LEXICAL);
-      expect(" (  ", LEXICAL);
-      expect(")", LEXICAL);
-      expect("(()())",SEMANTIC);
-      expect("  ( ( )    ( ) )",SEMANTIC);
-      expect("(()()))",SEMANTIC);     // fails on expr before reaching extra ')'
-      expect(" ( () ())) ",SEMANTIC); // fails on expr before reaching extra ')'
-      expect("((()())", LEXICAL);
-      expect("(())",SEMANTIC);
+      {
+         final Object[][] tests = { 
+            { "()",               SEMANTIC },
+            { "\r(\t)\n",         SEMANTIC },
+            { "(",                LEXICAL  },
+            { " (  ",             LEXICAL  },
+            { ")",                LEXICAL  },
+            { "(()())",           SEMANTIC },
+            { "  ( ( )    ( ) )", SEMANTIC },
+            { "(()()))",          SEMANTIC }, // SEMANTIC before dangling ')'
+            { " ( () ())) ",      SEMANTIC }, // SEMANTIC before dangling ')'
+            { "((()())",          LEXICAL  },
+            { "(())",             SEMANTIC },
+         };
+         batch(tests,REP_INDEPENDANT);
+      }  
 
       expect("-",   "-",  newScm(false));
-      expect("-",   null);
       expect("-asd", "-asd",  newScm(false));
+      expect("-",   null);
       expect("-as",SEMANTIC);
       
-      expect("(a b c)",SEMANTIC);
-      expect("(a (b c))",SEMANTIC);
-      expect("((a b) c)",SEMANTIC);
-      expect("((a b c))",SEMANTIC);
-      expect("((a b) c", LEXICAL);
-      expect("((a b c)", LEXICAL);
+      {
+         final Object[][] tests = { 
+            { "(a b c)",          SEMANTIC },
+            { "(a (b c))",        SEMANTIC },
+            { "((a b) c)",        SEMANTIC },
+            { "((a b c))",        SEMANTIC },
+            { "((a b) c",          LEXICAL },
+            { "((a b c)",          LEXICAL },
+         };
+         batch(tests,REP_INDEPENDANT);
+      }  
 
-      expect("(a b c)",      "(a b c)",   newScm(false));
-      expect("(a (b c))",    "(a (b c))", newScm(false));
-      expect("((a b) c)",    "((a b) c)", newScm(false));
-      expect("((a b c))",    "((a b c))", newScm(false));
-      expect("((a)b)",       "((a) b)",   newScm(false));
-      expect("((a )b)",      "((a) b)",   newScm(false));
-      expect("((a ) b)",     "((a) b)",   newScm(false));
-      expect("( (a )b)",     "((a) b)",   newScm(false));
-      expect("( (a) b)",     "((a) b)",   newScm(false));
-      expect("( (a)b )",     "((a) b)",   newScm(false));
-      expect("((a b) c", LEXICAL,                  newScm(false));
-      expect("((a b c)", LEXICAL,                  newScm(false));
-      expect("()",           "()",        newScm(false));
-      expect("\r(\t)\n",     "()",        newScm(false));
-      expect("(", LEXICAL,                         newScm(false));
-      expect(" (  ", LEXICAL,                      newScm(false));
-      expect(")", LEXICAL,                         newScm(false));
-      expect("(()())",       "(() ())",   newScm(false));
-      expect(" ( ( ) ( ) )", "(() ())",   newScm(false));
-      expect("(()()))", LEXICAL,                   newScm(false));
-      expect(" ( () ())) ", LEXICAL,               newScm(false));
-      expect("((()())", LEXICAL,                   newScm(false));
+      {
+         final Object[][] tests = { 
+            { "(a b c)",      "(a b c)"    },
+            { "(a (b c))",    "(a (b c))"  },
+            { "((a b) c)",    "((a b) c)"  },
+            { "((a b c))",    "((a b c))"  },
+            { "((a)b)",       "((a) b)"    },
+            { "((a )b)",      "((a) b)"    },
+            { "((a ) b)",     "((a) b)"    },
+            { "( (a )b)",     "((a) b)"    },
+            { "( (a) b)",     "((a) b)"    },
+            { "( (a)b )",     "((a) b)"    },
+            { "((a b) c",     LEXICAL      },
+            { "((a b c)",     LEXICAL      },
+            { "()",           "()"         },
+            { "\r(\t)\n",     "()"         },
+            { "(",            LEXICAL      },
+            { " (  ",         LEXICAL      },
+            { ")",            LEXICAL      },
+            { "(()())",       "(() ())"    },
+            { " ( ( ) ( ) )", "(() ())"    },
+            { "(()()))",      LEXICAL      },
+            { " ( () ())) ",  LEXICAL      },
+            { "((()())",      LEXICAL      },
+         };
+         batch(tests,RE_INDEPENDANT);
+      }  
 
       // improper list experssions: yay!
       expect("(1 . 2)",      "(1 . 2)",   newScm(false));
@@ -1071,6 +1085,21 @@ public class TestScm
     *
     * If evaluate is false, uses instances initialized to just the
     * read-print loop.
+    *
+    * Special case: if the type.do_rep is false, and a test predicts a
+    * SEMANTIC error (which should only arise from evaluation), we
+    * instead declare that the test is expected to succeed with
+    * unspecified output value.
+    *
+    * Special cases can be icky: but the special case here is hoped to
+    * avoid a ton of special cases and needless distinctions and
+    * boilerplate where the actual tests are specified.
+    *
+    * YIKES, maybe not try to be so clever.  Sometimes inputs can have
+    * both semantic errors (in the first expression) *and* lexical
+    * errors (in some subsequent expression).
+    *
+    * Special case cancelled.  TODO: clean up this comment.
     */
    private static void batch ( final Object[][] tests, final BatchType type )
       throws java.io.IOException
