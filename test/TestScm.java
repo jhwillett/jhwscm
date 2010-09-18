@@ -20,6 +20,22 @@ public class TestScm
    private static final int LEXICAL  = JhwScm.FAILURE_LEXICAL;
    private static final int SEMANTIC = JhwScm.FAILURE_SEMANTIC;
 
+   private static class BatchType
+   {
+      final boolean reuse;
+      final boolean do_rep;
+      
+      BatchType ( final boolean reuse, final boolean do_rep )
+      {
+         this.reuse  = reuse;
+         this.do_rep = do_rep;
+      }
+   }
+   private static final BatchType REP_DEPENDANT   = new BatchType(true, true);
+   private static final BatchType REP_INDEPENDANT = new BatchType(false,true);
+   private static final BatchType RE_DEPENDANT    = new BatchType(true, false);
+   private static final BatchType RE_INDEPENDANT  = new BatchType(false,false);
+
    private static boolean DO_REP = true;
    private static boolean SILENT = true;
    private static boolean DEBUG  = false;
@@ -120,10 +136,10 @@ public class TestScm
             { expr + "\n" ,           expr },
             { "\t" + expr + "\t\r\n", expr },
          };
-         batch(tests,false,false);
-         batch(tests,false,true);
-         batch(tests,true,false);
-         batch(tests,true,true);
+         batch(tests,RE_INDEPENDANT);
+         batch(tests,RE_DEPENDANT);
+         batch(tests,REP_INDEPENDANT);
+         batch(tests,REP_DEPENDANT);
       }
 
 
@@ -140,10 +156,10 @@ public class TestScm
             { pair[0] + " " ,      pair[1] },
             { " " + pair[0] + " ", pair[1] },
          };
-         batch(tests,false,false);
-         batch(tests,false,true);
-         batch(tests,true,false);
-         batch(tests,true,true);
+         batch(tests,RE_INDEPENDANT);
+         batch(tests,RE_DEPENDANT);
+         batch(tests,REP_INDEPENDANT);
+         batch(tests,REP_DEPENDANT);
       }
 
       // first computation: even simple integer take nonzero cycles
@@ -175,15 +191,34 @@ public class TestScm
             { " #f",  "#f" },
             { "#x",   LEXICAL },
          };
-         batch(tests,false,false);
-         batch(tests,false,true);
-         batch(tests,true,false);
-         batch(tests,true,true);
+         batch(tests,RE_INDEPENDANT);
+         batch(tests,RE_DEPENDANT);
+         batch(tests,REP_INDEPENDANT);
+         batch(tests,REP_DEPENDANT);
       }
 
-      // unbound variables fail
-      expect("a",SEMANTIC);
-      expect("a1",SEMANTIC);
+      // variables are self-reading and self-printing, but unbound
+      // variables fail to evaluate
+      {
+         final Object[][] tests = { 
+            { "a",       "a"       },
+            { "a1",      "a1"      },
+            { "a_0-b.c", "a_0-b.c" },
+         };
+         batch(tests,RE_INDEPENDANT);
+         batch(tests,RE_DEPENDANT);
+      }      
+      {
+         final Object[][] tests = { 
+            { "a",  SEMANTIC },
+            { "a1", SEMANTIC },
+         };
+         ////batch(tests,false,true);
+         //batch(tests,true,true);
+         //batch(tests,REP_INDEPENDANT);
+         batch(tests,REP_DEPENDANT);
+      }  
+
 
       // some lexical, rather than semantic, error case expectations
       expect("()",SEMANTIC);
@@ -1037,9 +1072,7 @@ public class TestScm
     * read-eval-print loop.  Otherwise, uses instances initialized to
     * just the read-print loop.
     */
-   private static void batch ( final Object[][] tests, 
-                               final boolean    reuse,
-                               final boolean    evaluate )
+   private static void batch ( final Object[][] tests, final BatchType type )
       throws java.io.IOException
    {
       numBatches++;
@@ -1049,9 +1082,9 @@ public class TestScm
          final Object[] test   =         tests[i];
          final String   expr   = (String)test[0];
          final Object   result =         test[1];
-         if ( reuse || null == scm )
+         if ( type.reuse || null == scm )
          {
-            scm = newScm(evaluate);
+            scm = newScm(type.do_rep);
          }
          expect(expr,result,scm);
       }

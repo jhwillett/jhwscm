@@ -1,4 +1,4 @@
-4e62e729af920c3ceb1869289096b27c  Makefile
+daaaf9a250f89acc0b409515113afb79  Makefile
 9867e0d4ab80923c958166416456c002  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
@@ -7,10 +7,9 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 3bca3ed0f4a478640a4e8ddb3002c5ce  test/TestMem.java
-c3e8f006ccbec288378bbdbdcaec0ac5  test/TestScm.java
+9e0c6129df1cb8e9835a92478b6b4e1d  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestMem
 host:   little-man
-java -cp build:build/junit-4.8.2.jar TestMem
 make[1]: Leaving directory `/home/jwillett/jhwscm'

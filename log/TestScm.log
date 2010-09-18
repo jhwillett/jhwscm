@@ -1,4 +1,4 @@
-4e62e729af920c3ceb1869289096b27c  Makefile
+daaaf9a250f89acc0b409515113afb79  Makefile
 9867e0d4ab80923c958166416456c002  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
@@ -7,39 +7,38 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 3bca3ed0f4a478640a4e8ddb3002c5ce  test/TestMem.java
-c3e8f006ccbec288378bbdbdcaec0ac5  test/TestScm.java
+9e0c6129df1cb8e9835a92478b6b4e1d  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
-java -cp build:build/junit-4.8.2.jar TestScm
 global:
-  numCycles:        319759
-  numCons:          443101
-  numInput:         6411
-  numOutput:        1755
-  reg.numSet:       2551172
-  reg.numGet:       4630483
+  numCycles:        319901
+  numCons:          443911
+  numInput:         6431
+  numOutput:        1775
+  reg.numSet:       2553624
+  reg.numGet:       4633598
   reg.maxAddr:      31
-  heap.numSet:      374288
-  heap.numGet:      1048928
+  heap.numSet:      375920
+  heap.numGet:      1051584
   heap.maxAddr:     6143
-  cache.numHits:    3237342
-  cache.numMisses:  56198
-  cache.numFlush:   23393
+  cache.numHits:    3243988
+  cache.numMisses:  56300
+  cache.numFlush:   23495
   cache.numDrop:    32805
-  cache.numLoad:    65558
-  cacheTop.numSet:  1675629
-  cacheTop.numGet:  1627271
+  cache.numLoad:    65724
+  cacheTop.numSet:  1680235
+  cacheTop.numGet:  1629477
   cacheTop.maxAddr: 6143
-  reg   ops:        7181655
-  cache ops:        3302900
-  heap  ops:        1423216
-  reg   ops/cell:   231666.29032258064
-  cache ops/cell:   537.6688914211297
-  heap  ops/cell:   231.68093765261273
-  ops   reg/cache:  2.1743482999788064
-  ops   cache/heap: 2.3207299524457286
+  reg   ops:        7187222
+  cache ops:        3309712
+  heap  ops:        1427504
+  reg   ops/cell:   231845.87096774194
+  cache ops/cell:   538.7777958652124
+  heap  ops/cell:   232.37896793097835
+  ops   reg/cache:  2.1715551081181688
+  ops   cache/heap: 2.3185308062184062
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -47,10 +46,10 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.982936900720805
-  cache write/miss:          0.4162603651375494
-numExpects: 741
-  happy:    641
+  cache hit/op:              0.9829408827350825
+  cache write/miss:          0.41731793960923624
+numExpects: 747
+  happy:    647
   unhappy:  100
-numBatches: 44
+numBatches: 47
 make[1]: Leaving directory `/home/jwillett/jhwscm'
