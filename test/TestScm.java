@@ -207,14 +207,14 @@ public class TestScm
       // improper list experssions: yay!
       expect("(1 . 2)",      "(1 . 2)",   newScm(false));
       expect("(1 2 . 3)",    "(1 2 . 3)", newScm(false));
-      expectLexical("(1 . 2 3)",                 newScm(false));
-      expectLexical("( . 2 3)",                  newScm(false));
-      expectLexical("(1 . )",                    newScm(false));
-      expectLexical("(1 .)",                     newScm(false));
-      expectLexical("(1 . 2 3)");
-      expectLexical("( . 2 3)");
-      expectLexical("(1 . )");
-      expectLexical("(1 .)");
+      expect("(1 . 2 3)", JhwScm.FAILURE_LEXICAL,  newScm(false));
+      expect("( . 2 3)", JhwScm.FAILURE_LEXICAL,   newScm(false));
+      expect("(1 . )", JhwScm.FAILURE_LEXICAL,   newScm(false));
+      expect("(1 .)", JhwScm.FAILURE_LEXICAL,   newScm(false));
+      expect("(1 . 2 3)",JhwScm.FAILURE_LEXICAL);
+      expect("( . 2 3)",JhwScm.FAILURE_LEXICAL);
+      expect("(1 . )",JhwScm.FAILURE_LEXICAL);
+      expect("(1 .)",JhwScm.FAILURE_LEXICAL);
 
       expect("(1 . ())",     "(1)",       newScm(false));
       expect("(1 .())",      "(1)",       newScm(false));
@@ -238,7 +238,7 @@ public class TestScm
       expect("( . 2 )",    "2",           newScm(false));
       expect("( . 2 )",    "2",           newScm(true));
       expect("( . () )",   "()",          newScm(false));
-      expectLexical("( . 2 3 )");
+      expect("( . 2 3 )",JhwScm.FAILURE_LEXICAL);
       expect("(. abc )",   "abc",         newScm(false));
 
       if ( false )
@@ -285,14 +285,14 @@ public class TestScm
          expect(pair[0] + " " ,      pair[1]);
          expect(" " + pair[0] + " ", pair[1]);
       }
-      expectLexical("#");
-      expectLexical("#\\");
-      expectLexical("# ");
-      expectLexical("#\n");
+      expect("#",JhwScm.FAILURE_LEXICAL);
+      expect("#\\",JhwScm.FAILURE_LEXICAL);
+      expect("# ",JhwScm.FAILURE_LEXICAL);
+      expect("#\n",JhwScm.FAILURE_LEXICAL);
       if ( false )
       {
-         expectLexical("#\\spac");
-         expectLexical("#\\asdf");
+         expect("#\\spac",JhwScm.FAILURE_LEXICAL);
+         expect("#\\asdf",JhwScm.FAILURE_LEXICAL);
       }
 
       // string literals expressions are self-evaluating and
@@ -310,8 +310,8 @@ public class TestScm
          expect(expr + "\n" ,           expr);
          expect("\t" + expr + "\t\r\n", expr);
       }
-      expectLexical("\"");
-      expectLexical("\"hello");
+      expect("\"",JhwScm.FAILURE_LEXICAL);
+      expect("\"hello",JhwScm.FAILURE_LEXICAL);
 
       // Check some basic symbol bindings are preset for us which
       // would enable our upcoming (eval) tests...
@@ -1030,18 +1030,6 @@ public class TestScm
          expectFailure(expr,scm,((Integer)result).intValue());
 
       }
-   }
-
-   private static void expectLexical ( final String expr )
-      throws java.io.IOException
-   {
-      expect(expr,JhwScm.FAILURE_LEXICAL);
-   }
-
-   private static void expectLexical ( final String expr, final JhwScm scm )
-      throws java.io.IOException
-   {
-      expect(expr,JhwScm.FAILURE_LEXICAL,scm);
    }
 
    private static void expectSemantic ( final String expr )
