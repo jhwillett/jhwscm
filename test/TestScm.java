@@ -1196,22 +1196,38 @@ public class TestScm
       }
    }
 
+   private static void log ( final Object msg )
+   {
+      System.out.println(msg);
+   }
+
    private static void report ( final String tag, final JhwScm.Stats stats )
    {
       if ( !JhwScm.PROFILE || !REPORT ) return;
-      System.out.println(tag);
-      System.out.println("  numCycles:        " + stats.numCycles);
-      System.out.println("  numCons:          " + stats.numCons);
+      log(tag);
+      log("  numCycles:        " + stats.numCycles);
+      log("  numCons:          " + stats.numCons);
       if ( false )
       {
-         System.out.println("  numInput:         " + stats.numInput);
-         System.out.println("  numOutput:        " + stats.numOutput);
+         log("  numInput:         " + stats.numInput);
+         log("  numOutput:        " + stats.numOutput);
       }
-      System.out.println("  heap.numSet:      " + stats.heapStats.numSet);
-      System.out.println("  heap.numGet:      " + stats.heapStats.numGet);
-      System.out.println("  heap.maxAddr:     " + stats.heapStats.maxAddr);
-      System.out.println("  reg.numSet:       " + stats.regStats.numSet);
-      System.out.println("  reg.numGet:       " + stats.regStats.numGet);
-      System.out.println("  reg.maxAddr:      " + stats.regStats.maxAddr);
+      log("  reg.numSet:       " + stats.regStats.numSet);
+      log("  reg.numGet:       " + stats.regStats.numGet);
+      log("  reg.maxAddr:      " + stats.regStats.maxAddr);
+      log("  heap.numSet:      " + stats.heapStats.numSet);
+      log("  heap.numGet:      " + stats.heapStats.numGet);
+      log("  heap.maxAddr:     " + stats.heapStats.maxAddr);
+      if ( JhwScm.USE_CACHED_MEM ) 
+      {
+         log("  cache.numHits:    " + stats.cacheStats.numHits);
+         log("  cache.numMisses:  " + stats.cacheStats.numMisses);
+         log("  cache.numFlush:   " + stats.cacheStats.numFlush);
+         log("  cache.numDrop:    " + stats.cacheStats.numDrop);
+         log("  cache.numLoad:    " + stats.cacheStats.numLoad);
+         log("  cacheTop.numSet:  " + stats.cacheTopStats.numSet);
+         log("  cacheTop.numGet:  " + stats.cacheTopStats.numGet);
+         log("  cacheTop.maxAddr: " + stats.cacheTopStats.maxAddr);
+      }
    }
 }

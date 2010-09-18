@@ -45,7 +45,7 @@ import java.util.Random; // TODO: this doesn't belong here
 
 public class JhwScm
 {
-   public static final boolean PROFILE                   = false;
+   public static final boolean PROFILE                   = true;
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
@@ -57,7 +57,7 @@ public class JhwScm
 
    public static final boolean USE_CACHED_MEM            = true;
    public static final int     LINE_SIZE                 = 64;
-   public static final int     LINE_COUNT                = 1;
+   public static final int     LINE_COUNT                = 16;
 
    public static final int     SUCCESS          =  0;
    public static final int     INCOMPLETE       = -1;
@@ -76,12 +76,14 @@ public class JhwScm
 
    public static class Stats
    {
-      public final MemStats.Stats heapStats  = new MemStats.Stats();
-      public final MemStats.Stats regStats   = new MemStats.Stats();
-      public       int            numCycles  = 0;
-      public       int            numCons    = 0;
-      public       int            numInput   = 0;
-      public       int            numOutput  = 0;
+      public final MemStats.Stats  heapStats     = new MemStats.Stats();
+      public final MemStats.Stats  regStats      = new MemStats.Stats();
+      public final MemCached.Stats cacheStats    = new MemCached.Stats();
+      public final MemStats.Stats  cacheTopStats = new MemStats.Stats();
+      public       int             numCycles     = 0;
+      public       int             numCons       = 0;
+      public       int             numInput      = 0;
+      public       int             numOutput     = 0;
    }
 
    public static final Stats global = new Stats();
@@ -130,7 +132,23 @@ public class JhwScm
       }
       if ( USE_CACHED_MEM )
       {
-         mem = new MemCached(mem,LINE_SIZE,LINE_COUNT);
+         final MemCached.Stats glo;
+         final MemCached.Stats loc;
+         if ( PROFILE )
+         {
+            glo = global.cacheStats;
+            loc = local.cacheStats;
+         }
+         else
+         {
+            glo = null;
+            loc = null;
+         }
+         mem = new MemCached(mem,LINE_SIZE,LINE_COUNT,glo,loc);
+         if ( PROFILE )
+         {
+            mem = new MemStats(mem,global.cacheTopStats,local.cacheTopStats);
+         }
       }
       this.heap = mem;
 

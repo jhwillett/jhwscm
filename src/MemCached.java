@@ -19,10 +19,30 @@ public class MemCached implements Mem
    private final int[][]   lines;
    private final int[]     roots;
    private final boolean[] dirties;
+   public  final Stats     global;
+   public  final Stats     local;
 
-   public MemCached ( final Mem main,
-                      final int lineSize, 
-                      final int lineCount )
+   public static class Stats
+   {
+      public int numHits   = 0;
+      public int numMisses = 0;
+      public int numFlush  = 0;
+      public int numDrop   = 0;
+      public int numLoad   = 0;
+   }
+
+   public MemCached ( final Mem   main,
+                      final int   lineSize, 
+                      final int   lineCount )
+   {
+      this(main,lineSize,lineCount,null,null);
+   }
+
+   public MemCached ( final Mem   main,
+                      final int   lineSize, 
+                      final int   lineCount,
+                      final Stats global, 
+                      final Stats local )
    {
       if ( lineSize <= 0 )
       {
@@ -45,6 +65,8 @@ public class MemCached implements Mem
       this.lines     = new int[lineCount][];
       this.roots     = new int[lineCount];
       this.dirties   = TRACK_DIRTY ? new boolean[lineCount] : null;
+      this.local     = local;
+      this.global    = global;
       for ( int i = 0; i < lineCount; ++i )
       {
          this.lines[i]      = new int[lineSize];
@@ -63,7 +85,6 @@ public class MemCached implements Mem
 
    public void set ( final int addr, final int value )
    {
-      //log("set:     " + addr + "     " + value);
       final int root = addr / lineSize;
       final int off  = addr % lineSize;
       final int line = getRoot(root);
@@ -80,7 +101,6 @@ public class MemCached implements Mem
       final int off   = addr % lineSize;
       final int line  = getRoot(root);
       final int value = lines[line][off];
-      //log("get:     " + addr + "     " + value);
       return value;
    }
 
@@ -92,7 +112,8 @@ public class MemCached implements Mem
          if ( root == roots[i] )
          {
             // TODO: LRU stuff?
-            //log("  hit:   " + root + " in   " + i);
+            if ( null != local )  local.numHits++;
+            if ( null != global ) global.numHits++;
             return i;
          }
          if ( -1 == roots[i] )
@@ -106,21 +127,22 @@ public class MemCached implements Mem
          line = 0; // TODO: LRU stuff?
          if ( !TRACK_DIRTY || dirties[line] )
          {
-            //log("  flush: " + roots[line] + " from " + line);
             flushLine(line);
+            if ( null != local )  local.numFlush++;
+            if ( null != global ) global.numFlush++;
          }         
          else
          {
-            //log("  drop: " + roots[line] + " from " + line);
+            if ( null != local )  local.numDrop++;
+            if ( null != global ) global.numDrop++;
          }
-      }
-      else
-      {
-         //log("  first-use: " + line);
+         if ( null != local )  local.numMisses++;
+         if ( null != global ) global.numMisses++;
       }
 
-      //log("  load:  " + root + " to   " + line);
       loadLine(line,root);
+      if ( null != local )  local.numLoad++;
+      if ( null != global ) global.numLoad++;
 
       return line;
    }
