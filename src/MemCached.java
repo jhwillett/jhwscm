@@ -12,13 +12,13 @@ import java.util.Random; // TODO: roll your own LCG
 
 public class MemCached implements Mem
 {
-   private static final boolean TRACK_DIRTY = true;
+   private static final int     ALG_NONE    = 0;
+   private static final int     ALG_DUMB    = 1;
+   private static final int     ALG_RAND    = 2;
+   private static final int     ALG_INC     = 3;
 
-   private static final int ALG_NONE = 0;
-   private static final int ALG_DUMB = 1;
-   private static final int ALG_RAND = 2;
-   private static final int ALG_INC  = 3;
-   private static final int ALG      = ALG_INC;
+   private static final boolean TRACK_DIRTY = true;
+   private static final int     ALG         = ALG_INC;
 
    // Wow: ALG_RAND and ALG_INC are surprisingly effective.
    //
@@ -26,6 +26,48 @@ public class MemCached implements Mem
    // as LRU.  Now, that may not be true.  Sure, LRU might be a little
    // better, but ALG_INC is mindblowingly better than nothing and
    // would be a much easier circuit to write.
+   //
+   // I think that ALG_INC, after at least the initial cache
+   // population is established, works out to a replacement policy of
+   // "oldest".  I can't recall texts discussing that one: "least
+   // recently used" is always the media darling.
+   // 
+   // But "oldest" gives some very satisfactory results for such a
+   // minimal implementation, and it has me charmed.
+   // 
+   // Wikipedia at http://en.wikipedia.org/wiki/Cache_algorithms only
+   // lists:
+   //
+   //   * 1.1 Belady's Algorithm
+   //   * 1.2 Least Recently Used
+   //   * 1.3 Most Recently Used
+   //   * 1.4 Pseudo-LRU
+   //   * 1.5 Random Replacement
+   //   * 1.6 Segmented LRU
+   //   * 1.7 2-Way Set Associative
+   //   * 1.8 Direct-mapped cache
+   //   * 1.9 Least-Frequently Used
+   //   * 1.10 Adaptive Replacement Cache
+   //   * 1.11 Multi Queue Caching Algorithm
+   // 
+   // I read the unfamiliar ones: none of them is "oldest".  Huh.
+   // Maybe I just discovered something novel and useful that is below
+   // the entire field's radar.
+   //
+   // Ah, no dice:
+   //
+   //  http://en.wikipedia.org/wiki/Page_replacement_algorithm
+   //
+   // Includes:
+   //
+   //   The simplest page-replacement algorithm is a FIFO
+   //   algorithm. The first-in, first-out (FIFO) page replacement
+   //   algorithm is a low-overhead algorithm that requires little
+   //   book-keeping on the part of the operating system.
+   //
+   // Funny how "Cache Algorithms" and "Page Replacement Algorithms"
+   // are such divergant articles.  Might be worth studying both, see
+   // what the deal is w/ page replacement that I'm not familiar with.
 
    private final Mem       mem;
    private final int       lineSize;
