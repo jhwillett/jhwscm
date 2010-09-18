@@ -59,6 +59,7 @@ public class TestMem
 
       test(new MemCached(new MemSimple(256),1,2));
       test(new MemCached(new MemSimple(256),2,1));    // fails!
+      test(new MemCached(new MemSimple(256),2,2));    // fails!
       test(new MemCached(new MemSimple(256),1,4));
       //test(new MemCached(new MemSimple(256),4,1));    // fails
       test(new MemCached(new MemSimple(256),1,8));
@@ -85,12 +86,11 @@ public class TestMem
 
    private static void test ( final Mem mem )
    {
-      Random rand = null;
+      log("mem:      " + mem);
 
       final int length = mem.length();
-      //log("memid " + memid + ":");
-      log("mem:    " + mem);
       log("  length: " + length);
+
       for ( int addr = 0; addr < length; ++addr )
       {
          final int value1 = length-addr;
@@ -111,6 +111,7 @@ public class TestMem
          assertEquals("addr " + addr,value1,value2);
       }
 
+      Random rand = null;
       rand = new Random(4321);
       final int[] addrs = new int[Math.min(128,length)];
       for ( int i = 0; i < addrs.length; ++i )

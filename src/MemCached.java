@@ -92,7 +92,7 @@ public class MemCached implements Mem
          if ( root == roots[i] )
          {
             // TODO: LRU stuff?
-            ////log("  hit:   " + root + " in   " + i);
+            //log("  hit:   " + root + " in   " + i);
             return i;
          }
          if ( -1 == roots[i] )
@@ -116,7 +116,7 @@ public class MemCached implements Mem
       }
       else
       {
-         log("  first-use: " + line);
+         //log("  first-use: " + line);
       }
 
       //log("  load:  " + root + " to   " + line);
@@ -128,7 +128,8 @@ public class MemCached implements Mem
    private void loadLine ( final int line, final int root )
    {
       final int[]  buf = lines[line];
-      int         addr = root;
+      int         addr = root * lineSize;
+      log("  " + line + " <== " + addr );
       for ( int i = 0; i < lineSize; ++i )
       {
          buf[i] = main.get(addr++);
@@ -143,7 +144,9 @@ public class MemCached implements Mem
    private void flushLine ( final int line )
    {
       final int[]  buf = lines[line];
-      int         addr = roots[line];
+      final int   root = roots[line];
+      int         addr = root * lineSize;
+      log("  " + line + " ==> " + addr );
       for ( int i = 0; i < lineSize; ++i )
       {
          main.set(addr++,buf[i]);
