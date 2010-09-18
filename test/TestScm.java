@@ -38,7 +38,7 @@ public class TestScm
 
    private static boolean DO_REP = true;
    private static boolean SILENT = true;
-   private static boolean DEBUG  = false;
+   private static boolean DEBUG  = false; // TODO: not tried in a while!
 
    private static boolean REPORT = true;
 
@@ -1135,23 +1135,28 @@ public class TestScm
          scm = newScm(true);
       }
 
-      final int icode;
       {
-         final byte[] buf = expr.toString().getBytes();
-         int off  = 0;
-         int code = JhwScm.SUCCESS;
-         while ( off < buf.length )
+         final byte[] input_buf = expr.toString().getBytes();
+         int input_off = 0;
+
+         final byte[] output_buf = new byte[debugRand.nextInt(13)];
+         int output_off = 0;
+         
+         while ( input_off < input_buf.length )
          {
-            final int len = buf.length - off;
-            final int n   = scm.input(buf,off,len);
-            if ( n < 0 )
+            //log("input_off: " + input_off + " / " + input_buf.length);
+            final int icode = scm.input(input_buf,
+                                        input_off,
+                                        input_buf.length - input_off);
+            if ( 0 <= icode )
             {
-               code = n;
-               break;
+               input_off += icode;
             }
-            off += n;
+            else
+            {
+               throw new RuntimeException("input() out of spec: " + icode);
+            }
          }
-         icode = code;
       }
 
       final int dcode = scm.drive(-1);
@@ -1187,9 +1192,6 @@ public class TestScm
          ocode = code;
       }
 
-      assertEquals("input failure on \"" + expr + "\":",
-                   JhwScm.SUCCESS,
-                   icode);
       assertEquals("output failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    ocode);

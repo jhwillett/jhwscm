@@ -7,7 +7,7 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 3bca3ed0f4a478640a4e8ddb3002c5ce  test/TestMem.java
-32db5798fab118ed6625769f8539dd2d  test/TestScm.java
+89d769c30c14180dd9900f407c6989a1  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
@@ -18,7 +18,7 @@ global:
   numInput:         6430
   numOutput:        1788
   reg.numSet:       2551650
-  reg.numGet:       4631726
+  reg.numGet:       4631729
   reg.maxAddr:      31
   heap.numSet:      374640
   heap.numGet:      1049360
@@ -31,13 +31,13 @@ global:
   cacheTop.numSet:  1676045
   cacheTop.numGet:  1628080
   cacheTop.maxAddr: 6143
-  reg   ops:        7183376
+  reg   ops:        7183379
   cache ops:        3304125
   heap  ops:        1424000
-  reg   ops/cell:   231721.8064516129
+  reg   ops/cell:   231721.90322580645
   cache ops/cell:   537.8683053882468
   heap  ops/cell:   231.80856259156764
-  ops   reg/cache:  2.1740630272765102
+  ops   reg/cache:  2.1740639352324744
   ops   cache/heap: 2.3203125
   ALG:                       4
   LINE_SIZE:                 16
