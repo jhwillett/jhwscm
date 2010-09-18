@@ -26,6 +26,11 @@ public class TestScm
 
    private static boolean REPORT = true;
 
+   private static int numTests        = 0;
+   private static int numBatches      = 0;
+   private static int numHappyTests   = 0;
+   private static int numUnhappyTests = 0;
+
    private static JhwScm newScm ( final boolean do_rep )
    {
       return new JhwScm(do_rep,SILENT,DEBUG);
@@ -122,10 +127,13 @@ public class TestScm
       };
       for ( final String[] pair : tweakyInts )
       {
-         expect(pair[0],             pair[1]);
-         expect(" " + pair[0],       pair[1]);
-         expect(pair[0] + " " ,      pair[1]);
-         expect(" " + pair[0] + " ", pair[1]);
+         final Object[][] tests = { 
+            { pair[0],             pair[1] },
+            { " " + pair[0],       pair[1] },
+            { pair[0] + " " ,      pair[1] },
+            { " " + pair[0] + " ", pair[1] },
+         };
+         batch(tests,false,true);
       }
 
       // first computation: even simple integer take nonzero cycles
@@ -991,7 +999,46 @@ public class TestScm
       // Weird.  So is it or is it not a symbol?
 
       report("global:",JhwScm.global);
+
+      log("numTests:   " + numTests);
+      log("  happy:    " + numHappyTests);
+      log("  unhappy:  " + numUnhappyTests);
+      log("numBatches: " + numBatches);
    }
+
+   /**
+    * Expects tests to be an array of pairs of arguments suitable for
+    * expect(expr,result,scm).
+    *
+    * Runs the tests in sequence.
+    *
+    * If reuse is false, runs each test with a new JhwScm instance,
+    * otherwise a single JhwScm is reused for all tests.
+    *
+    * If evaluate is true, uses JhwScm instances initialized to the
+    * read-eval-print loop.  Otherwise, uses instances initialized to
+    * just the read-print loop.
+    */
+   private static void batch ( final Object[][] tests, 
+                               final boolean    reuse,
+                               final boolean    evaluate )
+      throws java.io.IOException
+   {
+      numBatches++;
+      JhwScm scm = null;
+      for ( int i = 0; i < tests.length; ++i )
+      {
+         final Object[] test   =         tests[i];
+         final String   expr   = (String)test[0];
+         final Object   result =         test[1];
+         if ( reuse || null == scm )
+         {
+            scm = newScm(evaluate);
+         }
+         expect(expr,result,scm);
+      }
+   }
+
 
    /**
     * If result is null, we expect driving to succeed but are
@@ -1024,14 +1071,16 @@ public class TestScm
                                 final JhwScm scm )
       throws java.io.IOException
    {
+      numTests++;
       if ( null == result || result instanceof String)
       {
+         numHappyTests++;
          expectSuccess(expr,(String)result,scm);
       }
       else
       {
+         numUnhappyTests++;
          expectFailure(expr,scm,((Integer)result).intValue());
-
       }
    }
 
