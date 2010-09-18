@@ -12,8 +12,7 @@ import java.util.Random; // TODO: roll your own LCG
 
 public class MemCached implements Mem
 {
-   // TODO: expose this policy to caller, be sure unit tests stress both
-   private static final boolean TRACK_DIRTY = false;
+   private static final boolean TRACK_DIRTY = true;
 
    private static final int ALG_NONE = 0;
    private static final int ALG_DUMB = 1;

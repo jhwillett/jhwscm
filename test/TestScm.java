@@ -1270,7 +1270,8 @@ public class TestScm
       if ( JhwScm.USE_CACHED_MEM ) 
       {
          final int hm = stats.cacheStats.numHits + stats.cacheStats.numMisses;
-         log("  cache hit rate:   " + ( 1.0 * stats.cacheStats.numHits / hm));
+         log("  cache hit/op:     " + ( 1.0 * stats.cacheStats.numHits / hm));
+         log("  cache write/miss: " + ( 1.0 * stats.cacheStats.numFlush / stats.cacheStats.numMisses));
       }
    }
 }
