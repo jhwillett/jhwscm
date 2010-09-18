@@ -1267,6 +1267,7 @@ public class TestScm
          }
       }
 
+      log("  ALG:                       " + MemCached.ALG);
       log("  LINE_SIZE:                 " + JhwScm.LINE_SIZE);
       log("  LINE_COUNT:                " + JhwScm.LINE_COUNT);
       log("  PROPERLY_TAIL_RECURSIVE:   " + JhwScm.PROPERLY_TAIL_RECURSIVE);

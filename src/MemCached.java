@@ -18,8 +18,8 @@ public class MemCached implements Mem
    private static final int     ALG_INC     = 3;
    private static final int     ALG_CLOCK   = 4;
 
-   private static final boolean TRACK_DIRTY = true;
-   private static final int     ALG         = ALG_CLOCK;
+   public static final boolean TRACK_DIRTY = true;
+   public static final int     ALG         = ALG_CLOCK;
 
    // Wow: ALG_RAND and ALG_INC are surprisingly effective.
    //
@@ -85,7 +85,7 @@ public class MemCached implements Mem
    // serving as the clock hand.
    //
    // No, wait, that's not true.  They're saying Clock does the same
-   // general function as Second-chance.  I'm not doing Second-chance,
+   // general function as Second-Chance.  I'm not doing Second-Chance,
    // I'm definitely doing plain FIFO - but I am using the circular
    // buffer with a "hand" to do it.  So maybe full Clock would be an
    // easy extension.
@@ -97,6 +97,20 @@ public class MemCached implements Mem
    // when we need to free up a line, we look at the mark where the
    // hand is pointing.  If marked, we unmark it, advance the hand,
    // and keep looking.  If unmarked, we purge that line.
+   //
+   // I made a mistake in my first implementation of Clock.  Tests
+   // showed it to have *identical* cache performance to my FIFO, over
+   // a range of cache sizes.  I logged the hand's movement, and
+   // noticed it would always find a vulnerable line immediately, or
+   // it would loop around a full cycle, clearing all lineCount lines,
+   // before it found a vulnerable line.
+   //
+   // Turns out the get-out-of-jail-free marks need to be set on each
+   // access, not just on load.  My mistake.  The Wikipedia article
+   // calls these "reference bits", but the description of when they
+   // are set is presented earlier, under Not Recently Used.  The
+   // FIFO, Second-Chance, and Clock sections take that knowledge as
+   // read - my bad for skimming and assuming.
 
    private final Mem       mem;
    private final int       lineSize;
@@ -241,6 +255,10 @@ public class MemCached implements Mem
          {
             if ( null != local )  local.numHits++;
             if ( null != global ) global.numHits++;
+            if ( ALG_CLOCK == ALG )
+            {
+               getOutOfJailFree[i] = true;
+            }
             return i;
          }
          if ( -1 == roots[i] )
@@ -265,7 +283,6 @@ public class MemCached implements Mem
             next %= lineCount;
             break;
          case ALG_CLOCK:
-            int numSkips = 0;
             while ( true )
             {
                line  = next;
@@ -275,10 +292,8 @@ public class MemCached implements Mem
                {
                   break;
                }
-               numSkips++;
                getOutOfJailFree[line] = false;
             }
-            System.out.println("  numSkips: " + numSkips);
             break;
          default:
             throw new RuntimeException("bogus ALG: " + ALG);
