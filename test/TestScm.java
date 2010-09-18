@@ -120,12 +120,15 @@ public class TestScm
             { expr + "\n" ,           expr },
             { "\t" + expr + "\t\r\n", expr },
          };
+         batch(tests,false,false);
          batch(tests,false,true);
+         batch(tests,true,false);
+         batch(tests,true,true);
       }
 
 
-      // second content: tweakier integer expressions are
-      // self-evaluating but not self-printing.
+      // second content: tweakier integer expressions are self-reading
+      // and self-evaluating but not self-printing.
       final String[][] tweakyInts = { 
          { "007", "7" }, { "-007", "-7" }, {"-070", "-70" },
       };
@@ -137,7 +140,10 @@ public class TestScm
             { pair[0] + " " ,      pair[1] },
             { " " + pair[0] + " ", pair[1] },
          };
+         batch(tests,false,false);
          batch(tests,false,true);
+         batch(tests,true,false);
+         batch(tests,true,true);
       }
 
       // first computation: even simple integer take nonzero cycles
