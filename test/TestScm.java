@@ -26,10 +26,10 @@ public class TestScm
 
    private static boolean REPORT = true;
 
-   private static int numTests        = 0;
-   private static int numBatches      = 0;
-   private static int numHappyTests   = 0;
-   private static int numUnhappyTests = 0;
+   private static int numExpects        = 0;
+   private static int numBatches        = 0;
+   private static int numHappyExpects   = 0;
+   private static int numUnhappyExpects = 0;
 
    private static JhwScm newScm ( final boolean do_rep )
    {
@@ -1000,9 +1000,9 @@ public class TestScm
 
       report("global:",JhwScm.global);
 
-      log("numTests:   " + numTests);
-      log("  happy:    " + numHappyTests);
-      log("  unhappy:  " + numUnhappyTests);
+      log("numExpects: " + numExpects);
+      log("  happy:    " + numHappyExpects);
+      log("  unhappy:  " + numUnhappyExpects);
       log("numBatches: " + numBatches);
    }
 
@@ -1071,7 +1071,7 @@ public class TestScm
                                 final JhwScm scm )
       throws java.io.IOException
    {
-      numTests++;
+      numExpects++;
       if ( null == result || result instanceof String)
       {
          numHappyTests++;
