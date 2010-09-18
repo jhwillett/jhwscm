@@ -8,7 +8,7 @@
  * All rights reserved.
  */
 
-import java.util.Random; // TODO: roll your own LCG
+import java.util.Random; // TODO: roll your own LCG: or just bag ALG_RAND?
 
 public class MemCached implements Mem
 {

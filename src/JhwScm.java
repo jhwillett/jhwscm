@@ -45,17 +45,17 @@ import java.util.Random; // TODO: this doesn't belong here
 
 public class JhwScm
 {
-   public static final boolean PROFILE                   = true;
+   public static final boolean PROFILE                   = false;
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final boolean USE_PAGED_MEM             = true;
+   public static final boolean USE_PAGED_MEM             = false;
    public static final int     PAGE_SIZE                 = 1024;
-   public static final int     PAGE_COUNT                = 512;
+   public static final int     PAGE_COUNT                = 6; // need 512 unopt
 
-   public static final boolean USE_CACHED_MEM            = true;
+   public static final boolean USE_CACHED_MEM            = false;
    public static final int     LINE_SIZE                 = 16;
    public static final int     LINE_COUNT                = 16;
 
