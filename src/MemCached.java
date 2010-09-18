@@ -66,7 +66,7 @@ public class MemCached implements Mem
       //log("set:     " + addr + "     " + value);
       final int root = addr / lineSize;
       final int off  = addr % lineSize;
-      final int line = getRootIntoLine(root);
+      final int line = getRoot(root);
       lines[line][off] = value;
       if ( TRACK_DIRTY )
       {
@@ -78,24 +78,24 @@ public class MemCached implements Mem
    {
       final int root  = addr / lineSize;
       final int off   = addr % lineSize;
-      final int line  = getRootIntoLine(root);
+      final int line  = getRoot(root);
       final int value = lines[line][off];
       //log("get:     " + addr + "     " + value);
       return value;
    }
 
-   private int getRootIntoLine ( final int root )
+   private int getRoot ( final int root )
    {
       int line = -1;
       for ( int i = 0; i < lineCount; ++i )
       {
-         if ( root == this.roots[i] )
+         if ( root == roots[i] )
          {
             // TODO: LRU stuff?
             ////log("  hit:   " + root + " in   " + i);
             return i;
          }
-         if ( -1 == this.roots[i] )
+         if ( -1 == roots[i] )
          {
             line = i;
          }
@@ -107,10 +107,7 @@ public class MemCached implements Mem
          if ( !TRACK_DIRTY || dirties[line] )
          {
             //log("  flush: " + roots[line] + " from " + line);
-            for ( int i = 0; i < lineSize; ++i )
-            {
-               main.set(roots[line]+i,lines[line][i]);
-            }
+            flushLine(line,root);
          }         
          else
          {
@@ -119,6 +116,13 @@ public class MemCached implements Mem
       }
 
       //log("  load:  " + root + " to   " + line);
+      loadLine(line,root);
+
+      return line;
+   }
+
+   private void loadLine ( final int line, final int root )
+   {
       for ( int i = 0; i < lineSize; ++i )
       {
          lines[line][i] = main.get(root+i);
@@ -128,8 +132,18 @@ public class MemCached implements Mem
       {
          dirties[line]  = false;
       }
+   }
 
-      return line;
+   private void flushLine ( final int line, final int root )
+   {
+      for ( int i = 0; i < lineSize; ++i )
+      {
+         main.set(roots[line]+i,lines[line][i]);
+      }
+      if ( TRACK_DIRTY )
+      {
+         dirties[line]  = false;
+      }
    }
 
    private static void log ( final Object obj )
