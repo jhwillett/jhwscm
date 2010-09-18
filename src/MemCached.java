@@ -107,38 +107,46 @@ public class MemCached implements Mem
          if ( !TRACK_DIRTY || dirties[line] )
          {
             //log("  flush: " + roots[line] + " from " + line);
-            flushLine(line,root[line]);
+            flushLine(line);
          }         
          else
          {
             //log("  drop: " + roots[line] + " from " + line);
          }
       }
+      else
+      {
+         log("  first-use: " + line);
+      }
 
       //log("  load:  " + root + " to   " + line);
-      loadLine(line,roots[line]);
+      loadLine(line,root);
 
       return line;
    }
 
-   private void loadLine ( final int line, final int addr )
+   private void loadLine ( final int line, final int root )
    {
+      final int[]  buf = lines[line];
+      int         addr = root;
       for ( int i = 0; i < lineSize; ++i )
       {
-         lines[line][i] = main.get(addr+i);
+         buf[i] = main.get(addr++);
       }
-      roots[line]       = root;
+      roots[line] = root;
       if ( TRACK_DIRTY )
       {
          dirties[line]  = false;
       }
    }
 
-   private void flushLine ( final int line, final int addr )
+   private void flushLine ( final int line )
    {
+      final int[]  buf = lines[line];
+      int         addr = roots[line];
       for ( int i = 0; i < lineSize; ++i )
       {
-         main.set(addr+i,lines[line][i]);
+         main.set(addr++,buf[i]);
       }
       if ( TRACK_DIRTY )
       {
