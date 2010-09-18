@@ -129,7 +129,7 @@ public class MemCached implements Mem
    {
       final int[]  buf = lines[line];
       int         addr = root * lineSize;
-      log("  " + line + " <== " + addr );
+      //log("  " + line + " <== " + addr );
       for ( int i = 0; i < lineSize; ++i )
       {
          buf[i] = main.get(addr++);
@@ -146,7 +146,7 @@ public class MemCached implements Mem
       final int[]  buf = lines[line];
       final int   root = roots[line];
       int         addr = root * lineSize;
-      log("  " + line + " ==> " + addr );
+      //log("  " + line + " ==> " + addr );
       for ( int i = 0; i < lineSize; ++i )
       {
          main.set(addr++,buf[i]);

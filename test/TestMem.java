@@ -58,38 +58,38 @@ public class TestMem
       test(new MemCached(new MemSimple(256),1,1));
 
       test(new MemCached(new MemSimple(256),1,2));
-      test(new MemCached(new MemSimple(256),2,1));    // fails!
-      test(new MemCached(new MemSimple(256),2,2));    // fails!
+      test(new MemCached(new MemSimple(256),2,1));
+      test(new MemCached(new MemSimple(256),2,2));
       test(new MemCached(new MemSimple(256),1,4));
-      test(new MemCached(new MemSimple(256),4,1));    // fails
+      test(new MemCached(new MemSimple(256),4,1));
       test(new MemCached(new MemSimple(256),1,8));
-      test(new MemCached(new MemSimple(256),8,1));    // fails
-      test(new MemCached(new MemSimple(256),8,2));    // fails
+      test(new MemCached(new MemSimple(256),8,1));
+      test(new MemCached(new MemSimple(256),8,2));
 
       test(new MemCached(new MemSimple(256),16,16));
 
       test(new MemCached(new MemSimple(1024),1,1));
-      test(new MemCached(new MemSimple(1024),2,1));   // fails!
+      test(new MemCached(new MemSimple(1024),2,1));
 
-      test(new MemCached(new MemSimple(256),2,16));   // fails!
-      test(new MemCached(new MemSimple(256),16,2));   // fails!
+      test(new MemCached(new MemSimple(256),2,16));
+      test(new MemCached(new MemSimple(256),16,2));
 
-      test(new MemCached(new MemSimple(256),512,16)); // fails!
+      test(new MemCached(new MemSimple(1024),512,16));
 
       test(new MemCached(new MemSimple(256),16,512));
 
-      test(new MemCached(new MemSimple(256),2,2));    // fails!
-      test(new MemCached(new MemSimple(256),4,4));    // fails!
-      test(new MemCached(new MemSimple(256),8,8));    // fails!
+      test(new MemCached(new MemSimple(256),2,2));
+      test(new MemCached(new MemSimple(256),4,4));
+      test(new MemCached(new MemSimple(256),8,8));
       test(new MemCached(new MemSimple(256),16,16));
    }
 
    private static void test ( final Mem mem )
    {
-      log("mem:      " + mem);
+      //log("mem:      " + mem);
 
       final int length = mem.length();
-      log("  length: " + length);
+      //log("  length: " + length);
 
       for ( int addr = 0; addr < length; ++addr )
       {
