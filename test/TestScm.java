@@ -103,13 +103,13 @@ public class TestScm
       };
       for ( final String expr : simpleInts )
       {
-         expectSuccess(expr,                   expr);
-         expectSuccess(" " + expr,             expr);
-         expectSuccess(expr + " " ,            expr);
-         expectSuccess(" " + expr + " ",       expr);
-         expectSuccess("\n" + expr,            expr);
-         expectSuccess(expr + "\n" ,           expr);
-         expectSuccess("\t" + expr + "\t\r\n", expr);
+         expect(expr,                   expr);
+         expect(" " + expr,             expr);
+         expect(expr + " " ,            expr);
+         expect(" " + expr + " ",       expr);
+         expect("\n" + expr,            expr);
+         expect(expr + "\n" ,           expr);
+         expect("\t" + expr + "\t\r\n", expr);
       }
 
       // second content: tweakier integer expressions are
@@ -1035,13 +1035,55 @@ public class TestScm
       }
    }
 
+   /**
+    * If result is null, we expect driving to succeed but are
+    * indifferent to the output.
+    *
+    * If result is a String, we expect driving to succeed and the
+    * output to match result.
+    *
+    * If result is an Integer, we expect driving to fail with an error
+    * equal to result.
+    */
+   private static void expect ( final String expr, final Object result )
+      throws java.io.IOException
+   {
+      expect(expr,result,null);
+   }
+
+   /**
+    * If result is null, we expect driving to succeed but are
+    * indifferent to the output.
+    *
+    * If result is a String, we expect driving to succeed and the
+    * output to match result.
+    *
+    * If result is an Integer, we expect driving to fail with an error
+    * equal to result.
+    */
+   private static void expect ( final String expr,
+                                final Object result,
+                                final JhwScm scm )
+      throws java.io.IOException
+   {
+      if ( null == result || result instanceof String)
+      {
+         expectSuccess(expr,(String)result,scm);
+      }
+      else
+      {
+         expectFailure(expr,scm,((Integer)result).intValue());
+
+      }
+   }
+
    private static void expectLexical ( final String expr )
       throws java.io.IOException
    {
       expectFailure(expr,null,JhwScm.FAILURE_LEXICAL);
    }
 
-   private static void expectLexical ( final String expr, JhwScm scm )
+   private static void expectLexical ( final String expr, final JhwScm scm )
       throws java.io.IOException
    {
       expectFailure(expr,scm,JhwScm.FAILURE_LEXICAL);
@@ -1053,7 +1095,7 @@ public class TestScm
       expectFailure(expr,null,JhwScm.FAILURE_SEMANTIC);
    }
 
-   private static void expectSemantic ( final String expr, JhwScm scm )
+   private static void expectSemantic ( final String expr, final JhwScm scm )
       throws java.io.IOException
    {
       expectFailure(expr,scm,JhwScm.FAILURE_SEMANTIC);
