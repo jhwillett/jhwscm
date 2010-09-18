@@ -1148,89 +1148,51 @@ public class TestScm
     */
    private static void expect ( final String expr,
                                 final Object result,
-                                final JhwScm scm )
+                                JhwScm scm )
       throws java.io.IOException
    {
       numExpects++;
-      if ( null == result || result instanceof String)
+      final int    expected_dcode;
+      final String expected_output;
+      if ( null == result || result instanceof String )
       {
          numHappyExpects++;
-         expectSuccess(expr,(String)result,scm);
+         expected_dcode  = JhwScm.SUCCESS;
+         expected_output = (String)result;
       }
       else
       {
          numUnhappyExpects++;
-         expectFailure(expr,scm,((Integer)result).intValue());
+         expected_dcode  = ((Integer)result).intValue();
+         expected_output = null;
       }
-   }
-
-   private static void expectSuccess ( final String expr, 
-                                       final String expect,
-                                       JhwScm       scm )
-      throws java.io.IOException
-   {
+      //
+      // I/O are contracted to never fail, provided their args are
+      // valid, regardless of how crazy drive() gets.
+      //
       final StringBuilder buf = new StringBuilder();
       if ( null == scm )
       {
-         scm = newScm();
+         scm = newScm(true);
       }
       final int icode = input(scm,expr);
+      final int dcode = scm.drive(-1);
+      final int ocode = output(scm,buf);
       assertEquals("input failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    icode);
-      final int dcode = scm.drive(-1);
-      assertEquals("drive failure on \"" + expr + "\":",
-                   JhwScm.SUCCESS,
-                   dcode);
-      final int ocode = output(scm,buf);
       assertEquals("output failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    ocode);
-      if ( null != expect )
+      assertEquals("drive failure on \"" + expr + "\":",
+                   expected_dcode,
+                   dcode);
+      if ( null != expected_output )
       {
          assertEquals("result failure on \"" + expr + "\":",
-                      expect,
+                      expected_output,
                       buf.toString());
       }
-      if ( verbose )
-      {
-         System.out.print("pass: expr \"");
-         System.out.print(expr);
-         System.out.print("\" evaluated to \"");
-         System.out.print(buf);
-         System.out.print("\"");
-         System.out.println("\"");
-      }
-   }
-
-   private static void expectFailure ( final String expr, 
-                                       JhwScm       scm,
-                                       final int    expectedError )
-      throws java.io.IOException
-   {
-      if ( null == scm )
-      {
-         scm = newScm();
-      }
-      final int icode = input(scm,expr);
-      assertEquals("input failure on \"" + expr + "\":",
-                   JhwScm.SUCCESS,
-                   icode);
-      final int dcode = scm.drive(-1);
-      if ( JhwScm.SUCCESS == dcode )
-      {
-         final StringBuilder buf = new StringBuilder();
-         final int ocode         = output(scm,buf);
-         System.out.print("unexpected success: expr \"");
-         System.out.print(expr);
-         System.out.print("\" evaluated to \"");
-         System.out.print(buf);
-         System.out.print("\"");
-         System.out.println();
-      }
-      assertEquals("should fail evaluating \"" + expr + "\":",
-                   expectedError, 
-                   dcode);
    }
 
    /**

@@ -7,7 +7,7 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 3bca3ed0f4a478640a4e8ddb3002c5ce  test/TestMem.java
-f9868532c6dce3571508909d9bf9e2d2  test/TestScm.java
+3a1edcae98a714c4f7bc1af916b8afd8  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
@@ -16,29 +16,29 @@ global:
   numCycles:        319901
   numCons:          443911
   numInput:         6431
-  numOutput:        1775
+  numOutput:        1789
   reg.numSet:       2553624
-  reg.numGet:       4633598
+  reg.numGet:       4633836
   reg.maxAddr:      31
-  heap.numSet:      375920
-  heap.numGet:      1051584
+  heap.numSet:      376128
+  heap.numGet:      1051872
   heap.maxAddr:     6143
-  cache.numHits:    3243988
-  cache.numMisses:  56300
-  cache.numFlush:   23495
-  cache.numDrop:    32805
-  cache.numLoad:    65724
-  cacheTop.numSet:  1680235
-  cacheTop.numGet:  1629477
+  cache.numHits:    3244171
+  cache.numMisses:  56318
+  cache.numFlush:   23508
+  cache.numDrop:    32810
+  cache.numLoad:    65742
+  cacheTop.numSet:  1680251
+  cacheTop.numGet:  1629662
   cacheTop.maxAddr: 6143
-  reg   ops:        7187222
-  cache ops:        3309712
-  heap  ops:        1427504
-  reg   ops/cell:   231845.87096774194
-  cache ops/cell:   538.7777958652124
-  heap  ops/cell:   232.37896793097835
-  ops   reg/cache:  2.1715551081181688
-  ops   cache/heap: 2.3185308062184062
+  reg   ops:        7187460
+  cache ops:        3309913
+  heap  ops:        1428000
+  reg   ops/cell:   231853.5483870968
+  cache ops/cell:   538.8105160345108
+  heap  ops/cell:   232.45971023929675
+  ops   reg/cache:  2.171495142017328
+  ops   cache/heap: 2.3178662464985993
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -46,8 +46,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9829408827350825
-  cache write/miss:          0.41731793960923624
+  cache hit/op:              0.9829364678991507
+  cache write/miss:          0.4174153911715615
 numExpects: 747
   happy:    647
   unhappy:  100
