@@ -7,39 +7,39 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 3bca3ed0f4a478640a4e8ddb3002c5ce  test/TestMem.java
-a9693188735e801c9fc3a3b1c4a2c378  test/TestScm.java
+c3e8f006ccbec288378bbdbdcaec0ac5  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 java -cp build:build/junit-4.8.2.jar TestScm
 global:
-  numCycles:        319506
-  numCons:          441545
-  numInput:         6363
-  numOutput:        1725
-  reg.numSet:       2546487
-  reg.numGet:       4624713
+  numCycles:        319759
+  numCons:          443101
+  numInput:         6411
+  numOutput:        1755
+  reg.numSet:       2551172
+  reg.numGet:       4630483
   reg.maxAddr:      31
-  heap.numSet:      371120
-  heap.numGet:      1043712
+  heap.numSet:      374288
+  heap.numGet:      1048928
   heap.maxAddr:     6143
-  cache.numHits:    3224476
-  cache.numMisses:  56000
-  cache.numFlush:   23195
+  cache.numHits:    3237342
+  cache.numMisses:  56198
+  cache.numFlush:   23393
   cache.numDrop:    32805
-  cache.numLoad:    65232
-  cacheTop.numSet:  1666623
-  cacheTop.numGet:  1623085
+  cache.numLoad:    65558
+  cacheTop.numSet:  1675629
+  cacheTop.numGet:  1627271
   cacheTop.maxAddr: 6143
-  reg   ops:        7171200
-  cache ops:        3289708
-  heap  ops:        1414832
-  reg   ops/cell:   231329.03225806452
-  cache ops/cell:   535.5214064789191
-  heap  ops/cell:   230.3161321829725
-  ops   reg/cache:  2.179889522109561
-  ops   cache/heap: 2.325158039965169
+  reg   ops:        7181655
+  cache ops:        3302900
+  heap  ops:        1423216
+  reg   ops/cell:   231666.29032258064
+  cache ops/cell:   537.6688914211297
+  heap  ops/cell:   231.68093765261273
+  ops   reg/cache:  2.1743482999788064
+  ops   cache/heap: 2.3207299524457286
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -47,10 +47,10 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9829293066006275
-  cache write/miss:          0.4141964285714286
-numExpects: 723
-  happy:    626
-  unhappy:  97
-numBatches: 40
+  cache hit/op:              0.982936900720805
+  cache write/miss:          0.4162603651375494
+numExpects: 741
+  happy:    641
+  unhappy:  100
+numBatches: 44
 make[1]: Leaving directory `/home/jwillett/jhwscm'

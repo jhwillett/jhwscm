@@ -165,13 +165,21 @@ public class TestScm
          assertEquals("0",buf.toString());
       }
 
-      // boolean literals are self-evaluating
-      expect("#t",   "#t");
-      expect("#f",   "#f");
-      expect(" #t ", "#t");
-      expect("#f ",  "#f");
-      expect(" #f",  "#f");
-      expect("#x",   LEXICAL);
+      // boolean literals are self-evaluating and self-printing
+      {
+         final Object[][] tests = { 
+            { "#t",   "#t" },
+            { "#f",   "#f" },
+            { " #t ", "#t" },
+            { "#f ",  "#f" },
+            { " #f",  "#f" },
+            { "#x",   LEXICAL },
+         };
+         batch(tests,false,false);
+         batch(tests,false,true);
+         batch(tests,true,false);
+         batch(tests,true,true);
+      }
 
       // unbound variables fail
       expect("a",SEMANTIC);
