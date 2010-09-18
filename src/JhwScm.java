@@ -56,8 +56,8 @@ public class JhwScm
    public static final int     PAGE_COUNT                = 6;
 
    public static final boolean USE_CACHED_MEM            = true;
-   public static final int     LINE_SIZE                 = 64;
-   public static final int     LINE_COUNT                = 16;
+   public static final int     LINE_SIZE                 = 2;
+   public static final int     LINE_COUNT                = 2;
 
    public static final int     SUCCESS          =  0;
    public static final int     INCOMPLETE       = -1;
