@@ -1074,12 +1074,12 @@ public class TestScm
       numExpects++;
       if ( null == result || result instanceof String)
       {
-         numHappyTests++;
+         numHappyExpects++;
          expectSuccess(expr,(String)result,scm);
       }
       else
       {
-         numUnhappyTests++;
+         numUnhappyExpects++;
          expectFailure(expr,scm,((Integer)result).intValue());
       }
    }
