@@ -61,26 +61,26 @@ public class TestMem
       test(new MemCached(new MemSimple(256),2,1));    // fails!
       test(new MemCached(new MemSimple(256),2,2));    // fails!
       test(new MemCached(new MemSimple(256),1,4));
-      //test(new MemCached(new MemSimple(256),4,1));    // fails
+      test(new MemCached(new MemSimple(256),4,1));    // fails
       test(new MemCached(new MemSimple(256),1,8));
-      //test(new MemCached(new MemSimple(256),8,1));    // fails
-      //test(new MemCached(new MemSimple(256),8,2));    // fails
+      test(new MemCached(new MemSimple(256),8,1));    // fails
+      test(new MemCached(new MemSimple(256),8,2));    // fails
 
       test(new MemCached(new MemSimple(256),16,16));
 
       test(new MemCached(new MemSimple(1024),1,1));
-      //test(new MemCached(new MemSimple(1024),2,1));   // fails!
+      test(new MemCached(new MemSimple(1024),2,1));   // fails!
 
-      //test(new MemCached(new MemSimple(256),2,16));   // fails!
-      //test(new MemCached(new MemSimple(256),16,2));   // fails!
+      test(new MemCached(new MemSimple(256),2,16));   // fails!
+      test(new MemCached(new MemSimple(256),16,2));   // fails!
 
-      //test(new MemCached(new MemSimple(256),512,16)); // fails!
+      test(new MemCached(new MemSimple(256),512,16)); // fails!
 
       test(new MemCached(new MemSimple(256),16,512));
 
-      //test(new MemCached(new MemSimple(256),2,2));    // fails!
-      //test(new MemCached(new MemSimple(256),4,4));    // fails!
-      //test(new MemCached(new MemSimple(256),8,8));    // fails!
+      test(new MemCached(new MemSimple(256),2,2));    // fails!
+      test(new MemCached(new MemSimple(256),4,4));    // fails!
+      test(new MemCached(new MemSimple(256),8,8));    // fails!
       test(new MemCached(new MemSimple(256),16,16));
    }
 
