@@ -47,13 +47,13 @@ public class JhwScm
 {
    public static final boolean PROFILE                   = true;
    public static final boolean DEFER_HEAP_INIT           = true;
-   public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
-   public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
-   public static final boolean CLEVER_STACK_RECYCLING    = true;
+   public static final boolean PROPERLY_TAIL_RECURSIVE   = false;
+   public static final boolean CLEVER_TAIL_CALL_MOD_CONS = false;
+   public static final boolean CLEVER_STACK_RECYCLING    = false;
 
-   public static final boolean USE_PAGED_MEM             = false;
-   public static final int     PAGE_SIZE                 = 1024; // slots
-   public static final int     PAGE_COUNT                = 6;
+   public static final boolean USE_PAGED_MEM             = true;
+   public static final int     PAGE_SIZE                 = 1024;
+   public static final int     PAGE_COUNT                = 512;
 
    public static final boolean USE_CACHED_MEM            = true;
    public static final int     LINE_SIZE                 = 16;

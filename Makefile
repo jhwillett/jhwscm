@@ -8,7 +8,7 @@ SRC       += $(wildcard src/*.java)
 
 # Maintaining TESTS explicitly so I can control ordering.
 #
-TESTS     += test/TestMem.java
+#TESTS     += test/TestMem.java
 TESTS     += test/TestScm.java
 
 LIBS                 += junit-4.8.2.jar

@@ -1267,10 +1267,13 @@ public class TestScm
          }
       }
 
+      log("  PROPERLY_TAIL_RECURSIVE:   " + JhwScm.PROPERLY_TAIL_RECURSIVE);
+      log("  CLEVER_TAIL_CALL_MOD_CONS: " + JhwScm.CLEVER_TAIL_CALL_MOD_CONS);
+      log("  CLEVER_STACK_RECYCLING:    " + JhwScm.CLEVER_STACK_RECYCLING);
       if ( JhwScm.USE_CACHED_MEM ) 
       {
          final int hm = stats.cacheStats.numHits + stats.cacheStats.numMisses;
-         log("  cache hit/op:     " + ( 1.0 * stats.cacheStats.numHits / hm));
+         log("  cache hit/op:              " + ( 1.0 * stats.cacheStats.numHits / hm));
          log("  cache write/miss: " + ( 1.0 * stats.cacheStats.numFlush / stats.cacheStats.numMisses));
       }
    }
