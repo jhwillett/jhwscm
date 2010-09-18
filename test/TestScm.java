@@ -97,28 +97,7 @@ public class TestScm
 
       driveEdgeCases();
 
-      {
-         final StringBuilder buf  = new StringBuilder();
-         final int           code = output(newScm(),buf);
-         assertEquals("output()",JhwScm.SUCCESS,code);
-         assertEquals("output is empty",0,buf.length());
-      }
-
-      // some content-free end-to-ends
-      final int[] variousNumCyclesEnoughForEmptyExpr = { -1, 5, 10 };
-      for ( int numCycles : variousNumCyclesEnoughForEmptyExpr )
-      {
-         final String        msg   = "cycles: " + numCycles;
-         final StringBuilder buf   = new StringBuilder();
-         final JhwScm        scm   = newScm();
-         final int           icode = input(scm,"");
-         assertEquals(msg,JhwScm.SUCCESS,icode);
-         final int           dcode = scm.drive(numCycles);
-         assertEquals(msg,JhwScm.SUCCESS,dcode);
-         final int           ocode = output(scm,buf);
-         assertEquals(msg,JhwScm.SUCCESS,ocode);
-         assertEquals(msg,0,buf.length());
-      }
+      expect("","");
 
       // first content: simple integer expressions are self-evaluating
       // and self-printing.
@@ -160,25 +139,6 @@ public class TestScm
          batch(tests,RE_DEPENDANT);
          batch(tests,REP_INDEPENDANT);
          batch(tests,REP_DEPENDANT);
-      }
-
-      // first computation: even simple integer take nonzero cycles
-      {
-         final StringBuilder buf    = new StringBuilder();
-         final JhwScm        scm    = newScm();
-         final int           icode  = input(scm,"0");
-         assertEquals(JhwScm.SUCCESS, icode);
-         final int           dcode1 = scm.drive(0);
-         assertEquals("should be incomplete so far",JhwScm.INCOMPLETE,dcode1);
-         final int           dcode2 = scm.drive(0);
-         assertEquals("should be incomplete so far",JhwScm.INCOMPLETE,dcode2);
-         final int           dcode3 = scm.drive(-1);
-         assertEquals("should be successful",       JhwScm.SUCCESS,   dcode3);
-         final int           dcode4 = scm.drive(0);
-         assertEquals("should be incomplete again",JhwScm.INCOMPLETE, dcode4);
-         final int           ocode  = output(scm,buf);
-         assertEquals(JhwScm.SUCCESS, ocode);
-         assertEquals("0",buf.toString());
       }
 
       // boolean literals are self-evaluating and self-printing
@@ -1170,14 +1130,63 @@ public class TestScm
       // I/O are contracted to never fail, provided their args are
       // valid, regardless of how crazy drive() gets.
       //
-      final StringBuilder buf = new StringBuilder();
       if ( null == scm )
       {
          scm = newScm(true);
       }
-      final int icode = input(scm,expr);
+
+      final int icode;
+      {
+         final byte[] buf = expr.toString().getBytes();
+         int off  = 0;
+         int code = JhwScm.SUCCESS;
+         while ( off < buf.length )
+         {
+            final int len = buf.length - off;
+            final int n   = scm.input(buf,off,len);
+            if ( n < 0 )
+            {
+               code = n;
+               break;
+            }
+            off += n;
+         }
+         icode = code;
+      }
+
       final int dcode = scm.drive(-1);
-      final int ocode = output(scm,buf);
+
+      final StringBuilder out = new StringBuilder();
+      final int ocode;
+      {
+         final byte[] buf = new byte[1+debugRand.nextInt(10)];
+         int code = 0;
+         for ( int off = 0; true; )
+         {
+            final int n = scm.output(buf,off,buf.length-off);
+            if ( -1 > n )
+            {
+               code = n; // error code
+               break;
+            }
+            if ( -1 == n )
+            {
+               code = JhwScm.SUCCESS;
+               break;
+            }
+            for ( int i = off; i < off+n; ++i )
+            {
+               out.append((char)buf[i]);
+            }
+            off += n;
+            if ( off >= buf.length )
+            {
+               off = 0;
+            }
+         }
+         ocode = code;
+      }
+
       assertEquals("input failure on \"" + expr + "\":",
                    JhwScm.SUCCESS,
                    icode);
@@ -1191,67 +1200,7 @@ public class TestScm
       {
          assertEquals("result failure on \"" + expr + "\":",
                       expected_output,
-                      buf.toString());
-      }
-   }
-
-   /**
-    * Convenience wrapper around JhwScm.input(byte[],int,int).
-    *
-    * Places all characters into the VM's input queue.
-    *
-    * On failure, the VM's input queue is left unchanged: input() is
-    * all-or-nothing.
-    *
-    * @param input characters to be copied into the VM's input queue.
-    * @throws nothing, not ever
-    * @returns SUCCESS on success, otherwise an error code.
-    */
-   private static int input ( final JhwScm scm, final CharSequence input ) 
-   {
-      final byte[] buf = input.toString().getBytes();
-      int off = 0;
-      while ( off < buf.length )
-      {
-         final int len = buf.length - off;
-         final int n   = scm.input(buf,off,len);
-         if ( n < 0 )
-         {
-            return n;
-         }
-         off += n;
-      }
-      return JhwScm.SUCCESS;
-   }
-
-
-   /**
-    * Convenience wrapper around JhwScm.output(byte[],int,int).
-    */
-   private static int output ( final JhwScm scm, final Appendable out ) 
-      throws IOException
-   {
-      final byte[] buf = new byte[1+debugRand.nextInt(10)];
-      for ( int off = 0; true; )
-      {
-         final int n = scm.output(buf,off,buf.length-off);
-         if ( -1 > n )
-         {
-            return n; // error code
-         }
-         if ( -1 == n )
-         {
-            return JhwScm.SUCCESS;
-         }
-         for ( int i = off; i < off+n; ++i )
-         {
-            out.append((char)buf[i]);
-         }
-         off += n;
-         if ( off >= buf.length )
-         {
-            off = 0;
-         }
+                      out.toString());
       }
    }
 
