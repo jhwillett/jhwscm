@@ -16,7 +16,6 @@ public class TestMem
    private static final boolean verbose = false;
 
    public static void main ( final String[] argv )
-      throws java.io.IOException
    {
       final MemStats.Stats stats1    = new MemStats.Stats();
       final MemStats.Stats stats2    = new MemStats.Stats();
@@ -85,11 +84,17 @@ public class TestMem
          new MemCached(new MemSimple(256),16,16),
       };
 
-      Random rand = null;
-
       for ( int memid = 0; memid < mems.length; ++memid )
       {
          final Mem mem    = mems[memid];
+         test(mem,memid);
+      }
+   }
+
+   private static void test ( final Mem mem, final int memid )
+   {
+      Random rand = null;
+
          final int length = mem.length();
          log("memid " + memid + ":");
          log("  mem:    " + mem);
@@ -144,8 +149,6 @@ public class TestMem
             //log("get " + addr + " to " + value2);
             assertEquals("addr " + addr,value1,value2);
          }
-      }
-
    }
 
    private static void log ( final Object obj )
