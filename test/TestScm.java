@@ -36,11 +36,10 @@ public class TestScm
    private static final BatchType RE_DEPENDANT    = new BatchType(true, false);
    private static final BatchType RE_INDEPENDANT  = new BatchType(false,false);
 
-   private static boolean DO_REP = true;
-   private static boolean SILENT = true;
-   private static boolean DEBUG  = false; // TODO: not tried in a while!
+   private static final boolean REPORT = true;
 
-   private static boolean REPORT = true;
+   private static boolean SILENT = true;
+   private static boolean DEBUG  = true; // TODO: not tried in a while!
 
    private static int numExpects        = 0;
    private static int numBatches        = 0;
@@ -52,42 +51,38 @@ public class TestScm
       return new JhwScm(do_rep,SILENT,DEBUG);
    }
 
-   private static JhwScm newScm ()
-   {
-      return new JhwScm(DO_REP,SILENT,DEBUG);
-   }
-
    private static void ioEdgeCases ()
    {
-      assertEquals(JhwScm.BAD_ARG,newScm().input(null,0,0));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(null,0,0));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).input(null,0,0));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(null,0,0));
 
-      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],-1,0));
-      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],0,-1));
-      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],2,3));
-      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],3,2));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],-1,0));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],-1,0));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],0,-1));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],0,-1));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],2,3));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],3,2));
-      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[3],2,3));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],-1,0));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],0,-1));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],2,3));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],3,2));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],-1,0));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],-1,0));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],0,-1));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],0,-1));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],2,3));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],3,2));
+      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[3],2,3));
 
-      assertEquals(0,             newScm().input(new byte[0],0,0));
-      assertEquals(0,             newScm().input(new byte[0],0,0));
-      assertEquals(0,             newScm().input(new byte[0],0,0));
-      assertEquals(0,             newScm().input(new byte[1],1,0));
-      assertEquals(0,             newScm().output(new byte[0],0,0));
-      assertEquals(-1,            newScm().output(new byte[5],2,3));
+      assertEquals(0,             newScm(true).input(new byte[0],0,0));
+      assertEquals(0,             newScm(true).input(new byte[0],0,0));
+      assertEquals(0,             newScm(true).input(new byte[0],0,0));
+      assertEquals(0,             newScm(true).input(new byte[1],1,0));
+      assertEquals(0,             newScm(true).output(new byte[0],0,0));
+      
+      assertEquals(-1,            newScm(true).output(new byte[5],2,3));
    }
 
    private static void driveEdgeCases ()
    {
-      assertEquals(JhwScm.INCOMPLETE,newScm().drive(0));
-      assertEquals(JhwScm.SUCCESS,   newScm().drive(-1)); // run-to-completion
-      assertEquals(JhwScm.BAD_ARG,   newScm().drive(-2));
-      assertEquals(JhwScm.BAD_ARG,   newScm().drive(-3));
+      assertEquals(JhwScm.INCOMPLETE,newScm(true).drive(0));
+      assertEquals(JhwScm.SUCCESS,   newScm(true).drive(-1)); // run-to-completion
+      assertEquals(JhwScm.BAD_ARG,   newScm(true).drive(-2));
+      assertEquals(JhwScm.BAD_ARG,   newScm(true).drive(-3));
    }
 
    public static void main ( final String[] argv )
@@ -512,7 +507,7 @@ public class TestScm
       
       // defining symbols
       {
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect("(define a 100)","",   scm);
          expect("a",             "100",scm);
          expect("(define a 100)","",   scm);
@@ -526,7 +521,7 @@ public class TestScm
       expect("(define a 1)a(define a 2)a","12");
 
       {
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect("(define foo +)","",  scm);
          expect("(foo 13 18)",   "31",scm);
          expect("(foo 13 '())",SEMANTIC,      scm);
@@ -546,7 +541,7 @@ public class TestScm
       expect("((lambda (a) (* 3 a)) 13)",    "39");
       expect("((lambda (a b) (* a b)) 13 5)","65");
       {
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect("(define (foo a b) (+ a b))","",  scm);
          expect("(foo 13 18)",               "31",scm);
          expect("(foo 13 '())",SEMANTIC,                  scm);
@@ -564,7 +559,7 @@ public class TestScm
          // scale.
          final String fact = 
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect(fact,        "",       scm);
          expect("fact",      "???",    scm);
          expect("(fact -1)", "1",      scm);
@@ -583,7 +578,7 @@ public class TestScm
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
          final String fact = 
             "(define (fact n) (help n 1))";
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect(fact,        "",       scm);
          expect(help,        "",       scm); // note, define help 2nd ;)
          expect("fact",      "???",    scm);
@@ -615,7 +610,7 @@ public class TestScm
          //
          final String fib = 
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect(fib,"",scm);
          expect("fib","???",scm);
          expect("(fib 0)","0",scm);
@@ -682,7 +677,7 @@ public class TestScm
          //
          // An overly simple early form of sub_let pushed frames onto
          // the env, but didn't pop them.
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect("(let ((a 10)) a)", "10", scm);
          expect("a",SEMANTIC,scm);
       }
@@ -706,7 +701,7 @@ public class TestScm
             "  (let ((help"                                                  +
             "        (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))))" +
             "    (help n 1)))";
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect(fact,       "",   scm);
          expect("fact",     "???",scm);
          expect("(fact -1)","1",  scm);
@@ -818,7 +813,7 @@ public class TestScm
       {
          // Are the nested-define defined symbols in scope of the
          // "real" body?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect("(define (a x) (define b 2) (+ x b))", "",    scm);
          expect("(a 10)",                              "12",  scm);
          expect("a",                                   "???", scm);
@@ -826,13 +821,13 @@ public class TestScm
       }
       {
          // Can we do more than one?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          expect("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expect("(f)","3",scm);
       }
       {
          // Can we do it for an inner helper function?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
@@ -850,7 +845,7 @@ public class TestScm
       }
       {
          // Do nested defines really act like (begin)?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String def = 
             "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
          expect(def,"",scm);
@@ -858,7 +853,7 @@ public class TestScm
       }
       {
          // Do nested defines really act like (begin) when we have args?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
          expect(def,"",scm);
@@ -867,7 +862,7 @@ public class TestScm
       }
       {
          // Are nested defines in one another's scope, in any order?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String F = 
             "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
          final String G = 
@@ -879,21 +874,21 @@ public class TestScm
       }
       {
          // What about defines in lambdas?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String def = 
             "((lambda (x) (define a 7) (+ x a)) 5)";
          expect(def,"12",scm);
       }
       {
          // What about closures?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String def = 
             "(((lambda (x) (lambda (y) (+ x y))) 10) 7)";
          expect(def,"17",scm);
       }
       {
          // What about closures?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String def = 
             "(define (f x) (lambda (y) (+ x y)))";
          expect(def,"",scm);
@@ -902,7 +897,7 @@ public class TestScm
       }
       {
          // What about closures?
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String def = 
             "(define (f x) (define (h y) (+ x y)) h)";
          expect(def,"",scm);
@@ -919,7 +914,7 @@ public class TestScm
 
       // check that map works w/ both builtins and user-defineds
       {
-         final JhwScm scm = newScm();
+         final JhwScm scm = newScm(true);
          final String def = "(define (f x) (+ x 10))";
          expect("(map display '())",      "()");     
          expect("(map display '(1 2 3))", "123(  )");
