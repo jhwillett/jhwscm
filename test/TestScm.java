@@ -156,31 +156,31 @@ public class TestScm
       expect("#x",   LEXICAL);
 
       // unbound variables fail
-      expectSemantic("a");
-      expectSemantic("a1");
+      expect("a",SEMANTIC);
+      expect("a1",SEMANTIC);
 
       // some lexical, rather than semantic, error case expectations
-      expectSemantic("()");
-      expectSemantic("\r(\t)\n");
+      expect("()",SEMANTIC);
+      expect("\r(\t)\n",SEMANTIC);
       expect("(", LEXICAL);
       expect(" (  ", LEXICAL);
       expect(")", LEXICAL);
-      expectSemantic("(()())");
-      expectSemantic("  ( ( )    ( ) )");
-      expectSemantic("(()()))");     // fails on expr before reaching extra ')'
-      expectSemantic(" ( () ())) "); // fails on expr before reaching extra ')'
+      expect("(()())",SEMANTIC);
+      expect("  ( ( )    ( ) )",SEMANTIC);
+      expect("(()()))",SEMANTIC);     // fails on expr before reaching extra ')'
+      expect(" ( () ())) ",SEMANTIC); // fails on expr before reaching extra ')'
       expect("((()())", LEXICAL);
-      expectSemantic("(())");
+      expect("(())",SEMANTIC);
 
       expect("-",   "-",  newScm(false));
       expect("-",   null);
       expect("-asd", "-asd",  newScm(false));
-      expectSemantic("-as");
+      expect("-as",SEMANTIC);
       
-      expectSemantic("(a b c)");
-      expectSemantic("(a (b c))");
-      expectSemantic("((a b) c)");
-      expectSemantic("((a b c))");
+      expect("(a b c)",SEMANTIC);
+      expect("(a (b c))",SEMANTIC);
+      expect("((a b) c)",SEMANTIC);
+      expect("((a b c))",SEMANTIC);
       expect("((a b) c", LEXICAL);
       expect("((a b c)", LEXICAL);
 
@@ -337,14 +337,14 @@ public class TestScm
       // Dipping my toe into basic edge cases around implied (eval)
       // and some simple arithmetic - more than testing math.
       //
-      expectSemantic("(())");
-      expectSemantic("(1)");
-      expectSemantic("(\"a\")");
-      expectSemantic("(#\\a)");
-      expectSemantic("(() 0)");
-      expectSemantic("(1 0)");
-      expectSemantic("(\"a\" 0)");
-      expectSemantic("(#\\a 0)");
+      expect("(())",SEMANTIC);
+      expect("(1)",SEMANTIC);
+      expect("(\"a\")",SEMANTIC);
+      expect("(#\\a)",SEMANTIC);
+      expect("(() 0)",SEMANTIC);
+      expect("(1 0)",SEMANTIC);
+      expect("(\"a\" 0)",SEMANTIC);
+      expect("(#\\a 0)",SEMANTIC);
       expect("(+ 0 0)", "0");
       expect("(+ 0 1)", "1");
       expect("(+ 0 2)", "2");
@@ -361,17 +361,17 @@ public class TestScm
       expect("(* -97 2)","-194");
       expect("(* -97 -2)","194");
       expect("(* 97 -2)","-194");
-      expectSemantic("(+ a b)");
+      expect("(+ a b)",SEMANTIC);
 
       if ( true )
       {
          // TODO: note, for now + and * are binary only: this will
          // change!
-         expectSemantic("(+ 0)");
-         expectSemantic("(+)");
-         expectSemantic("(+ 1)");
-         expectSemantic("(* 2 3 5)");
-         expectSemantic("(*)");
+         expect("(+ 0)",SEMANTIC);
+         expect("(+)",SEMANTIC);
+         expect("(+ 1)",SEMANTIC);
+         expect("(* 2 3 5)",SEMANTIC);
+         expect("(*)",SEMANTIC);
       }
       else
       {
@@ -384,18 +384,18 @@ public class TestScm
       expect("(+0)",      "0");
       expect("(+1 10)",   "10");
       expect("(+3 3 5 7)","15");
-      expectSemantic("(+0 1)");
-      expectSemantic("(+1)");
-      expectSemantic("(+1 1 2)");
-      expectSemantic("(+3)");
-      expectSemantic("(+3 1 2)");
-      expectSemantic("(+3 1 2 3 4)");
+      expect("(+0 1)",SEMANTIC);
+      expect("(+1)",SEMANTIC);
+      expect("(+1 1 2)",SEMANTIC);
+      expect("(+3)",SEMANTIC);
+      expect("(+3 1 2)",SEMANTIC);
+      expect("(+3 1 2 3 4)",SEMANTIC);
 
       // simple special form
       expect("(quote ())","()");
       expect("(quote (1 2))","(1 2)");
       expect("(quote (a b))","(a b)");
-      expectSemantic("(+ 1 (quote ()))");
+      expect("(+ 1 (quote ()))",SEMANTIC);
       expect("(quote 9)",                "9");
       expect("(quote (quote 9))",        "(quote 9)");
       expect("(quote (quote (quote 9)))","(quote (quote 9))");
@@ -404,7 +404,7 @@ public class TestScm
       expect("'()","()");
       expect("'(1 2)","(1 2)");
       expect("'(a b)","(a b)");
-      expectSemantic("(+ 1 '())");
+      expect("(+ 1 '())",SEMANTIC);
       expect("'9",       "9");
       if ( false )
       {
@@ -427,7 +427,7 @@ public class TestScm
       expect("(<     -10   0)","#t");
       expect("(<      -1  10)","#t");
       expect("(<       0 -10)","#f");
-      expectSemantic("(< 10 'a)");
+      expect("(< 10 'a)",SEMANTIC);
 
       // simple conditionals: in Scheme, only #f is false
       // 
@@ -454,10 +454,10 @@ public class TestScm
       expect("(cdr (cons 1 2))","2");
       expect("(list)","()");
       expect("(list 1 2)","(1 2)");
-      expectSemantic("(car 1)");
-      expectSemantic("(car '())");
-      expectSemantic("(cdr 1)");
-      expectSemantic("(cdr '())");
+      expect("(car 1)",SEMANTIC);
+      expect("(car '())",SEMANTIC);
+      expect("(cdr 1)",SEMANTIC);
+      expect("(cdr '())",SEMANTIC);
       expect("(cons 1 '())","(1)");
 
       // OUCH! w/ no garbage collection, no proper tail recursion, and
@@ -486,9 +486,9 @@ public class TestScm
          expect("(define a 100)","",   scm);
          expect("(define b   2)","",   scm);
          expect("(+ a b)",       "102",scm);
-         expectSemantic("(+ a c)",            scm);
+         expect("(+ a c)",SEMANTIC,            scm);
       }
-      expectSemantic("(define a)");
+      expect("(define a)",SEMANTIC);
 
       // redefining symbols
       expect("(define a 1)a(define a 2)a","12");
@@ -497,19 +497,19 @@ public class TestScm
          final JhwScm scm = newScm();
          expect("(define foo +)","",  scm);
          expect("(foo 13 18)",   "31",scm);
-         expectSemantic("(foo 13 '())",      scm);
+         expect("(foo 13 '())",SEMANTIC,      scm);
       }
 
       // defining functions
-      expectSemantic("(lambda)");
-      expectSemantic("(lambda ())");
+      expect("(lambda)",SEMANTIC);
+      expect("(lambda ())",SEMANTIC);
       expect("(lambda () 1)","???");
       expect("((lambda () 1))","1");
-      expectSemantic("((lambda () 1) 10)");
+      expect("((lambda () 1) 10)",SEMANTIC);
       expect("(lambda (a) 1)","???");
       expect("((lambda (a) 1) 10)","1");
-      expectSemantic("((lambda (a) 1))");
-      expectSemantic("((lambda (a) 1) 10 20)");
+      expect("((lambda (a) 1))",SEMANTIC);
+      expect("((lambda (a) 1) 10 20)",SEMANTIC);
       expect("(lambda (a b) (* a b))",       "???");
       expect("((lambda (a) (* 3 a)) 13)",    "39");
       expect("((lambda (a b) (* a b)) 13 5)","65");
@@ -517,7 +517,7 @@ public class TestScm
          final JhwScm scm = newScm();
          expect("(define (foo a b) (+ a b))","",  scm);
          expect("(foo 13 18)",               "31",scm);
-         expectSemantic("(foo 13 '())",                  scm);
+         expect("(foo 13 '())",SEMANTIC,                  scm);
       }
 
       {
@@ -636,14 +636,14 @@ public class TestScm
 
       // let, local scopes:
       // 
-      expectSemantic("(let ())");
+      expect("(let ())",SEMANTIC);
       expect("(let () 32)","32");
       expect("(let()32)","32");
       expect("(let ((a 10)) (+ a 32))","42");
       expect("(let ((a 10) (b 32)) (+ a b))","42");
-      expectSemantic("(let ((a 10) (b 32)) (+ a c))");
-      expectSemantic("(let ((a 10) (b a)) b)");
-      expectSemantic("(let ((a 10) (b (+ a 1))) b)");
+      expect("(let ((a 10) (b 32)) (+ a c))",SEMANTIC);
+      expect("(let ((a 10) (b a)) b)",SEMANTIC);
+      expect("(let ((a 10) (b (+ a 1))) b)",SEMANTIC);
       if ( true )
       {
          // Heh, guard that those names stay buried.  
@@ -652,7 +652,7 @@ public class TestScm
          // the env, but didn't pop them.
          final JhwScm scm = newScm();
          expect("(let ((a 10)) a)", "10", scm);
-         expectSemantic("a",scm);
+         expect("a",SEMANTIC,scm);
       }
 
       // nested lexical scopes:
@@ -682,7 +682,7 @@ public class TestScm
          expect("(fact 1)", "1",  scm);
          if ( true )
          {
-            expectSemantic("(fact 2)"); // HAHAHHAHHAHAHA
+            expect("(fact 2)",SEMANTIC); // HAHAHHAHHAHAHA
          }
          else
          {
@@ -733,7 +733,7 @@ public class TestScm
          // But in any case, I'm not implementing "else" for now.
          SILENT = false;
          expect("(cond ((equal? 3 4) 1) (else 2))","2");
-         expectSemantic("else"); // else is *not* just bound to #t!
+         expect("else",SEMANTIC); // else is *not* just bound to #t!
       }
 
       // TODO: let*, letrec
@@ -744,11 +744,11 @@ public class TestScm
       //
       // We need user-code-accesible side-effects to detect that (case)
       // only evaluates the matching clause.
-      expectSemantic("(case)");
-      expectSemantic("(case 1)");
-      expectSemantic("(case 1 1)");
-      expectSemantic("(case 1 (1))");
-      expectSemantic("(case 1 (1 1))");
+      expect("(case)",SEMANTIC);
+      expect("(case 1)",SEMANTIC);
+      expect("(case 1 1)",SEMANTIC);
+      expect("(case 1 (1))",SEMANTIC);
+      expect("(case 1 (1 1))",SEMANTIC);
       expect("(case 1 ((1) 1))","1");
       expect("(case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300))","300");
       expect("(case 7 ((2 3) 100) ((6 7) 200) ((4 5) 300))","200");
@@ -757,10 +757,10 @@ public class TestScm
       expect("(case  (+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
       expect("(case '(+ 3 4) ((2 3) 100) ((6 (+ 3 4)) 200))","");
       expect("(case 7 (() 10) ((7) 20))","20"); // empty label ok
-      expectSemantic("(case 7 ((2 3) 100) ((6 7)))");  // bad clause
-      expectSemantic("(case 7 ((2 3)) ((6 7) 1))");    // bad clause
-      expectSemantic("(case 7 (()) ((7) 20))");        // bad clause
-      expectSemantic("(case 7 (10) ((7) 20))");        // bad clause
+      expect("(case 7 ((2 3) 100) ((6 7)))",SEMANTIC);  // bad clause
+      expect("(case 7 ((2 3)) ((6 7) 1))",SEMANTIC);    // bad clause
+      expect("(case 7 (()) ((7) 20))",SEMANTIC);        // bad clause
+      expect("(case 7 (10) ((7) 20))",SEMANTIC);        // bad clause
       expect("(case '7 ((2 3) 100) ((6 '7) 200) ((4 5) 300))","");
       expect("(case \"7\" ((2 3) 100) ((6 \"7\") 200) ((4 5) 300))","");
       expect("(case #t ((2 3) 100) ((6 #t) 200) ((4 5) 300))","200");
@@ -774,8 +774,8 @@ public class TestScm
       if ( false )
       {
          // TODO: an error if a case label is duplicated!
-         expectSemantic("(case 7 ((5 5) 100))");
-         expectSemantic("(case 7 ((5 3) 100) ((4 5) 200))");
+         expect("(case 7 ((5 5) 100))",SEMANTIC);
+         expect("(case 7 ((5 3) 100) ((4 5) 200))",SEMANTIC);
       }
 
       // variadic (lambda) and (define), inner defines, etc.
@@ -790,7 +790,7 @@ public class TestScm
          expect("(define (a x) (define b 2) (+ x b))", "",    scm);
          expect("(a 10)",                              "12",  scm);
          expect("a",                                   "???", scm);
-         expectSemantic("b",                                         scm);
+         expect("b",SEMANTIC,                                         scm);
       }
       {
          // Can we do more than one?
@@ -882,7 +882,7 @@ public class TestScm
          // variadic stress on the body of let
          expect("(let ((a 1)) (define b 2) (+ a b))","3");
          expect("(let ((a 1)) (display 7) (define b 2) (+ a b))","73");
-         expectSemantic("(let ((a 1)))");
+         expect("(let ((a 1)))",SEMANTIC);
       }
 
       // check that map works w/ both builtins and user-defineds
@@ -934,19 +934,19 @@ public class TestScm
       if ( false )
       {
          SILENT = false;
-         expectSemantic("(lambda (x x) 1)");
-         expectSemantic("(lambda (x a x) 1)");
-         expectSemantic("(lambda (a x b x) 1)");
-         expectSemantic("(lambda (x a x x) 1)");
-         expectSemantic("(define (f x x) 1)");
-         expectSemantic("(define (f x a x) 1)");
-         expectSemantic("(define (f a x b x) 1)");
-         expectSemantic("(define (f x a x x) 1)");
-         expectSemantic("(let ((x 1) (x 2)) 1)");
-         expectSemantic("(let ((x 1) (x 2)) 1)");
-         expectSemantic("(let ((x 1) (a 10) (x 2)) 1)");
-         expectSemantic("(let ((a 10) (x 1) (b 20) (x 2)) 1)");
-         expectSemantic("(let ((x 1) (a 10) (x 2) (b 20)) 1)");
+         expect("(lambda (x x) 1)",SEMANTIC);
+         expect("(lambda (x a x) 1)",SEMANTIC);
+         expect("(lambda (a x b x) 1)",SEMANTIC);
+         expect("(lambda (x a x x) 1)",SEMANTIC);
+         expect("(define (f x x) 1)",SEMANTIC);
+         expect("(define (f x a x) 1)",SEMANTIC);
+         expect("(define (f a x b x) 1)",SEMANTIC);
+         expect("(define (f x a x x) 1)",SEMANTIC);
+         expect("(let ((x 1) (x 2)) 1)",SEMANTIC);
+         expect("(let ((x 1) (x 2)) 1)",SEMANTIC);
+         expect("(let ((x 1) (a 10) (x 2)) 1)",SEMANTIC);
+         expect("(let ((a 10) (x 1) (b 20) (x 2)) 1)",SEMANTIC);
+         expect("(let ((x 1) (a 10) (x 2) (b 20)) 1)",SEMANTIC);
       }
 
       // Here's an interesting thing:
@@ -1033,18 +1033,6 @@ public class TestScm
          expectFailure(expr,scm,((Integer)result).intValue());
 
       }
-   }
-
-   private static void expectSemantic ( final String expr )
-      throws java.io.IOException
-   {
-      expect(expr,SEMANTIC);
-   }
-
-   private static void expectSemantic ( final String expr, final JhwScm scm )
-      throws java.io.IOException
-   {
-      expect(expr,SEMANTIC);
    }
 
    private static void expectSuccess ( final String expr, 
