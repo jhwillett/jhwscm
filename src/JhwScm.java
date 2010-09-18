@@ -360,7 +360,7 @@ public class JhwScm
       }
       for ( int i = 0; i < len; ++i )
       {
-         if ( (DEBUG && false) && debugRand.nextInt(100) < STRESS_OUTPUT_PERCENT )
+         if ( DEBUG && debugRand.nextInt(100) < STRESS_OUTPUT_PERCENT )
          {
             if ( verb ) log("output(): stress: " + i);
             return i;

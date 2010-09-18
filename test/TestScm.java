@@ -74,7 +74,10 @@ public class TestScm
       assertEquals(0,             newScm(true).input(new byte[1],1,0));
       assertEquals(0,             newScm(true).output(new byte[0],0,0));
       
-      assertEquals(-1,            newScm(true).output(new byte[5],2,3));
+      if ( !DEBUG )
+      {
+         assertEquals(-1,            newScm(true).output(new byte[5],2,3));
+      }
    }
 
    private static void driveEdgeCases ()
@@ -1130,12 +1133,10 @@ public class TestScm
       {
          final byte[] input_buf = expr.toString().getBytes();
          int input_off = 0;
-
          while ( input_off < input_buf.length )
          {
-            final int icode = scm.input(input_buf,
-                                        input_off,
-                                        input_buf.length - input_off);
+            final int input_len = input_buf.length - input_off;
+            final int icode = scm.input(input_buf, input_off, input_len);
             if ( 0 <= icode )
             {
                input_off += icode;
@@ -1156,11 +1157,12 @@ public class TestScm
 
       final StringBuilder out = new StringBuilder();
       {
-         final byte[] buf = new byte[1+debugRand.nextInt(10)];
-         int code = 0;
+         final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
+         int output_off = 0;
          for ( int off = 0; true; )
          {
-            final int ocode = scm.output(buf,off,buf.length-off);
+            final int output_len = output_buf.length - output_off;
+            final int ocode = scm.output(output_buf, output_off, output_len);
             if ( -1 > ocode )
             {
                throw new RuntimeException("output() out of spec: " + ocode);
@@ -1169,14 +1171,14 @@ public class TestScm
             {
                break;
             }
-            for ( int i = off; i < off + ocode; ++i )
+            for ( int i = output_off; i < output_off + ocode; ++i )
             {
-               out.append((char)buf[i]);
+               out.append((char)output_buf[i]);
             }
-            off += ocode;
-            if ( off >= buf.length )
+            output_off += ocode;
+            if ( output_off >= output_buf.length )
             {
-               off = 0;
+               output_off = 0;
             }
          }
       }
