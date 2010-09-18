@@ -25,7 +25,8 @@ $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build.ok
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
 	@mkdir -p $(dir $@)
-	$(MAKE) rawtest-$* 2>&1 | tee $@.tmp
+	md5sum Makefile $(SRC) $(TESTS) $(DEPS) >             $@.tmp
+	$(MAKE) rawtest-$*                      2>&1 | tee -a $@.tmp
 	@echo "date:   `date`"
 	@echo "uptime: `uptime`"
 	@mv $@.tmp $@
