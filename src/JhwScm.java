@@ -89,8 +89,8 @@ public class JhwScm
    public static final Stats global = new Stats();
    public        final Stats local  = new Stats();
 
-   public final Mem reg;
-   public final Mem heap;
+   private final Mem reg;
+   private final Mem heap;
 
    private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug

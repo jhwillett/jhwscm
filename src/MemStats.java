@@ -12,8 +12,8 @@
 public class MemStats implements Mem
 {
    private final Mem   mem;
-   public  final Stats global;
-   public  final Stats local;
+   private final Stats global;
+   private final Stats local;
 
    public static class Stats
    {

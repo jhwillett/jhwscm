@@ -13,14 +13,19 @@ public class MemCached implements Mem
    // TODO: expose this policy to caller, be sure unit tests stress both
    private static final boolean TRACK_DIRTY = false;
 
+   private static final int ALG_DUMB = 0;
+   private static final int ALG_RAND = 1;
+   private static final int ALG_INC  = 2;
+   private static final int ALG      = ALG_DUMB;
+
    private final Mem       main;
    private final int       lineSize;
    private final int       lineCount;
    private final int[][]   lines;
    private final int[]     roots;
    private final boolean[] dirties;
-   public  final Stats     global;
-   public  final Stats     local;
+   private final Stats     global;
+   private final Stats     local;
 
    public static class Stats
    {
@@ -124,7 +129,16 @@ public class MemCached implements Mem
 
       if ( -1 == line )
       {
-         line = 0; // TODO: LRU stuff?
+         switch ( ALG )
+         {
+         case ALG_DUMB:
+            line = 0;
+            break;
+         case ALG_RAND:
+         case ALG_INC:
+         default:
+            throw new RuntimeException("bogus ALG: " + ALG);
+         }
          if ( !TRACK_DIRTY || dirties[line] )
          {
             flushLine(line);
