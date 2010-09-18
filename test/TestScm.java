@@ -111,14 +111,18 @@ public class TestScm
       };
       for ( final String expr : simpleInts )
       {
-         expect(expr,                   expr);
-         expect(" " + expr,             expr);
-         expect(expr + " " ,            expr);
-         expect(" " + expr + " ",       expr);
-         expect("\n" + expr,            expr);
-         expect(expr + "\n" ,           expr);
-         expect("\t" + expr + "\t\r\n", expr);
+         final Object[][] tests = { 
+            { expr,                   expr },
+            { " " + expr,             expr },
+            { expr + " " ,            expr },
+            { " " + expr + " ",       expr },
+            { "\n" + expr,            expr },
+            { expr + "\n" ,           expr },
+            { "\t" + expr + "\t\r\n", expr },
+         };
+         batch(tests,false,true);
       }
+
 
       // second content: tweakier integer expressions are
       // self-evaluating but not self-printing.

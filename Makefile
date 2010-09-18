@@ -22,8 +22,10 @@ test: $(TESTS:%=test-%)
 $(TESTS:%=test-%): test-%: $(DESTDIR)/%.tested
 $(TESTS:%=build/%.tested): $(DESTDIR)/%.tested: $(DESTDIR)/build.ok
 $(TESTS:%=build/%.tested): $(DESTDIR)/%.tested: 
+	@echo "host:   `hostname`"
+	@echo "date:   `date`"
+	@echo "uptime: `uptime`"
 	time java -cp $(DESTDIR):$(DEPS) `basename $* | sed 's/.java$$//g'`
-	uptime
 
 .PHONY: build
 build: $(DESTDIR)/build.ok
