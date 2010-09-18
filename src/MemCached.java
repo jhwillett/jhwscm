@@ -16,9 +16,10 @@ public class MemCached implements Mem
    private static final int     ALG_DUMB    = 1;
    private static final int     ALG_RAND    = 2;
    private static final int     ALG_INC     = 3;
+   private static final int     ALG_CLOCK   = 4;
 
    private static final boolean TRACK_DIRTY = true;
-   private static final int     ALG         = ALG_INC;
+   private static final int     ALG         = ALG_CLOCK;
 
    // Wow: ALG_RAND and ALG_INC are surprisingly effective.
    //
@@ -68,6 +69,34 @@ public class MemCached implements Mem
    // Funny how "Cache Algorithms" and "Page Replacement Algorithms"
    // are such divergant articles.  Might be worth studying both, see
    // what the deal is w/ page replacement that I'm not familiar with.
+   //
+   // Ah, again.  From the page replacement article:
+   //
+   //   Clock
+   //
+   //   Clock is a more efficient version of FIFO than Second-chance
+   //   because pages don't have to be constantly pushed to the back
+   //   of the list, but it performs the same general function as
+   //   Second-Chance. The clock algorithm keeps a circular list of
+   //   pages in memory, with the "hand" (iterator) pointing to the
+   //   oldest page in the list.
+   //
+   // That's what I did here for ALG_INC, with the MemCached.next
+   // serving as the clock hand.
+   //
+   // No, wait, that's not true.  They're saying Clock does the same
+   // general function as Second-chance.  I'm not doing Second-chance,
+   // I'm definitely doing plain FIFO - but I am using the circular
+   // buffer with a "hand" to do it.  So maybe full Clock would be an
+   // easy extension.
+   //
+   // As I interpret what Second-Chance and Clock do, is as each line
+   // comes into the cache it gets a bit, basically a single Get Out
+   // of Jail free card: it is FIFO, but each cache entry gets to
+   // survive one cycle of the FIFO queue with immunity.  In Clock,
+   // when we need to free up a line, we look at the mark where the
+   // hand is pointing.  If marked, we unmark it, advance the hand,
+   // and keep looking.  If unmarked, we purge that line.
 
    private final Mem       mem;
    private final int       lineSize;
@@ -75,6 +104,7 @@ public class MemCached implements Mem
    private final int[][]   lines;
    private final int[]     roots;
    private final boolean[] dirties;
+   private final boolean[] getOutOfJailFree;
    private final Stats     global;
    private final Stats     local;
 
@@ -123,17 +153,15 @@ public class MemCached implements Mem
       this.lineCount = lineCount;
       this.lines     = new int[lineCount][];
       this.roots     = new int[lineCount];
-      this.dirties   = TRACK_DIRTY ? new boolean[lineCount] : null;
       this.local     = local;
       this.global    = global;
-      for ( int i = 0; i < lineCount; ++i )
+      if ( TRACK_DIRTY )
       {
-         this.lines[i]      = new int[lineSize];
-         this.roots[i]      = -1;
-         if ( TRACK_DIRTY )
-         {
-            this.dirties[i] = false;
-         }
+         this.dirties = new boolean[lineCount];
+      }
+      else
+      {
+         this.dirties = null;
       }
       if ( ALG == ALG_RAND )
       {
@@ -142,6 +170,30 @@ public class MemCached implements Mem
       else
       {
          rand = null;
+      }
+      if ( ALG == ALG_CLOCK )
+      {
+         getOutOfJailFree = new boolean[lineCount];
+      }
+      else
+      {
+         getOutOfJailFree = null;
+      }
+      for ( int i = 0; i < lineCount; ++i )
+      {
+         this.lines[i]      = new int[lineSize];
+         this.roots[i]      = -1;
+         if ( TRACK_DIRTY )
+         {
+            this.dirties[i] = false;
+         }
+         if ( ALG == ALG_CLOCK )
+         {
+            // Who cares?  If the marks are initially random junk,
+            // that just means we are slighty less efficient in the
+            // first clock revolution.
+            this.getOutOfJailFree[i] = false;
+         }
       }
    }
 
@@ -212,6 +264,22 @@ public class MemCached implements Mem
             next += 1;
             next %= lineCount;
             break;
+         case ALG_CLOCK:
+            int numSkips = 0;
+            while ( true )
+            {
+               line  = next;
+               next += 1;
+               next %= lineCount;
+               if ( !getOutOfJailFree[line] )
+               {
+                  break;
+               }
+               numSkips++;
+               getOutOfJailFree[line] = false;
+            }
+            System.out.println("  numSkips: " + numSkips);
+            break;
          default:
             throw new RuntimeException("bogus ALG: " + ALG);
          }
@@ -231,6 +299,11 @@ public class MemCached implements Mem
       }
 
       loadLine(line,root);
+      if ( ALG_CLOCK == ALG )
+      {
+         getOutOfJailFree[line] = true;
+      }
+
       if ( null != local )  local.numLoad++;
       if ( null != global ) global.numLoad++;
 

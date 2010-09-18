@@ -45,7 +45,7 @@ import java.util.Random; // TODO: this doesn't belong here
 
 public class JhwScm
 {
-   public static final boolean PROFILE                   = false;
+   public static final boolean PROFILE                   = true;
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
@@ -56,8 +56,8 @@ public class JhwScm
    public static final int     PAGE_COUNT                = 512;
 
    public static final boolean USE_CACHED_MEM            = true;
-   public static final int     LINE_SIZE                 = 16;
-   public static final int     LINE_COUNT                = 16;
+   public static final int     LINE_SIZE                 = 64;
+   public static final int     LINE_COUNT                = 64;
 
    public static final int     SUCCESS          =  0;
    public static final int     INCOMPLETE       = -1;
