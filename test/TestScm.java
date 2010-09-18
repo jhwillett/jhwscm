@@ -33,93 +33,46 @@ public class TestScm
       return new JhwScm(DO_REP,SILENT,DEBUG);
    }
 
+   private static void ioEdgeCases ()
+   {
+      assertEquals(JhwScm.BAD_ARG,newScm().input(null,0,0));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(null,0,0));
+
+      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],-1,0));
+      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],0,-1));
+      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],2,3));
+      assertEquals(JhwScm.BAD_ARG,newScm().input(new byte[0],3,2));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],-1,0));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],-1,0));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],0,-1));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],0,-1));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],2,3));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[0],3,2));
+      assertEquals(JhwScm.BAD_ARG,newScm().output(new byte[3],2,3));
+
+      assertEquals(0,             newScm().input(new byte[0],0,0));
+      assertEquals(0,             newScm().input(new byte[0],0,0));
+      assertEquals(0,             newScm().input(new byte[0],0,0));
+      assertEquals(0,             newScm().input(new byte[1],1,0));
+      assertEquals(0,             newScm().output(new byte[0],0,0));
+      assertEquals(-1,            newScm().output(new byte[5],2,3));
+   }
+
+   private static void driveEdgeCases ()
+   {
+      assertEquals(JhwScm.INCOMPLETE,newScm().drive(0));
+      assertEquals(JhwScm.SUCCESS,   newScm().drive(-1)); // run-to-completion
+      assertEquals(JhwScm.BAD_ARG,   newScm().drive(-2));
+      assertEquals(JhwScm.BAD_ARG,   newScm().drive(-3));
+   }
+
    public static void main ( final String[] argv )
       throws java.io.IOException
    {
-      // bogus args to entry points result in BAD_ARG, not an exception
-      {
-         final int code = newScm().input(null,0,0);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().input(new byte[0],0,0);
-         assertEquals(JhwScm.SUCCESS,code);
-      }
-      {
-         final int code = newScm().input(new byte[0],-1,0);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().input(new byte[0],0,-1);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().input(new byte[0],3,2);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().input(new byte[0],2,3);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().output(null,0,0);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().output(new byte[0],0,0);
-         assertEquals(0,code);
-      }
-      {
-         final int code = newScm().output(new byte[0],-1,0);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().output(new byte[0],0,-1);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().output(new byte[0],3,2);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().output(new byte[0],2,3);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().output(new byte[3],2,3);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
-      {
-         final int code = newScm().output(new byte[5],2,3);
-         assertEquals(-1,code);
-      }
-      {
-         final int code = newScm().drive(-2);
-         assertEquals(JhwScm.BAD_ARG,code);
-      }
+      ioEdgeCases();
 
+      driveEdgeCases();
 
-      // empty args are OK
-      {
-         final int code = newScm().input(new byte[0],0,0);
-         assertEquals("input(\"\")",JhwScm.SUCCESS,code);
-      }
-      {
-         final int code = newScm().input(new byte[0],0,0);
-         assertEquals("input(\"\")",JhwScm.SUCCESS,code);
-      }
-      {
-         final int code = newScm().input(new byte[1],1,0);
-         assertEquals("input(\"\")",JhwScm.SUCCESS,code);
-      }
-      {
-         final int code = newScm().drive(0);
-         assertEquals("drive(0)",JhwScm.INCOMPLETE,code);
-      }
-      {
-         final int code = newScm().drive(-1);
-         assertEquals("drive(-1) (w/ empty input)",JhwScm.SUCCESS,code);
-      }
       {
          final StringBuilder buf  = new StringBuilder();
          final int           code = output(newScm(),buf);
