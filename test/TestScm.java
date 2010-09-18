@@ -1267,6 +1267,8 @@ public class TestScm
          }
       }
 
+      log("  LINE_SIZE:                 " + JhwScm.LINE_SIZE);
+      log("  LINE_COUNT:                " + JhwScm.LINE_COUNT);
       log("  PROPERLY_TAIL_RECURSIVE:   " + JhwScm.PROPERLY_TAIL_RECURSIVE);
       log("  CLEVER_TAIL_CALL_MOD_CONS: " + JhwScm.CLEVER_TAIL_CALL_MOD_CONS);
       log("  CLEVER_STACK_RECYCLING:    " + JhwScm.CLEVER_STACK_RECYCLING);
