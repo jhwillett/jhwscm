@@ -95,60 +95,60 @@ public class TestMem
    {
       Random rand = null;
 
-         final int length = mem.length();
-         log("memid " + memid + ":");
-         log("  mem:    " + mem);
-         log("  length: " + length);
-         for ( int addr = 0; addr < length; ++addr )
-         {
-            final int value1 = length-addr;
-            mem.set(addr,value1);
-            final int value2 = mem.get(addr);
-            assertEquals("addr " + addr,value1,value2);
-         }
-         for ( int addr = 0; addr < length; ++addr )
-         {
-            final int value1 = length-addr;
-            final int value2 = mem.get(addr);
-            assertEquals("addr " + addr,value1,value2);
-         }
-         for ( int addr = length-1; addr >= 0; --addr )
-         {
-            final int value1 = length-addr;
-            final int value2 = mem.get(addr);
-            assertEquals("addr " + addr,value1,value2);
-         }
+      final int length = mem.length();
+      log("memid " + memid + ":");
+      log("  mem:    " + mem);
+      log("  length: " + length);
+      for ( int addr = 0; addr < length; ++addr )
+      {
+         final int value1 = length-addr;
+         mem.set(addr,value1);
+         final int value2 = mem.get(addr);
+         assertEquals("addr " + addr,value1,value2);
+      }
+      for ( int addr = 0; addr < length; ++addr )
+      {
+         final int value1 = length-addr;
+         final int value2 = mem.get(addr);
+         assertEquals("addr " + addr,value1,value2);
+      }
+      for ( int addr = length-1; addr >= 0; --addr )
+      {
+         final int value1 = length-addr;
+         final int value2 = mem.get(addr);
+         assertEquals("addr " + addr,value1,value2);
+      }
 
-         rand = new Random(4321);
-         final int[] addrs = new int[Math.min(128,length)];
-         for ( int i = 0; i < addrs.length; ++i )
-         {
-            addrs[i] = i;
-         }
-         for ( int i = addrs.length-1; i > 0; --i )
-         {
-            final int j   = rand.nextInt(i+1);
-            final int tmp = addrs[i];
-            addrs[i]      = addrs[j];
-            addrs[j]      = tmp;
-         }
-         rand = new Random(987);
-         for ( int i = 0; i < addrs.length; ++i )
-         {
-            final int addr   = addrs[i];
-            final int value1 = rand.nextInt();
-            //log("set " + addr + " to " + value1);
-            mem.set(addr,value1);
-         }
-         rand = new Random(987);
-         for ( int i = 0; i < addrs.length; ++i )
-         {
-            final int addr   = addrs[i];
-            final int value1 = rand.nextInt();
-            final int value2 = mem.get(addr);
-            //log("get " + addr + " to " + value2);
-            assertEquals("addr " + addr,value1,value2);
-         }
+      rand = new Random(4321);
+      final int[] addrs = new int[Math.min(128,length)];
+      for ( int i = 0; i < addrs.length; ++i )
+      {
+         addrs[i] = i;
+      }
+      for ( int i = addrs.length-1; i > 0; --i )
+      {
+         final int j   = rand.nextInt(i+1);
+         final int tmp = addrs[i];
+         addrs[i]      = addrs[j];
+         addrs[j]      = tmp;
+      }
+      rand = new Random(987);
+      for ( int i = 0; i < addrs.length; ++i )
+      {
+         final int addr   = addrs[i];
+         final int value1 = rand.nextInt();
+         //log("set " + addr + " to " + value1);
+         mem.set(addr,value1);
+      }
+      rand = new Random(987);
+      for ( int i = 0; i < addrs.length; ++i )
+      {
+         final int addr   = addrs[i];
+         final int value1 = rand.nextInt();
+         final int value2 = mem.get(addr);
+         //log("get " + addr + " to " + value2);
+         assertEquals("addr " + addr,value1,value2);
+      }
    }
 
    private static void log ( final Object obj )
