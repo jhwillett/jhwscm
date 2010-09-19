@@ -96,7 +96,8 @@ public class JhwScm implements Firmware
 
       reg.set(regFreeCellList,NIL);
 
-      reg.set(regPc  , doREP ? sub_rep : sub_rp);
+      reg.set(regArg0, doREP ? sub_rep : sub_rp);
+      reg.set(regPc  , sub_init);
 
       reg.set(regIn  , code(TYPE_IOBUF,0));
       reg.set(regOut , code(TYPE_IOBUF,1));
@@ -177,6 +178,10 @@ public class JhwScm implements Firmware
    {
       final boolean verb = true && VERBOSE;
 
+      if ( DEBUG ) javaDepth = 0;
+      if ( verb ) log("step: " + pp(reg.get(regPc)));
+      if ( DEBUG ) javaDepth = 1;
+
       // Temp variables: note, any block can overwrite any of these.
       // Any data which must survive a block transition should be
       // saved in registers and on the stack instead.
@@ -186,10 +191,15 @@ public class JhwScm implements Firmware
       int tmp0 = 0;
       int tmp1 = 0;
 
-      if ( verb ) log("step: " + pp(reg.get(regPc)));
-      if ( DEBUG ) javaDepth = 2;
       switch ( reg.get(regPc) )
       {
+      case sub_init:
+         // Initializes the machine and the environment, then
+         // calls the sub in reg.get(regArg0).
+         //
+         gosub(reg.get(regArg0),blk_tail_call);
+         break;
+
       case sub_rep:
          // Reads the next expr from reg.get(regIn), evaluates it,
          // and prints the result in reg.get(regOut).
@@ -2637,8 +2647,9 @@ public class JhwScm implements Firmware
    private static final int A3                   =       0x3 << SHIFT_ARITY;
    private static final int AX                   =       0xF << SHIFT_ARITY;
 
-   private static final int sub_rep              = TYPE_SUBP | A0 |  0x1000;
-   private static final int sub_rp               = TYPE_SUBP | A0 |  0x1100;
+   private static final int sub_init             = TYPE_SUBP | A1 |  0x1000;
+   private static final int sub_rep              = TYPE_SUBP | A0 |  0x1100;
+   private static final int sub_rp               = TYPE_SUBP | A0 |  0x1200;
 
    private static final int sub_read             = TYPE_SUBP | A0 |  0x2000;
    private static final int sub_read_list        = TYPE_SUBP | A0 |  0x2100;
@@ -3312,6 +3323,7 @@ public class JhwScm implements Firmware
       case TYPE_SUBS:
          switch (code & ~MASK_BLOCKID)
          {
+         case sub_init:             buf.append("sub_init");             break;
          case sub_rep:              buf.append("sub_rep");              break;
          case sub_rp:               buf.append("sub_rp");               break;
          case sub_read:             buf.append("sub_read");             break;
