@@ -10,12 +10,15 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
-public class TestMem
+public class TestMem extends Util
 {
    private static final boolean verbose = false;
 
    public static void main ( final String[] argv )
    {
+      log("TestMem:");
+      depth++;
+
       final MemStats.Stats stats1    = new MemStats.Stats();
       final MemStats.Stats stats2    = new MemStats.Stats();
 
@@ -81,6 +84,8 @@ public class TestMem
       test(new MemCached(new MemSimple(256),4,4));
       test(new MemCached(new MemSimple(256),8,8));
       test(new MemCached(new MemSimple(256),16,16));
+
+      log("success");
    }
 
    private static void test ( final Mem mem )
@@ -141,10 +146,5 @@ public class TestMem
          //log("get " + addr + " to " + value2);
          assertEquals("addr " + addr,value1,value2);
       }
-   }
-
-   private static void log ( final Object obj )
-   {
-      System.out.println(obj);
    }
 }

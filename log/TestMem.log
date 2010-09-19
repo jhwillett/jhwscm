@@ -1,4 +1,4 @@
-958973f9a815369fa8f66b41eee9a4c1  Makefile
+bc94fc394399e0ce01628f84b099daa3  Makefile
 340befb0624db4df68ca22dcf1d13fbd  src/IOBuffer.java
 6a46a41f2a0a900077b40f0e6dfa6f83  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
@@ -7,11 +7,14 @@ cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
 bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
-6dc6f33212e2987447cc9978b387a832  test/TestIOBuffer.java
-6407b2d691694d53d80625b4480d0267  test/TestMem.java
-9fce6b7b263588132a2746e1fd4444c4  test/TestScm.java
+c83626ba5f94cdf4a8a940830a17b6c4  test/TestIOBuffer.java
+c9d34a626ff426e93258e761f2f88655  test/TestMem.java
+d63c135c1a689288a6cac9610298199d  test/TestScm.java
+25e4279584ba519b70b5d52cddbb0f85  test/Util.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestMem
 host:   little-man
+TestMem:
+  success
 make[1]: Leaving directory `/home/jwillett/jhwscm'

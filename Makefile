@@ -13,6 +13,8 @@ TESTS     += test/TestIOBuffer.java
 TESTS     += test/TestMem.java
 TESTS     += test/TestScm.java
 
+TEST_SRC  := $(wildcard test/*.java)
+
 LIBS                 += junit-4.8.2.jar
 HOME-junit-4.8.2.jar := http://github.com/downloads/KentBeck/junit
 MD5-junit-4.8.2.jar  := 8a498c3d820db50cc7255d8c46c1ebd1
@@ -26,7 +28,7 @@ $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build.ok
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
 	@mkdir -p $(dir $@)
-	@md5sum Makefile $(SRC) $(TESTS) $(DEPS)                >        $@.tmp
+	@md5sum Makefile $(SRC) $(TEST_SRC) $(DEPS)             >        $@.tmp
 	@time bash -c "set -o pipefail ;$(MAKE) rawtest-$* 2>&1 | tee -a $@.tmp"
 	@echo "date:   `date`"
 	@echo "uptime: `uptime`"
@@ -43,10 +45,10 @@ $(TESTS:test/%.java=rawtest-%): rawtest-%:
 build: $(DESTDIR)/build.ok
 $(DESTDIR)/build.ok: $(DEPS)
 $(DESTDIR)/build.ok: $(SRC)
-$(DESTDIR)/build.ok: $(TESTS)
+$(DESTDIR)/build.ok: $(TEST_SRC)
 $(DESTDIR)/build.ok:
 	mkdir -p $(dir $@)
-	time javac -cp $(DESTDIR):$(DEPS) -d $(DESTDIR) $(SRC) $(TESTS)
+	time javac -cp $(DESTDIR):$(DEPS) -d $(DESTDIR) $(SRC) $(TEST_SRC)
 	touch $@
 
 .PHONY: clean

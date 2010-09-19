@@ -11,11 +11,9 @@ import static org.junit.Assert.assertEquals;
 import java.util.Random;
 import java.io.IOException;
 
-public class TestIOBuffer
+public class TestIOBuffer extends Util
 {
    private static final boolean verbose = false;
-
-   private static int depth = 0;
 
    public static void main ( final String[] argv )
    {
@@ -84,16 +82,4 @@ public class TestIOBuffer
       depth--;
    }
 
-   private static void log ( final Object obj )
-   {
-      //System.out.print("depth ");
-      //System.out.print(depth);
-      //System.out.print(": ");
-      for ( int i = 0; i < depth; ++i )
-      {
-         System.out.print(' ');
-         System.out.print(' ');
-      }
-      System.out.println(obj);
-   }
 }

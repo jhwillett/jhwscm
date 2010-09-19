@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
-public class TestScm
+public class TestScm extends Util
 {
    private static final boolean verbose = false;
 
@@ -1190,11 +1190,6 @@ public class TestScm
       }
    }
 
-   private static void log ( final Object msg )
-   {
-      System.out.println(msg);
-   }
-
    private static void report ( final String tag, final JhwScm.Stats stats )
    {
       if ( !JhwScm.PROFILE || !REPORT ) return;
@@ -1271,8 +1266,10 @@ public class TestScm
       if ( JhwScm.USE_CACHED_MEM ) 
       {
          final int hm = stats.cacheStats.numHits + stats.cacheStats.numMisses;
-         log("  cache hit/op:              " + ( 1.0 * stats.cacheStats.numHits / hm));
-         log("  cache write/miss:          " + ( 1.0 * stats.cacheStats.numFlush / stats.cacheStats.numMisses));
+         log("  cache hit/op:              " + 
+             ( 1.0 * stats.cacheStats.numHits / hm));
+         log("  cache write/miss:          " + 
+             ( 1.0 * stats.cacheStats.numFlush / stats.cacheStats.numMisses));
       }
    }
 }
