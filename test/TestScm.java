@@ -35,7 +35,7 @@ public class TestScm extends Util
 
    private static boolean REPORT  = true;
    private static boolean PROFILE = true;
-   private static boolean SILENT  = true;
+   private static boolean VERBOSE = false;
    private static boolean DEBUG   = true;
 
    private static int numExpects        = 0;
@@ -45,8 +45,8 @@ public class TestScm extends Util
 
    private static JhwScm newScm ( final boolean do_rep )
    {
-      final Machine machine = new Machine(PROFILE,SILENT,DEBUG);
-      final JhwScm  scm     = new JhwScm(machine,do_rep,PROFILE,SILENT,DEBUG);
+      final Machine machine = new Machine(PROFILE,VERBOSE,DEBUG);
+      final JhwScm  scm     = new JhwScm(machine,do_rep,PROFILE,VERBOSE,DEBUG);
       return scm;
    }
 
@@ -243,7 +243,6 @@ public class TestScm extends Util
       if ( false )
       {
          // Probably not until I handle floats!
-         SILENT = false;
          expect("(1 .2)",       "(1 0.2)",   newScm(false));
       }
 
@@ -683,7 +682,6 @@ public class TestScm extends Util
          else
          {
             // TODO: save it for letrec*
-            SILENT = false;
             expect("(fact 2)", "2",  scm); // HAHAHHAHHAHAHA
             expect("(fact 3)", "6",  scm);
             expect("(fact 4)", "24", scm);
@@ -727,7 +725,6 @@ public class TestScm extends Util
          //
          // So it probably should be cut from the microcode layer.
          // But in any case, I'm not implementing "else" for now.
-         SILENT = false;
          expect("(cond ((equal? 3 4) 1) (else 2))","2");
          expect("else",SEMANTIC); // else is *not* just bound to #t!
       }
@@ -919,7 +916,6 @@ public class TestScm extends Util
       // TODO: user-level variadics
       if ( false )
       {
-         SILENT = false;
          expect("((lambda x x) 3 4 5 6)",              "(3 4 5 6)");
          expect("((lambda ( . x)) 3 4 5 6)",           "(3 4 5 6)");
          expect("((lambda (x y . z) z) 3 4 5 6)",      "(5 6)");
@@ -929,7 +925,6 @@ public class TestScm extends Util
       // TODO: error for names to collide in formals:
       if ( false )
       {
-         SILENT = false;
          expect("(lambda (x x) 1)",SEMANTIC);
          expect("(lambda (x a x) 1)",SEMANTIC);
          expect("(lambda (a x b x) 1)",SEMANTIC);

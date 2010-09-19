@@ -41,8 +41,6 @@
  * All rights reserved.
  */
 
-import java.util.Random; // TODO: this doesn't belong here
-
 public class JhwScm
 {
    public static final boolean DEFER_HEAP_INIT           = true;
@@ -51,7 +49,7 @@ public class JhwScm
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
    public static final int     SUCCESS          =  0;
-   public static final int     PORT_CLOSED      = -1;
+   //public static final int     PORT_CLOSED      = -1;
    public static final int     BAD_ARG          = -2;
    public static final int     INCOMPLETE       = -3;
    public static final int     OUT_OF_MEMORY    = -4;
@@ -59,9 +57,6 @@ public class JhwScm
    public static final int     FAILURE_SEMANTIC = -6;
    public static final int     INTERNAL_ERROR   = -7;
    public static final int     UNIMPLEMENTED    = -8;
-
-   private static final int    STRESS_OUTPUT_PERCENT = 13;
-   private static final Random debugRand             = new Random(1234);
 
    public static class Stats
    {
@@ -73,7 +68,7 @@ public class JhwScm
    public        final Stats local  = new Stats();
 
    private final boolean PROFILE;
-   private final boolean SILENT;
+   private final boolean VERBOSE;
    private final boolean DEBUG;  // check things which should never happen
 
    public  final Machine    machine;
@@ -89,12 +84,12 @@ public class JhwScm
    public JhwScm ( final Machine machine,
                    final boolean doREP, 
                    final boolean PROFILE, 
-                   final boolean SILENT, 
+                   final boolean VERBOSE, 
                    final boolean DEBUG )
    {
       this.machine = machine;
       this.PROFILE = PROFILE;
-      this.SILENT  = SILENT;
+      this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
 
       this.reg     = machine.reg;
@@ -196,7 +191,7 @@ public class JhwScm
     */
    public int drive ( final int numSteps )
    {
-      final boolean verb = true && !SILENT;
+      final boolean verb = true && VERBOSE;
 
       if ( DEBUG ) javaDepth = 0;
       if ( verb ) log("drive():");
@@ -2600,13 +2595,12 @@ public class JhwScm
    // TODO: distinct from EOF, do we need an NO_INPUT to indicate when
    // no input is ready, but the port isn't closed?
    //
-   // Should explore ports and how we do input() and output() here,
-   // get down to a lower level.
+   // No: my thinking now is we need to be able to suspend processing
+   // when there is no io but the ports are unclosed.
 
    private static final int NIL                 = TYPE_SENTINEL | 39;
 
    private static final int EOF                 = TYPE_SENTINEL | 97;
-   private static final int NO_INPUT            = TYPE_SENTINEL |  3;
    private static final int UNSPECIFIED         = TYPE_SENTINEL | 65;
    private static final int IS_SYMBOL           = TYPE_SENTINEL | 79;
    private static final int IS_STRING           = TYPE_SENTINEL | 32;
@@ -3268,7 +3262,7 @@ public class JhwScm
    //
    private void log ( final Object msg )
    {
-      if ( SILENT ) return;
+      if ( !VERBOSE ) return;
       final int lim = (scmDepth + javaDepth);
       for (int i = 0; i < lim; ++i)
       {
@@ -3279,7 +3273,7 @@ public class JhwScm
 
    private void logrec ( String tag, int c )
    {
-      if ( SILENT ) return;
+      if ( !VERBOSE ) return;
       tag += " ";
       if ( TYPE_CELL == type(c) )
       {
@@ -3321,7 +3315,6 @@ public class JhwScm
       {
       case NIL:                  return "NIL";
       case EOF:                  return "EOF";
-      case NO_INPUT:             return "NO_INPUT";
       case UNSPECIFIED:          return "UNSPECIFIED";
       case IS_STRING:            return "IS_STRING";
       case IS_SYMBOL:            return "IS_SYMBOL";

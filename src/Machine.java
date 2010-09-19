@@ -38,7 +38,7 @@ public class Machine
    public        final Stats local  = new Stats();
 
    public final boolean PROFILE;
-   public final boolean SILENT;
+   public final boolean VERBOSE;
    public final boolean DEBUG;
 
    public final Mem        reg;
@@ -49,11 +49,11 @@ public class Machine
    private int javaDepth = 0; // debug
 
    public Machine ( final boolean PROFILE, 
-                    final boolean SILENT, 
+                    final boolean VERBOSE, 
                     final boolean DEBUG )
    {
       this.PROFILE = PROFILE;
-      this.SILENT  = SILENT;
+      this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
 
       Mem mem = null;
@@ -133,27 +133,26 @@ public class Machine
     */
    public int input ( final byte[] buf, int off, final int len ) 
    {
-      final boolean verb = true && !SILENT;
       if ( DEBUG ) javaDepth = 0;
-      if ( verb ) log("input(): " + off + "+" + len + " / " + buf.length);
+      if ( VERBOSE ) log("input(): " + off + "+" + len + " / " + buf.length);
       if ( null == buf )
       {
-         if ( verb ) log("input():  null arg");
+         if ( VERBOSE ) log("input():  null arg");
          return BAD_ARG;
       }
       if ( off < 0 )
       {
-         if ( verb ) log("input(): bad off: " + off);
+         if ( VERBOSE ) log("input(): bad off: " + off);
          return BAD_ARG;
       }
       if ( len < 0 )
       {
-         if ( verb ) log("input(): bad len: " + len);
+         if ( VERBOSE ) log("input(): bad len: " + len);
          return BAD_ARG;
       }
       if ( off+len > buf.length )
       {
-         if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
+         if ( VERBOSE ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
       final IOBuffer iobuf = buffers[0];
@@ -169,8 +168,8 @@ public class Machine
             return i;
          }
          final byte b = buf[off++];
-         if ( verb ) log("input(): pushing byte " + b);
-         if ( verb ) log("input(): pushing char " + (char)b);
+         if ( VERBOSE ) log("input(): pushing byte " + b);
+         if ( VERBOSE ) log("input(): pushing char " + (char)b);
          iobuf.push(b);
          if ( PROFILE ) local.numInput++;
          if ( PROFILE ) global.numInput++;
@@ -194,27 +193,26 @@ public class Machine
     */
    public int output ( final byte[] buf, int off, final int len ) 
    {
-      final boolean verb = true && !SILENT;
       if ( DEBUG ) javaDepth = 0;
-      if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
+      if ( VERBOSE ) log("output(): " + off + "+" + len + " / " + buf.length);
       if ( null == buf )
       {
-         if ( verb ) log("output(): null arg");
+         if ( VERBOSE ) log("output(): null arg");
          return BAD_ARG;
       }
       if ( off < 0 )
       {
-         if ( verb ) log("output(): bad off: " + off);
+         if ( VERBOSE ) log("output(): bad off: " + off);
          return BAD_ARG;
       }
       if ( len < 0 )
       {
-         if ( verb ) log("output(): bad len: " + len);
+         if ( VERBOSE ) log("output(): bad len: " + len);
          return BAD_ARG;
       }
       if ( off+len > buf.length )
       {
-         if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
+         if ( VERBOSE ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
       final IOBuffer iobuf = buffers[1];
@@ -229,23 +227,23 @@ public class Machine
          {
             if ( 0 == i )
             {
-               if ( verb ) log("output(): empty and done");
+               if ( VERBOSE ) log("output(): empty and done");
                return -1;
             }
             else
             {
-               if ( verb ) log("output(): empty, but shifted: " + i);
+               if ( VERBOSE ) log("output(): empty, but shifted: " + i);
                return i;
             }
          }
          final byte b = iobuf.pop();
          buf[off++] = b;
-         if ( verb ) log("output(): popped byte " + b);
-         if ( verb ) log("output(): popped char " + (char)b);
+         if ( VERBOSE ) log("output(): popped byte " + b);
+         if ( VERBOSE ) log("output(): popped char " + (char)b);
          if ( PROFILE ) local.numOutput++;
          if ( PROFILE ) global.numOutput++;
       }
-      if ( verb ) log("output(): shifted: " + max);
+      if ( VERBOSE ) log("output(): shifted: " + max);
       return max;
    }
 
@@ -260,7 +258,7 @@ public class Machine
    //
    private void log ( final Object msg )
    {
-      if ( SILENT ) return;
+      if ( !VERBOSE ) return;
       final int lim = (scmDepth + javaDepth);
       for (int i = 0; i < lim; ++i)
       {

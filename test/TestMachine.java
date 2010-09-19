@@ -10,12 +10,12 @@ public class TestMachine extends Util
 {
    private static boolean REPORT  = true;
    private static boolean PROFILE = true;
-   private static boolean SILENT  = true;
+   private static boolean VERBOSE = false;
    private static boolean DEBUG   = true;
 
    private static Machine newMachine ()
    {
-      final Machine machine = new Machine(PROFILE,SILENT,DEBUG);
+      final Machine machine = new Machine(PROFILE,VERBOSE,DEBUG);
       return machine;
    }
 
