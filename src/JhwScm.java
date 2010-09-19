@@ -216,12 +216,26 @@ public class JhwScm
       // to maintianging longer term until *after* I've got (eval)
       // working and the entry points in the microcode tied down more.
       //
-      final int queue = queueCreate();
-      for ( int i = 0; i < name.length(); i++ )
+      final int symbol;
+      if ( QUEUE_FREE_READER )
       {
-         queuePushBack(queue,code(TYPE_CHAR,name.charAt(i)));
+         int tmp = NIL;
+         for ( int i = name.length()-1; i >= 0 ; --i )
+         {
+            final int c = code(TYPE_CHAR,name.charAt(i));
+            tmp = cons(c,tmp);
+         }
+         symbol = cons(IS_SYMBOL,tmp);
       }
-      final int symbol   = cons(IS_SYMBOL,car(queue));
+      else
+      {
+         final int queue = queueCreate();
+         for ( int i = 0; i < name.length(); ++i )
+         {
+            queuePushBack(queue,code(TYPE_CHAR,name.charAt(i)));
+         }
+         symbol = cons(IS_SYMBOL,car(queue));
+      }
       final int binding  = cons(symbol,code);
       final int frame    = car(reg.get(regEnv));
       final int newframe = cons(binding,frame);
