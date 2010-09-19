@@ -1087,6 +1087,9 @@ public class JhwScm
          case sub_read_string:
             // Parses the next string literal from reg.get(regIn).
             //
+            // Expects that the next character in the input is known
+            // to be the leading '"' of a string literal.
+            //
             reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
             if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
             {
@@ -1095,13 +1098,26 @@ public class JhwScm
                break;
             }
             queuePopFront(reg.get(regIn));
-            reg.set(regArg0 , queueCreate());
-            store(reg.get(regArg0));
-            gosub(sub_read_string_body,sub_read_string+0x1);
+            if ( QUEUE_FREE_READER )
+            {
+               gosub(sub_read_string_body,sub_read_string+0x1);
+            }
+            else
+            {
+               reg.set(regArg0 , queueCreate());
+               store(reg.get(regArg0));
+               gosub(sub_read_string_body,sub_read_string+0x1);
+            }
             break;
          case sub_read_string+0x1:
-            reg.set(regTmp0   , restore());
-            reg.set(regRetval , cons(IS_STRING,car(reg.get(regTmp0))));
+            if ( QUEUE_FREE_READER )
+            {
+            }
+            else
+            {
+               reg.set(regTmp0   , restore());
+               reg.set(regRetval , cons(IS_STRING,car(reg.get(regTmp0))));
+            }
             reg.set(regTmp0   , queuePeekFront(reg.get(regIn)));
             if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
             {
@@ -1110,6 +1126,14 @@ public class JhwScm
                break;
             }
             queuePopFront(reg.get(regIn));
+            if ( QUEUE_FREE_READER )
+            {
+               reg.set(regRetval , cons(IS_STRING,reg.get(regRetval)));
+            }
+            else
+            {
+               reg.set(regRetval , cons(IS_STRING,car(reg.get(regRetval))));
+            }
             returnsub();
             break;
 
@@ -1125,7 +1149,7 @@ public class JhwScm
             // and stops on the trailing \" (which is left unconsumed
             // for balance).
             //
-            if ( DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
+            if ( !QUEUE_FREE_READER && DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
             {
                log("non-queue in arg: " + pp(reg.get(regArg0)));
                raiseError(ERR_INTERNAL);
@@ -1147,13 +1171,28 @@ public class JhwScm
             switch (value(reg.get(regTmp1)))
             {
             case '"':
-               reg.set(regRetval , car(reg.get(regArg0)));
+               if ( QUEUE_FREE_READER )
+               {
+                  reg.set(regRetval , NIL);
+               }
+               else
+               {
+                  reg.set(regRetval , car(reg.get(regArg0)));
+               }
                returnsub();
                break;
             default:
-               queuePushBack(reg.get(regArg0),reg.get(regTmp1));
                queuePopFront(reg.get(regIn));
-               gosub(sub_read_string_body,blk_tail_call);
+               if ( QUEUE_FREE_READER )
+               {
+                  store(reg.get(regTmp1));
+                  gosub(sub_read_string_body,blk_tail_call_m_cons);
+               }
+               else
+               {
+                  queuePushBack(reg.get(regArg0),reg.get(regTmp1));
+                  gosub(sub_read_string_body,blk_tail_call);
+               }
                break;
             }
             break;

@@ -1,5 +1,5 @@
 daaaf9a250f89acc0b409515113afb79  Makefile
-3a097b61c641c096d0f5074f43f7b99f  src/JhwScm.java
+47f705ce71b36450aeae752e1d80a8e1  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
@@ -13,32 +13,32 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 global:
-  numCycles:        321397
-  numCons:          430006
+  numCycles:        321513
+  numCons:          430045
   numInput:         6430
   numOutput:        1788
-  reg.numSet:       2546194
-  reg.numGet:       5311132
+  reg.numSet:       2546972
+  reg.numGet:       5312489
   reg.maxAddr:      31
-  heap.numSet:      330800
-  heap.numGet:      973520
+  heap.numSet:      330768
+  heap.numGet:      973488
   heap.maxAddr:     5631
-  cache.numHits:    3000889
-  cache.numMisses:  51485
-  cache.numFlush:   20675
+  cache.numHits:    3000925
+  cache.numMisses:  51483
+  cache.numFlush:   20673
   cache.numDrop:    30810
-  cache.numLoad:    60845
-  cacheTop.numSet:  1548491
-  cacheTop.numGet:  1513243
+  cache.numLoad:    60843
+  cacheTop.numSet:  1548520
+  cacheTop.numGet:  1513248
   cacheTop.maxAddr: 5631
-  reg   ops:        7857326
-  cache ops:        3061734
-  heap  ops:        1304320
-  reg   ops/cell:   253462.12903225806
-  cache ops/cell:   543.7282898241875
-  heap  ops/cell:   231.63203693837684
-  ops   reg/cache:  2.5662993584681097
-  ops   cache/heap: 2.3473794774288517
+  reg   ops:        7859461
+  cache ops:        3061768
+  heap  ops:        1304256
+  reg   ops/cell:   253531.0
+  cache ops/cell:   543.7343278280945
+  heap  ops/cell:   231.62067128396376
+  ops   reg/cache:  2.5669681700246394
+  ops   cache/heap: 2.3475207321262084
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -46,8 +46,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9831328008953031
-  cache write/miss:          0.40157327376905894
+  cache hit/op:              0.9831336439951671
+  cache write/miss:          0.4015500262222481
 numExpects: 748
   happy:    648
   unhappy:  100
