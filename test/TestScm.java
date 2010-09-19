@@ -98,6 +98,8 @@ public class TestScm
 
       driveEdgeCases();
 
+      //SILENT = false;
+
       expect("","");
 
       // first content: simple integer expressions are self-evaluating

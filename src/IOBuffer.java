@@ -36,7 +36,7 @@ public class IOBuffer
     */
    public boolean isFull ()
    {
-      throw new RuntimeException("unimplemented");
+      return start == end && ( 0 != len );
    }
 
    /**
@@ -49,7 +49,11 @@ public class IOBuffer
     */
    public byte peek ()
    {
-      throw new RuntimeException("unimplemented");
+      if ( isEmpty() )
+      {
+         throw new SegFault("peek() when isEmpty()");
+      }
+      return buf[start];
    }
 
    /**
@@ -62,7 +66,15 @@ public class IOBuffer
     */
    public byte pop ()
    {
-      throw new RuntimeException("unimplemented");
+      if ( isEmpty() )
+      {
+         throw new SegFault("pop() when isEmpty()");
+      }
+      final byte value = buf[start];
+      start += 1;
+      start %= buf.length;
+      len   -= 1;
+      return value;
    }
 
    /**
@@ -74,6 +86,13 @@ public class IOBuffer
     */
    public void push ( final byte value )
    {
-      throw new RuntimeException("unimplemented");
+      if ( isFull() )
+      {
+         throw new SegFault("push() when isFull()");
+      }
+      end += 1;
+      end %= buf.length;
+      len += 1;
+      buf[end] = value;
    }
 }

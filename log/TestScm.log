@@ -1,6 +1,6 @@
 daaaf9a250f89acc0b409515113afb79  Makefile
-834b53909eb5ff8c2646fa391389c600  src/IOBuffer.java
-a2d1b41069367543818741eb9ea7ea56  src/JhwScm.java
+ca4cb8b0865ab79cc9066223abe9fcc8  src/IOBuffer.java
+e037f0698ace2e77f4e1072bd35553bd  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
@@ -8,7 +8,7 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 3bca3ed0f4a478640a4e8ddb3002c5ce  test/TestMem.java
-eba15f55d67373f307dec7b7cd61e2fe  test/TestScm.java
+71c10b01a794c69f9671d7dada1dedca  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
@@ -24,22 +24,22 @@ global:
   heap.numSet:      330768
   heap.numGet:      973488
   heap.maxAddr:     5631
-  cache.numHits:    3000925
+  cache.numHits:    2992716
   cache.numMisses:  51483
   cache.numFlush:   20673
   cache.numDrop:    30810
   cache.numLoad:    60843
   cacheTop.numSet:  1548520
-  cacheTop.numGet:  1513248
+  cacheTop.numGet:  1505039
   cacheTop.maxAddr: 5631
   reg   ops:        7859409
-  cache ops:        3061768
+  cache ops:        3053559
   heap  ops:        1304256
   reg   ops/cell:   253529.32258064515
-  cache ops/cell:   543.7343278280945
+  cache ops/cell:   542.2765050612679
   heap  ops/cell:   231.62067128396376
-  ops   reg/cache:  2.5669511863733634
-  ops   cache/heap: 2.3475207321262084
+  ops   reg/cache:  2.573852019888923
+  ops   cache/heap: 2.341226722361254
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -47,7 +47,7 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9831336439951671
+  cache hit/op:              0.9830881621076677
   cache write/miss:          0.4015500262222481
 numExpects: 748
   happy:    648

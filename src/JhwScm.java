@@ -171,7 +171,7 @@ public class JhwScm
       if ( USE_IO_BUFFER )
       {
          this.buffers = new IOBuffer[] { new IOBuffer(), new IOBuffer() };
-         reg.set(regOut , code(TYPE_IOBUF,0));
+         reg.set(regIn  , code(TYPE_IOBUF,0));
          reg.set(regOut , code(TYPE_IOBUF,1));
       }
       else
@@ -397,7 +397,14 @@ public class JhwScm
          {
             if ( iobuf.isEmpty() )
             {
-               return i;
+               if ( 0 == i )
+               {
+                  return -1;
+               }
+               else
+               {
+                  return i;
+               }
             }
             buf[off++] = iobuf.pop();
          }
@@ -3236,10 +3243,10 @@ public class JhwScm
    }
 
    /**
-    * @returns the object at the front of the queue (in which case the
-    * queue is mutated to remove the object), or EOF if empty
+    * Removes the object at the front of the queue (in which case the
+    * queue is mutated to remove the object).
     */
-   private int queuePopFront ( final int queue )
+   private void queuePopFront ( final int queue )
    {
       final boolean verb = true;
       if ( USE_IO_BUFFER )
@@ -3248,13 +3255,13 @@ public class JhwScm
          {
             if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
             raiseError(ERR_INTERNAL);
-            return EOF;
+            return;
          }
          if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
          {
             if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
             raiseError(ERR_INTERNAL);
-            return EOF;
+            return;
          }
          final IOBuffer buf = buffers[value(queue)];
          //
@@ -3267,41 +3274,45 @@ public class JhwScm
          //
          if ( null == buf )
          {
-            return EOF;
+            if ( verb ) log("  queuePopFront(): closed");
+            raiseError(ERR_INTERNAL);
+            return;
          }
          if ( buf.isEmpty() )
          {
             // TODO: suspend
-            return EOF;
+            if ( verb ) log("  queuePopFront(): empty");
+            raiseError(ERR_INTERNAL);
+            return;
          }
-         return buf.pop();
+         if ( verb ) log("  queuePopFront(): popping");
+         buf.pop();
+         return;
       }
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
          if ( verb ) log("  queuePopFront(): non-queue " + pp(queue));
          raiseError(ERR_INTERNAL);
-         return EOF;
+         return;
       }
       final int head = car(queue);
       if ( NIL == head )
       {
          if ( verb ) log("  queuePopFront(): empty " + pp(queue));
-         return EOF;
+         return;
       }
       if ( TYPE_CELL != type(head) ) 
       {
          if ( verb ) log("  queuePopFront(): corrupt queue " + pp(head));
          raiseError(ERR_INTERNAL); // corrupt queue
-         return EOF;
+         return;
       }
-      final int value = car(head);
+      if ( verb ) log("  queuePopFront(): popping");
       setcar(queue,cdr(head));
       if ( NIL == car(queue) )
       {
          setcdr(queue,NIL);
       }
-      if ( verb ) log("  queuePopFront(): popped " + pp(value));
-      return value;
    }
 
    /**
@@ -3309,7 +3320,7 @@ public class JhwScm
     */
    private int queuePeekFront ( final int queue )
    {
-      final boolean verb = false;
+      final boolean verb = true;
       if ( USE_IO_BUFFER )
       {
          if ( DEBUG && TYPE_IOBUF != type(queue) ) 
@@ -3325,6 +3336,7 @@ public class JhwScm
             return EOF;
          }
          final IOBuffer buf = buffers[value(queue)];
+         if ( verb ) log("  queuePeekFront(): iobuf " + buf);
          //
          // TODO: for now, an iobuf is EOF if empty, but later when we
          // add close() it'll be EOF when null, and an empty buffer
@@ -3335,14 +3347,20 @@ public class JhwScm
          //
          if ( null == buf )
          {
+            if ( verb ) log("  queuePeekFront(): closed");
             return EOF;
          }
          if ( buf.isEmpty() )
          {
             // TODO: suspend
+            if ( verb ) log("  queuePeekFront(): empty");
             return EOF;
          }
-         return buf.peek();
+         final int value = buf.peek();
+         if ( verb ) log("  queuePeekFront(): value: " + value);
+         final int code  = code(TYPE_CHAR,value);
+         if ( verb ) log("  queuePeekFront(): code:  " + pp(code));
+         return code;
       }
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
