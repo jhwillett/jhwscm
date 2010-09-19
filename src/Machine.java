@@ -10,8 +10,6 @@ import java.util.Random; // TODO: this doesn't belong here
 
 public class Machine
 {
-   public static final boolean PROFILE                   = true;
-
    public static final boolean USE_PAGED_MEM             = false;
    public static final int     PAGE_SIZE                 = 1024;
    public static final int     PAGE_COUNT                = 6; // need 512 unopt
@@ -20,21 +18,11 @@ public class Machine
    public static final int     LINE_SIZE                 = 16;
    public static final int     LINE_COUNT                = 16;
 
-   public static final int     SUCCESS          =  0;
    public static final int     PORT_CLOSED      = -1;
    public static final int     BAD_ARG          = -2;
-   public static final int     INCOMPLETE       = -3;
-   public static final int     OUT_OF_MEMORY    = -4;
-   public static final int     FAILURE_LEXICAL  = -5;
-   public static final int     FAILURE_SEMANTIC = -6;
-   public static final int     INTERNAL_ERROR   = -7;
-   public static final int     UNIMPLEMENTED    = -8;
 
    private static final int    STRESS_OUTPUT_PERCENT = 13;
    private static final Random debugRand             = new Random(1234);
-
-   private final boolean SILENT;
-   private final boolean DEBUG;  // check things which should never happen
 
    public static class Stats
    {
@@ -49,19 +37,24 @@ public class Machine
    public static final Stats global = new Stats();
    public        final Stats local  = new Stats();
 
-   private final Mem reg;
-   private final Mem heap;
+   public final boolean PROFILE;
+   public final boolean SILENT;
+   public final boolean DEBUG;
 
-   private final IOBuffer[] buffers;
+   public final Mem        reg;
+   public final Mem        heap;
+   public final IOBuffer[] buffers;
 
    private int scmDepth  = 0; // debug
    private int javaDepth = 0; // debug
 
-   public Machine ( final boolean SILENT, 
+   public Machine ( final boolean PROFILE, 
+                    final boolean SILENT, 
                     final boolean DEBUG )
    {
-      this.SILENT = SILENT;
-      this.DEBUG  = DEBUG;
+      this.PROFILE = PROFILE;
+      this.SILENT  = SILENT;
+      this.DEBUG   = DEBUG;
 
       Mem mem = null;
 
