@@ -7,7 +7,7 @@ cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
 bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
-5d00ec0b92affa1d8ddb13b6f2c5c3d7  test/TestIOBuffer.java
+e7e96af8d9756d4652318f27efdd8b9c  test/TestIOBuffer.java
 6407b2d691694d53d80625b4480d0267  test/TestMem.java
 084c4f8b4a3d5479c49ca164e6a3ed8b  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
@@ -15,7 +15,10 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestIOBuffer
 host:   little-man
 TestIOBuffer
-  created
-  done writing
-  done reading
+  test:
+    byteCount: 5
+    numOps:    3
+    mutation:  10
+    created
+success
 make[1]: Leaving directory `/home/jwillett/jhwscm'

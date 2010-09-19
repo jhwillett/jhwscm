@@ -15,31 +15,68 @@ public class TestIOBuffer
 {
    private static final boolean verbose = false;
 
+   private static int depth = 0;
+
    public static void main ( final String[] argv )
    {
       log("TestIOBuffer");
 
-      final IOBuffer iobuf = new IOBuffer(5);
-      log("  created");
+      final int[][] tests = {
+         { 5, 3, 10 },
+      };
 
-      for ( int i = 0; i < 3; ++i )
+      for ( int i = 0; i < tests.length; ++i )
       {
-         final byte b = (byte)(i+10);
+         final int[] test    = tests[i];
+         final int byteCount = test[0];
+         final int numOps    = test[1];
+         final int mutation  = test[2];
+         depth++;
+         test(byteCount,numOps,mutation);
+         depth--;
+      }
+
+      log("success");
+   }
+
+   public static void test ( final int byteCount,
+                             final int numOps,
+                             final int mutation )
+   {
+      log("test:");
+      depth++;
+      log("byteCount: " + byteCount);
+      log("numOps:    " + numOps);
+      log("mutation:  " + mutation);
+
+      final IOBuffer iobuf = new IOBuffer(byteCount);
+      log("created");
+
+      for ( int i = 0; i < numOps; ++i )
+      {
+         final byte b = (byte)(i+mutation);
          iobuf.push(b);
       }
-      log("  done writing");
 
-      for ( int i = 0; i < 3; ++i )
+      for ( int i = 0; i < numOps; ++i )
       {
          final byte b = iobuf.pop();
-         assertEquals(b,(byte)(i+10));
+         assertEquals(b,(byte)(i+mutation));
          assertEquals(b,(i+10));
       }
-      log("  done reading");
+      depth--;
    }
 
    private static void log ( final Object obj )
    {
+      //System.out.print("depth ");
+      //System.out.print(depth);
+      //System.out.print(": ");
+      for ( int i = 0; i < depth; ++i )
+      {
+         System.out.print(' ');
+         System.out.print(' ');
+      }
       System.out.println(obj);
    }
 }
