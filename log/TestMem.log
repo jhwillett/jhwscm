@@ -1,4 +1,5 @@
 8b45cd0359c87ea44d20bf96229132d6  Makefile
+88a3f5db03d1cb0759d299e058c762cf  src/Computer.java
 7d88928e0ac577a67dd3fe81ef06fe6c  src/Firmware.java
 340befb0624db4df68ca22dcf1d13fbd  src/IOBuffer.java
 c631ea0a7c7831b9a3fe9d1ebf6780fb  src/JhwScm.java
