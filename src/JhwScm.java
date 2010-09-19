@@ -51,6 +51,8 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
+   public static final boolean QUEUE_FREE_READER         = true;
+
    public static final boolean USE_PAGED_MEM             = false;
    public static final int     PAGE_SIZE                 = 1024;
    public static final int     PAGE_COUNT                = 6; // need 512 unopt
@@ -322,8 +324,6 @@ public class JhwScm
     *
     * A return result of 0 frequently indicates more cycles in drive()
     * are needed to clear out the port buffers.
-    *
-    * TODO: Implement to this new contract!
     *
     * @returns BAD_ARGS if any of the arguments are invalid,
     * PORT_CLOSED if close() has been called on the port, else the
@@ -748,6 +748,12 @@ public class JhwScm
                   reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp0)));
                   returnsub();
                }
+               else if ( QUEUE_FREE_READER )
+               {
+                  if ( verb ) log("minus-starting-symbol");
+                  reg.set(regArg0   , code(TYPE_CHAR,'-'));
+                  gosub(sub_read_symbol,blk_tail_call);
+               }
                else
                {
                   if ( verb ) log("minus-starting-symbol");
@@ -760,6 +766,10 @@ public class JhwScm
                break;
             default:
                if ( verb ) log("symbol");
+               if ( QUEUE_FREE_READER )
+               {
+                  reg.set(regArg0   , NIL);
+               }
                gosub(sub_read_symbol,blk_tail_call);
                break;
             }
@@ -945,13 +955,46 @@ public class JhwScm
          case sub_read_symbol:
             // Parses the next symbol from reg.get(regIn).
             //
-            reg.set(regArg0 , queueCreate());
-            store(reg.get(regArg0));
-            gosub(sub_read_symbol_body,sub_read_symbol+0x1);
+            // Expects that the next character in the input is known
+            // to be the first character of a symbol.
+            //
+            // If QUEUE_FREE_READER and reg.get(regArg0) is not NIL,
+            // reg.get(regArg0) is prepended to the symbol.
+            //
+            if ( QUEUE_FREE_READER )
+            {
+               if ( NIL == reg.get(regArg0) )
+               {
+                  store(IS_SYMBOL);
+                  gosub(sub_read_symbol_body,blk_tail_call_m_cons);
+               }
+               else
+               {
+                  store(reg.get(regArg0));
+                  gosub(sub_read_symbol_body,sub_read_symbol+0x2);
+               }
+            }
+            else
+            {
+               reg.set(regArg0 , queueCreate());
+               store(reg.get(regArg0));
+               gosub(sub_read_symbol_body,sub_read_symbol+0x1);
+            }
             break;
          case sub_read_symbol+0x1: // blk_tail_call_m_cons-ish??
             reg.set(regTmp0   , restore());
             reg.set(regRetval , cons(IS_SYMBOL,car(reg.get(regTmp0))));
+            returnsub();
+            break;
+         case sub_read_symbol+0x2:
+            logrec("received:   ",reg.get(regRetval));
+            reg.set(regArg0,   restore()); // restore prepend character
+            logrec("restored:   ",reg.get(regArg0));
+            reg.set(regTmp0,   cons(reg.get(regArg0), reg.get(regRetval)));
+            logrec("prepended:  ",reg.get(regTmp0));
+            reg.set(regTmp1,   cons(IS_SYMBOL,        reg.get(regTmp0)));
+            logrec("besymboled: ",reg.get(regTmp1));
+            reg.set(regRetval, reg.get(regTmp1));
             returnsub();
             break;
 
@@ -965,7 +1008,7 @@ public class JhwScm
             //
             // Return value UNSPECIFIED, works via side-effects.
             //
-            if ( DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
+            if ( !QUEUE_FREE_READER && DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
             {
                if ( verb ) log("non-queue in arg: " + pp(reg.get(regArg0)));
                raiseError(ERR_INTERNAL);
@@ -975,7 +1018,14 @@ public class JhwScm
             if ( EOF == reg.get(regTmp1) )
             {
                if ( verb ) log("eof: returning");
-               reg.set(regRetval , UNSPECIFIED);
+               if ( QUEUE_FREE_READER )
+               {
+                  reg.set(regRetval , NIL);
+               }
+               else
+               {
+                  reg.set(regRetval , UNSPECIFIED);
+               }
                returnsub();
                break;
             }
@@ -994,12 +1044,28 @@ public class JhwScm
             case '(':
             case ')':
             case '"':
+               if ( QUEUE_FREE_READER )
+               {
+                  reg.set(regRetval , NIL);
+               }
+               else
+               {
+                  reg.set(regRetval , UNSPECIFIED);
+               }
                returnsub();
                break;
             default:
-               queuePushBack(reg.get(regArg0),reg.get(regTmp1));
                queuePopFront(reg.get(regIn));
-               gosub(sub_read_symbol_body,blk_tail_call);
+               if ( QUEUE_FREE_READER )
+               {
+                  store(reg.get(regTmp1));
+                  gosub(sub_read_symbol_body,blk_tail_call_m_cons);
+               }
+               else
+               {
+                  queuePushBack(reg.get(regArg0),reg.get(regTmp1));
+                  gosub(sub_read_symbol_body,blk_tail_call);
+               }
                break;
             }
             break;

@@ -1,5 +1,5 @@
 daaaf9a250f89acc0b409515113afb79  Makefile
-2e7a519b7f2b126e5a8d0a1bda62c2ba  src/JhwScm.java
+322b563e991b7a7171a804813c09c518  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
@@ -7,38 +7,38 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 3bca3ed0f4a478640a4e8ddb3002c5ce  test/TestMem.java
-eba15f55d67373f307dec7b7cd61e2fe  test/TestScm.java
+f0d139965c44749db2addff952e0566b  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 global:
-  numCycles:        319873
-  numCons:          443203
+  numCycles:        321397
+  numCons:          443461
   numInput:         6430
   numOutput:        1788
-  reg.numSet:       2551689
-  reg.numGet:       5307880
+  reg.numSet:       2563233
+  reg.numGet:       5328185
   reg.maxAddr:      31
-  heap.numSet:      374640
-  heap.numGet:      1049360
+  heap.numSet:      372448
+  heap.numGet:      1057504
   heap.maxAddr:     6143
-  cache.numHits:    3242579
-  cache.numMisses:  56225
-  cache.numFlush:   23415
-  cache.numDrop:    32810
-  cache.numLoad:    65585
-  cacheTop.numSet:  1676045
-  cacheTop.numGet:  1632119
+  cache.numHits:    3241488
+  cache.numMisses:  56734
+  cache.numFlush:   23278
+  cache.numDrop:    33456
+  cache.numLoad:    66094
+  cacheTop.numSet:  1674999
+  cacheTop.numGet:  1632583
   cacheTop.maxAddr: 6143
-  reg   ops:        7859569
-  cache ops:        3308164
-  heap  ops:        1424000
-  reg   ops/cell:   253534.48387096773
-  cache ops/cell:   538.5258017255412
-  heap  ops/cell:   231.80856259156764
-  ops   reg/cache:  2.3758099658904457
-  ops   cache/heap: 2.3231488764044945
+  reg   ops:        7891418
+  cache ops:        3307582
+  heap  ops:        1429952
+  reg   ops/cell:   254561.87096774194
+  cache ops/cell:   538.4310597427967
+  heap  ops/cell:   232.77747029138857
+  ops   reg/cache:  2.385857100443768
+  ops   cache/heap: 2.3130720471736113
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -46,8 +46,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9829559440330495
-  cache write/miss:          0.4164517563361494
+  cache hit/op:              0.9827986108879269
+  cache write/miss:          0.4103007015193711
 numExpects: 748
   happy:    648
   unhappy:  100
