@@ -1,5 +1,5 @@
 daaaf9a250f89acc0b409515113afb79  Makefile
-47f705ce71b36450aeae752e1d80a8e1  src/JhwScm.java
+7fff1c1a2a3e14eb561a1158800ee0e1  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
@@ -18,7 +18,7 @@ global:
   numInput:         6430
   numOutput:        1788
   reg.numSet:       2546972
-  reg.numGet:       5312489
+  reg.numGet:       5312437
   reg.maxAddr:      31
   heap.numSet:      330768
   heap.numGet:      973488
@@ -31,13 +31,13 @@ global:
   cacheTop.numSet:  1548520
   cacheTop.numGet:  1513248
   cacheTop.maxAddr: 5631
-  reg   ops:        7859461
+  reg   ops:        7859409
   cache ops:        3061768
   heap  ops:        1304256
-  reg   ops/cell:   253531.0
+  reg   ops/cell:   253529.32258064515
   cache ops/cell:   543.7343278280945
   heap  ops/cell:   231.62067128396376
-  ops   reg/cache:  2.5669681700246394
+  ops   reg/cache:  2.5669511863733634
   ops   cache/heap: 2.3475207321262084
   ALG:                       4
   LINE_SIZE:                 16

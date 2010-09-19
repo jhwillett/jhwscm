@@ -51,8 +51,6 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final boolean QUEUE_FREE_READER         = true;
-
    public static final boolean USE_PAGED_MEM             = false;
    public static final int     PAGE_SIZE                 = 1024;
    public static final int     PAGE_COUNT                = 6; // need 512 unopt
@@ -216,26 +214,13 @@ public class JhwScm
       // to maintianging longer term until *after* I've got (eval)
       // working and the entry points in the microcode tied down more.
       //
-      final int symbol;
-      if ( QUEUE_FREE_READER )
+      int tmp = NIL;
+      for ( int i = name.length()-1; i >= 0 ; --i )
       {
-         int tmp = NIL;
-         for ( int i = name.length()-1; i >= 0 ; --i )
-         {
-            final int c = code(TYPE_CHAR,name.charAt(i));
-            tmp = cons(c,tmp);
-         }
-         symbol = cons(IS_SYMBOL,tmp);
+         final int c = code(TYPE_CHAR,name.charAt(i));
+         tmp = cons(c,tmp);
       }
-      else
-      {
-         final int queue = queueCreate();
-         for ( int i = 0; i < name.length(); ++i )
-         {
-            queuePushBack(queue,code(TYPE_CHAR,name.charAt(i)));
-         }
-         symbol = cons(IS_SYMBOL,car(queue));
-      }
+      final int symbol   = cons(IS_SYMBOL,tmp);
       final int binding  = cons(symbol,code);
       final int frame    = car(reg.get(regEnv));
       final int newframe = cons(binding,frame);
@@ -762,28 +747,16 @@ public class JhwScm
                   reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp0)));
                   returnsub();
                }
-               else if ( QUEUE_FREE_READER )
+               else
                {
                   if ( verb ) log("minus-starting-symbol");
                   reg.set(regArg0   , code(TYPE_CHAR,'-'));
                   gosub(sub_read_symbol,blk_tail_call);
                }
-               else
-               {
-                  if ( verb ) log("minus-starting-symbol");
-                  reg.set(regArg0 , queueCreate());
-                  if ( verb ) log("pushing: minus onto " + pp(reg.get(regArg0)));
-                  queuePushBack(reg.get(regArg0),code(TYPE_CHAR,'-'));
-                  store(reg.get(regArg0));
-                  gosub(sub_read_symbol_body,sub_read_atom+0x2);
-               }
                break;
             default:
                if ( verb ) log("symbol");
-               if ( QUEUE_FREE_READER )
-               {
-                  reg.set(regArg0   , NIL);
-               }
+               reg.set(regArg0   , NIL);
                gosub(sub_read_symbol,blk_tail_call);
                break;
             }
@@ -972,74 +945,47 @@ public class JhwScm
             // Expects that the next character in the input is known
             // to be the first character of a symbol.
             //
-            // If QUEUE_FREE_READER and reg.get(regArg0) is not NIL,
-            // reg.get(regArg0) is prepended to the symbol.
+            // reg.get(regArg0) is expected to be a 'prepend'
+            // character.  If non-NIL, reg.get(regArg0) is prepended
+            // to the symbol.
             //
-            if ( QUEUE_FREE_READER )
+            if ( NIL == reg.get(regArg0) )
             {
-               if ( NIL == reg.get(regArg0) )
-               {
-                  store(IS_SYMBOL);
-                  gosub(sub_read_symbol_body,blk_tail_call_m_cons);
-               }
-               else
-               {
-                  store(reg.get(regArg0));
-                  gosub(sub_read_symbol_body,sub_read_symbol+0x2);
-               }
+               store(IS_SYMBOL);
+               gosub(sub_read_symbol_body,blk_tail_call_m_cons);
             }
             else
             {
-               reg.set(regArg0 , queueCreate());
                store(reg.get(regArg0));
                gosub(sub_read_symbol_body,sub_read_symbol+0x1);
             }
             break;
-         case sub_read_symbol+0x1: // blk_tail_call_m_cons-ish??
-            reg.set(regTmp0   , restore());
-            reg.set(regRetval , cons(IS_SYMBOL,car(reg.get(regTmp0))));
-            returnsub();
-            break;
-         case sub_read_symbol+0x2:
-            logrec("received:   ",reg.get(regRetval));
+         case sub_read_symbol+0x1: // TODO: blk_tail_call_m_cons_m_cons ???
             reg.set(regArg0,   restore()); // restore prepend character
-            logrec("restored:   ",reg.get(regArg0));
             reg.set(regTmp0,   cons(reg.get(regArg0), reg.get(regRetval)));
-            logrec("prepended:  ",reg.get(regTmp0));
             reg.set(regTmp1,   cons(IS_SYMBOL,        reg.get(regTmp0)));
-            logrec("besymboled: ",reg.get(regTmp1));
             reg.set(regRetval, reg.get(regTmp1));
             returnsub();
             break;
 
          case sub_read_symbol_body:
-            // Parses the next symbol from reg.get(regIn), expecting
-            // the accumulated value-so-far as a queue in
-            // reg.get(regArg0).
+            // Parses the next symbol from reg.get(regIn).
             //
             // A helper for sub_read_symbol, but still a sub_ in its
             // own right.
             //
-            // Return value UNSPECIFIED, works via side-effects.
+            // Returns a list of characters.
             //
-            if ( !QUEUE_FREE_READER && DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               if ( verb ) log("non-queue in arg: " + pp(reg.get(regArg0)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
+            // All the characters in the symbol will have been
+            // consumed from the input, and the next character in the
+            // input will be the character immediately following the
+            // end of the symbol.
+            //
             reg.set(regTmp1, queuePeekFront(reg.get(regIn)));
             if ( EOF == reg.get(regTmp1) )
             {
                if ( verb ) log("eof: returning");
-               if ( QUEUE_FREE_READER )
-               {
-                  reg.set(regRetval , NIL);
-               }
-               else
-               {
-                  reg.set(regRetval , UNSPECIFIED);
-               }
+               reg.set(regRetval , NIL);
                returnsub();
                break;
             }
@@ -1058,28 +1004,13 @@ public class JhwScm
             case '(':
             case ')':
             case '"':
-               if ( QUEUE_FREE_READER )
-               {
-                  reg.set(regRetval , NIL);
-               }
-               else
-               {
-                  reg.set(regRetval , UNSPECIFIED);
-               }
+               reg.set(regRetval , NIL);
                returnsub();
                break;
             default:
                queuePopFront(reg.get(regIn));
-               if ( QUEUE_FREE_READER )
-               {
-                  store(reg.get(regTmp1));
-                  gosub(sub_read_symbol_body,blk_tail_call_m_cons);
-               }
-               else
-               {
-                  queuePushBack(reg.get(regArg0),reg.get(regTmp1));
-                  gosub(sub_read_symbol_body,blk_tail_call);
-               }
+               store(reg.get(regTmp1));
+               gosub(sub_read_symbol_body,blk_tail_call_m_cons);
                break;
             }
             break;
@@ -1098,49 +1029,22 @@ public class JhwScm
                break;
             }
             queuePopFront(reg.get(regIn));
-            if ( QUEUE_FREE_READER )
-            {
-               gosub(sub_read_string_body,sub_read_string+0x1);
-            }
-            else
-            {
-               reg.set(regArg0 , queueCreate());
-               store(reg.get(regArg0));
-               gosub(sub_read_string_body,sub_read_string+0x1);
-            }
+            gosub(sub_read_string_body,sub_read_string+0x1);
             break;
          case sub_read_string+0x1:
-            if ( QUEUE_FREE_READER )
-            {
-            }
-            else
-            {
-               reg.set(regTmp0   , restore());
-               reg.set(regRetval , cons(IS_STRING,car(reg.get(regTmp0))));
-            }
             reg.set(regTmp0   , queuePeekFront(reg.get(regIn)));
             if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
             {
-               log("non-\" terminating string literal: " + pp(reg.get(regTmp0)));
                raiseError(ERR_LEXICAL);
                break;
             }
             queuePopFront(reg.get(regIn));
-            if ( QUEUE_FREE_READER )
-            {
-               reg.set(regRetval , cons(IS_STRING,reg.get(regRetval)));
-            }
-            else
-            {
-               reg.set(regRetval , cons(IS_STRING,car(reg.get(regRetval))));
-            }
+            reg.set(regRetval , cons(IS_STRING,reg.get(regRetval)));
             returnsub();
             break;
 
          case sub_read_string_body:
-            // Parses the next string from reg.get(regIn), expecting
-            // the accumulated value-so-far as a queue in
-            // reg.get(regArg0).
+            // Parses the next string from reg.get(regIn).
             //
             // A helper for sub_read_string, but still a sub_ in its
             // own right.
@@ -1149,12 +1053,12 @@ public class JhwScm
             // and stops on the trailing \" (which is left unconsumed
             // for balance).
             //
-            if ( !QUEUE_FREE_READER && DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               log("non-queue in arg: " + pp(reg.get(regArg0)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
+            // Returns a list of characters.
+            //
+            // All the characters in the string will have been
+            // consumed from the input, and the next character in the
+            // input will be the trailing \".
+            //
             reg.set(regTmp1 , queuePeekFront(reg.get(regIn)));
             if ( EOF == reg.get(regTmp1) )
             {
@@ -1171,28 +1075,13 @@ public class JhwScm
             switch (value(reg.get(regTmp1)))
             {
             case '"':
-               if ( QUEUE_FREE_READER )
-               {
-                  reg.set(regRetval , NIL);
-               }
-               else
-               {
-                  reg.set(regRetval , car(reg.get(regArg0)));
-               }
+               reg.set(regRetval , NIL);
                returnsub();
                break;
             default:
                queuePopFront(reg.get(regIn));
-               if ( QUEUE_FREE_READER )
-               {
-                  store(reg.get(regTmp1));
-                  gosub(sub_read_string_body,blk_tail_call_m_cons);
-               }
-               else
-               {
-                  queuePushBack(reg.get(regArg0),reg.get(regTmp1));
-                  gosub(sub_read_string_body,blk_tail_call);
-               }
+               store(reg.get(regTmp1));
+               gosub(sub_read_string_body,blk_tail_call_m_cons);
                break;
             }
             break;
