@@ -90,33 +90,6 @@ public class JhwScm implements Firmware
       reg.set(regPc  , sub_init);
    }
 
-   private void prebind ( final String name, final int code )
-   {
-      // TODO: this is sloppy, non-LISPy, magic, and has no error
-      // checking.
-      //
-      // Longer-term I want lexical-level bindings for this stuff, and
-      // to just express the "standard" name bindings as a series of
-      // defines against the lexically supported stuff.
-      //
-      // But I did this now because I don't want to go inventing some
-      // off-specification lexical bindings which I will be committed
-      // to maintianging longer term until *after* I've got (eval)
-      // working and the entry points in the microcode tied down more.
-      //
-      int tmp = NIL;
-      for ( int i = name.length()-1; i >= 0 ; --i )
-      {
-         final int c = code(TYPE_CHAR,name.charAt(i));
-         tmp = cons(c,tmp);
-      }
-      final int symbol   = cons(IS_SYMBOL,tmp);
-      final int binding  = cons(symbol,code);
-      final int frame    = car(reg.get(regEnv));
-      final int newframe = cons(binding,frame);
-      setcar(reg.get(regEnv),newframe);
-   }
-
    ////////////////////////////////////////////////////////////////////
    //
    // client control points
@@ -3223,6 +3196,33 @@ public class JhwScm implements Firmware
       case ERR_NOT_IMPL:  return UNIMPLEMENTED;
       default:            return INTERNAL_ERROR;
       }
+   }
+
+   private void prebind ( final String name, final int code )
+   {
+      // TODO: this is sloppy, non-LISPy, magic, and has no error
+      // checking.
+      //
+      // Longer-term I want lexical-level bindings for this stuff, and
+      // to just express the "standard" name bindings as a series of
+      // defines against the lexically supported stuff.
+      //
+      // But I did this now because I don't want to go inventing some
+      // off-specification lexical bindings which I will be committed
+      // to maintianging longer term until *after* I've got (eval)
+      // working and the entry points in the microcode tied down more.
+      //
+      int tmp = NIL;
+      for ( int i = name.length()-1; i >= 0 ; --i )
+      {
+         final int c = code(TYPE_CHAR,name.charAt(i));
+         tmp = cons(c,tmp);
+      }
+      final int symbol   = cons(IS_SYMBOL,tmp);
+      final int binding  = cons(symbol,code);
+      final int frame    = car(reg.get(regEnv));
+      final int newframe = cons(binding,frame);
+      setcar(reg.get(regEnv),newframe);
    }
 
    ////////////////////////////////////////////////////////////////////
