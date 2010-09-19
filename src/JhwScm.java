@@ -45,7 +45,6 @@ import java.util.Random; // TODO: this doesn't belong here
 
 public class JhwScm
 {
-   public static final boolean PROFILE                   = true;
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
@@ -72,9 +71,6 @@ public class JhwScm
    private static final int    STRESS_OUTPUT_PERCENT = 13;
    private static final Random debugRand             = new Random(1234);
 
-   private final boolean SILENT;
-   private final boolean DEBUG;  // check things which should never happen
-
    public static class Stats
    {
       public final MemStats.Stats  heapStats     = new MemStats.Stats();
@@ -90,21 +86,29 @@ public class JhwScm
    public static final Stats global = new Stats();
    public        final Stats local  = new Stats();
 
-   private final Mem reg;
-   private final Mem heap;
+   private final boolean PROFILE;
+   private final boolean SILENT;
+   private final boolean DEBUG;  // check things which should never happen
 
+   private final Machine    machine;
+   private final Mem        reg;
+   private final Mem        heap;
    private final IOBuffer[] buffers;
 
    private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug
    private int javaDepth = 0; // debug
 
-   public JhwScm ( final boolean doREP, 
+   public JhwScm ( final Machine machine,
+                   final boolean doREP, 
+                   final boolean PROFILE, 
                    final boolean SILENT, 
                    final boolean DEBUG )
    {
-      this.SILENT = SILENT;
-      this.DEBUG  = DEBUG;
+      this.machine = machine;
+      this.PROFILE = PROFILE;
+      this.SILENT  = SILENT;
+      this.DEBUG   = DEBUG;
 
       Mem mem = null;
 

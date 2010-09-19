@@ -35,8 +35,9 @@ public class TestScm extends Util
 
    private static final boolean REPORT = true;
 
-   private static boolean SILENT = true;
-   private static boolean DEBUG  = true; // TODO: not tried in a while!
+   private static boolean PROFILE = true;
+   private static boolean SILENT  = true;
+   private static boolean DEBUG   = true;
 
    private static int numExpects        = 0;
    private static int numBatches        = 0;
@@ -45,7 +46,9 @@ public class TestScm extends Util
 
    private static JhwScm newScm ( final boolean do_rep )
    {
-      return new JhwScm(do_rep,SILENT,DEBUG);
+      final Machine machine = new Machine(PROFILE,SILENT,DEBUG);
+      final JhwScm  scm     = new JhwScm(machine,do_rep,PROFILE,SILENT,DEBUG);
+      return scm;
    }
 
    private static void ioEdgeCases ()
@@ -1190,7 +1193,7 @@ public class TestScm extends Util
 
    private static void report ( final String tag, final JhwScm.Stats stats )
    {
-      if ( !JhwScm.PROFILE || !REPORT ) return;
+      if ( !PROFILE || !REPORT ) return;
       log(tag);
       log("  numCycles:        " + stats.numCycles);
       log("  numCons:          " + stats.numCons);

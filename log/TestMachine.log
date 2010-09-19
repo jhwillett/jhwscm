@@ -1,7 +1,7 @@
 8b45cd0359c87ea44d20bf96229132d6  Makefile
 340befb0624db4df68ca22dcf1d13fbd  src/IOBuffer.java
-6a46a41f2a0a900077b40f0e6dfa6f83  src/JhwScm.java
-6d97209bd5dc03b1e2a38ecfbe608fd9  src/Machine.java
+62416b12e2b3d89112b3814d9685155e  src/JhwScm.java
+d00fce4464b19aa17eea4e3abc5834bf  src/Machine.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
@@ -11,7 +11,7 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 4604f3d94e79b58b0c9ced2717a527c8  test/TestIOBuffer.java
 129ad77d09d17763de631acc29b303db  test/TestMachine.java
 09e5ac937891078bb45422a5b3df6a26  test/TestMem.java
-418ee20c7d264832a99031291bf5bf9c  test/TestScm.java
+6d6dfa4e05fd0af1bad4c48505c6ee75  test/TestScm.java
 e6f4ff7f2ec88c11a94b3f1a9d7ed10f  test/Util.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
