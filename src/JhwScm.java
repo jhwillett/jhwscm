@@ -82,11 +82,11 @@ public class JhwScm implements Firmware
                    final boolean VERBOSE, 
                    final boolean DEBUG )
    {
-      this.machine = machine;
       this.PROFILE = PROFILE;
       this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
 
+      this.machine = machine;
       this.reg     = machine.reg;
       this.heap    = machine.heap;
       this.buffers = machine.buffers;

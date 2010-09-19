@@ -11,7 +11,7 @@
 public class Computer
 {
    public final Machine  machine;
-   public final JhwScm firmware; // TODO: to Firmware, after global+local think
+   public final Firmware firmware;
 
    public static class Stats
    {
@@ -26,16 +26,16 @@ public class Computer
    private final boolean DEBUG;
 
    public Computer ( final Machine  machine,
-                     final JhwScm firmware,
+                     final Firmware firmware,
                      final boolean  PROFILE, 
                      final boolean  VERBOSE, 
                      final boolean  DEBUG )
    {
-      this.machine = machine;
+      this.machine  = machine;
       this.firmware = firmware;
-      this.PROFILE = PROFILE;
-      this.VERBOSE = VERBOSE;
-      this.DEBUG   = DEBUG;
+      this.PROFILE  = PROFILE;
+      this.VERBOSE  = VERBOSE;
+      this.DEBUG    = DEBUG;
    }
 
    /**

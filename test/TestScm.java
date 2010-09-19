@@ -544,7 +544,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         report("fact simple:",scm.local,scm.firmware.local,scm.machine.local);
+         report("fact simple:",scm);
       }
       {
          final String help = 
@@ -565,7 +565,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         report("fact 2/ help:",scm.local,scm.firmware.local,scm.machine.local);
+         report("fact 2/ help:",scm);
       }
 
       {
@@ -609,7 +609,7 @@ public class TestScm extends Util
             // Takes like a minute...
             expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         report("fib:",scm.local,scm.firmware.local,scm.machine.local);
+         report("fib:",scm);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -986,7 +986,7 @@ public class TestScm extends Util
       //
       // Weird.  So is it or is it not a symbol?
 
-      report("global:",Computer.global,JhwScm.global,Machine.global);
+      reportGlobal();
 
       log("numExpects: " + numExpects);
       log("  happy:    " + numHappyExpects);
@@ -1167,6 +1167,16 @@ public class TestScm extends Util
                       expected_output,
                       out.toString());
       }
+   }
+
+   private static void reportGlobal ()
+   {
+      report("global:",Computer.global,JhwScm.global,Machine.global);
+   }
+
+   private static void report ( final String tag, final Computer scm )
+   {
+      report(tag,scm.local,((JhwScm)scm.firmware).local,scm.machine.local);
    }
 
    private static void report ( final String         tag, 
