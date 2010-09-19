@@ -170,7 +170,10 @@ public class JhwScm
       reg.set(regPc  , doREP ? sub_rep : sub_rp);
       if ( USE_IO_BUFFER )
       {
-         this.buffers = new IOBuffer[] { new IOBuffer(), new IOBuffer() };
+         this.buffers = new IOBuffer[] { 
+            new IOBuffer(1024), 
+            new IOBuffer(1024) 
+         };
          reg.set(regIn  , code(TYPE_IOBUF,0));
          reg.set(regOut , code(TYPE_IOBUF,1));
       }

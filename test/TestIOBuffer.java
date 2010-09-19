@@ -19,8 +19,7 @@ public class TestIOBuffer
    {
       log("TestIOBuffer");
 
-      final IOBuffer iobuf = new IOBuffer();
-
+      final IOBuffer iobuf = new IOBuffer(5);
       log("  created");
 
       for ( int i = 0; i < 3; ++i )
@@ -29,6 +28,7 @@ public class TestIOBuffer
          iobuf.push(b);
       }
       log("  done writing");
+
       for ( int i = 0; i < 3; ++i )
       {
          final byte b = iobuf.pop();

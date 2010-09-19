@@ -1,13 +1,13 @@
 958973f9a815369fa8f66b41eee9a4c1  Makefile
-ed674f2479244c4d0472df13cfe73442  src/IOBuffer.java
-99c0ed1a9853b631bfe9495a8fa94823  src/JhwScm.java
+7eb84c15994d27e0abbea19b2a8d52a9  src/IOBuffer.java
+3c94270a6e60561244f418d7b05a9dad  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
 bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
-6d5c5432be242dc8d337a2e8b44be324  test/TestIOBuffer.java
+5d00ec0b92affa1d8ddb13b6f2c5c3d7  test/TestIOBuffer.java
 6407b2d691694d53d80625b4480d0267  test/TestMem.java
 084c4f8b4a3d5479c49ca164e6a3ed8b  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
@@ -16,36 +16,6 @@ test:   TestIOBuffer
 host:   little-man
 TestIOBuffer
   created
-push():
-  start: 0
-  end:   0
-  len:   0
-  value: 10
-push():
-  start: 0
-  end:   1
-  len:   1
-  value: 11
-push():
-  start: 0
-  end:   2
-  len:   2
-  value: 12
   done writing
-pop():
-  start: 0
-  end:   3
-  len:   3
-  value: 10
-pop():
-  start: 1
-  end:   3
-  len:   2
-  value: 11
-pop():
-  start: 2
-  end:   3
-  len:   1
-  value: 12
   done reading
 make[1]: Leaving directory `/home/jwillett/jhwscm'

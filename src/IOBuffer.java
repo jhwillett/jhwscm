@@ -14,13 +14,16 @@
 
 public class IOBuffer
 {
-   final byte[] buf   = new byte[512];
-   int          start = 0;
-   int          end   = 0;
-   int          len   = 0;
+   private static final boolean verbose = false;
 
-   public IOBuffer ()
+   private final byte[] buf;
+   private int          start = 0;
+   private int          end   = 0;
+   private int          len   = 0;
+
+   public IOBuffer ( final int byteCount )
    {
+      this.buf = new byte[byteCount];
    }
 
    /**
@@ -54,11 +57,14 @@ public class IOBuffer
          throw new SegFault("peek() when isEmpty()");
       }
       final byte value = buf[start];
-      log("peek():");
-      log("  start: " + start);
-      log("  end:   " + end);
-      log("  len:   " + len);
-      log("  value: " + value);
+      if ( verbose )
+      {
+         log("peek():");
+         log("  start: " + start);
+         log("  end:   " + end);
+         log("  len:   " + len);
+         log("  value: " + value);
+      }
       return value;
    }
 
@@ -77,11 +83,14 @@ public class IOBuffer
          throw new SegFault("pop() when isEmpty()");
       }
       final byte value = buf[start];
-      log("pop():");
-      log("  start: " + start);
-      log("  end:   " + end);
-      log("  len:   " + len);
-      log("  value: " + value);
+      if ( verbose )
+      {
+         log("pop():");
+         log("  start: " + start);
+         log("  end:   " + end);
+         log("  len:   " + len);
+         log("  value: " + value);
+      }
       start += 1;
       start %= buf.length;
       len   -= 1;
@@ -101,11 +110,14 @@ public class IOBuffer
       {
          throw new SegFault("push() when isFull()");
       }
-      log("push():");
-      log("  start: " + start);
-      log("  end:   " + end);
-      log("  len:   " + len);
-      log("  value: " + value);
+      if ( verbose )
+      {
+         log("push():");
+         log("  start: " + start);
+         log("  end:   " + end);
+         log("  len:   " + len);
+         log("  value: " + value);
+      }
       buf[end] = value;
       end += 1;
       end %= buf.length;
