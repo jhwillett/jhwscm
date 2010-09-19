@@ -8,8 +8,6 @@
 
 public class TestIOBuffer extends Util
 {
-   private static final boolean verbose = false;
-
    public static void main ( final String[] argv )
    {
       log("TestIOBuffer");

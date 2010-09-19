@@ -15,8 +15,8 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 e6f4ff7f2ec88c11a94b3f1a9d7ed10f  test/Util.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
-test:   TestMem
+test:   TestMachine
 host:   little-man
-TestMem:
-  success
+TestMachine
+  TODO: write me
 make[1]: Leaving directory `/home/jwillett/jhwscm'
