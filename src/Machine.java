@@ -6,23 +6,23 @@
  * All rights reserved.
  */
 
-import java.util.Random; // TODO: this doesn't belong here
+import java.util.Random;
 
 public class Machine
 {
-   public static final boolean USE_PAGED_MEM             = false;
-   public static final int     PAGE_SIZE                 = 1024;
-   public static final int     PAGE_COUNT                = 6; // need 512 unopt
+   public static final boolean USE_PAGED_MEM     = false;
+   public static final int     PAGE_SIZE         = 1024;
+   public static final int     PAGE_COUNT        = 6; // need 512 unopt
 
-   public static final boolean USE_CACHED_MEM            = true;
-   public static final int     LINE_SIZE                 = 16;
-   public static final int     LINE_COUNT                = 16;
+   public static final boolean USE_CACHED_MEM    = true;
+   public static final int     LINE_SIZE         = 16;
+   public static final int     LINE_COUNT        = 16;
 
-   public static final int     PORT_CLOSED      = -1;
-   public static final int     BAD_ARG          = -2;
+   public static final int     PORT_CLOSED       = -1;
+   public static final int     BAD_ARG           = -2;
 
-   private static final int    STRESS_OUTPUT_PERCENT = 13;
-   private static final Random debugRand             = new Random(1234);
+   private static final int    IO_STRESS_PERCENT = 13;
+   private static final Random debugRand         = new Random(11031978);
 
    public static class Stats
    {
