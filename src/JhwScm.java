@@ -66,11 +66,8 @@ public class JhwScm implements Firmware
    private final boolean VERBOSE;
    private final boolean DEBUG;  // check things which should never happen
 
-   public  final Machine    machine;
-
-   private final Mem        reg;
-   private final Mem        heap;
-   private final IOBuffer[] buffers;
+   public  final Machine mach;
+   private final Mem     reg;
 
    private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug
@@ -86,10 +83,8 @@ public class JhwScm implements Firmware
       this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
 
-      this.machine = machine;
-      this.reg     = machine.reg;
-      this.heap    = machine.heap;
-      this.buffers = machine.buffers;
+      this.mach = machine;
+      this.reg  = machine.reg;
 
       for ( int i = 0; i < reg.length(); i++ )
       {
@@ -2727,7 +2722,7 @@ public class JhwScm implements Firmware
       int cell = reg.get(regFreeCellList);
       if ( NIL == cell )
       {
-         if ( heapTop >= heap.length() )
+         if ( heapTop >= mach.heap.length() )
          {
             raiseError(ERR_OOM);
             return UNSPECIFIED;
@@ -2748,16 +2743,16 @@ public class JhwScm implements Firmware
             // Even if you're going to use all of it, at least we
             // don't initialize a piece of heap until right before the
             // higher-level program was going to get to it anyhow.
-            top = heap.length();
+            top = mach.heap.length();
          }
-         final int lim = (top < heap.length()) ? top : heap.length();
+         final int lim = (top < mach.heap.length()) ? top : mach.heap.length();
          for ( ; heapTop < lim; heapTop += 2 )
          {
             // Notice that how half the space in the free cell list,
             // the car()s, is unused.  Is this an opportunity for
             // something?
-            heap.set(heapTop+0   , UNSPECIFIED);
-            heap.set(heapTop+1   , reg.get(regFreeCellList));
+            mach.heap.set(heapTop+0   , UNSPECIFIED);
+            mach.heap.set(heapTop+1   , reg.get(regFreeCellList));
             reg.set(regFreeCellList , code(TYPE_CELL,(heapTop >>> 1)));
          }
          cell = reg.get(regFreeCellList);
@@ -2771,9 +2766,9 @@ public class JhwScm implements Firmware
       final int v          = value(cell);
       final int ar         = v << 1;
       final int dr         = ar + 1;
-      reg.set(regFreeCellList , heap.get(dr));
-      heap.set(ar          , car);
-      heap.set(dr          , cdr);
+      reg.set(regFreeCellList , mach.heap.get(dr));
+      mach.heap.set(ar          , car);
+      mach.heap.set(dr          , cdr);
       return cell;
    }
 
@@ -2784,7 +2779,7 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
-      return heap.get((value(cell) << 1) + 0);
+      return mach.heap.get((value(cell) << 1) + 0);
    }
 
    private int cdr ( final int cell )
@@ -2794,7 +2789,7 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
-      return heap.get((value(cell) << 1) + 1);
+      return mach.heap.get((value(cell) << 1) + 1);
    }
 
    private void setcar ( final int cell, final int value )
@@ -2804,7 +2799,7 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      heap.set( (value(cell) << 1) + 0 , value );
+      mach.heap.set( (value(cell) << 1) + 0 , value );
    }
 
    private void setcdr ( final int cell, final int value )
@@ -2814,7 +2809,7 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      heap.set( (value(cell) << 1) + 1 , value );
+      mach.heap.set( (value(cell) << 1) + 1 , value );
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -2845,13 +2840,13 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && ( 0 > value(port) || value(port) >= buffers.length ) )
+      if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
       {
          if ( verb ) log("  portPush(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
-      final IOBuffer iobuf = buffers[value(port)];
+      final IOBuffer iobuf = mach.buffers[value(port)];
       if ( verb ) log("  portPush(): iobuf: " + iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
@@ -2894,13 +2889,13 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && ( 0 > value(port) || value(port) >= buffers.length ) )
+      if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
       {
          if ( verb ) log("  portPop(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
-      final IOBuffer iobuf = buffers[value(port)];
+      final IOBuffer iobuf = mach.buffers[value(port)];
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
       // add close() it'll be EOF when null, and an empty buffer
@@ -2939,13 +2934,13 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return EOF;
       }
-      if ( DEBUG && ( 0 > value(port) || value(port) >= buffers.length ) )
+      if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
       {
          if ( verb ) log("  portPeek(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
-      final IOBuffer iobuf = buffers[value(port)];
+      final IOBuffer iobuf = mach.buffers[value(port)];
       if ( verb ) log("  portPeek(): iobuf " + iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
