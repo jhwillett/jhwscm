@@ -50,38 +50,6 @@ public class TestScm extends Util
       return scm;
    }
 
-   private static void ioEdgeCases ()
-   {
-      assertEquals(JhwScm.BAD_ARG,newScm(true).input(null,0,0));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(null,0,0));
-
-      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],-1,0));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],0,-1));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],2,3));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).input(new byte[0],3,2));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],-1,0));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],-1,0));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],0,-1));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],0,-1));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],2,3));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[0],3,2));
-      assertEquals(JhwScm.BAD_ARG,newScm(true).output(new byte[3],2,3));
-
-      assertEquals(0,             newScm(true).input(new byte[0],0,0));
-      assertEquals(0,             newScm(true).input(new byte[0],0,0));
-      assertEquals(0,             newScm(true).input(new byte[0],0,0));
-      assertEquals(0,             newScm(true).input(new byte[1],1,0));
-      assertEquals(0,             newScm(true).output(new byte[0],0,0));
-      
-      {
-         final int code = newScm(true).output(new byte[5],2,3);
-         if ( -1 != code && 0 != code )
-         {
-            throw new RuntimeException("output() out of spec");
-         }
-      }
-   }
-
    private static void driveEdgeCases ()
    {
       assertEquals(JhwScm.INCOMPLETE,newScm(true).drive(0));
@@ -92,8 +60,6 @@ public class TestScm extends Util
 
    public static void main ( final String[] argv )
    {
-      ioEdgeCases();
-
       driveEdgeCases();
 
       expect("","");
@@ -574,7 +540,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         report("fact simple:",scm.local,scm.machine.local);
+         //report("fact simple:",scm.local,scm.machine.local);
       }
       {
          final String help = 
@@ -595,7 +561,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         report("fact 2/ help:",scm.local,scm.machine.local);
+         //report("fact 2/ help:",scm.local,scm.machine.local);
       }
 
       {
@@ -639,7 +605,7 @@ public class TestScm extends Util
             // Takes like a minute...
             expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         report("fib:",scm.local,scm.machine.local);
+         //report("fib:",scm.local,scm.machine.local);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1125,6 +1091,7 @@ public class TestScm extends Util
       {
          scm = newScm(true);
       }
+      final Machine machine = scm.machine;
 
       {
          final byte[] input_buf = expr.toString().getBytes();
@@ -1132,14 +1099,14 @@ public class TestScm extends Util
          while ( input_off < input_buf.length )
          {
             final int input_len = input_buf.length - input_off;
-            final int icode = scm.input(input_buf, input_off, input_len);
-            if ( 0 <= icode )
+            final int code = machine.input(input_buf, input_off, input_len);
+            if ( 0 <= code )
             {
-               input_off += icode;
+               input_off += code;
             }
             else
             {
-               throw new RuntimeException("input() out of spec: " + icode);
+               throw new RuntimeException("input() out of spec: " + code);
             }
          }
       }
@@ -1158,20 +1125,20 @@ public class TestScm extends Util
          for ( int off = 0; true; )
          {
             final int output_len = output_buf.length - output_off;
-            final int ocode = scm.output(output_buf, output_off, output_len);
-            if ( -1 > ocode )
+            final int code = machine.output(output_buf, output_off, output_len);
+            if ( -1 > code )
             {
-               throw new RuntimeException("output() out of spec: " + ocode);
+               throw new RuntimeException("output() out of spec: " + code);
             }
-            if ( -1 == ocode )
+            if ( -1 == code )
             {
                break;
             }
-            for ( int i = output_off; i < output_off + ocode; ++i )
+            for ( int i = output_off; i < output_off + code; ++i )
             {
                out.append((char)output_buf[i]);
             }
-            output_off += ocode;
+            output_off += code;
             if ( output_off >= output_buf.length )
             {
                output_off = 0;
@@ -1200,8 +1167,8 @@ public class TestScm extends Util
       log("  numCons:          " + ss.numCons);
       if ( true )
       {
-         log("  numInput:         " + ss.numInput);
-         log("  numOutput:        " + ss.numOutput);
+         log("  numInput:         " + ms.numInput);
+         log("  numOutput:        " + ms.numOutput);
       }
       log("  reg.numSet:       " + ms.regStats.numSet);
       log("  reg.numGet:       " + ms.regStats.numGet);

@@ -1,6 +1,6 @@
 8b45cd0359c87ea44d20bf96229132d6  Makefile
 340befb0624db4df68ca22dcf1d13fbd  src/IOBuffer.java
-49680013fb933d187ac30eb07fee1ab2  src/JhwScm.java
+07b3e4cc96bca6de2543c89589b970ac  src/JhwScm.java
 d00fce4464b19aa17eea4e3abc5834bf  src/Machine.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
@@ -9,149 +9,41 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 4604f3d94e79b58b0c9ced2717a527c8  test/TestIOBuffer.java
-129ad77d09d17763de631acc29b303db  test/TestMachine.java
+9cefe4521a6382afeb00b4511997ce6c  test/TestMachine.java
 09e5ac937891078bb45422a5b3df6a26  test/TestMem.java
-7f521a8c948ad311411cb09a0068b19c  test/TestScm.java
+0a4baa8fcc73619be6238adccd27a928  test/TestScm.java
 e6f4ff7f2ec88c11a94b3f1a9d7ed10f  test/Util.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
-fact simple:
-  numCycles:        24517
-  numCons:          26836
-  numInput:         131
-  numOutput:        23
-  reg.numSet:       180578
-  reg.numGet:       396648
-  reg.maxAddr:      31
-  heap.numSet:      6896
-  heap.numGet:      50848
-  heap.maxAddr:     1535
-  cache.numHits:    184486
-  cache.numMisses:  3162
-  cache.numFlush:   431
-  cache.numDrop:    2731
-  cache.numLoad:    3178
-  cacheTop.numSet:  81772
-  cacheTop.numGet:  105892
-  cacheTop.maxAddr: 1535
-  reg   ops:        577226
-  cache ops:        187664
-  heap  ops:        57744
-  reg   ops/cell:   18620.1935483871
-  cache ops/cell:   122.25667752442996
-  heap  ops/cell:   37.618241042345275
-  ops   reg/cache:  3.075848324665359
-  ops   cache/heap: 3.2499307287337214
-  ALG:                       4
-  LINE_SIZE:                 16
-  LINE_COUNT:                16
-  PROPERLY_TAIL_RECURSIVE:   true
-  CLEVER_TAIL_CALL_MOD_CONS: true
-  CLEVER_STACK_RECYCLING:    true
-  CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9831493008185539
-  cache write/miss:          0.13630613535736874
-fact 2/ help:
-  numCycles:        28566
-  numCons:          31295
-  numInput:         167
-  numOutput:        26
-  reg.numSet:       210410
-  reg.numGet:       461826
-  reg.maxAddr:      31
-  heap.numSet:      7904
-  heap.numGet:      63600
-  heap.maxAddr:     2047
-  cache.numHits:    214989
-  cache.numMisses:  3959
-  cache.numFlush:   494
-  cache.numDrop:    3465
-  cache.numLoad:    3975
-  cacheTop.numSet:  95584
-  cacheTop.numGet:  123380
-  cacheTop.maxAddr: 2047
-  reg   ops:        672236
-  cache ops:        218964
-  heap  ops:        71504
-  reg   ops/cell:   21685.032258064515
-  cache ops/cell:   106.96824621397167
-  heap  ops/cell:   34.931118710307764
-  ops   reg/cache:  3.0700754461920683
-  ops   cache/heap: 3.0622622510628776
-  ALG:                       4
-  LINE_SIZE:                 16
-  LINE_COUNT:                16
-  PROPERLY_TAIL_RECURSIVE:   true
-  CLEVER_TAIL_CALL_MOD_CONS: true
-  CLEVER_STACK_RECYCLING:    true
-  CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9819180810055356
-  cache write/miss:          0.12477898459206871
-fib:
-  numCycles:        168943
-  numCons:          186105
-  numInput:         123
-  numOutput:        12
-  reg.numSet:       1253566
-  reg.numGet:       2757589
-  reg.maxAddr:      31
-  heap.numSet:      59568
-  heap.numGet:      389184
-  heap.maxAddr:     5631
-  cache.numHits:    1279392
-  cache.numMisses:  24308
-  cache.numFlush:   3723
-  cache.numDrop:    20585
-  cache.numLoad:    24324
-  cacheTop.numSet:  563061
-  cacheTop.numGet:  740655
-  cacheTop.maxAddr: 5631
-  reg   ops:        4011155
-  cache ops:        1303716
-  heap  ops:        448752
-  reg   ops/cell:   129392.09677419355
-  cache ops/cell:   231.5247735748535
-  heap  ops/cell:   79.69312733084709
-  ops   reg/cache:  3.076709191265582
-  ops   cache/heap: 2.905203765108568
-  ALG:                       4
-  LINE_SIZE:                 16
-  LINE_COUNT:                16
-  PROPERLY_TAIL_RECURSIVE:   true
-  CLEVER_TAIL_CALL_MOD_CONS: true
-  CLEVER_STACK_RECYCLING:    true
-  CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9813546061210401
-  cache write/miss:          0.15315945367780154
 global:
   numCycles:        321513
-  numCons:          420657
+  numCons:          417826
   numInput:         6430
   numOutput:        1788
-  reg.numSet:       2533232
-  reg.numGet:       5262206
+  reg.numSet:       2524796
+  reg.numGet:       5251107
   reg.maxAddr:      31
-  heap.numSet:      304400
-  heap.numGet:      951952
+  heap.numSet:      298624
+  heap.numGet:      941312
   heap.maxAddr:     5631
-  cache.numHits:    2844113
-  cache.numMisses:  50137
-  cache.numFlush:   19025
+  cache.numHits:    2825683
+  cache.numMisses:  49776
+  cache.numFlush:   18664
   cache.numDrop:    31112
-  cache.numLoad:    59497
-  cacheTop.numSet:  1495035
-  cacheTop.numGet:  1408575
+  cache.numLoad:    58832
+  cacheTop.numSet:  1479208
+  cacheTop.numGet:  1405307
   cacheTop.maxAddr: 5631
-  reg   ops:        7795438
-  cache ops:        2903610
-  heap  ops:        1256352
-  reg   ops/cell:   251465.74193548388
-  cache ops/cell:   515.6473095364944
-  heap  ops/cell:   223.1134789557805
-  ops   reg/cache:  2.6847400305137397
-  ops   cache/heap: 2.3111436922136472
+  reg   ops:        7775903
+  cache ops:        2884515
+  heap  ops:        1239936
+  reg   ops/cell:   250835.5806451613
+  cache ops/cell:   512.2562599893447
+  heap  ops/cell:   220.19818859882793
+  ops   reg/cache:  2.6957401850917746
+  ops   cache/heap: 2.3263418434499847
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -159,8 +51,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9826770320462987
-  cache write/miss:          0.3794602788359894
+  cache hit/op:              0.9826893723749843
+  cache write/miss:          0.3749598199935712
 numExpects: 748
   happy:    648
   unhappy:  100

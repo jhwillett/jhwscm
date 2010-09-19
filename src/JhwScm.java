@@ -65,10 +65,8 @@ public class JhwScm
 
    public static class Stats
    {
-      public       int             numCycles     = 0;
-      public       int             numCons       = 0;
-      public       int             numInput      = 0;
-      public       int             numOutput     = 0;
+      public int numCycles = 0;
+      public int numCons   = 0;
    }
 
    public static final Stats global = new Stats();
@@ -184,145 +182,6 @@ public class JhwScm
    // client control points
    //
    ////////////////////////////////////////////////////////////////////
-
-   /**
-    * Transfers up to len bytes from in[off..len-1] to the VM's input
-    * port buffer.
-    *
-    * Never results in OUT_OF_MEMORY, FAILURE_SEMANTIC, etc.
-    * PORT_CLOSED and BAD_ARG are the only specified failure modes.
-    *
-    * A return result of 0 frequently indicates more cycles in drive()
-    * are needed to clear out the port buffers.
-    *
-    * @returns BAD_ARGS if any of the arguments are invalid,
-    * PORT_CLOSED if close() has been called on the port, else the
-    * number of bytes transferred from buf[off..n-1].
-    */
-   public int input ( final byte[] buf, int off, final int len ) 
-   {
-      final boolean verb = true && !SILENT;
-      if ( DEBUG ) javaDepth = 0;
-      if ( verb ) log("input(): " + off + "+" + len + " / " + buf.length);
-      if ( null == buf )
-      {
-         if ( verb ) log("input():  null arg");
-         return BAD_ARG;
-      }
-      if ( off < 0 )
-      {
-         if ( verb ) log("input(): bad off: " + off);
-         return BAD_ARG;
-      }
-      if ( len < 0 )
-      {
-         if ( verb ) log("input(): bad len: " + len);
-         return BAD_ARG;
-      }
-      if ( off+len > buf.length )
-      {
-         if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
-         return BAD_ARG;
-      }
-      if ( NIL != reg.get(regError) )
-      {
-         // What we're doing here is saying "can't accept input on a
-         // VM in an error state", which is different than saying
-         // "encountered an error processing this input".
-         return 0;
-      }
-      final IOBuffer iobuf = buffers[0];
-      if ( null == buf )
-      {
-         return PORT_CLOSED;
-      }
-      final int max = DEBUG ? debugRand.nextInt(len+1) : len;
-      for ( int i = 0; i < max; ++i )
-      {
-         if ( iobuf.isFull() )
-         {
-            return i;
-         }
-         final byte b = buf[off++];
-         if ( verb ) log("input(): pushing byte " + b);
-         if ( verb ) log("input(): pushing char " + (char)b);
-         iobuf.push(b);
-         if ( PROFILE ) local.numInput++;
-         if ( PROFILE ) global.numInput++;
-      }
-      return max;
-   }
-
-   /**
-    * Transfers up to len bytes from the VM's output port buffer and
-    * copies them to buf[off..len-1].
-    *
-    * Never results in OUT_OF_MEMORY, FAILURE_SEMANTIC, etc.
-    * PORT_CLOSED and BAD_ARG are the only specified failure modes.
-    *
-    * A return result of 0 frequently indicates more cycles in drive()
-    * are needed to clear out the port buffers.
-    *
-    * @returns BAD_ARGS if any of the arguments are invalid,
-    * PORT_CLOSED if close() has been called on the port, else the
-    * number of bytes transferred into buf[off..n-1].
-    */
-   public int output ( final byte[] buf, int off, final int len ) 
-   {
-      final boolean verb = true && !SILENT;
-      if ( DEBUG ) javaDepth = 0;
-      if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
-      if ( null == buf )
-      {
-         if ( verb ) log("output(): null arg");
-         return BAD_ARG;
-      }
-      if ( off < 0 )
-      {
-         if ( verb ) log("output(): bad off: " + off);
-         return BAD_ARG;
-      }
-      if ( len < 0 )
-      {
-         if ( verb ) log("output(): bad len: " + len);
-         return BAD_ARG;
-      }
-      if ( off+len > buf.length )
-      {
-         if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
-         return BAD_ARG;
-      }
-      final IOBuffer iobuf = buffers[1];
-      if ( null == buf )
-      {
-         return PORT_CLOSED;
-      }
-      final int max = DEBUG ? debugRand.nextInt(len+1) : len;
-      for ( int i = 0; i < max; ++i )
-      {
-         if ( iobuf.isEmpty() )
-         {
-            if ( 0 == i )
-            {
-               if ( verb ) log("output(): empty and done");
-               return -1;
-            }
-            else
-            {
-               if ( verb ) log("output(): empty, but shifted: " + i);
-               return i;
-            }
-         }
-         final byte b = iobuf.pop();
-         buf[off++] = b;
-         if ( verb ) log("output(): popped byte " + b);
-         if ( verb ) log("output(): popped char " + (char)b);
-         if ( PROFILE ) local.numOutput++;
-         if ( PROFILE ) global.numOutput++;
-      }
-      if ( verb ) log("output(): shifted: " + max);
-      return max;
-   }
 
    /**
     * Drives all pending computation to completion.
