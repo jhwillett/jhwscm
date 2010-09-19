@@ -203,6 +203,25 @@ public class JhwScm
          return BAD_ARG;
       }
 
+      for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
+      {
+         if ( PROFILE ) local.numCycles  += 1;
+         if ( PROFILE ) global.numCycles += 1;
+         if ( DEBUG ) javaDepth = 1;
+         final int code = step();
+         if ( INCOMPLETE != code )
+         {
+            return code;
+         }
+      }
+
+      return INCOMPLETE;
+   }
+
+   public int step ()
+   {
+      final boolean verb = true && VERBOSE;
+
       // Temp variables: note, any block can overwrite any of these.
       // Any data which must survive a block transition should be
       // saved in registers and on the stack instead.
@@ -212,11 +231,6 @@ public class JhwScm
       int tmp0 = 0;
       int tmp1 = 0;
 
-      for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
-      {
-         if ( PROFILE ) local.numCycles  += 1;
-         if ( PROFILE ) global.numCycles += 1;
-         if ( DEBUG ) javaDepth = 1;
          if ( verb ) log("step: " + pp(reg.get(regPc)));
          if ( DEBUG ) javaDepth = 2;
          switch ( reg.get(regPc) )
@@ -2376,16 +2390,16 @@ public class JhwScm
             logrec("DEFINE SYMBOL: ",reg.get(regTmp0));
             logrec("DEFINE BODY:   ",reg.get(regTmp1));
             store(reg.get(regTmp0));              // store the symbol
-            reg.set(regArg0 , reg.get(regTmp1));      // eval the body
-            reg.set(regArg1 , reg.get(regEnv));       // we need an env arg here!
+            reg.set(regArg0 , reg.get(regTmp1));  // eval the body
+            reg.set(regArg1 , reg.get(regEnv));   // we need an env arg here!
             gosub(sub_eval,sub_define+0x1);
             break;
          case sub_define+0x1:
             reg.set(regTmp0 , restore());         // restore the symbol
             store(reg.get(regTmp0));              // store the symbol INEFFICIENT
             store(reg.get(regRetval));            // store the body's value
-            reg.set(regArg0 , reg.get(regTmp0));      // lookup the binding
-            reg.set(regArg1 , car(reg.get(regEnv)));  // we need an env arg here!
+            reg.set(regArg0 , reg.get(regTmp0));     // lookup the binding
+            reg.set(regArg1 , car(reg.get(regEnv))); // we need an env arg here!
             gosub(sub_eval_look_frame,sub_define+0x2);
             break;
          case sub_define+0x2:
@@ -2393,7 +2407,7 @@ public class JhwScm
             reg.set(regTmp0 , restore());         // restore the symbol
             if ( NIL == reg.get(regRetval) )
             {
-               // create a new binding        // we need an env arg here!
+               // create a new binding               // we need an env arg here!
                reg.set(regTmp1 , cons(reg.get(regTmp0),reg.get(regTmp1)));
                reg.set(regTmp2 , cons(reg.get(regTmp1),car(reg.get(regEnv))));
                setcar(reg.get(regEnv),reg.get(regTmp2));
@@ -2505,7 +2519,6 @@ public class JhwScm
             raiseError(ERR_INTERNAL);
             break;
          }
-      }
 
       return INCOMPLETE;
    }
