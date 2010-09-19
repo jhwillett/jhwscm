@@ -51,6 +51,8 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
+   public static final boolean USE_IO_BUFFER             = false;
+
    public static final boolean USE_PAGED_MEM             = false;
    public static final int     PAGE_SIZE                 = 1024;
    public static final int     PAGE_COUNT                = 6; // need 512 unopt
@@ -92,6 +94,8 @@ public class JhwScm
 
    private final Mem reg;
    private final Mem heap;
+
+   private final IOBuffer[] buffers;
 
    private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug
@@ -164,8 +168,18 @@ public class JhwScm
       reg.set(regFreeCellList,NIL);
 
       reg.set(regPc  , doREP ? sub_rep : sub_rp);
-      reg.set(regIn  , queueCreate());
-      reg.set(regOut , queueCreate());
+      if ( USE_IO_BUFFER )
+      {
+         this.buffers = new IOBuffer[] { new IOBuffer(), new IOBuffer() };
+         reg.set(regOut , code(TYPE_IOBUF,0));
+         reg.set(regOut , code(TYPE_IOBUF,1));
+      }
+      else
+      {
+         this.buffers = null;
+         reg.set(regIn  , queueCreate());
+         reg.set(regOut , queueCreate());
+      }
       reg.set(regEnv , cons(NIL,NIL));
 
       prebind("+",      sub_add);
@@ -283,6 +297,10 @@ public class JhwScm
          // "encountered an error processing this input".
          return 0;
       }
+      if ( USE_IO_BUFFER )
+      {
+         throw new RuntimeException("unimplemented");
+      }
       if ( DEBUG && TYPE_CELL != type(reg.get(regIn)) )
       {
          raiseError(ERR_INTERNAL);
@@ -352,6 +370,10 @@ public class JhwScm
       {
          if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
+      }
+      if ( USE_IO_BUFFER )
+      {
+         throw new RuntimeException("unimplemented");
       }
       if ( NIL == reg.get(regOut) )
       {
@@ -2779,6 +2801,7 @@ public class JhwScm
       return (MASK_TYPE & type) | (MASK_VALUE & value);
    }
 
+   private static final int TYPE_IOBUF    = 0x10000000;
    private static final int TYPE_FIXINT   = 0x20000000;
    private static final int TYPE_CELL     = 0x30000000;
    private static final int TYPE_CHAR     = 0x40000000;
@@ -3070,6 +3093,10 @@ public class JhwScm
 
    private int queueCreate ()
    {
+      if ( USE_IO_BUFFER )
+      {
+         throw new RuntimeException("dead code");
+      }
       final int queue = cons(NIL,NIL);
       if ( false ) log("  queueCreate(): returning " + pp(queue));
       return queue;
