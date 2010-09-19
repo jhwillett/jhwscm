@@ -23,6 +23,10 @@ public class IOBuffer
 
    public IOBuffer ( final int byteCount )
    {
+      if ( byteCount <= 0 )
+      {
+         throw new IllegalArgumentException("nonpos byteCount " + byteCount);
+      }
       this.buf = new byte[byteCount];
    }
 
