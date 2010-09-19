@@ -93,9 +93,6 @@ public class JhwScm
    private final Mem reg;
    private final Mem heap;
 
-   private final int[] portIn  = new int[13];
-   private final int[] portOut = new int[1];
-
    private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug
    private int javaDepth = 0; // debug
@@ -245,8 +242,6 @@ public class JhwScm
     * A return result of 0 frequently indicates more cycles in drive()
     * are needed to clear out the port buffers.
     *
-    * TODO: Implement to this new contract!
-    *
     * @returns BAD_ARGS if any of the arguments are invalid,
     * PORT_CLOSED if close() has been called on the port, else the
     * number of bytes transferred from buf[off..n-1].
@@ -276,18 +271,19 @@ public class JhwScm
          if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
-      if ( DEBUG && TYPE_CELL != type(reg.get(regIn)) )
+      if ( NIL == reg.get(regIn) )
       {
-         raiseError(ERR_INTERNAL);
-         return INTERNAL_ERROR;
+         return PORT_CLOSED;
       }
-      if ( DEBUG && NIL != reg.get(regError) )
+      if ( NIL != reg.get(regError) )
       {
-         // TODO: is this really a legit use case?  Need a new code?
-         //
          // What we're doing here is saying "can't accept input on a
          // VM in an error state", which is different than saying
          // "encountered an error processing this input".
+         return 0;
+      }
+      if ( DEBUG && TYPE_CELL != type(reg.get(regIn)) )
+      {
          raiseError(ERR_INTERNAL);
          return INTERNAL_ERROR;
       }
@@ -299,11 +295,17 @@ public class JhwScm
          final byte c    = buf[off+i];
          final int  code = code(TYPE_CHAR,0xFF&c);
          queuePushBack(reg.get(regIn),code);
+         if ( ERR_OOM == reg.get(regError) )
+         {
+            // We back up to where we were before the OO, in
+            // anticipation of subsequent calls to drive() hopefully
+            // freeing something up and recovering.
+            resumeErrorContinuation();
+            return i;
+         }
          if ( NIL != reg.get(regError) )
          {
-            setcar(reg.get(regIn),oldCar);
-            setcdr(reg.get(regIn),oldCdr);
-            return INTERNAL_ERROR; // TODO: proper proxy for reg.get(regError)
+            return internal2external(reg.get(regError));
          }
          if ( PROFILE ) local.numInput++;
          if ( PROFILE ) global.numInput++;
@@ -354,9 +356,7 @@ public class JhwScm
       }
       if ( NIL == reg.get(regOut) )
       {
-         if ( verb ) log("output(): internal");
-         raiseError(ERR_INTERNAL);
-         return INTERNAL_ERROR;
+         return PORT_CLOSED;
       }
       for ( int i = 0; i < len; ++i )
       {
@@ -2699,20 +2699,7 @@ public class JhwScm
             break;
 
          case blk_error:
-            // Returns to outside control, translating the internally
-            // visible error codes into externally visible ones.
-            //
-            switch ( reg.get(regError) )
-            {
-            case ERR_OOM:       return OUT_OF_MEMORY;
-            case ERR_INTERNAL:  return INTERNAL_ERROR;
-            case ERR_LEXICAL:   return FAILURE_LEXICAL;
-            case ERR_SEMANTIC:  return FAILURE_SEMANTIC;
-            case ERR_NOT_IMPL:  return UNIMPLEMENTED;
-            default:            
-               if ( verb ) log("unknown error code: " + pp(reg.get(regError)));
-               return INTERNAL_ERROR;
-            }
+            return internal2external(reg.get(regError));
 
          default:
             if ( verb ) log("bogus op: " + pp(reg.get(regPc)));
@@ -3082,6 +3069,8 @@ public class JhwScm
 
    /**
     * Pushes value onto the back of the queue.
+    * 
+    * Leaves the queue unchanged in the event of any error.
     */
    private void queuePushBack ( final int queue, final int value )
    {
@@ -3428,6 +3417,36 @@ public class JhwScm
       if ( true && err == ERR_INTERNAL )
       {
          throw new RuntimeException("detonate on ERR_INTERNAL");
+      }
+   }
+
+   /**
+    * Restores the continuation to where it was at time of last error,
+    * and clears the VM's error state.
+    */
+   private void resumeErrorContinuation ()
+   {
+      reg.set(regError , NIL);
+      reg.set(regPc    , reg.get(regErrorPc));
+      reg.set(regStack , reg.get(regErrorStack));
+   }
+
+   /**
+    * Translating internally visible error codes into externally
+    * visible ones.
+    * 
+    * TODO: why two sets of error codes?  I don't know yet, but I
+    * think there is a reason.
+    */
+   private static int internal2external ( final int err )
+   {
+      switch ( err )
+      {
+      case ERR_OOM:       return OUT_OF_MEMORY;
+      case ERR_LEXICAL:   return FAILURE_LEXICAL;
+      case ERR_SEMANTIC:  return FAILURE_SEMANTIC;
+      case ERR_NOT_IMPL:  return UNIMPLEMENTED;
+      default:            return INTERNAL_ERROR;
       }
    }
 
