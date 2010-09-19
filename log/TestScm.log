@@ -1,8 +1,8 @@
 8b45cd0359c87ea44d20bf96229132d6  Makefile
-838ecc768cf88671b26bff68dda5149d  src/Computer.java
-7d88928e0ac577a67dd3fe81ef06fe6c  src/Firmware.java
+68eb1d723e9e31430b8f25bacc502735  src/Computer.java
+be8279cc404b218de99abe6e94adc01c  src/Firmware.java
 340befb0624db4df68ca22dcf1d13fbd  src/IOBuffer.java
-0a20679dca840554ec8d837a14d8c5ba  src/JhwScm.java
+fe59d635bd0aa42b10320b2f9d43e0c0  src/JhwScm.java
 bfa1cdf8cc3f50ba71cc3872cfbae167  src/Machine.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
@@ -25,8 +25,8 @@ fact simple:
   numCons:          26836
   numInput:         131
   numOutput:        23
-  reg.numSet:       180581
-  reg.numGet:       396614
+  reg.numSet:       180579
+  reg.numGet:       396612
   reg.maxAddr:      31
   heap.numSet:      6896
   heap.numGet:      50848
@@ -39,13 +39,13 @@ fact simple:
   cacheTop.numSet:  81772
   cacheTop.numGet:  105892
   cacheTop.maxAddr: 1535
-  reg   ops:        577195
+  reg   ops:        577191
   cache ops:        187664
   heap  ops:        57744
-  reg   ops/cell:   18619.1935483871
+  reg   ops/cell:   18619.064516129034
   cache ops/cell:   122.25667752442996
   heap  ops/cell:   37.618241042345275
-  ops   reg/cache:  3.075683135817205
+  ops   reg/cache:  3.0756618211271207
   ops   cache/heap: 3.2499307287337214
   ALG:                       4
   LINE_SIZE:                 16
@@ -61,8 +61,8 @@ fact 2/ help:
   numCons:          31295
   numInput:         167
   numOutput:        26
-  reg.numSet:       210413
-  reg.numGet:       461790
+  reg.numSet:       210411
+  reg.numGet:       461788
   reg.maxAddr:      31
   heap.numSet:      7904
   heap.numGet:      63600
@@ -75,13 +75,13 @@ fact 2/ help:
   cacheTop.numSet:  95584
   cacheTop.numGet:  123380
   cacheTop.maxAddr: 2047
-  reg   ops:        672203
+  reg   ops:        672199
   cache ops:        218964
   heap  ops:        71504
-  reg   ops/cell:   21683.967741935485
+  reg   ops/cell:   21683.83870967742
   cache ops/cell:   106.96824621397167
   heap  ops/cell:   34.931118710307764
-  ops   reg/cache:  3.069924736486363
+  ops   reg/cache:  3.0699064686432473
   ops   cache/heap: 3.0622622510628776
   ALG:                       4
   LINE_SIZE:                 16
@@ -97,8 +97,8 @@ fib:
   numCons:          186105
   numInput:         123
   numOutput:        12
-  reg.numSet:       1253569
-  reg.numGet:       2757543
+  reg.numSet:       1253567
+  reg.numGet:       2757541
   reg.maxAddr:      31
   heap.numSet:      59568
   heap.numGet:      389184
@@ -111,13 +111,13 @@ fib:
   cacheTop.numSet:  563061
   cacheTop.numGet:  740655
   cacheTop.maxAddr: 5631
-  reg   ops:        4011112
+  reg   ops:        4011108
   cache ops:        1303716
   heap  ops:        448752
-  reg   ops/cell:   129390.70967741935
+  reg   ops/cell:   129390.58064516129
   cache ops/cell:   231.5247735748535
   heap  ops/cell:   79.69312733084709
-  ops   reg/cache:  3.076676208622123
+  ops   reg/cache:  3.0766731404692433
   ops   cache/heap: 2.905203765108568
   ALG:                       4
   LINE_SIZE:                 16
@@ -133,8 +133,8 @@ global:
   numCons:          417228
   numInput:         6430
   numOutput:        1788
-  reg.numSet:       2524693
-  reg.numGet:       5251515
+  reg.numSet:       2523567
+  reg.numGet:       5250391
   reg.maxAddr:      31
   heap.numSet:      297408
   heap.numGet:      939072
@@ -147,13 +147,13 @@ global:
   cacheTop.numSet:  1475870
   cacheTop.numGet:  1404613
   cacheTop.maxAddr: 5631
-  reg   ops:        7776208
+  reg   ops:        7773958
   cache ops:        2880483
   heap  ops:        1236480
-  reg   ops/cell:   250845.4193548387
+  reg   ops/cell:   250772.83870967742
   cache ops/cell:   511.5402237613213
   heap  ops/cell:   219.5844432605221
-  ops   reg/cache:  2.6996194735396806
+  ops   reg/cache:  2.698838354539846
   ops   cache/heap: 2.329583171583851
   ALG:                       4
   LINE_SIZE:                 16

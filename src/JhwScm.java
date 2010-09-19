@@ -62,6 +62,7 @@ public class JhwScm implements Firmware
    public static final Stats global = new Stats();
    public        final Stats local  = new Stats();
 
+   private final boolean DO_REP;
    private final boolean PROFILE;
    private final boolean VERBOSE;
    private final boolean DEBUG;  // check things which should never happen
@@ -73,28 +74,35 @@ public class JhwScm implements Firmware
    private int scmDepth  = 0; // debug
    private int javaDepth = 0; // debug
 
-   public JhwScm ( final Machine machine,
-                   final boolean doREP, 
-                   final boolean PROFILE, 
-                   final boolean VERBOSE, 
-                   final boolean DEBUG )
-   {
-      this.PROFILE = PROFILE;
-      this.VERBOSE = VERBOSE;
-      this.DEBUG   = DEBUG;
-
-      this.mach = machine;
-      this.reg  = machine.reg;
-
-      reg.set(regArg0, doREP ? sub_rep : sub_rp);
-      reg.set(regPc  , sub_init);
-   }
-
    ////////////////////////////////////////////////////////////////////
    //
    // client control points
    //
    ////////////////////////////////////////////////////////////////////
+
+   public JhwScm ( final Machine machine,
+                   final boolean DO_REP, 
+                   final boolean PROFILE, 
+                   final boolean VERBOSE, 
+                   final boolean DEBUG )
+   {
+      this.DO_REP  = DO_REP;
+      this.PROFILE = PROFILE;
+      this.VERBOSE = VERBOSE;
+      this.DEBUG   = DEBUG;
+      this.mach    = machine;
+      this.reg     = machine.reg;
+   }
+
+   /**
+    * Called before step(), not allowed to fail.
+    *
+    * The firmware should initialize the Machine to a base state.
+    */
+   public void boot ()
+   {
+      reg.set(regPc,sub_init);
+   }
 
    /**
     * Drives a single step of computation.  
@@ -122,14 +130,12 @@ public class JhwScm implements Firmware
       {
       case sub_init:
          // Initializes the machine and the environment, then
-         // transfers to the continuation in reg.get(regArg0).
+         // transfers to sub_rep if DO_REP, else to sub_rp.
          //
-         tmp0 = reg.get(regArg0);
          for ( int i = 0; i < reg.length(); i++ )
          {
             reg.set(i,UNSPECIFIED);
          }
-         reg.set(regArg0, tmp0);
 
          reg.set(regStack,NIL);
          reg.set(regError,NIL);
@@ -165,7 +171,7 @@ public class JhwScm implements Firmware
          prebind("display",sub_print);
          prebind("map",    sub_map);
 
-         gosub(reg.get(regArg0),blk_tail_call);
+         gosub( DO_REP ? sub_rep : sub_rp, blk_tail_call );
          break;
 
       case sub_rep:

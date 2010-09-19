@@ -36,6 +36,7 @@ public class Computer
       this.PROFILE  = PROFILE;
       this.VERBOSE  = VERBOSE;
       this.DEBUG    = DEBUG;
+      this.firmware.boot();
    }
 
    /**
