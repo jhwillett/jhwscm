@@ -53,7 +53,13 @@ public class IOBuffer
       {
          throw new SegFault("peek() when isEmpty()");
       }
-      return buf[start];
+      final byte value = buf[start];
+      log("peek():");
+      log("  start: " + start);
+      log("  end:   " + end);
+      log("  len:   " + len);
+      log("  value: " + value);
+      return value;
    }
 
    /**
@@ -71,6 +77,11 @@ public class IOBuffer
          throw new SegFault("pop() when isEmpty()");
       }
       final byte value = buf[start];
+      log("pop():");
+      log("  start: " + start);
+      log("  end:   " + end);
+      log("  len:   " + len);
+      log("  value: " + value);
       start += 1;
       start %= buf.length;
       len   -= 1;
@@ -90,9 +101,19 @@ public class IOBuffer
       {
          throw new SegFault("push() when isFull()");
       }
+      log("push():");
+      log("  start: " + start);
+      log("  end:   " + end);
+      log("  len:   " + len);
+      log("  value: " + value);
+      buf[end] = value;
       end += 1;
       end %= buf.length;
       len += 1;
-      buf[end] = value;
+   }
+
+   private static void log ( final Object obj )
+   {
+      System.out.println(obj);
    }
 }

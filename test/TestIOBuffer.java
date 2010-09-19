@@ -23,20 +23,17 @@ public class TestIOBuffer
 
       log("  created");
 
-      for ( int i = 0; i < 10; ++i )
+      for ( int i = 0; i < 3; ++i )
       {
-         final byte b = (byte)i;
+         final byte b = (byte)(i+10);
          iobuf.push(b);
-         log("  wrote: " + b);
       }
       log("  done writing");
-      if ( true ) return; // fails!
-      for ( int i = 0; i < 10; ++i )
+      for ( int i = 0; i < 3; ++i )
       {
          final byte b = iobuf.pop();
-         log("  read:  " + b);
-         assertEquals(b,(byte)i);
-         assertEquals(b,i);
+         assertEquals(b,(byte)(i+10));
+         assertEquals(b,(i+10));
       }
       log("  done reading");
    }

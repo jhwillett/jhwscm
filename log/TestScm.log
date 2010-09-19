@@ -1,5 +1,5 @@
 958973f9a815369fa8f66b41eee9a4c1  Makefile
-445dc4ddf7f67d360b8dee1575943bb0  src/IOBuffer.java
+ed674f2479244c4d0472df13cfe73442  src/IOBuffer.java
 99c0ed1a9853b631bfe9495a8fa94823  src/JhwScm.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
@@ -7,7 +7,7 @@ cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
 bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
-582d6e4ef4bff23848eec512e2f64da5  test/TestIOBuffer.java
+6d5c5432be242dc8d337a2e8b44be324  test/TestIOBuffer.java
 6407b2d691694d53d80625b4480d0267  test/TestMem.java
 084c4f8b4a3d5479c49ca164e6a3ed8b  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
