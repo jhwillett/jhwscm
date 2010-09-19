@@ -22,7 +22,25 @@ public class TestIOBuffer
       log("TestIOBuffer");
 
       final int[][] tests = {
-         { 5, 3, 10 },
+         { 1, 0, 0 },
+
+         { 1, 1,    0 },
+         { 1, 1,    1 },
+         { 1, 1,  127 },
+         { 1, 1,  128 },
+         { 1, 1,  255 },
+         { 1, 1,  256 },
+         { 1, 1,   -1 },
+         { 1, 1,   -2 },
+         { 1, 1, -127 },
+         { 1, 1, -128 },
+         { 1, 1, -255 },
+         { 1, 1, -256 },
+
+         { 1, 1, 0 },
+         { 5, 1, 0 },
+         { 5, 3, 0 },
+         { 5, 5, 0 },
       };
 
       for ( int i = 0; i < tests.length; ++i )
@@ -50,19 +68,16 @@ public class TestIOBuffer
       log("mutation:  " + mutation);
 
       final IOBuffer iobuf = new IOBuffer(byteCount);
-      log("created");
-
       for ( int i = 0; i < numOps; ++i )
       {
-         final byte b = (byte)(i+mutation);
-         iobuf.push(b);
+         final byte a = (byte)(i+mutation);
+         iobuf.push(a);
       }
-
       for ( int i = 0; i < numOps; ++i )
       {
+         final byte a = (byte)(i+mutation);
          final byte b = iobuf.pop();
-         assertEquals(b,(byte)(i+mutation));
-         assertEquals(b,(i+10));
+         assertEquals(a, b);
       }
       depth--;
    }

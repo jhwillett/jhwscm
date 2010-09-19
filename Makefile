@@ -9,9 +9,9 @@ SRC       += $(wildcard src/*.java)
 
 # Maintaining TESTS explicitly so I can control ordering.
 #
-TESTS     += test/TestIOBuffer.java
 TESTS     += test/TestMem.java
 TESTS     += test/TestScm.java
+TESTS     += test/TestIOBuffer.java
 
 LIBS                 += junit-4.8.2.jar
 HOME-junit-4.8.2.jar := http://github.com/downloads/KentBeck/junit
