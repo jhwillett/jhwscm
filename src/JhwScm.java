@@ -50,14 +50,6 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final boolean USE_PAGED_MEM             = false;
-   public static final int     PAGE_SIZE                 = 1024;
-   public static final int     PAGE_COUNT                = 6; // need 512 unopt
-
-   public static final boolean USE_CACHED_MEM            = true;
-   public static final int     LINE_SIZE                 = 16;
-   public static final int     LINE_COUNT                = 16;
-
    public static final int     SUCCESS          =  0;
    public static final int     PORT_CLOSED      = -1;
    public static final int     BAD_ARG          = -2;
@@ -73,10 +65,6 @@ public class JhwScm
 
    public static class Stats
    {
-      public final MemStats.Stats  heapStats     = new MemStats.Stats();
-      public final MemStats.Stats  regStats      = new MemStats.Stats();
-      public final MemCached.Stats cacheStats    = new MemCached.Stats();
-      public final MemStats.Stats  cacheTopStats = new MemStats.Stats();
       public       int             numCycles     = 0;
       public       int             numCons       = 0;
       public       int             numInput      = 0;
@@ -90,7 +78,8 @@ public class JhwScm
    private final boolean SILENT;
    private final boolean DEBUG;  // check things which should never happen
 
-   private final Machine    machine;
+   public  final Machine    machine;
+
    private final Mem        reg;
    private final Mem        heap;
    private final IOBuffer[] buffers;

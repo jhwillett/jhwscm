@@ -574,7 +574,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         //report("fact simple:",scm.local);
+         report("fact simple:",scm.local,scm.machine.local);
       }
       {
          final String help = 
@@ -595,7 +595,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         //report("fact 2/ help:",scm.local);
+         report("fact 2/ help:",scm.local,scm.machine.local);
       }
 
       {
@@ -639,7 +639,7 @@ public class TestScm extends Util
             // Takes like a minute...
             expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         //report("fib:",scm.local);
+         report("fib:",scm.local,scm.machine.local);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1020,7 +1020,7 @@ public class TestScm extends Util
       //
       // Weird.  So is it or is it not a symbol?
 
-      report("global:",JhwScm.global);
+      report("global:",JhwScm.global,Machine.global);
 
       log("numExpects: " + numExpects);
       log("  happy:    " + numHappyExpects);
@@ -1190,54 +1190,56 @@ public class TestScm extends Util
       }
    }
 
-   private static void report ( final String tag, final JhwScm.Stats stats )
+   private static void report ( final String        tag, 
+                                final JhwScm.Stats  ss,
+                                final Machine.Stats ms )
    {
       if ( !PROFILE || !REPORT ) return;
       log(tag);
-      log("  numCycles:        " + stats.numCycles);
-      log("  numCons:          " + stats.numCons);
+      log("  numCycles:        " + ss.numCycles);
+      log("  numCons:          " + ss.numCons);
       if ( true )
       {
-         log("  numInput:         " + stats.numInput);
-         log("  numOutput:        " + stats.numOutput);
+         log("  numInput:         " + ss.numInput);
+         log("  numOutput:        " + ss.numOutput);
       }
-      log("  reg.numSet:       " + stats.regStats.numSet);
-      log("  reg.numGet:       " + stats.regStats.numGet);
-      log("  reg.maxAddr:      " + stats.regStats.maxAddr);
-      log("  heap.numSet:      " + stats.heapStats.numSet);
-      log("  heap.numGet:      " + stats.heapStats.numGet);
-      log("  heap.maxAddr:     " + stats.heapStats.maxAddr);
-      if ( JhwScm.USE_CACHED_MEM ) 
+      log("  reg.numSet:       " + ms.regStats.numSet);
+      log("  reg.numGet:       " + ms.regStats.numGet);
+      log("  reg.maxAddr:      " + ms.regStats.maxAddr);
+      log("  heap.numSet:      " + ms.heapStats.numSet);
+      log("  heap.numGet:      " + ms.heapStats.numGet);
+      log("  heap.maxAddr:     " + ms.heapStats.maxAddr);
+      if ( Machine.USE_CACHED_MEM ) 
       {
-         log("  cache.numHits:    " + stats.cacheStats.numHits);
-         log("  cache.numMisses:  " + stats.cacheStats.numMisses);
-         log("  cache.numFlush:   " + stats.cacheStats.numFlush);
-         log("  cache.numDrop:    " + stats.cacheStats.numDrop);
-         log("  cache.numLoad:    " + stats.cacheStats.numLoad);
-         log("  cacheTop.numSet:  " + stats.cacheTopStats.numSet);
-         log("  cacheTop.numGet:  " + stats.cacheTopStats.numGet);
-         log("  cacheTop.maxAddr: " + stats.cacheTopStats.maxAddr);
+         log("  cache.numHits:    " + ms.cacheStats.numHits);
+         log("  cache.numMisses:  " + ms.cacheStats.numMisses);
+         log("  cache.numFlush:   " + ms.cacheStats.numFlush);
+         log("  cache.numDrop:    " + ms.cacheStats.numDrop);
+         log("  cache.numLoad:    " + ms.cacheStats.numLoad);
+         log("  cacheTop.numSet:  " + ms.cacheTopStats.numSet);
+         log("  cacheTop.numGet:  " + ms.cacheTopStats.numGet);
+         log("  cacheTop.maxAddr: " + ms.cacheTopStats.maxAddr);
       }
 
-      final int regOps   = stats.regStats.numGet + stats.regStats.numSet;
-      final int cacheOps = stats.cacheTopStats.numGet + stats.cacheTopStats.numSet;
-      final int heapOps  = stats.heapStats.numGet + stats.heapStats.numSet;
+      final int regOps   = ms.regStats.numGet + ms.regStats.numSet;
+      final int cacheOps = ms.cacheTopStats.numGet + ms.cacheTopStats.numSet;
+      final int heapOps  = ms.heapStats.numGet + ms.heapStats.numSet;
 
       log("  reg   ops:        " + regOps);
-      if ( JhwScm.USE_CACHED_MEM ) 
+      if ( Machine.USE_CACHED_MEM ) 
       {
          log("  cache ops:        " + cacheOps);
       }
       log("  heap  ops:        " + heapOps);
 
-      log("  reg   ops/cell:   " + (1.0 * regOps / stats.regStats.maxAddr));
-      if ( JhwScm.USE_CACHED_MEM ) 
+      log("  reg   ops/cell:   " + (1.0 * regOps / ms.regStats.maxAddr));
+      if ( Machine.USE_CACHED_MEM ) 
       {
-         log("  cache ops/cell:   " + (1.0 * cacheOps / stats.cacheTopStats.maxAddr));
+         log("  cache ops/cell:   " + (1.0 * cacheOps / ms.cacheTopStats.maxAddr));
       }
-      log("  heap  ops/cell:   " + (1.0 * heapOps / stats.heapStats.maxAddr));
+      log("  heap  ops/cell:   " + (1.0 * heapOps / ms.heapStats.maxAddr));
 
-      if ( JhwScm.USE_CACHED_MEM ) 
+      if ( Machine.USE_CACHED_MEM ) 
       {
          if ( cacheOps > 0 )
          {
@@ -1257,19 +1259,19 @@ public class TestScm extends Util
       }
 
       log("  ALG:                       " + MemCached.ALG);
-      log("  LINE_SIZE:                 " + JhwScm.LINE_SIZE);
-      log("  LINE_COUNT:                " + JhwScm.LINE_COUNT);
+      log("  LINE_SIZE:                 " + Machine.LINE_SIZE);
+      log("  LINE_COUNT:                " + Machine.LINE_COUNT);
       log("  PROPERLY_TAIL_RECURSIVE:   " + JhwScm.PROPERLY_TAIL_RECURSIVE);
       log("  CLEVER_TAIL_CALL_MOD_CONS: " + JhwScm.CLEVER_TAIL_CALL_MOD_CONS);
       log("  CLEVER_STACK_RECYCLING:    " + JhwScm.CLEVER_STACK_RECYCLING);
       log("  CLEVER_STACK_RECYCLING:    " + JhwScm.CLEVER_STACK_RECYCLING);
-      if ( JhwScm.USE_CACHED_MEM ) 
+      if ( Machine.USE_CACHED_MEM ) 
       {
-         final int hm = stats.cacheStats.numHits + stats.cacheStats.numMisses;
+         final int hm = ms.cacheStats.numHits + ms.cacheStats.numMisses;
          log("  cache hit/op:              " + 
-             ( 1.0 * stats.cacheStats.numHits / hm));
+             ( 1.0 * ms.cacheStats.numHits / hm));
          log("  cache write/miss:          " + 
-             ( 1.0 * stats.cacheStats.numFlush / stats.cacheStats.numMisses));
+             ( 1.0 * ms.cacheStats.numFlush / ms.cacheStats.numMisses));
       }
    }
 }
