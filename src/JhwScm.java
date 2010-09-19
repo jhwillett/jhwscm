@@ -231,2294 +231,2294 @@ public class JhwScm
       int tmp0 = 0;
       int tmp1 = 0;
 
-         if ( verb ) log("step: " + pp(reg.get(regPc)));
-         if ( DEBUG ) javaDepth = 2;
-         switch ( reg.get(regPc) )
+      if ( verb ) log("step: " + pp(reg.get(regPc)));
+      if ( DEBUG ) javaDepth = 2;
+      switch ( reg.get(regPc) )
+      {
+      case sub_rep:
+         // Reads the next expr from reg.get(regIn), evaluates it,
+         // and prints the result in reg.get(regOut).
+         //
+         // Top-level entry point for the interactive interpreter.
+         //
+         // Does not return in the Scheme sense, but may exit the
+         // VM (returning in the Java sense).
+         //
+         // (define (sub_rep)
+         //   (begin (sub_print (sub_eval (sub_read) global_env))
+         //          (sub_rep)))
+         //
+         gosub(sub_read,sub_rep+0x1);
+         break;
+      case sub_rep+0x1:
+         if ( EOF == reg.get(regRetval) )
          {
-         case sub_rep:
-            // Reads the next expr from reg.get(regIn), evaluates it,
-            // and prints the result in reg.get(regOut).
-            //
-            // Top-level entry point for the interactive interpreter.
-            //
-            // Does not return in the Scheme sense, but may exit the
-            // VM (returning in the Java sense).
-            //
-            // (define (sub_rep)
-            //   (begin (sub_print (sub_eval (sub_read) global_env))
-            //          (sub_rep)))
-            //
-            gosub(sub_read,sub_rep+0x1);
-            break;
-         case sub_rep+0x1:
-            if ( EOF == reg.get(regRetval) )
-            {
-               reg.set(regPc , sub_rep);
-               return SUCCESS;
-            }
-            reg.set(regArg0 , reg.get(regRetval));
-            reg.set(regArg1 , reg.get(regEnv));
-            gosub(sub_eval,sub_rep+0x2);
-            break;
-         case sub_rep+0x2:
-            reg.set(regArg0 , reg.get(regRetval));
-            gosub(sub_print,sub_rep+0x3);
-            break;
-         case sub_rep+0x3:
-            gosub(sub_rep,blk_tail_call);
-            break;
+            reg.set(regPc , sub_rep);
+            return SUCCESS;
+         }
+         reg.set(regArg0 , reg.get(regRetval));
+         reg.set(regArg1 , reg.get(regEnv));
+         gosub(sub_eval,sub_rep+0x2);
+         break;
+      case sub_rep+0x2:
+         reg.set(regArg0 , reg.get(regRetval));
+         gosub(sub_print,sub_rep+0x3);
+         break;
+      case sub_rep+0x3:
+         gosub(sub_rep,blk_tail_call);
+         break;
 
-         case sub_rp:
-            // Reads the next expr from reg.get(regIn), and prints the
-            // result in reg.get(regOut).
-            //
-            // A useful entry point for testing sub_read and sub_print
-            // decoupled from sub_eval and sub_apply.
-            //
-            // Does not return in the Scheme sense, but may exit the
-            // VM (returning in the Java sense).
-            //
-            // (define (sub_rp)
-            //   (begin (sub_print (sub_read))
-            //          (sub_rp)))
-            //
-            gosub(sub_read,sub_rp+0x1);
-            break;
-         case sub_rp+0x1:
-            if ( EOF == reg.get(regRetval) )
-            {
-               reg.set(regPc , sub_rp);
-               return SUCCESS;
-            }
-            reg.set(regArg0 , reg.get(regRetval));
-            gosub(sub_print,sub_rp+0x2);
-            break;
-         case sub_rp+0x2:
-            gosub(sub_rp,blk_tail_call);
-            break;
+      case sub_rp:
+         // Reads the next expr from reg.get(regIn), and prints the
+         // result in reg.get(regOut).
+         //
+         // A useful entry point for testing sub_read and sub_print
+         // decoupled from sub_eval and sub_apply.
+         //
+         // Does not return in the Scheme sense, but may exit the
+         // VM (returning in the Java sense).
+         //
+         // (define (sub_rp)
+         //   (begin (sub_print (sub_read))
+         //          (sub_rp)))
+         //
+         gosub(sub_read,sub_rp+0x1);
+         break;
+      case sub_rp+0x1:
+         if ( EOF == reg.get(regRetval) )
+         {
+            reg.set(regPc , sub_rp);
+            return SUCCESS;
+         }
+         reg.set(regArg0 , reg.get(regRetval));
+         gosub(sub_print,sub_rp+0x2);
+         break;
+      case sub_rp+0x2:
+         gosub(sub_rp,blk_tail_call);
+         break;
 
-         case sub_read:
-            // Parses the next expr from reg.get(regIn), and leaves
-            // the results in reg.get(regRetval).
-            //
-            // Top-level entry point for the parser.
-            //
-            // Returns EOF if nothing was found, else the next expr.
-            //
-            // From R5RS Sec 66:
-            //
-            //   If an end of file is encountered in the input before
-            //   any characters are found that can begin an object,
-            //   then an end of file object is returned. The port
-            //   remains open, and further attempts to read will also
-            //   return an end of file object. If an end of file is
-            //   encountered after the beginning of an object's
-            //   external representation, but the external
-            //   representation is incomplete and therefore not
-            //   parsable, an error is signalled.
-            //
-            // (define (sub_read)
-            //   (begin (sub_read_burn_space)
-            //          (let ((c (port_peek)))
-            //            (case c
-            //              (( EOF ) EOF)
-            //              (( #\) ) (err_lexical))
-            //              (( #\( ) (sub_read_list))
-            //              (else    (sub_read_atom))))))
-            //
-            gosub(sub_read_burn_space,sub_read+0x1);
-            break;
-         case sub_read+0x1:
-            reg.set(regTmp0, portPeek(reg.get(regIn)));
-            if ( EOF == reg.get(regTmp0) )
-            {
-               reg.set(regRetval , EOF);
-               returnsub();
-               break;
-            }
-            if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
-            {
-               if ( verb ) log("non-char in input: " + pp(reg.get(regTmp0)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            switch (value(reg.get(regTmp0)))
-            {
-            case ')':
-               if ( verb ) log("mismatch close paren");
-               raiseError(ERR_LEXICAL);
-               break;
-            case '(':
-               gosub(sub_read_list,blk_tail_call);
-               break;
-            default:
-               gosub(sub_read_atom,blk_tail_call);
-               break;
-            }
-            break;
-
-         case sub_read_list:
-            // Reads the next list expr from reg.get(regIn), returning
-            // the result in reg.get(regRetval). Also handles dotted
-            // lists.
-            // 
-            // On entry, expects the next char from reg.get(regIn) to
-            // be the opening '(' a list expression.
-            // 
-            // On exit, precisely the list expression will have been
-            // consumed from reg.get(regIn), up to and including the
-            // final ')'.
-            //
-            // (define (sub_read_list)
-            //   (if (!= #\( (port_peek))
-            //       (err_lexical "expected open paren")
-            //       (begin (port_pop)
-            //              (sub_read_list_open))))
-            //
-            if ( code(TYPE_CHAR,'(') != portPeek(reg.get(regIn)) )
-            {
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            portPop(reg.get(regIn));
-            reg.set(regArg0 , FALSE);
-            gosub(sub_read_list_open,blk_tail_call);
-            break;
-
-         case sub_read_list_open:
-            // Reads all exprs from reg.get(regIn) until a loose EOF,
-            // a ')', or a '.' is encountered.
-            //
-            // EOF results in an error (mismatchd paren).
-            //
-            // ')' results in returning a list containing all the
-            // exprs in order.
-            //
-            // '.' results in a dotted list, provided subsequent
-            // success reading a single expression further and finding
-            // the closing ')'.
-            // 
-            // On exit, precisely the list expression will have been
-            // consumed from reg.get(regIn), up to and including the
-            // final ')'.
-            //  
-            // (define (sub_read_list_open)
-            //   (burn-space)
-            //   (case (port_peek)
-            //     ((eof) (error_lexical "eof in list expr"))
-            //     ((#\)  (begin (port_peek) '()))
-            //     (else
-            //       (let ((next (sub_read))
-            //             (rest (sub_read_list_open))) ; wow, token lookahead!
-            //         ;; Philosophical question: is it an abuse to let the
-            //         ;; next be parsed as a symbol before rejecting it, when
-            //         ;; what I am after is not the semantic entity "the 
-            //         ;; symbol with name '.'" but rather the syntactic entity
-            //         ;; "the lexeme of an isolated dot in the last-but-one
-            //         ;; position in a list expression"?
-            //         (cond 
-            //          ((not (eqv? '. next)) (cons next rest))
-            //          ((null? rest)         (err_lexical "danging dot"))
-            //          ((null? (cdr rest))   (cons next (car rest)))
-            //          (else                 (err_lexical "many after dot"))
-            //          )))))
-            //
-            gosub(sub_read_burn_space,sub_read_list_open+0x1);
-            break;
-         case sub_read_list_open+0x1:
-            reg.set(regTmp0 , portPeek(reg.get(regIn)));
-            if ( EOF == reg.get(regTmp0) )
-            {
-               if ( verb ) log("eof in list expr");
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            if ( code(TYPE_CHAR,')') == reg.get(regTmp0) )
-            {
-               if ( verb ) log("matching close-paren");
-               portPop(reg.get(regIn));
-               reg.set(regRetval , NIL);
-               returnsub();
-               break;
-            }
-            gosub(sub_read,sub_read_list_open+0x2);
-            break;
-         case sub_read_list_open+0x2:
-            store(reg.get(regRetval));
-            gosub(sub_read_list_open,sub_read_list_open+0x3);
-            break;
-         case sub_read_list_open+0x3:
-            reg.set(regTmp0 , restore());      // next
-            reg.set(regTmp1 , reg.get(regRetval)); // rest
-            if ( TYPE_CELL           != type(reg.get(regTmp0))     ||
-                 IS_SYMBOL           != car(reg.get(regTmp0))      ||
-                 code(TYPE_CHAR,'.') != car(cdr(reg.get(regTmp0))) ||
-                 NIL                 != cdr(cdr(reg.get(regTmp0)))  )
-            {
-               reg.set(regRetval , cons(reg.get(regTmp0),reg.get(regTmp1)));
-               returnsub();
-               break;
-            }
-            if ( NIL == reg.get(regTmp1) )
-            {
-               log("dangling dot");
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            if ( NIL == cdr(reg.get(regTmp1)) )
-            {
-               log("happy dotted list");
-               log("  " + pp(reg.get(regTmp0)) + " " + pp(car(reg.get(regTmp0))));
-               log("  " + pp(reg.get(regTmp1)) + " " + pp(car(reg.get(regTmp1))));
-               reg.set(regRetval , car(reg.get(regTmp1)));
-               returnsub();
-               break;
-            }
-            log("many after dot");
-            raiseError(ERR_LEXICAL);
-            break;
-
-         case sub_read_atom:
-            // Reads the next atomic expr from reg.get(regIn),
-            // returning the result in reg.get(regRetval).
-            // 
-            // On entry, expects the next char from reg.get(regIn) to
-            // be the initial character of an atomic expression.
-            // 
-            // On exit, precisely the atomic expression will have been
-            // consumed from reg.get(regIn).
-            //
-            // (define (sub_read_atom)
-            //   (let ((c (port_peek)))
-            //     (case c
-            //       (( #\' ) (err_not_impl))
-            //       (( #\" ) (sub_read_string))
-            //       (( #\# ) (sub_read_octo_tok))
-            //       (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
-            //        (sub_read_num))
-            //       (( #\- ) (begin 
-            //                (port_pop)
-            //                (let ((c (port_peek)))
-            //                  (case c
-            //                    (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 )
-            //                     (- (sub_read_num)))
-            //                    (else (prepend #\- 
-            //                                   (sub_read_symbol_body))))))))))
-            //
-            reg.set(regTmp0 , portPeek(reg.get(regIn)));
-            if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
-            {
-               if ( verb ) log("non-char in input: " + pp(reg.get(regTmp0)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            switch (value(reg.get(regTmp0)))
-            {
-            case '\'':
-               if ( verb ) log("quote (not belong here in sub_read_atom?)");
-               portPop(reg.get(regIn));
-               gosub(sub_read,sub_read_atom+0x3);
-               break;
-            case '"':
-               if ( verb ) log("string literal");
-               gosub(sub_read_string,blk_tail_call);
-               break;
-            case '#':
-               if ( verb ) log("octothorpe special");
-               gosub(sub_read_octo_tok,blk_tail_call);
-               break;
-            case '0': case '1': case '2': case '3': case '4':
-            case '5': case '6': case '7': case '8': case '9':
-               if ( verb ) log("non-negated number");
-               gosub(sub_read_num,blk_tail_call);
-               break;
-            case '-':
-               // The minus sign is special.  We need to look ahead
-               // *again* before we can decide whether it is part of a
-               // symbol or part of a number.
-               portPop(reg.get(regIn));
-               reg.set(regTmp2 , portPeek(reg.get(regIn)));
-               if ( TYPE_CHAR == type(reg.get(regTmp2)) && 
-                    '0' <= value(reg.get(regTmp2))      && 
-                    '9' >= value(reg.get(regTmp2))       )
-               {
-                  if ( verb ) log("minus-starting-number");
-                  gosub(sub_read_num,sub_read_atom+0x1);
-               }
-               else if ( EOF == reg.get(regTmp2) )
-               {
-                  if ( verb ) log("lonliest minus in the world");
-                  reg.set(regTmp0   , cons(code(TYPE_CHAR,'-'),NIL));
-                  reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp0)));
-                  returnsub();
-               }
-               else
-               {
-                  if ( verb ) log("minus-starting-symbol");
-                  reg.set(regArg0   , code(TYPE_CHAR,'-'));
-                  gosub(sub_read_symbol,blk_tail_call);
-               }
-               break;
-            default:
-               if ( verb ) log("symbol");
-               reg.set(regArg0   , NIL);
-               gosub(sub_read_symbol,blk_tail_call);
-               break;
-            }
-            break;
-         case sub_read_atom+0x1:
-            if ( TYPE_FIXINT != type(reg.get(regRetval)) )
-            {
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            if ( verb ) log("negating: " + pp(reg.get(regRetval)));
-            reg.set(regRetval , code(TYPE_FIXINT,-value(reg.get(regRetval))));
-            if ( verb ) log("  to:       " + pp(reg.get(regRetval)));
+      case sub_read:
+         // Parses the next expr from reg.get(regIn), and leaves
+         // the results in reg.get(regRetval).
+         //
+         // Top-level entry point for the parser.
+         //
+         // Returns EOF if nothing was found, else the next expr.
+         //
+         // From R5RS Sec 66:
+         //
+         //   If an end of file is encountered in the input before
+         //   any characters are found that can begin an object,
+         //   then an end of file object is returned. The port
+         //   remains open, and further attempts to read will also
+         //   return an end of file object. If an end of file is
+         //   encountered after the beginning of an object's
+         //   external representation, but the external
+         //   representation is incomplete and therefore not
+         //   parsable, an error is signalled.
+         //
+         // (define (sub_read)
+         //   (begin (sub_read_burn_space)
+         //          (let ((c (port_peek)))
+         //            (case c
+         //              (( EOF ) EOF)
+         //              (( #\) ) (err_lexical))
+         //              (( #\( ) (sub_read_list))
+         //              (else    (sub_read_atom))))))
+         //
+         gosub(sub_read_burn_space,sub_read+0x1);
+         break;
+      case sub_read+0x1:
+         reg.set(regTmp0, portPeek(reg.get(regIn)));
+         if ( EOF == reg.get(regTmp0) )
+         {
+            reg.set(regRetval , EOF);
             returnsub();
             break;
-         case sub_read_atom+0x2:
-            reg.set(regTmp0   , restore());
-            reg.set(regTmp1   , car(reg.get(regTmp0)));
-            reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp1)));
-            if ( DEBUG )
-            {
-               reg.set(regTmp1 , reg.get(regTmp0));
-               while ( NIL != reg.get(regTmp1) )
-               {
-                  reg.set(regTmp1 , cdr(reg.get(regTmp1)));
-               }
-            }
-            returnsub();
-            break;
-         case sub_read_atom+0x3:
-            // after single quote
-            //
-            // TODO: Think about this one, by putting sub_quote here
-            // instead of the symbol 'quote there are some funny
-            // consequences: like for instance it kind of implies that
-            // sub_quote needs to be self-evaluating (if not all
-            // sub_foo).
-            //
-            // Note: by leveraging sub_quote in this way, putting the
-            // literal value sub_quote at the head of a constructed
-            // expression which is en route to sub_eval, we force the
-            // hand on other design decisions about the direct
-            // (eval)ability and (apply)ability of sub_foo in general.
-            //
-            // We do the same in sub_define with sub_lambda, so
-            // clearly I'm getting comfortable with this decision.
-            // It's a syntax rewrite, nothing more, and sub_read can
-            // stay simple and let the rest of the system handle it.
-            //
-            reg.set(regTmp0   , cons(reg.get(regRetval),NIL));
-            reg.set(regRetval , cons(sub_quote,reg.get(regTmp0)));
-            returnsub();
-            break;
-
-         case sub_read_num:
-            // Parses the next number from reg.get(regIn).
-            //
-            reg.set(regArg0 , code(TYPE_FIXINT,0));
-            gosub(sub_read_num_loop,blk_tail_call);
-            break;
-         case sub_read_num_loop:
-            // Parses the next number from reg.get(regIn), expecting
-            // the accumulated value-so-far as a TYPE_FIXINT in
-            // reg.get(regArg0).
-            //
-            // A helper for sub_read_num, but still a sub_ in its own
-            // right.
-            //
-            reg.set(regTmp1 , portPeek(reg.get(regIn)));
-            if ( EOF == reg.get(regTmp1) )
-            {
-               if ( verb ) log("eof: returning " + pp(reg.get(regArg0)));
-               reg.set(regRetval , reg.get(regArg0));
-               returnsub();
-               break;
-            }
-            if ( TYPE_CHAR != type(reg.get(regTmp1)) )
-            {
-               if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            reg.set(regTmp2 , reg.get(regArg0));
-            if ( TYPE_FIXINT != type(reg.get(regTmp2)) )
-            {
-               if ( verb ) log("non-fixint in arg: " + pp(reg.get(regTmp2)));
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            switch (value(reg.get(regTmp1)))
-            {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-            case '(':
-            case ')':
-               // terminator
-               reg.set(regRetval , reg.get(regArg0));
-               returnsub();
-               break;
-            default:
-               if ( value(reg.get(regTmp1)) < '0' || value(reg.get(regTmp1)) > '9' )
-               {
-                  if ( verb ) log("non-digit in input: " + pp(reg.get(regTmp1)));
-                  raiseError(ERR_LEXICAL);
-                  break;
-               }
-               tmp0 = 10 * value(reg.get(regTmp2)) + (value(reg.get(regTmp1)) - '0');
-               if ( verb ) log("first char: " + (char)value(reg.get(regTmp1)));
-               if ( verb ) log("old accum:  " +       value(reg.get(regTmp2)));
-               if ( verb ) log("new accum:  " +       tmp0);
-               portPop(reg.get(regIn));
-               reg.set(regArg0 , code(TYPE_FIXINT,tmp0));
-               gosub(sub_read_num_loop,blk_tail_call);
-               break;
-            }
-            break;
-
-         case sub_read_octo_tok:
-            // Parses the next octothorpe literal reg.get(regIn).
-            //
-            reg.set(regTmp0 , portPeek(reg.get(regIn)));
-            if ( reg.get(regTmp0) != code(TYPE_CHAR,'#') )
-            {
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            portPop(reg.get(regIn));
-            reg.set(regTmp1 , portPeek(reg.get(regIn)));
-            if ( EOF == reg.get(regTmp1) )
-            {
-               if ( verb ) log("eof after octothorpe");
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp1)) )
-            {
-               if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            portPop(reg.get(regIn));
-            switch (value(reg.get(regTmp1)))
-            {
-            case 't':
-               if ( verb ) log("true");
-               reg.set(regRetval , TRUE);
-               returnsub();
-               break;
-            case 'f':
-               if ( verb ) log("false");
-               reg.set(regRetval , FALSE);
-               returnsub();
-               break;
-            case '\\':
-               reg.set(regTmp2 , portPeek(reg.get(regIn)));
-               if ( EOF == reg.get(regTmp2) )
-               {
-                  if ( verb ) log("eof after octothorpe slash");
-                  raiseError(ERR_LEXICAL);
-                  break;
-               }
-               if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp2)) )
-               {
-                  if ( verb ) log("non-char in input: " + pp(reg.get(regTmp2)));
-                  raiseError(ERR_INTERNAL);
-                  break;
-               }
-               if ( verb ) log("character literal: " + pp(reg.get(regTmp2)));
-               portPop(reg.get(regIn));
-               reg.set(regRetval , reg.get(regTmp2));
-               returnsub();
-               // TODO: so far, we only handle the 1-char sequences...
-               break;
-            default:
-               log("unexpected after octothorpe: " + pp(reg.get(regTmp1)));
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            break;
-
-         case sub_read_symbol:
-            // Parses the next symbol from reg.get(regIn).
-            //
-            // Expects that the next character in the input is known
-            // to be the first character of a symbol.
-            //
-            // reg.get(regArg0) is expected to be a 'prepend'
-            // character.  If non-NIL, reg.get(regArg0) is prepended
-            // to the symbol.
-            //
-            if ( NIL == reg.get(regArg0) )
-            {
-               store(IS_SYMBOL);
-               gosub(sub_read_symbol_body,blk_tail_call_m_cons);
-            }
-            else
-            {
-               store(reg.get(regArg0));
-               gosub(sub_read_symbol_body,sub_read_symbol+0x1);
-            }
-            break;
-         case sub_read_symbol+0x1: // TODO: blk_tail_call_m_cons_m_cons ???
-            reg.set(regArg0,   restore()); // restore prepend character
-            reg.set(regTmp0,   cons(reg.get(regArg0), reg.get(regRetval)));
-            reg.set(regTmp1,   cons(IS_SYMBOL,        reg.get(regTmp0)));
-            reg.set(regRetval, reg.get(regTmp1));
-            returnsub();
-            break;
-
-         case sub_read_symbol_body:
-            // Parses the next symbol from reg.get(regIn).
-            //
-            // A helper for sub_read_symbol, but still a sub_ in its
-            // own right.
-            //
-            // Returns a list of characters.
-            //
-            // All the characters in the symbol will have been
-            // consumed from the input, and the next character in the
-            // input will be the character immediately following the
-            // end of the symbol.
-            //
-            reg.set(regTmp1, portPeek(reg.get(regIn)));
-            if ( EOF == reg.get(regTmp1) )
-            {
-               if ( verb ) log("eof: returning");
-               reg.set(regRetval , NIL);
-               returnsub();
-               break;
-            }
-            if ( TYPE_CHAR != type(reg.get(regTmp1)) )
-            {
-               if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            switch (value(reg.get(regTmp1)))
-            {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-            case '(':
-            case ')':
-            case '"':
-               reg.set(regRetval , NIL);
-               returnsub();
-               break;
-            default:
-               portPop(reg.get(regIn));
-               store(reg.get(regTmp1));
-               gosub(sub_read_symbol_body,blk_tail_call_m_cons);
-               break;
-            }
-            break;
-
-         case sub_read_string:
-            // Parses the next string literal from reg.get(regIn).
-            //
-            // Expects that the next character in the input is known
-            // to be the leading '"' of a string literal.
-            //
-            reg.set(regTmp0 , portPeek(reg.get(regIn)));
-            if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
-            {
-               log("non-\" leading string literal: " + pp(reg.get(regTmp0)));
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            portPop(reg.get(regIn));
-            gosub(sub_read_string_body,sub_read_string+0x1);
-            break;
-         case sub_read_string+0x1:
-            reg.set(regTmp0   , portPeek(reg.get(regIn)));
-            if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
-            {
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            portPop(reg.get(regIn));
-            reg.set(regRetval , cons(IS_STRING,reg.get(regRetval)));
-            returnsub();
-            break;
-
-         case sub_read_string_body:
-            // Parses the next string from reg.get(regIn).
-            //
-            // A helper for sub_read_string, but still a sub_ in its
-            // own right.
-            //
-            // Expects that the leading \" has already been consumed,
-            // and stops on the trailing \" (which is left unconsumed
-            // for balance).
-            //
-            // Returns a list of characters.
-            //
-            // All the characters in the string will have been
-            // consumed from the input, and the next character in the
-            // input will be the trailing \".
-            //
-            reg.set(regTmp1 , portPeek(reg.get(regIn)));
-            if ( EOF == reg.get(regTmp1) )
-            {
-               log("eof in string literal");
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            if ( TYPE_CHAR != type(reg.get(regTmp1)) )
-            {
-               log("non-char in input: " + pp(reg.get(regTmp1)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            switch (value(reg.get(regTmp1)))
-            {
-            case '"':
-               reg.set(regRetval , NIL);
-               returnsub();
-               break;
-            default:
-               portPop(reg.get(regIn));
-               store(reg.get(regTmp1));
-               gosub(sub_read_string_body,blk_tail_call_m_cons);
-               break;
-            }
-            break;
-
-         case sub_read_burn_space:
-            // Consumes any whitespace from reg.get(regIn).
-            //
-            // Returns UNSPECIFIED.
-            //
-            reg.set(regTmp0 , portPeek(reg.get(regIn)));
-            if ( EOF == reg.get(regTmp0) )
-            {
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            switch (value(reg.get(regTmp0)))
-            {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-               portPop(reg.get(regIn));
-               gosub(sub_read_burn_space,blk_tail_call);
-               break;
-            default:
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            break;
-
-         case sub_eval:
-            // Evaluates the expr in reg.get(regArg0) in the env in
-            // reg.get(regArg1), and leaves the results in
-            // reg.get(regRetval).
-            //
-            switch (type(reg.get(regArg0)))
-            {
-            case TYPE_SENTINEL:
-               switch (reg.get(regArg0))
-               {
-               case TRUE:
-               case FALSE:
-                  // These values are self-evaluating
-                  reg.set(regRetval , reg.get(regArg0));
-                  returnsub();
-                  break;
-               case NIL:
-                  // The empty list is not self-evaluating.
-                  //
-                  // Covers expressions like "()" and "(())"..
-                  raiseError(ERR_SEMANTIC);
-                  break;
-               default:
-                  if ( verb ) log("unexpected value: " + pp(reg.get(regArg0)));
-                  raiseError(ERR_INTERNAL);
-                  break;
-               }
-               break;
-            case TYPE_CHAR:
-            case TYPE_FIXINT:
-            case TYPE_SUBS:    // TODO: is this a valid decision?  Off-spec?
-            case TYPE_SUBP:    // TODO: is this a valid decision?  Off-spec?
-               // these types are self-evaluating
-               reg.set(regRetval , reg.get(regArg0));
-               returnsub();
-               break;
-            case TYPE_CELL:
-               tmp0 = car(reg.get(regArg0));
-               switch (tmp0)
-               {
-               case IS_STRING:
-                  // Strings are self-evaluating.
-                  reg.set(regRetval , reg.get(regArg0));
-                  returnsub();
-                  break;
-               case IS_SYMBOL:
-                  // Lookup the symbol in the environment.
-                  //
-                  //   reg.get(regArg0) already contains the symbol
-                  //   reg.get(regArg1) already contains the env
-                  //
-                  // TODO: w/ a different variant of
-                  // sub_eval_look_env, could this be a tail call?
-                  // And I don't just mean making a new function that
-                  // calls sub_eval_look_env that has our same
-                  // continuation sub_eval+0x1... I mean something
-                  // that tail-recurses all the way to the
-                  // success-or-symbol-not-found logic.
-                  gosub(sub_eval_look_env,sub_eval+0x1);
-                  break;
-               default:
-                  // Evaluate the operator: the type of the result
-                  // will determine whether we evaluate the args prior
-                  // to apply.
-                  store(cdr(reg.get(regArg0)));    // store the arg exprs
-                  store(reg.get(regArg1));         // store the env
-                  reg.set(regArg0 , tmp0);         // forward the op
-                  reg.set(regArg1 , reg.get(regArg1)); // forward the env
-                  gosub(sub_eval,sub_eval+0x2);
-                  break;
-               }
-               break;
-            default:
-               if ( verb ) log("unexpected type: " + pp(reg.get(regArg0)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            break;
-         case sub_eval+0x1:
-            // following symbol lookup
-            if ( NIL == reg.get(regRetval) )
-            {
-               // symbol not found: unbound variable
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( DEBUG && TYPE_CELL != type(reg.get(regRetval)) )
-            {
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            reg.set(regRetval , cdr(reg.get(regRetval)));
-            returnsub();
-            break;
-         case sub_eval+0x2:
-            // following eval of the first elem
-            //
-            // If it's a function, evaluate the args next, following
-            // up with apply.
-            //
-            // If it's a special form, don't evaluate the args, just
-            // pass it off to apply.
-            //
-            reg.set(regTmp1 , restore());         // restore the env
-            reg.set(regTmp0 , restore());         // restore the arg exprs
-            reg.set(regTmp2 , reg.get(regRetval));    // value of the operator
-            tmp0 = type(reg.get(regTmp2));
-            if ( TYPE_SUBP == tmp0 || 
-                 TYPE_CELL == tmp0 && IS_PROCEDURE == car(reg.get(regTmp2)) )
-            {
-               // procedure: evaluate the args and then apply op to
-               // args values
-               // 
-               store(reg.get(regTmp2));           // store value of the operator
-               reg.set(regArg0 , reg.get(regTmp0));
-               reg.set(regArg1 , reg.get(regTmp1));
-               gosub(sub_eval_list,sub_eval+0x3);
-               break;
-            }
-            if ( TYPE_SUBS == tmp0 || 
-                 TYPE_CELL == tmp0 && IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
-            {
-               // special: apply op directly to args exprs
-               //
-               reg.set(regArg0 , reg.get(regTmp2));
-               reg.set(regArg1 , reg.get(regTmp0));
-               gosub(sub_apply,blk_tail_call);
-               break;
-            }
-            // We get here, for instance, evaluating the expr (1).
-            logrec("non-operator in sub_eval: ",tmp0);
-            raiseError(ERR_SEMANTIC);
-            break;
-         case sub_eval+0x3:
-            // following eval of the args
-            reg.set(regArg0 , restore());      // restore value of the operator
-            reg.set(regArg1 , reg.get(regRetval)); // restore list of args
-            gosub(sub_apply,blk_tail_call);
-            break;
-
-         case sub_eval_list:
-            // Evaluates all the expressions in the list in
-            // reg.get(regArg0) in the env in reg.get(regArg1), and
-            // returns a list of the results.
-            //
-            //   (define (sub_eval_list list env)
-            //     (if (null? list) 
-            //         '()
-            //         (cons (sub_eval (car list) env)
-            //               (sub_eval_list (cdr list) env))))
-            //   (define (sub_eval_list list env)
-            //     (if (null? list) 
-            //         '()
-            //         (let ((first (sub_eval (car list) env))
-            //           (cons first (sub_eval_list (cdr list) env)))))
-            //   (define (sub_eval_list list env)
-            //     (if (null? list) 
-            //         '()
-            //         (let ((first (sub_eval (car list) env))
-            //               (rest  (sub_eval_list (cdr list) env))
-            //           (cons first rest))))
-            //
-            // Using something most like the second varsion: I get to
-            // exploit blk_tail_call_m_cons again! :)
-            //
-            // NOTE: This almost sub_map e.g. (map eval list), except
-            // except sub_eval is binary and sub_map works with unary
-            // functions.
-            //
-            if ( NIL == reg.get(regArg0) )
-            {
-               reg.set(regRetval , NIL);
-               returnsub();
-               break;
-            }
-            store(cdr(reg.get(regArg0)));          // the rest of the list
-            store(reg.get(regArg1));               // the env
-            reg.set(regArg0 , car(reg.get(regArg0)));  // the head of the list
-            reg.set(regArg1 , reg.get(regArg1));       // the env
-            gosub(sub_eval,sub_eval_list+0x1);
-            break;
-         case sub_eval_list+0x1:
-            reg.set(regArg1 , restore());          // the env
-            reg.set(regArg0 , restore());          // the rest of the list
-            store(reg.get(regRetval));             // feed blk_tail_call_m_cons
-            gosub(sub_eval_list,blk_tail_call_m_cons);
-            break;
-
-         case sub_eval_look_env:
-            // Looks up the symbol in reg.get(regArg0) in the env in
-            // reg.get(regArg1).
-            //
-            // Returns NIL if not found, else the binding of the
-            // symbol: a cell whose car is a symbol equivalent to the
-            // argument symbol, and whose cdr is the value.
-            //
-            // Subsequent setcdrs on that cell change the value of the
-            // symbol.
-            //
-            // Finds the *first* binding in the *first* frame for the
-            // symbol.
-            //
-            // (define (sub_eval_look_env sym env)
-            //   (if (null? env) 
-            //       '()
-            //       (let ((bind (sub_eval_look_frame sym (car env))))
-            //         (if (null? bind) 
-            //             (sub_eval_look_env sym (cdr env))
-            //             bind))))
-            //
-            if ( true )
-            {
-               logrec("sub_eval_look_env SYM",reg.get(regArg0));
-               log(   "sub_eval_look_env ENV " + pp(reg.get(regArg1)));
-            }
-            if ( NIL == reg.get(regArg1) )
-            {
-               if ( verb ) log("empty env: symbol not found");
-               reg.set(regRetval  , NIL);
-               returnsub();
-               break;
-            }
-            store(reg.get(regArg0));
-            store(reg.get(regArg1));
-            reg.set(regArg1 , car(reg.get(regArg1)));
-            gosub(sub_eval_look_frame,sub_eval_look_env+0x1);
-            break;
-         case sub_eval_look_env+0x1:
-            reg.set(regArg1 , restore());
-            reg.set(regArg0 , restore());
-            if ( NIL != reg.get(regRetval) )
-            {
-               if ( verb ) log("symbol found w/ bind: " + pp(reg.get(regRetval)));
-               returnsub();
-               break;
-            }
-            reg.set(regArg1 , cdr(reg.get(regArg1)));
-            gosub(sub_eval_look_env,blk_tail_call);
-            break;
-
-         case sub_eval_look_frame:
-            // Looks up the symbol in reg.get(regArg0) in the env
-            // frame in reg.get(regArg1).
-            //
-            // Returns NIL if not found, else the binding of the
-            // symbol: a cell whose car is a symbol equivalent to the
-            // argument symbol, and whose cdr is the value.
-            //
-            // Subsequent setcdrs on that cell change the value of the
-            // symbol.
-            //
-            // Finds the *first* binding in the frame for the symbol.
-            //
-            // (define (sub_eval_look_frame sym frame)
-            //   (if (null? frame) 
-            //       '()
-            //       (let ((s (car (car frame))))
-            //         (if (equal? sym s) 
-            //             (car frame)
-            //             (sub_eval_look_frame (cdr frame))))))
-            //
-            logrec("sub_eval_look_frame SYM ",reg.get(regArg0));
-            if ( NIL == reg.get(regArg1) )
-            {
-               reg.set(regRetval , NIL);
-               returnsub();
-               break;
-            }
-            store(reg.get(regArg0));
-            store(reg.get(regArg1));
-            reg.set(regArg1 , car(car(reg.get(regArg1))));
-            logrec("sub_eval_look_frame CMP ",reg.get(regArg1));
-            gosub(sub_equal_p,sub_eval_look_frame+0x1);
-            break;
-         case sub_eval_look_frame+0x1:
-            reg.set(regArg1 , restore());
-            reg.set(regArg0 , restore());
-            if ( TRUE == reg.get(regRetval) )
-            {
-               reg.set(regRetval , car(reg.get(regArg1)));
-               returnsub();
-               break;
-            }
-            reg.set(regArg1 , cdr(reg.get(regArg1)));
-            gosub(sub_eval_look_frame,blk_tail_call);
-            break;
-
-         case sub_equal_p:
-            // Compares the objects in reg.get(regArg0) and
-            // reg.get(regArg1).
-            //
-            // Returns TRUE in reg.get(regRetval) if they are
-            // equivalent, being identical or having the same shape
-            // and same value everywhere, FALSE otherwise.
-            //
-            // Does not handle cycles gracefully - and it may not be
-            // necessary that it do so if we don't expose this to
-            // users and ensure that it can only be called on objects
-            // (like symbols) that are known to be cycle-free.
-            //
-            // NOTE: this is meant to be the equal? described in R5RS.
-            //
-            if ( reg.get(regArg0) == reg.get(regArg1) )
-            {
-               //if ( verb ) log("identical");
-               reg.set(regRetval , TRUE);
-               returnsub();
-               break;
-            }
-            if ( type(reg.get(regArg0)) != type(reg.get(regArg1)) )
-            {
-               //if ( verb ) log("different types");
-               reg.set(regRetval , FALSE);
-               returnsub();
-               break;
-            }
-            if ( type(reg.get(regArg0)) != TYPE_CELL )
-            {
-               //if ( verb ) log("not cells");
-               reg.set(regRetval , FALSE);
-               returnsub();
-               break;
-            }
-            //if ( verb ) log("checking car");
-            store(reg.get(regArg0));
-            store(reg.get(regArg1));
-            reg.set(regArg0 , car(reg.get(regArg0)));
-            reg.set(regArg1 , car(reg.get(regArg1)));
-            gosub(sub_equal_p,sub_equal_p+0x1);
-            break;
-         case sub_equal_p+0x1:
-            reg.set(regArg1 , restore());
-            reg.set(regArg0 , restore());
-            if ( FALSE == reg.get(regRetval) )
-            {
-               //if ( verb ) log("car mismatch");
-               returnsub();
-               break;
-            }
-            //if ( verb ) log("checking cdr");
-            reg.set(regArg0 , cdr(reg.get(regArg0)));
-            reg.set(regArg1 , cdr(reg.get(regArg1)));
-            gosub(sub_equal_p,blk_tail_call);
-            break;
-
-         case sub_let:
-            // Does a rewrite:
-            //
-            //   (define (rewrite expr)
-            //     (let ((params (map car  (cadr expr)))
-            //           (values (map cadr (cadr expr)))
-            //           (body   (caddr expr)))
-            //       (cons (list 'lambda params body) values)))
-            //
-            // or perhaps better reflecting what I will do with the
-            // stack here:
-            //
-            //   (define (rewrite expr)
-            //     (let ((locals (cadr expr))
-            //           (body   (caddr expr)))
-            //       (let ((params (map car locals)))
-            //         (let ((values (map cadr locals)))
-            //           (cons (list 'lambda params body) values)))))
-            //
-            // Of course, note that the 'let is already stripped from
-            // the input by the time we get here, so this is really:
-            //
-            //   (define (rewrite expr)
-            //     (let ((locals (car expr))
-            //           (body   (cadr expr)))
-            //       (let ((params (map car locals)))
-            //         (let ((values (map cadr locals)))
-            //           (cons (list 'lambda params body) values)))))
-            //
-            // Wow, but that is fiendishly tail-recursive!
-            //
-            // Not shown in this pseudo-code, is of course the
-            // evaluation of that rewritten expression.
-            //
-            logrec("REWRITE INPUT:  ",reg.get(regArg0));
-            reg.set(regTmp0 , car(reg.get(regArg0))); // regTmp0 is locals
-            reg.set(regTmp2 , cdr(reg.get(regArg0)));
-            if ( TYPE_CELL != type(reg.get(regTmp2)) ) 
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp1 , reg.get(regTmp2));      // regTmp1 is body
-            logrec("REWRITE BODY A: ",reg.get(regTmp1));
-            store(reg.get(regTmp0));
-            store(reg.get(regTmp1));
-            reg.set(regArg0 , sub_car);
-            reg.set(regArg1 , reg.get(regTmp0));
-            gosub(sub_map,sub_let+0x1);
-            break;
-         case sub_let+0x1:
-            // Note: Acknowledged, there is some wasteful stack manips
-            // here, and a peek operation would be welcome, too.
-            reg.set(regTmp2 , reg.get(regRetval));    // regTmp2 is params
-            reg.set(regTmp1 , restore());         // restore body
-            logrec("REWRITE BODY B: ",reg.get(regTmp1));
-            reg.set(regTmp0 , restore());         // restore locals
-            store(reg.get(regTmp0));
-            store(reg.get(regTmp1));
-            store(reg.get(regTmp2));
-            reg.set(regArg0 , sub_cadr);
-            reg.set(regArg1 , reg.get(regTmp0));
-            gosub(sub_map,sub_let+0x2);
-            break;
-         case sub_let+0x2:
-            reg.set(regTmp3 , reg.get(regRetval));    // regTmp3 is values
-            reg.set(regTmp2 , restore());         // restore params
-            reg.set(regTmp1 , restore());         // restore body
-            logrec("REWRITE BODY C: ",reg.get(regTmp1));
-            reg.set(regTmp0 , restore());         // restore locals
-            reg.set(regTmp4 , reg.get(regTmp1));
-            reg.set(regTmp5 , cons( reg.get(regTmp2), reg.get(regTmp4) ));
-            reg.set(regTmp6 , cons( sub_lambda,   reg.get(regTmp5) ));
-            reg.set(regTmp7 , cons( reg.get(regTmp6), reg.get(regTmp3) ));
-            logrec("REWRITE OUTPUT: ",reg.get(regTmp7));
-            reg.set(regArg0 , reg.get(regTmp7));
-            reg.set(regArg1 , reg.get(regEnv));
-            gosub(sub_eval,blk_tail_call);
-            break;
-
-         case sub_map:
-            // Applies the operator in reg.get(regArg0) to each
-            // element of the list in reg.get(regArg1), and returns a
-            // list of the results in order.
-            //
-            // The surplus cons() before we call sub_apply is perhaps
-            // regrettable, but the rather than squeeze more
-            // complexity into the sub_apply family, I choose here to
-            // work around the variadicity checking and globbing in
-            // sub_appy.
-            //
-            // I would prefer it if this sub_map worked with
-            // either/both of builtins and user-defineds, and this way
-            // it does.
-            //
-            if ( NIL == reg.get(regArg1) )
-            {
-               reg.set(regRetval  , NIL);
-               returnsub();
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg1))); // head
-            reg.set(regTmp1 , cdr(reg.get(regArg1))); // rest
-            store(reg.get(regArg0));
-            store(reg.get(regTmp1));
-            reg.set(regArg0 , reg.get(regArg0));
-            reg.set(regArg1 , cons(reg.get(regTmp0),NIL));
-            gosub(sub_apply,sub_map+0x1);
-            break;
-         case sub_map+0x1:
-            reg.set(regArg1 , restore());  // restore rest of operands
-            reg.set(regArg0 , restore());  // restore operator
-            store(reg.get(regRetval));     // feed blk_tail_call_m_cons
-            gosub(sub_map,blk_tail_call_m_cons);
-            break;
-
-         case sub_begin:
-            // Evaluates all its args, returning the result of the
-            // last.  If no args, returns UNSPECIFIED.
-            //
-            if ( NIL == reg.get(regArg0) )
-            {
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg0)));
-            reg.set(regTmp1 , cdr(reg.get(regArg0)));
-            reg.set(regArg0 , reg.get(regTmp0));
-            reg.set(regArg1 , reg.get(regEnv));
-            reg.set(regTmp2 , UNSPECIFIED);
-            if ( NIL == reg.get(regTmp1) )
-            {
-               reg.set(regTmp2 , blk_tail_call);
-            }
-            else
-            {
-               store(reg.get(regTmp1));             // store rest exprs
-               reg.set(regTmp2 , sub_begin+0x1);
-            }
-            gosub(sub_eval,reg.get(regTmp2));
-            break;
-         case sub_begin+0x1:
-            reg.set(regArg0 , restore());           // restore rest exprs
-            gosub(sub_begin,blk_tail_call);
-            break;
-
-         case sub_cond:
-            // Does this:
-            //
-            //   (cond (#f 1) (#f 2) (#t 3))  ==> 3
-            //
-            // That is, expects the args to be a list of lists, each
-            // of which is a test expression followed by a body.
-            //
-            // Evaluates the tests in order until one is true,
-            // whereupon it evaluates the body of that clause as an
-            // implicit (begin) statement.  If no args, returns
-            // UNSPECIFIED.
-            //
-            // Where the body of a clause is empty, returns the value
-            // of the test e.g.:
-            //
-            //   (cond (#f) (#t))   ==> 1
-            //   (cond (3)  (#t 1)) ==> 3
-            //
-            if ( NIL == reg.get(regArg0) )
-            {
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0 , car(car(reg.get(regArg0))));  // test of first clause
-            reg.set(regTmp1 , cdr(car(reg.get(regArg0))));  // body of first clause
-            reg.set(regTmp2 , cdr(reg.get(regArg0)));       // rest of clauses
-            store(reg.get(regTmp1));                    // store body of 1st clause
-            store(reg.get(regTmp2));                    // store rest of clauses
-            logrec("test",reg.get(regTmp0));
-            reg.set(regArg0 , reg.get(regTmp0));
-            reg.set(regArg1 , reg.get(regEnv));
-            gosub(sub_eval,sub_cond+0x1);
-            break;
-         case sub_cond+0x1:
-            reg.set(regTmp2 , restore());               // store rest of clauses
-            reg.set(regTmp1 , restore());               // store body of 1st clause
-            if ( FALSE == reg.get(regRetval) )
-            {
-               logrec("rest",reg.get(regTmp2));
-               reg.set(regArg0 , reg.get(regTmp2));
-               gosub(sub_cond,blk_tail_call);
-            }
-            else if ( NIL == reg.get(regTmp1) )
-            {
-               log("no body");
-               reg.set(regRetval , reg.get(regRetval));
-               returnsub();
-            }
-            else
-            {
-               logrec("body",reg.get(regTmp1));
-               reg.set(regArg0 , reg.get(regTmp1));
-               gosub(sub_begin,blk_tail_call);
-            }
-            break;
-
-         case sub_case:
-            // Does:
-            //
-            //   (case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300)) ==> 300
-            //
-            // Returns UNSPECIFIED if no match is found.
-            //
-            // Note: the key gets evaluated, and the body of the
-            // matching clause gets evaluated as an implicit (begin)
-            // form, but the labels do *not* get evaluated.
-            //
-            // This means (case) is useful with atomic literals as
-            // labels, and not for compound expressions, variables, or
-            // anything else fancy like that.  Think fixints,
-            // booleans, and character literals: even strings and
-            // symbols won't match
-            //
-            // Matching is per eqv?, not equal?.
-            //
-            // This makes (case) much less useful without "else" than
-            // (cond) is: (cond) can fall back on #t for the default
-            // catchall clause.  With (case), that would only work if
-            // the key's value were identical to #t, not just non-#f.
-            //
-            // I am vacillating about whether (case) belongs in the
-            // microcode layer.  It is weird, sort of un-Schemey in
-            // its semantics, and it requires the nontrivial "else"
-            // syntactic support to be useful - but then again it
-            // offers a lookup-table semantics that could potentially
-            // be implemented in constant time in the number of
-            // alternative paths. Neither (cond) nor an (if) chain can
-            // offer this.
-            //
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);       // missing key
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg0)));  // key
-            reg.set(regTmp1 , cdr(reg.get(regArg0)));  // clauses
-            if ( TYPE_CELL != type(reg.get(regTmp1)) )
-            {
-               raiseError(ERR_SEMANTIC);       // missing clauses
-               break;
-            }
-            logrec("key expr:  ",reg.get(regTmp0));
-            store(reg.get(regTmp1));               // store clauses
-            reg.set(regArg0 , reg.get(regTmp0));
-            reg.set(regArg1 , reg.get(regEnv));
-            gosub(sub_eval,sub_case+0x1);
-            break;
-         case sub_case+0x1:
-            reg.set(regTmp0 , reg.get(regRetval));     // value of key
-            reg.set(regTmp1 , restore());          // restore clauses
-            logrec("key value: ",reg.get(regTmp0));
-            logrec("clauses:   ",reg.get(regTmp1));
-            reg.set(regArg0 , reg.get(regTmp0));
-            reg.set(regArg1 , reg.get(regTmp1));
-            gosub(sub_case_search,blk_tail_call);
-            break;
-
-         case sub_case_search:
-            // reg.get(regArg0) is the value of the key
-            // reg.get(regArg1) is the list of clauses
-            logrec("key value:   ",reg.get(regArg0));
-            logrec("clause list: ",reg.get(regArg1));
-            if ( NIL == reg.get(regArg1) ) 
-            {
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            if ( TYPE_CELL != type(reg.get(regArg1)) )
-            {
-               raiseError(ERR_SEMANTIC);      // bogus clause list
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg1))); // first clause
-            reg.set(regTmp1 , cdr(reg.get(regArg1))); // rest clauses
-            logrec("first clause:",reg.get(regTmp0));
-            logrec("rest clauses:",reg.get(regTmp1));
-            if ( TYPE_CELL != type(reg.get(regTmp0)) )
-            {
-               raiseError(ERR_SEMANTIC);      // bogus clause
-               break;
-            }
-            reg.set(regTmp2 , car(reg.get(regTmp0))); // first clause label list
-            reg.set(regTmp3 , cdr(reg.get(regTmp0))); // first clause body
-            logrec("label list:  ",reg.get(regTmp2));
-            store(reg.get(regArg0));              // store key
-            store(reg.get(regTmp1));              // store rest clauses
-            store(reg.get(regTmp3));              // store body
-            reg.set(regArg0 , reg.get(regArg0));
-            reg.set(regArg1 , reg.get(regTmp2));
-            gosub(sub_case_in_list_p,sub_case_search+0x1);
-            break;
-         case sub_case_search+0x1:
-            reg.set(regTmp3 , restore());         // restore body
-            reg.set(regArg1 , restore());         // restore rest clauses
-            reg.set(regArg0 , restore());         // restore key
-            logrec("key:         ",reg.get(regArg0));
-            logrec("rest clauses:",reg.get(regArg1));
-            logrec("matchup:     ",reg.get(regRetval));
-            logrec("body:        ",reg.get(regTmp3));
-            if ( TYPE_CELL != type(reg.get(regTmp3)) )
-            {
-               // empty bodies are not cool in (case)
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( FALSE == reg.get(regRetval) )
-            {
-               gosub(sub_case_search,blk_tail_call);
-            }
-            else
-            {
-               reg.set(regArg0 , reg.get(regTmp3));
-               gosub(sub_begin,blk_tail_call);
-            }
-            break;
-
-         case sub_case_in_list_p:
-            // Returns TRUE if reg.get(regArg0) is hard-equal to any
-            // of the elements in the proper list in reg.get(regArg1),
-            // else FALSE.
-            //
-            // Only works w/ lables as per sub_case: fixints,
-            // booleans, and characer literals.  Nothing else will
-            // match.
-            logrec("key:   ",reg.get(regArg0));
-            logrec("labels:",reg.get(regArg1));
-            if ( NIL == reg.get(regArg1) ) 
-            {
-               reg.set(regRetval , FALSE);
-               returnsub();
-               break;
-            }
-            if ( TYPE_CELL != type(reg.get(regArg1)) ) 
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg1)));  // first element
-            reg.set(regTmp1 , cdr(reg.get(regArg1)));  // rest of elements
-            if ( reg.get(regArg0) == reg.get(regTmp0) )
-            {
-               // TODO: Check type?  We would not want them to both be
-               // interned strings, or would we...?
-               reg.set(regRetval  , TRUE);
-               returnsub();
-               break;
-            }
-            reg.set(regArg0 , reg.get(regArg0));
-            reg.set(regArg1 , reg.get(regTmp1));
-            gosub(sub_case_in_list_p,blk_tail_call);
-            break; 
-
-         case sub_apply:
-            // Applies the op in reg.get(regArg0) to the args in
-            // reg.get(regArg1), and return the results.
-            //
-            switch (type(reg.get(regArg0)))
-            {
-            case TYPE_SUBP:
-            case TYPE_SUBS:
-               gosub(sub_apply_builtin,blk_tail_call);
-               break;
-            case TYPE_CELL:
-               switch (car(reg.get(regArg0)))
-               {
-               case IS_PROCEDURE:
-               case IS_SPECIAL_FORM:
-                  gosub(sub_apply_user,blk_tail_call);
-                  break;
-               default:
-                  raiseError(ERR_INTERNAL);
-                  break;
-               }
-               break;
-            default:
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            break;
-         
-         case sub_apply_builtin:
-            // Applies the sub_foo in reg.get(regArg0) to the args in
-            // reg.get(regArg1), and return the results.
-            //
-            // get arity
-            //
-            // - if AX, just put the list of args in reg.get(regArg0).
-            //
-            // - if A<N>, assign N entries from list at
-            //   reg.get(regArg1) into reg.get(regArg0.regArg<N>).
-            //   Freak out if there are not exactly N args.
-            //
-            // Then just gosub()!
-            tmp0 = reg.get(regArg0);
-            final int arity = (tmp0 & MASK_ARITY) >>> SHIFT_ARITY;
-            log("tmp0:  " + pp(tmp0));
-            log("tmp0:  " + hex(tmp0,8));
-            log("arity: " + arity);
-            log("arg1:  " + pp(reg.get(regArg1)));
-            reg.set(regTmp0 , reg.get(regArg1));
-            reg.set(regArg0 , UNSPECIFIED);
-            reg.set(regArg1 , UNSPECIFIED);
-            reg.set(regArg2 , UNSPECIFIED);
-            //
-            // Note tricky dependency on reg order here.  At first
-            // this creeped me out, but it works good, and I got
-            // excited when I realized it was the first use of
-            // register-index-as-variable, and reflected that
-            // homoiconicity and "self-awareness" is part of the
-            // strength of a LISP system, and I shouldn't let it tweak
-            // me out at the lowest levels.
-            //
-            tmp1         = regArg0;
-            switch (arity << SHIFT_ARITY)
-            {
-            case AX:
-               reg.set(regArg0 , reg.get(regTmp0));
-               gosub(tmp0,blk_tail_call);
-               break;
-            case A3:
-               if ( NIL == reg.get(regTmp0) )
-               {
-                  log("too few args");
-                  raiseError(ERR_SEMANTIC);
-                  break;
-               }
-               reg.set(tmp1    , car(reg.get(regTmp0)));
-               reg.set(regTmp0 , cdr(reg.get(regTmp0)));
-               log("pop arg: " + pp(reg.get(regArg0)));
-               tmp1++;
-               // fall through
-            case A2:
-               if ( NIL == reg.get(regTmp0) )
-               {
-                  log("too few args");
-                  raiseError(ERR_SEMANTIC);
-                  break;
-               }
-               reg.set(tmp1    , car(reg.get(regTmp0)));
-               reg.set(regTmp0 , cdr(reg.get(regTmp0)));
-               log("pop arg: " + pp(reg.get(regArg0)));
-               tmp1++;
-            case A1:
-               if ( NIL == reg.get(regTmp0) )
-               {
-                  log("too few args");
-                  raiseError(ERR_SEMANTIC);
-                  break;
-               }
-               reg.set(tmp1    , car(reg.get(regTmp0)));
-               reg.set(regTmp0 , cdr(reg.get(regTmp0)));
-               log("pop arg: " + pp(reg.get(regArg0)));
-               tmp1++;
-            case A0:
-               if ( NIL != reg.get(regTmp0) )
-               {
-                  log("too many args");
-                  raiseError(ERR_SEMANTIC);
-                  break;
-               }
-               log("arg0: " + pp(reg.get(regArg0)));
-               log("arg1: " + pp(reg.get(regArg1)));
-               log("arg2: " + pp(reg.get(regArg2)));
-               gosub(tmp0,blk_tail_call);
-               break;
-            default:
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            break;
-
-         case sub_apply_user:
-            // Applies the user-defined procedure or special form in
-            // reg.get(regArg0) to the args in reg.get(regArg1), and
-            // return the results.
-            //
-            // We construct an env frame with the positional params
-            // bound to their corresponding args, extend the current
-            // env with that frame, and evaluate the body within the
-            // new env.
-            //
-            // The internal representation of a user-defined is:
-            //
-            //   '(IS_PROCEDURE arg-list body lexical-env)
-            //
-            if ( DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            if ( DEBUG && IS_PROCEDURE != car(reg.get(regArg0)) )
-            {
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            store(reg.get(regArg0));
-            reg.set(regArg0 , car(cdr(reg.get(regArg0))));
-            reg.set(regArg1 , reg.get(regArg1));
-            gosub(sub_zip,sub_apply_user+0x1);
-            break;
-         case sub_apply_user+0x1:
-            reg.set(regArg0 , restore());                        // restore op
-            reg.set(regTmp0 , reg.get(regRetval));                   // args frame
-            reg.set(regTmp1 , car(cdr(cdr(reg.get(regArg0)))));      // op body
-            reg.set(regTmp3 , car(cdr(cdr(cdr(reg.get(regArg0)))))); // op lexical env
-            reg.set(regTmp2 , cons(reg.get(regTmp0),reg.get(regEnv)));   // apply env
-            logrec("sub_apply_user BODY   ",reg.get(regTmp1));
-            logrec("sub_apply_user FRAME  ",reg.get(regTmp0));
-            //logrec("sub_apply_user CUR ENV",reg.get(regEnv));
-            //logrec("sub_apply_user LEX ENV",reg.get(regTmp3));
-
-            // going w/ lexical frames
-            reg.set(regTmp2 , cons(reg.get(regTmp0),reg.get(regTmp3)));
-
-            logrec("sub_apply_user ENV    ",reg.get(regTmp2));
-            reg.set(regArg0 , reg.get(regTmp1));
-            reg.set(regArg1 , reg.get(regTmp2));
-            //
-            // At first glance, this env manip feels like it should be
-            // the job of sub_eval. After all, sub_eval gets an
-            // environment arg, and sub_apply does not.
-            //
-            // After deeper soul searching, this is not true.  We
-            // certainly would not want (eval) to push/pop the env on
-            // *every* call, but only sub_apply_user and sub_let know
-            // what the new frames are, and only sub_apply_user knows
-            // where to find the lexical scope of a procedure or
-            // special form.
-            //
-            log("LEXICAL ENV PREPUSH:  " + pp(reg.get(regEnv)));
-            store(reg.get(regEnv));
-            reg.set(regEnv , reg.get(regTmp2));
-            log("LEXICAL ENV POSTPUSH: " + pp(reg.get(regEnv)));
-            gosub(sub_begin, sub_apply_user+0x2);
-            break;
-         case sub_apply_user+0x2:
-            // I am so sad that pushing that env above means we cannot
-            // be tail recursive.  At least this that is not true on
-            // every sub_eval.
-            //
-            log("LEXICAL ENV PREPOP:  " + pp(reg.get(regEnv)));
-            reg.set(regEnv , restore());
-            log("LEXICAL ENV POSTPOP: " + pp(reg.get(regEnv)));
-            returnsub();
-            break;
-
-         case sub_zip:
-            // Expects lists of equal lengths in reg.get(regArg0) and
-            // reg.get(regArg1). 
-            //
-            // Returns a new list of the same length, whose elments
-            // are cons() of corresponding elements from
-            // reg.get(regArg0) and reg.get(regArg1) respectively.
-            //
-            // TODO: if (when!) we have sub_mapcar, this is really
-            // just:
-            //
-            //   (mapcar cons listA listB)
-            //
-            if ( NIL == reg.get(regArg0) && NIL == reg.get(regArg1) )
-            {
-               reg.set(regRetval , NIL);
-               returnsub();
-               break;
-            }
-            if ( NIL == reg.get(regArg0) || NIL == reg.get(regArg1) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg0)));
-            reg.set(regTmp1 , car(reg.get(regArg1)));
-            reg.set(regTmp2 , cons(reg.get(regTmp0),reg.get(regTmp1)));
-            reg.set(regArg0 , cdr(reg.get(regArg0)));
-            reg.set(regArg1 , cdr(reg.get(regArg1)));
-            store(reg.get(regTmp2));
-            gosub(sub_zip,blk_tail_call_m_cons);
-            break;
-
-         case sub_print:
-            // Prints the expr in reg.get(regArg0) to reg.get(regOut).
-            //
-            // Returns UNSPECIFIED.
-            //
-            reg.set(regTmp0 , reg.get(regArg0));
-            if ( verb ) log("printing: " + pp(reg.get(regTmp0)));
-            switch (type(reg.get(regTmp0)))
-            {
-            case TYPE_SENTINEL:
-               switch (reg.get(regTmp0))
-               {
-               case UNSPECIFIED:
-                  reg.set(regRetval , UNSPECIFIED);
-                  returnsub();
-                  break;
-               case NIL:
-                  gosub(sub_print_list,blk_tail_call);
-                  break;
-               case TRUE:
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'t'));
-                  reg.set(regRetval , UNSPECIFIED);
-                  returnsub();
-                  break;
-               case FALSE:
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'f'));
-                  reg.set(regRetval , UNSPECIFIED);
-                  returnsub();
-                  break;
-               default:
-                  log("bogus sentinel: " + pp(reg.get(regTmp0)));
-                  raiseError(ERR_INTERNAL);
-                  break;
-               }
-               break;
-            case TYPE_CELL:
-               reg.set(regTmp1 , car(reg.get(regTmp0)));
-               reg.set(regTmp2 , cdr(reg.get(regTmp0)));
-               switch (reg.get(regTmp1))
-               {
-               case IS_STRING:
-                  reg.set(regArg0 , reg.get(regTmp2));
-                  gosub(sub_print_string,blk_tail_call);
-                  break;
-               case IS_SYMBOL:
-                  reg.set(regArg0 , reg.get(regTmp2));
-                  gosub(sub_print_chars,blk_tail_call);
-                  break;
-               case IS_PROCEDURE:
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-                  reg.set(regRetval , UNSPECIFIED);
-                  returnsub();
-                  break;
-               default:
-                  reg.set(regArg0 , reg.get(regTmp0));
-                  gosub(sub_print_list,blk_tail_call);
-                  break;
-               }
-               break;
-            case TYPE_CHAR:
-               portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'\\'));
-               switch (value(reg.get(regTmp0)))
-               {
-               case ' ':
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'s'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'a'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'c'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
-                  break;
-               case '\n':
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'w'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'l'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'i'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
-                  break;
-               default:
-                  portPush(reg.get(regOut),reg.get(regTmp0));
-                  break;
-               }
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            case TYPE_FIXINT:
-               // We trick out the sign extension of our 28-bit
-               // twos-complement FIXINTs to match Java's 32 bits
-               // before proceeding.
-               reg.set(regTmp1 , value_fixint(reg.get(regTmp0)));
-               if ( reg.get(regTmp1) < 0 )
-               {
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'-'));
-                  reg.set(regTmp1 , -reg.get(regTmp1));
-               }
-               if ( reg.get(regTmp1) == 0 )
-               {
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'0'));
-                  returnsub();
-                  break;
-               }
-               int factor = 1000000000; // big enough for 2**32 and less
-               while ( factor > 0 && 0 == reg.get(regTmp1)/factor )
-               {
-                  factor /= 10;
-               }
-               while ( factor > 0 )
-               {
-                  final int digit  = reg.get(regTmp1)/factor;
-                  reg.set(regTmp1  , reg.get(regTmp1) - digit * factor);
-                  factor          /= 10;
-                  portPush(reg.get(regOut),code(TYPE_CHAR,'0'+digit));
-               }
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            case TYPE_SUBP:
-            case TYPE_SUBS:
-               // TODO: some decisions to be made here about how these
-               // really print, but that kind of depends on how I land
-               // about how they lex.
-               //
-               // In the mean time, this is sufficient to meet spec.
-               //
-               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            default:
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            break;
-            
-         case sub_print_string:
-            // Prints the list in reg.get(regArg0), whose elements are
-            // expected to all be TYPE_CHAR, to reg.get(regOut) in
-            // double-quotes.
-            //
-            portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
-            gosub(sub_print_chars,sub_print_string+0x1);
-            break;
-         case sub_print_string+0x1:
-            portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
-            reg.set(regRetval , UNSPECIFIED);
-            returnsub();
-            break;
-
-         case sub_print_chars:
-            // Prints the list in reg.get(regArg0), whose elements are
-            // expected to all be TYPE_CHAR, to reg.get(regOut).
-            //
-            if ( NIL == reg.get(regArg0) )
-            {
-               reg.set(regRetval , UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               if ( verb ) log("bogus non-cell: " + pp(reg.get(regArg0)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            reg.set(regTmp1 , car(reg.get(regArg0)));
-            reg.set(regTmp2 , cdr(reg.get(regArg0)));
-            if ( TYPE_CHAR != type(reg.get(regTmp1)) )
-            {
-               if ( verb ) log("bogus: " + pp(reg.get(regTmp1)));
-               raiseError(ERR_INTERNAL);
-               break;
-            }
-            portPush(reg.get(regOut),reg.get(regTmp1));
-            reg.set(regArg0 , reg.get(regTmp2));
-            gosub(sub_print_chars,blk_tail_call);
-            break;
-
-         case sub_print_list:
-            // Prints the list (NIL or a cell) in reg.get(regArg0) to
-            // reg.get(regOut) in parens.
-            //
-            reg.set(regArg0 , reg.get(regArg0));
-            reg.set(regArg1 , TRUE);
-            portPush(reg.get(regOut),code(TYPE_CHAR,'('));
-            gosub(sub_print_list_elems,sub_print_list+0x1);
-            break;
-         case sub_print_list+0x1:
-            portPush(reg.get(regOut),code(TYPE_CHAR,')'));
-            reg.set(regRetval , UNSPECIFIED);
-            returnsub();
-            break;
-
-         case sub_print_list_elems:
-            // Prints the elements in the list (NIL or a cell) in
-            // reg.get(regArg0) to reg.get(regOut) with a space
-            // between each.
-            //
-            // Furthermore, reg.get(regArg1) should be TRUE if
-            // reg.get(regArg0) is the first item in the list, FALSE
-            // otherwise.
-            //
-            // Returns UNSPECIFIED.
-            //
-            if ( NIL == reg.get(regArg0) )
-            {
-               reg.set(regRetval  , UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            if ( FALSE == reg.get(regArg1) )
-            {
-               portPush(reg.get(regOut),code(TYPE_CHAR,' '));
-            }
-            store(reg.get(regArg0));
-            reg.set(regTmp0 , car(reg.get(regArg0)));
-            reg.set(regTmp1 , cdr(reg.get(regArg0)));
-            if ( NIL       != reg.get(regTmp1)       &&
-                 TYPE_CELL != type(reg.get(regTmp1))  )
-            {
-               log("dotted list");
-               reg.set(regArg0 , reg.get(regTmp0));
-               gosub(sub_print,sub_print_list_elems+0x2);
-            }
-            else
-            {
-               log("regular list so far");
-               reg.set(regArg0 , reg.get(regTmp0));
-               gosub(sub_print,sub_print_list_elems+0x1);
-            }
-            break;
-         case sub_print_list_elems+0x1:
-            reg.set(regTmp0 , restore());
-            reg.set(regArg0 , cdr(reg.get(regTmp0)));
-            reg.set(regArg1 , FALSE);
-            gosub(sub_print_list_elems,blk_tail_call);
-            break;
-         case sub_print_list_elems+0x2:
-            reg.set(regTmp0 , restore());
-            reg.set(regArg0 , cdr(reg.get(regTmp0)));
-            portPush(reg.get(regOut),code(TYPE_CHAR,' '));
-            portPush(reg.get(regOut),code(TYPE_CHAR,'.'));
-            portPush(reg.get(regOut),code(TYPE_CHAR,' '));
-            gosub(sub_print,blk_tail_call);
-            break;
-
-         case sub_add:
-            if ( TYPE_FIXINT != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( TYPE_FIXINT != type(reg.get(regArg1)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
-            reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
-            reg.set(regTmp2   , reg.get(regTmp0) + reg.get(regTmp1));
-            reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp2)));
-            returnsub();
-            break;
-
-         case sub_add0:
-            reg.set(regRetval , code(TYPE_FIXINT,0));
-            returnsub();
-            break;
-
-         case sub_add1:
-            if ( TYPE_FIXINT != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regRetval , reg.get(regArg0));
-            returnsub();
-            break;
-
-         case sub_add3:
-            if ( TYPE_FIXINT != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( TYPE_FIXINT != type(reg.get(regArg1)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( TYPE_FIXINT != type(reg.get(regArg2)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
-            reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
-            reg.set(regTmp2   , value_fixint(reg.get(regArg2)));
-            reg.set(regTmp3   , reg.get(regTmp0) + reg.get(regTmp1) + reg.get(regTmp2));
-            reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp3)));
-            returnsub();
-            break;
-
-         case sub_mul:
-            if ( TYPE_FIXINT != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( TYPE_FIXINT != type(reg.get(regArg1)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
-            reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
-            reg.set(regTmp2   , reg.get(regTmp0) * reg.get(regTmp1));
-            reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp2)));
-            returnsub();
-            break;
-
-         case sub_sub:
-            if ( TYPE_FIXINT != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( TYPE_FIXINT != type(reg.get(regArg1)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
-            reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
-            reg.set(regTmp2   , reg.get(regTmp0) - reg.get(regTmp1));
-            reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp2)));
-            returnsub();
-            break;
-
-         case sub_lt_p:
-            if ( TYPE_FIXINT != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            if ( TYPE_FIXINT != type(reg.get(regArg1)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regTmp0 , value_fixint(reg.get(regArg0)));
-            reg.set(regTmp1 , value_fixint(reg.get(regArg1)));
-            if ( reg.get(regTmp0) < reg.get(regTmp1) )
-            {
-               reg.set(regRetval,TRUE);
-            }
-            else
-            {
-               reg.set(regRetval,FALSE);
-            }
-            returnsub();
-            break;
-
-         case sub_cons:
-            log("cons: " + pp(reg.get(regArg0)));
-            log("cons: " + pp(reg.get(regArg1)));
-            reg.set(regRetval , cons(reg.get(regArg0),reg.get(regArg1)));
-            returnsub();
-            break;
-
-         case sub_car:
-            log("car: " + pp(reg.get(regArg0)));
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regRetval , car(reg.get(regArg0)));
-            returnsub();
-            break;
-
-         case sub_cdr:
-            log("cdr: " + pp(reg.get(regArg0)));
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regRetval , cdr(reg.get(regArg0)));
-            returnsub();
-            break;
-
-         case sub_cadr:
-            log("cadr: " + pp(reg.get(regArg0)));
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);
-               break;
-            }
-            reg.set(regRetval , car(cdr(reg.get(regArg0))));
-            returnsub();
-            break;
-
-         case sub_list:
-         case sub_quote:
-            // Commentary: I *love* how sub_quote and sub_list are the
-            // same once you abstract special form vs procedure into
-            // (eval) and arity into (apply).
-            //
-            // I totally get off on it!
-            //
-            reg.set(regRetval , reg.get(regArg0));
-            returnsub();
-            break;
-
-         case sub_if:
-            log("arg0: " + pp(reg.get(regArg0)));
-            log("arg1: " + pp(reg.get(regArg1)));
-            log("arg2: " + pp(reg.get(regArg2)));
-            store(reg.get(regArg1));
-            store(reg.get(regArg2));
-            reg.set(regArg0 , reg.get(regArg0));
-            reg.set(regArg1 , reg.get(regEnv));
-            gosub(sub_eval,sub_if+0x1);
-            break;
-         case sub_if+0x1:
-            reg.set(regArg2 , restore());
-            reg.set(regArg1 , restore());
-            if ( FALSE != reg.get(regRetval) )
-            {
-               reg.set(regArg0 , reg.get(regArg1));
-            }            
-            else
-            {
-               reg.set(regArg0 , reg.get(regArg2));
-            }
-            reg.set(regArg1 , reg.get(regEnv));
-            gosub(sub_eval,blk_tail_call);
-            break;
-
-         case sub_define:
-            // If a variable is bound in the current environment
-            // *frame*, changes it.  Else creates a new binding in the
-            // current *frame*.
-            //
-            // That is - at the top-level define creates or mutates a
-            // top-level binding, and an inner define creates or
-            // mutates an inner binding, but an inner define will not
-            // create or (most importantly) mutate a higher-level
-            // binding.
-            //
-            // Also - we have two forms of define, the one with a
-            // symbol arg which just defines a variable:
-            //
-            //   (define x 1)
-            //
-            // and the one with a list arg which is sugar:
-            //
-            //   (define (x) 1) equivalent to (define x (lambda () 1))
-            //
-            // sub_define is variadic.  The first form must have
-            // exactly two args.  The second form must have at least
-            // two args, which form the body of the method being
-            // defined within an implicit (begin) block.
-            //
-            logrec("args: ",reg.get(regArg0));
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);  // variadic with at least 2 args
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg0)));
-            reg.set(regTmp1 , cdr(reg.get(regArg0)));
-            logrec("head: ",reg.get(regTmp0));
-            logrec("rest: ",reg.get(regTmp1));
-            if ( TYPE_CELL != type(reg.get(regTmp0)) )
-            {
-               raiseError(ERR_SEMANTIC);  // first is symbol or arg list
-               break;
-            }
-            if ( TYPE_CELL != type(reg.get(regTmp1)) )
-            {
-               raiseError(ERR_SEMANTIC);  // variadic with at least 2 args
-               break;
-            }
-            if ( IS_SYMBOL == car(reg.get(regTmp0)) )
-            {
-               if ( NIL != cdr(reg.get(regTmp1)) )
-               {
-                  raiseError(ERR_SEMANTIC); // simple form takes exactly 2 args
-                  break;
-               }
-               // reg.get(regTmp0) is already the symbol, how we want
-               // it for this case.
-               reg.set(regTmp1 , car(reg.get(regTmp1)));
-            }
-            else
-            {
-               // Note: by leveraging sub_lambda in this way, putting
-               // the literal value sub_lambda at the head of a
-               // constructed expression which is en route to
-               // sub_eval, we force the hand on other design
-               // decisions about the direct (eval)ability and
-               // (apply)ability of sub_foo in general.
-               //
-               // We do the same in sub_read_atom with sub_quote, so
-               // clearly I'm getting comfortable with this decision.
-               //
-               reg.set(regTmp2 , car(reg.get(regTmp0))); // actual symbol
-               reg.set(regTmp3 , cdr(reg.get(regTmp0))); // actual arg list
-               reg.set(regTmp0 , reg.get(regTmp2));      // regTmp0 good, regTmp2 free
-               logrec("proc symbol: ",reg.get(regTmp0));
-               logrec("proc args:   ",reg.get(regTmp3));
-               logrec("proc body:   ",reg.get(regTmp1));
-               reg.set(regTmp2 , cons(reg.get(regTmp3),reg.get(regTmp1)));
-               logrec("partial:     ",reg.get(regTmp2));
-               reg.set(regTmp1 , cons(sub_lambda,reg.get(regTmp2)));
-               logrec("proc lambda: ",reg.get(regTmp1));
-            }
-            // By here, reg.get(regTmp0) should be the the symbol,
-            // reg.get(regTmp1) the expr whose value we will bind to
-            // the symbol.
-            logrec("DEFINE SYMBOL: ",reg.get(regTmp0));
-            logrec("DEFINE BODY:   ",reg.get(regTmp1));
-            store(reg.get(regTmp0));              // store the symbol
-            reg.set(regArg0 , reg.get(regTmp1));  // eval the body
-            reg.set(regArg1 , reg.get(regEnv));   // we need an env arg here!
-            gosub(sub_eval,sub_define+0x1);
-            break;
-         case sub_define+0x1:
-            reg.set(regTmp0 , restore());         // restore the symbol
-            store(reg.get(regTmp0));              // store the symbol INEFFICIENT
-            store(reg.get(regRetval));            // store the body's value
-            reg.set(regArg0 , reg.get(regTmp0));     // lookup the binding
-            reg.set(regArg1 , car(reg.get(regEnv))); // we need an env arg here!
-            gosub(sub_eval_look_frame,sub_define+0x2);
-            break;
-         case sub_define+0x2:
-            reg.set(regTmp1 , restore());         // restore the body's value
-            reg.set(regTmp0 , restore());         // restore the symbol
-            if ( NIL == reg.get(regRetval) )
-            {
-               // create a new binding               // we need an env arg here!
-               reg.set(regTmp1 , cons(reg.get(regTmp0),reg.get(regTmp1)));
-               reg.set(regTmp2 , cons(reg.get(regTmp1),car(reg.get(regEnv))));
-               setcar(reg.get(regEnv),reg.get(regTmp2));
-               log("define new binding");
-               
-            }
-            else
-            {
-               // change the existing binding
-               setcdr(reg.get(regRetval),reg.get(regTmp1));
-               log("define old binding");
-            }
-            //logrec("define B",reg.get(regEnv));
-            reg.set(regRetval , UNSPECIFIED);
-            returnsub();
-            break;
-
-         case sub_lambda:
-            // Some key decisions here.  
-            //
-            // To get lambda, gotta decide how to represent a
-            // function.  
-            //
-            // From stubbing out sub_eval and sub_apply, I already
-            // know it's gonna be a list whose 1st element is
-            // IS_PROCEDURE.
-            //
-            // We're gonna need an arg list, a body, and a lexical
-            // environment as well.  Let's just say that's it:
-            //
-            //   '(IS_PROCEDURE arg-list body lexical-env)
-            //
-            // OK, done!
-            //
-            // sub_lambda is variadic and must have at least two args.
-            // The first must be a list, possibly empty.  The
-            // remaining args are the body of the new procedure, in an
-            // implicit (begin) block.
-            //
-            logrec("lambda args: ",reg.get(regArg0));
-            if ( TYPE_CELL != type(reg.get(regArg0)) )
-            {
-               raiseError(ERR_SEMANTIC);  // must have at least 2 args
-               break;
-            }
-            reg.set(regTmp0 , car(reg.get(regArg0)));
-            logrec("proc args:   ",reg.get(regTmp0));
-            if ( NIL != reg.get(regTmp0) && TYPE_CELL != type(reg.get(regTmp0))  )
-            {
-               raiseError(ERR_SEMANTIC);  // must have at least 2 args
-               break;
-            }
-            reg.set(regTmp1 , cdr(reg.get(regArg0)));
-            logrec("proc body:   ",reg.get(regTmp1));
-            if ( TYPE_CELL != type(reg.get(regTmp1)) )
-            {
-               raiseError(ERR_SEMANTIC);  // must have at least 2 args
-               break;
-            }
-            reg.set(regRetval , cons(reg.get(regEnv), NIL));
-            reg.set(regRetval , cons(reg.get(regTmp1),reg.get(regRetval)));
-            reg.set(regRetval , cons(reg.get(regTmp0),reg.get(regRetval)));
-            reg.set(regRetval , cons(IS_PROCEDURE,reg.get(regRetval)));
-            returnsub();
-            break;
-
-         case blk_tail_call:
-            // Just returns whatever retval left behind by the
-            // subroutine which continued to here.
-            //
-            returnsub();
-            break;
-
-         case blk_tail_call_m_cons:
-            // Returns the cons of the value on the stack with
-            // reg.get(regRetval).
-            //
-            // This has a distinctive pattern of use:
-            //
-            //   store(head_to_be);
-            //   gosub(sub_foo,blk_tail_call_m_cons);
-            //
-            if ( CLEVER_TAIL_CALL_MOD_CONS )
-            {
-               // Recycles the stack cell holding the m cons argument
-               // for the m cons operation.
-               //
-               // In effect, just reverses the end of the stack onto
-               // the return result.
-               reg.set(regTmp0   , reg.get(regStack));
-               reg.set(regStack  , cdr(reg.get(regStack)));
-               setcdr(reg.get(regTmp0),reg.get(regRetval));
-               reg.set(regRetval , reg.get(regTmp0));
-            }
-            else
-            {
-               reg.set(regTmp0   , restore());
-               reg.set(regTmp1   , reg.get(regRetval));
-               reg.set(regRetval , cons(reg.get(regTmp0),reg.get(regTmp1)));
-            }
-            returnsub();
-            break;
-
-         case blk_error:
-            return internal2external(reg.get(regError));
-
-         default:
-            if ( verb ) log("bogus op: " + pp(reg.get(regPc)));
+         }
+         if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
+         {
+            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp0)));
             raiseError(ERR_INTERNAL);
             break;
          }
+         switch (value(reg.get(regTmp0)))
+         {
+         case ')':
+            if ( verb ) log("mismatch close paren");
+            raiseError(ERR_LEXICAL);
+            break;
+         case '(':
+            gosub(sub_read_list,blk_tail_call);
+            break;
+         default:
+            gosub(sub_read_atom,blk_tail_call);
+            break;
+         }
+         break;
+
+      case sub_read_list:
+         // Reads the next list expr from reg.get(regIn), returning
+         // the result in reg.get(regRetval). Also handles dotted
+         // lists.
+         // 
+         // On entry, expects the next char from reg.get(regIn) to
+         // be the opening '(' a list expression.
+         // 
+         // On exit, precisely the list expression will have been
+         // consumed from reg.get(regIn), up to and including the
+         // final ')'.
+         //
+         // (define (sub_read_list)
+         //   (if (!= #\( (port_peek))
+         //       (err_lexical "expected open paren")
+         //       (begin (port_pop)
+         //              (sub_read_list_open))))
+         //
+         if ( code(TYPE_CHAR,'(') != portPeek(reg.get(regIn)) )
+         {
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         portPop(reg.get(regIn));
+         reg.set(regArg0 , FALSE);
+         gosub(sub_read_list_open,blk_tail_call);
+         break;
+
+      case sub_read_list_open:
+         // Reads all exprs from reg.get(regIn) until a loose EOF,
+         // a ')', or a '.' is encountered.
+         //
+         // EOF results in an error (mismatchd paren).
+         //
+         // ')' results in returning a list containing all the
+         // exprs in order.
+         //
+         // '.' results in a dotted list, provided subsequent
+         // success reading a single expression further and finding
+         // the closing ')'.
+         // 
+         // On exit, precisely the list expression will have been
+         // consumed from reg.get(regIn), up to and including the
+         // final ')'.
+         //  
+         // (define (sub_read_list_open)
+         //   (burn-space)
+         //   (case (port_peek)
+         //     ((eof) (error_lexical "eof in list expr"))
+         //     ((#\)  (begin (port_peek) '()))
+         //     (else
+         //       (let ((next (sub_read))
+         //             (rest (sub_read_list_open))) ; wow, token lookahead!
+         //         ;; Philosophical question: is it an abuse to let the
+         //         ;; next be parsed as a symbol before rejecting it, when
+         //         ;; what I am after is not the semantic entity "the 
+         //         ;; symbol with name '.'" but rather the syntactic entity
+         //         ;; "the lexeme of an isolated dot in the last-but-one
+         //         ;; position in a list expression"?
+         //         (cond 
+         //          ((not (eqv? '. next)) (cons next rest))
+         //          ((null? rest)         (err_lexical "danging dot"))
+         //          ((null? (cdr rest))   (cons next (car rest)))
+         //          (else                 (err_lexical "many after dot"))
+         //          )))))
+         //
+         gosub(sub_read_burn_space,sub_read_list_open+0x1);
+         break;
+      case sub_read_list_open+0x1:
+         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         if ( EOF == reg.get(regTmp0) )
+         {
+            if ( verb ) log("eof in list expr");
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         if ( code(TYPE_CHAR,')') == reg.get(regTmp0) )
+         {
+            if ( verb ) log("matching close-paren");
+            portPop(reg.get(regIn));
+            reg.set(regRetval , NIL);
+            returnsub();
+            break;
+         }
+         gosub(sub_read,sub_read_list_open+0x2);
+         break;
+      case sub_read_list_open+0x2:
+         store(reg.get(regRetval));
+         gosub(sub_read_list_open,sub_read_list_open+0x3);
+         break;
+      case sub_read_list_open+0x3:
+         reg.set(regTmp0 , restore());      // next
+         reg.set(regTmp1 , reg.get(regRetval)); // rest
+         if ( TYPE_CELL           != type(reg.get(regTmp0))     ||
+              IS_SYMBOL           != car(reg.get(regTmp0))      ||
+              code(TYPE_CHAR,'.') != car(cdr(reg.get(regTmp0))) ||
+              NIL                 != cdr(cdr(reg.get(regTmp0)))  )
+         {
+            reg.set(regRetval , cons(reg.get(regTmp0),reg.get(regTmp1)));
+            returnsub();
+            break;
+         }
+         if ( NIL == reg.get(regTmp1) )
+         {
+            log("dangling dot");
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         if ( NIL == cdr(reg.get(regTmp1)) )
+         {
+            log("happy dotted list");
+            log("  " + pp(reg.get(regTmp0)) + " " + pp(car(reg.get(regTmp0))));
+            log("  " + pp(reg.get(regTmp1)) + " " + pp(car(reg.get(regTmp1))));
+            reg.set(regRetval , car(reg.get(regTmp1)));
+            returnsub();
+            break;
+         }
+         log("many after dot");
+         raiseError(ERR_LEXICAL);
+         break;
+
+      case sub_read_atom:
+         // Reads the next atomic expr from reg.get(regIn),
+         // returning the result in reg.get(regRetval).
+         // 
+         // On entry, expects the next char from reg.get(regIn) to
+         // be the initial character of an atomic expression.
+         // 
+         // On exit, precisely the atomic expression will have been
+         // consumed from reg.get(regIn).
+         //
+         // (define (sub_read_atom)
+         //   (let ((c (port_peek)))
+         //     (case c
+         //       (( #\' ) (err_not_impl))
+         //       (( #\" ) (sub_read_string))
+         //       (( #\# ) (sub_read_octo_tok))
+         //       (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
+         //        (sub_read_num))
+         //       (( #\- ) (begin 
+         //                (port_pop)
+         //                (let ((c (port_peek)))
+         //                  (case c
+         //                    (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 )
+         //                     (- (sub_read_num)))
+         //                    (else (prepend #\- 
+         //                                   (sub_read_symbol_body))))))))))
+         //
+         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
+         {
+            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp0)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         switch (value(reg.get(regTmp0)))
+         {
+         case '\'':
+            if ( verb ) log("quote (not belong here in sub_read_atom?)");
+            portPop(reg.get(regIn));
+            gosub(sub_read,sub_read_atom+0x3);
+            break;
+         case '"':
+            if ( verb ) log("string literal");
+            gosub(sub_read_string,blk_tail_call);
+            break;
+         case '#':
+            if ( verb ) log("octothorpe special");
+            gosub(sub_read_octo_tok,blk_tail_call);
+            break;
+         case '0': case '1': case '2': case '3': case '4':
+         case '5': case '6': case '7': case '8': case '9':
+            if ( verb ) log("non-negated number");
+            gosub(sub_read_num,blk_tail_call);
+            break;
+         case '-':
+            // The minus sign is special.  We need to look ahead
+            // *again* before we can decide whether it is part of a
+            // symbol or part of a number.
+            portPop(reg.get(regIn));
+            reg.set(regTmp2 , portPeek(reg.get(regIn)));
+            if ( TYPE_CHAR == type(reg.get(regTmp2)) && 
+                 '0' <= value(reg.get(regTmp2))      && 
+                 '9' >= value(reg.get(regTmp2))       )
+            {
+               if ( verb ) log("minus-starting-number");
+               gosub(sub_read_num,sub_read_atom+0x1);
+            }
+            else if ( EOF == reg.get(regTmp2) )
+            {
+               if ( verb ) log("lonliest minus in the world");
+               reg.set(regTmp0   , cons(code(TYPE_CHAR,'-'),NIL));
+               reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp0)));
+               returnsub();
+            }
+            else
+            {
+               if ( verb ) log("minus-starting-symbol");
+               reg.set(regArg0   , code(TYPE_CHAR,'-'));
+               gosub(sub_read_symbol,blk_tail_call);
+            }
+            break;
+         default:
+            if ( verb ) log("symbol");
+            reg.set(regArg0   , NIL);
+            gosub(sub_read_symbol,blk_tail_call);
+            break;
+         }
+         break;
+      case sub_read_atom+0x1:
+         if ( TYPE_FIXINT != type(reg.get(regRetval)) )
+         {
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         if ( verb ) log("negating: " + pp(reg.get(regRetval)));
+         reg.set(regRetval , code(TYPE_FIXINT,-value(reg.get(regRetval))));
+         if ( verb ) log("  to:       " + pp(reg.get(regRetval)));
+         returnsub();
+         break;
+      case sub_read_atom+0x2:
+         reg.set(regTmp0   , restore());
+         reg.set(regTmp1   , car(reg.get(regTmp0)));
+         reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp1)));
+         if ( DEBUG )
+         {
+            reg.set(regTmp1 , reg.get(regTmp0));
+            while ( NIL != reg.get(regTmp1) )
+            {
+               reg.set(regTmp1 , cdr(reg.get(regTmp1)));
+            }
+         }
+         returnsub();
+         break;
+      case sub_read_atom+0x3:
+         // after single quote
+         //
+         // TODO: Think about this one, by putting sub_quote here
+         // instead of the symbol 'quote there are some funny
+         // consequences: like for instance it kind of implies that
+         // sub_quote needs to be self-evaluating (if not all
+         // sub_foo).
+         //
+         // Note: by leveraging sub_quote in this way, putting the
+         // literal value sub_quote at the head of a constructed
+         // expression which is en route to sub_eval, we force the
+         // hand on other design decisions about the direct
+         // (eval)ability and (apply)ability of sub_foo in general.
+         //
+         // We do the same in sub_define with sub_lambda, so
+         // clearly I'm getting comfortable with this decision.
+         // It's a syntax rewrite, nothing more, and sub_read can
+         // stay simple and let the rest of the system handle it.
+         //
+         reg.set(regTmp0   , cons(reg.get(regRetval),NIL));
+         reg.set(regRetval , cons(sub_quote,reg.get(regTmp0)));
+         returnsub();
+         break;
+
+      case sub_read_num:
+         // Parses the next number from reg.get(regIn).
+         //
+         reg.set(regArg0 , code(TYPE_FIXINT,0));
+         gosub(sub_read_num_loop,blk_tail_call);
+         break;
+      case sub_read_num_loop:
+         // Parses the next number from reg.get(regIn), expecting
+         // the accumulated value-so-far as a TYPE_FIXINT in
+         // reg.get(regArg0).
+         //
+         // A helper for sub_read_num, but still a sub_ in its own
+         // right.
+         //
+         reg.set(regTmp1 , portPeek(reg.get(regIn)));
+         if ( EOF == reg.get(regTmp1) )
+         {
+            if ( verb ) log("eof: returning " + pp(reg.get(regArg0)));
+            reg.set(regRetval , reg.get(regArg0));
+            returnsub();
+            break;
+         }
+         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
+         {
+            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         reg.set(regTmp2 , reg.get(regArg0));
+         if ( TYPE_FIXINT != type(reg.get(regTmp2)) )
+         {
+            if ( verb ) log("non-fixint in arg: " + pp(reg.get(regTmp2)));
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         switch (value(reg.get(regTmp1)))
+         {
+         case ' ':
+         case '\t':
+         case '\r':
+         case '\n':
+         case '(':
+         case ')':
+            // terminator
+            reg.set(regRetval , reg.get(regArg0));
+            returnsub();
+            break;
+         default:
+            if ( value(reg.get(regTmp1)) < '0' || value(reg.get(regTmp1)) > '9' )
+            {
+               if ( verb ) log("non-digit in input: " + pp(reg.get(regTmp1)));
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            tmp0 = 10 * value(reg.get(regTmp2)) + (value(reg.get(regTmp1)) - '0');
+            if ( verb ) log("first char: " + (char)value(reg.get(regTmp1)));
+            if ( verb ) log("old accum:  " +       value(reg.get(regTmp2)));
+            if ( verb ) log("new accum:  " +       tmp0);
+            portPop(reg.get(regIn));
+            reg.set(regArg0 , code(TYPE_FIXINT,tmp0));
+            gosub(sub_read_num_loop,blk_tail_call);
+            break;
+         }
+         break;
+
+      case sub_read_octo_tok:
+         // Parses the next octothorpe literal reg.get(regIn).
+         //
+         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         if ( reg.get(regTmp0) != code(TYPE_CHAR,'#') )
+         {
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         portPop(reg.get(regIn));
+         reg.set(regTmp1 , portPeek(reg.get(regIn)));
+         if ( EOF == reg.get(regTmp1) )
+         {
+            if ( verb ) log("eof after octothorpe");
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp1)) )
+         {
+            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         portPop(reg.get(regIn));
+         switch (value(reg.get(regTmp1)))
+         {
+         case 't':
+            if ( verb ) log("true");
+            reg.set(regRetval , TRUE);
+            returnsub();
+            break;
+         case 'f':
+            if ( verb ) log("false");
+            reg.set(regRetval , FALSE);
+            returnsub();
+            break;
+         case '\\':
+            reg.set(regTmp2 , portPeek(reg.get(regIn)));
+            if ( EOF == reg.get(regTmp2) )
+            {
+               if ( verb ) log("eof after octothorpe slash");
+               raiseError(ERR_LEXICAL);
+               break;
+            }
+            if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp2)) )
+            {
+               if ( verb ) log("non-char in input: " + pp(reg.get(regTmp2)));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            if ( verb ) log("character literal: " + pp(reg.get(regTmp2)));
+            portPop(reg.get(regIn));
+            reg.set(regRetval , reg.get(regTmp2));
+            returnsub();
+            // TODO: so far, we only handle the 1-char sequences...
+            break;
+         default:
+            log("unexpected after octothorpe: " + pp(reg.get(regTmp1)));
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         break;
+
+      case sub_read_symbol:
+         // Parses the next symbol from reg.get(regIn).
+         //
+         // Expects that the next character in the input is known
+         // to be the first character of a symbol.
+         //
+         // reg.get(regArg0) is expected to be a 'prepend'
+         // character.  If non-NIL, reg.get(regArg0) is prepended
+         // to the symbol.
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            store(IS_SYMBOL);
+            gosub(sub_read_symbol_body,blk_tail_call_m_cons);
+         }
+         else
+         {
+            store(reg.get(regArg0));
+            gosub(sub_read_symbol_body,sub_read_symbol+0x1);
+         }
+         break;
+      case sub_read_symbol+0x1: // TODO: blk_tail_call_m_cons_m_cons ???
+         reg.set(regArg0,   restore()); // restore prepend character
+         reg.set(regTmp0,   cons(reg.get(regArg0), reg.get(regRetval)));
+         reg.set(regTmp1,   cons(IS_SYMBOL,        reg.get(regTmp0)));
+         reg.set(regRetval, reg.get(regTmp1));
+         returnsub();
+         break;
+
+      case sub_read_symbol_body:
+         // Parses the next symbol from reg.get(regIn).
+         //
+         // A helper for sub_read_symbol, but still a sub_ in its
+         // own right.
+         //
+         // Returns a list of characters.
+         //
+         // All the characters in the symbol will have been
+         // consumed from the input, and the next character in the
+         // input will be the character immediately following the
+         // end of the symbol.
+         //
+         reg.set(regTmp1, portPeek(reg.get(regIn)));
+         if ( EOF == reg.get(regTmp1) )
+         {
+            if ( verb ) log("eof: returning");
+            reg.set(regRetval , NIL);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
+         {
+            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         switch (value(reg.get(regTmp1)))
+         {
+         case ' ':
+         case '\t':
+         case '\r':
+         case '\n':
+         case '(':
+         case ')':
+         case '"':
+            reg.set(regRetval , NIL);
+            returnsub();
+            break;
+         default:
+            portPop(reg.get(regIn));
+            store(reg.get(regTmp1));
+            gosub(sub_read_symbol_body,blk_tail_call_m_cons);
+            break;
+         }
+         break;
+
+      case sub_read_string:
+         // Parses the next string literal from reg.get(regIn).
+         //
+         // Expects that the next character in the input is known
+         // to be the leading '"' of a string literal.
+         //
+         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
+         {
+            log("non-\" leading string literal: " + pp(reg.get(regTmp0)));
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         portPop(reg.get(regIn));
+         gosub(sub_read_string_body,sub_read_string+0x1);
+         break;
+      case sub_read_string+0x1:
+         reg.set(regTmp0   , portPeek(reg.get(regIn)));
+         if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
+         {
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         portPop(reg.get(regIn));
+         reg.set(regRetval , cons(IS_STRING,reg.get(regRetval)));
+         returnsub();
+         break;
+
+      case sub_read_string_body:
+         // Parses the next string from reg.get(regIn).
+         //
+         // A helper for sub_read_string, but still a sub_ in its
+         // own right.
+         //
+         // Expects that the leading \" has already been consumed,
+         // and stops on the trailing \" (which is left unconsumed
+         // for balance).
+         //
+         // Returns a list of characters.
+         //
+         // All the characters in the string will have been
+         // consumed from the input, and the next character in the
+         // input will be the trailing \".
+         //
+         reg.set(regTmp1 , portPeek(reg.get(regIn)));
+         if ( EOF == reg.get(regTmp1) )
+         {
+            log("eof in string literal");
+            raiseError(ERR_LEXICAL);
+            break;
+         }
+         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
+         {
+            log("non-char in input: " + pp(reg.get(regTmp1)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         switch (value(reg.get(regTmp1)))
+         {
+         case '"':
+            reg.set(regRetval , NIL);
+            returnsub();
+            break;
+         default:
+            portPop(reg.get(regIn));
+            store(reg.get(regTmp1));
+            gosub(sub_read_string_body,blk_tail_call_m_cons);
+            break;
+         }
+         break;
+
+      case sub_read_burn_space:
+         // Consumes any whitespace from reg.get(regIn).
+         //
+         // Returns UNSPECIFIED.
+         //
+         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         if ( EOF == reg.get(regTmp0) )
+         {
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         switch (value(reg.get(regTmp0)))
+         {
+         case ' ':
+         case '\t':
+         case '\r':
+         case '\n':
+            portPop(reg.get(regIn));
+            gosub(sub_read_burn_space,blk_tail_call);
+            break;
+         default:
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         break;
+
+      case sub_eval:
+         // Evaluates the expr in reg.get(regArg0) in the env in
+         // reg.get(regArg1), and leaves the results in
+         // reg.get(regRetval).
+         //
+         switch (type(reg.get(regArg0)))
+         {
+         case TYPE_SENTINEL:
+            switch (reg.get(regArg0))
+            {
+            case TRUE:
+            case FALSE:
+               // These values are self-evaluating
+               reg.set(regRetval , reg.get(regArg0));
+               returnsub();
+               break;
+            case NIL:
+               // The empty list is not self-evaluating.
+               //
+               // Covers expressions like "()" and "(())"..
+               raiseError(ERR_SEMANTIC);
+               break;
+            default:
+               if ( verb ) log("unexpected value: " + pp(reg.get(regArg0)));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            break;
+         case TYPE_CHAR:
+         case TYPE_FIXINT:
+         case TYPE_SUBS:    // TODO: is this a valid decision?  Off-spec?
+         case TYPE_SUBP:    // TODO: is this a valid decision?  Off-spec?
+            // these types are self-evaluating
+            reg.set(regRetval , reg.get(regArg0));
+            returnsub();
+            break;
+         case TYPE_CELL:
+            tmp0 = car(reg.get(regArg0));
+            switch (tmp0)
+            {
+            case IS_STRING:
+               // Strings are self-evaluating.
+               reg.set(regRetval , reg.get(regArg0));
+               returnsub();
+               break;
+            case IS_SYMBOL:
+               // Lookup the symbol in the environment.
+               //
+               //   reg.get(regArg0) already contains the symbol
+               //   reg.get(regArg1) already contains the env
+               //
+               // TODO: w/ a different variant of
+               // sub_eval_look_env, could this be a tail call?
+               // And I don't just mean making a new function that
+               // calls sub_eval_look_env that has our same
+               // continuation sub_eval+0x1... I mean something
+               // that tail-recurses all the way to the
+               // success-or-symbol-not-found logic.
+               gosub(sub_eval_look_env,sub_eval+0x1);
+               break;
+            default:
+               // Evaluate the operator: the type of the result
+               // will determine whether we evaluate the args prior
+               // to apply.
+               store(cdr(reg.get(regArg0)));    // store the arg exprs
+               store(reg.get(regArg1));         // store the env
+               reg.set(regArg0 , tmp0);         // forward the op
+               reg.set(regArg1 , reg.get(regArg1)); // forward the env
+               gosub(sub_eval,sub_eval+0x2);
+               break;
+            }
+            break;
+         default:
+            if ( verb ) log("unexpected type: " + pp(reg.get(regArg0)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         break;
+      case sub_eval+0x1:
+         // following symbol lookup
+         if ( NIL == reg.get(regRetval) )
+         {
+            // symbol not found: unbound variable
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( DEBUG && TYPE_CELL != type(reg.get(regRetval)) )
+         {
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         reg.set(regRetval , cdr(reg.get(regRetval)));
+         returnsub();
+         break;
+      case sub_eval+0x2:
+         // following eval of the first elem
+         //
+         // If it's a function, evaluate the args next, following
+         // up with apply.
+         //
+         // If it's a special form, don't evaluate the args, just
+         // pass it off to apply.
+         //
+         reg.set(regTmp1 , restore());         // restore the env
+         reg.set(regTmp0 , restore());         // restore the arg exprs
+         reg.set(regTmp2 , reg.get(regRetval));    // value of the operator
+         tmp0 = type(reg.get(regTmp2));
+         if ( TYPE_SUBP == tmp0 || 
+              TYPE_CELL == tmp0 && IS_PROCEDURE == car(reg.get(regTmp2)) )
+         {
+            // procedure: evaluate the args and then apply op to
+            // args values
+            // 
+            store(reg.get(regTmp2));           // store value of the operator
+            reg.set(regArg0 , reg.get(regTmp0));
+            reg.set(regArg1 , reg.get(regTmp1));
+            gosub(sub_eval_list,sub_eval+0x3);
+            break;
+         }
+         if ( TYPE_SUBS == tmp0 || 
+              TYPE_CELL == tmp0 && IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
+         {
+            // special: apply op directly to args exprs
+            //
+            reg.set(regArg0 , reg.get(regTmp2));
+            reg.set(regArg1 , reg.get(regTmp0));
+            gosub(sub_apply,blk_tail_call);
+            break;
+         }
+         // We get here, for instance, evaluating the expr (1).
+         logrec("non-operator in sub_eval: ",tmp0);
+         raiseError(ERR_SEMANTIC);
+         break;
+      case sub_eval+0x3:
+         // following eval of the args
+         reg.set(regArg0 , restore());      // restore value of the operator
+         reg.set(regArg1 , reg.get(regRetval)); // restore list of args
+         gosub(sub_apply,blk_tail_call);
+         break;
+
+      case sub_eval_list:
+         // Evaluates all the expressions in the list in
+         // reg.get(regArg0) in the env in reg.get(regArg1), and
+         // returns a list of the results.
+         //
+         //   (define (sub_eval_list list env)
+         //     (if (null? list) 
+         //         '()
+         //         (cons (sub_eval (car list) env)
+         //               (sub_eval_list (cdr list) env))))
+         //   (define (sub_eval_list list env)
+         //     (if (null? list) 
+         //         '()
+         //         (let ((first (sub_eval (car list) env))
+         //           (cons first (sub_eval_list (cdr list) env)))))
+         //   (define (sub_eval_list list env)
+         //     (if (null? list) 
+         //         '()
+         //         (let ((first (sub_eval (car list) env))
+         //               (rest  (sub_eval_list (cdr list) env))
+         //           (cons first rest))))
+         //
+         // Using something most like the second varsion: I get to
+         // exploit blk_tail_call_m_cons again! :)
+         //
+         // NOTE: This almost sub_map e.g. (map eval list), except
+         // except sub_eval is binary and sub_map works with unary
+         // functions.
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval , NIL);
+            returnsub();
+            break;
+         }
+         store(cdr(reg.get(regArg0)));          // the rest of the list
+         store(reg.get(regArg1));               // the env
+         reg.set(regArg0 , car(reg.get(regArg0)));  // the head of the list
+         reg.set(regArg1 , reg.get(regArg1));       // the env
+         gosub(sub_eval,sub_eval_list+0x1);
+         break;
+      case sub_eval_list+0x1:
+         reg.set(regArg1 , restore());          // the env
+         reg.set(regArg0 , restore());          // the rest of the list
+         store(reg.get(regRetval));             // feed blk_tail_call_m_cons
+         gosub(sub_eval_list,blk_tail_call_m_cons);
+         break;
+
+      case sub_eval_look_env:
+         // Looks up the symbol in reg.get(regArg0) in the env in
+         // reg.get(regArg1).
+         //
+         // Returns NIL if not found, else the binding of the
+         // symbol: a cell whose car is a symbol equivalent to the
+         // argument symbol, and whose cdr is the value.
+         //
+         // Subsequent setcdrs on that cell change the value of the
+         // symbol.
+         //
+         // Finds the *first* binding in the *first* frame for the
+         // symbol.
+         //
+         // (define (sub_eval_look_env sym env)
+         //   (if (null? env) 
+         //       '()
+         //       (let ((bind (sub_eval_look_frame sym (car env))))
+         //         (if (null? bind) 
+         //             (sub_eval_look_env sym (cdr env))
+         //             bind))))
+         //
+         if ( true )
+         {
+            logrec("sub_eval_look_env SYM",reg.get(regArg0));
+            log(   "sub_eval_look_env ENV " + pp(reg.get(regArg1)));
+         }
+         if ( NIL == reg.get(regArg1) )
+         {
+            if ( verb ) log("empty env: symbol not found");
+            reg.set(regRetval  , NIL);
+            returnsub();
+            break;
+         }
+         store(reg.get(regArg0));
+         store(reg.get(regArg1));
+         reg.set(regArg1 , car(reg.get(regArg1)));
+         gosub(sub_eval_look_frame,sub_eval_look_env+0x1);
+         break;
+      case sub_eval_look_env+0x1:
+         reg.set(regArg1 , restore());
+         reg.set(regArg0 , restore());
+         if ( NIL != reg.get(regRetval) )
+         {
+            if ( verb ) log("symbol found w/ bind: " + pp(reg.get(regRetval)));
+            returnsub();
+            break;
+         }
+         reg.set(regArg1 , cdr(reg.get(regArg1)));
+         gosub(sub_eval_look_env,blk_tail_call);
+         break;
+
+      case sub_eval_look_frame:
+         // Looks up the symbol in reg.get(regArg0) in the env
+         // frame in reg.get(regArg1).
+         //
+         // Returns NIL if not found, else the binding of the
+         // symbol: a cell whose car is a symbol equivalent to the
+         // argument symbol, and whose cdr is the value.
+         //
+         // Subsequent setcdrs on that cell change the value of the
+         // symbol.
+         //
+         // Finds the *first* binding in the frame for the symbol.
+         //
+         // (define (sub_eval_look_frame sym frame)
+         //   (if (null? frame) 
+         //       '()
+         //       (let ((s (car (car frame))))
+         //         (if (equal? sym s) 
+         //             (car frame)
+         //             (sub_eval_look_frame (cdr frame))))))
+         //
+         logrec("sub_eval_look_frame SYM ",reg.get(regArg0));
+         if ( NIL == reg.get(regArg1) )
+         {
+            reg.set(regRetval , NIL);
+            returnsub();
+            break;
+         }
+         store(reg.get(regArg0));
+         store(reg.get(regArg1));
+         reg.set(regArg1 , car(car(reg.get(regArg1))));
+         logrec("sub_eval_look_frame CMP ",reg.get(regArg1));
+         gosub(sub_equal_p,sub_eval_look_frame+0x1);
+         break;
+      case sub_eval_look_frame+0x1:
+         reg.set(regArg1 , restore());
+         reg.set(regArg0 , restore());
+         if ( TRUE == reg.get(regRetval) )
+         {
+            reg.set(regRetval , car(reg.get(regArg1)));
+            returnsub();
+            break;
+         }
+         reg.set(regArg1 , cdr(reg.get(regArg1)));
+         gosub(sub_eval_look_frame,blk_tail_call);
+         break;
+
+      case sub_equal_p:
+         // Compares the objects in reg.get(regArg0) and
+         // reg.get(regArg1).
+         //
+         // Returns TRUE in reg.get(regRetval) if they are
+         // equivalent, being identical or having the same shape
+         // and same value everywhere, FALSE otherwise.
+         //
+         // Does not handle cycles gracefully - and it may not be
+         // necessary that it do so if we don't expose this to
+         // users and ensure that it can only be called on objects
+         // (like symbols) that are known to be cycle-free.
+         //
+         // NOTE: this is meant to be the equal? described in R5RS.
+         //
+         if ( reg.get(regArg0) == reg.get(regArg1) )
+         {
+            //if ( verb ) log("identical");
+            reg.set(regRetval , TRUE);
+            returnsub();
+            break;
+         }
+         if ( type(reg.get(regArg0)) != type(reg.get(regArg1)) )
+         {
+            //if ( verb ) log("different types");
+            reg.set(regRetval , FALSE);
+            returnsub();
+            break;
+         }
+         if ( type(reg.get(regArg0)) != TYPE_CELL )
+         {
+            //if ( verb ) log("not cells");
+            reg.set(regRetval , FALSE);
+            returnsub();
+            break;
+         }
+         //if ( verb ) log("checking car");
+         store(reg.get(regArg0));
+         store(reg.get(regArg1));
+         reg.set(regArg0 , car(reg.get(regArg0)));
+         reg.set(regArg1 , car(reg.get(regArg1)));
+         gosub(sub_equal_p,sub_equal_p+0x1);
+         break;
+      case sub_equal_p+0x1:
+         reg.set(regArg1 , restore());
+         reg.set(regArg0 , restore());
+         if ( FALSE == reg.get(regRetval) )
+         {
+            //if ( verb ) log("car mismatch");
+            returnsub();
+            break;
+         }
+         //if ( verb ) log("checking cdr");
+         reg.set(regArg0 , cdr(reg.get(regArg0)));
+         reg.set(regArg1 , cdr(reg.get(regArg1)));
+         gosub(sub_equal_p,blk_tail_call);
+         break;
+
+      case sub_let:
+         // Does a rewrite:
+         //
+         //   (define (rewrite expr)
+         //     (let ((params (map car  (cadr expr)))
+         //           (values (map cadr (cadr expr)))
+         //           (body   (caddr expr)))
+         //       (cons (list 'lambda params body) values)))
+         //
+         // or perhaps better reflecting what I will do with the
+         // stack here:
+         //
+         //   (define (rewrite expr)
+         //     (let ((locals (cadr expr))
+         //           (body   (caddr expr)))
+         //       (let ((params (map car locals)))
+         //         (let ((values (map cadr locals)))
+         //           (cons (list 'lambda params body) values)))))
+         //
+         // Of course, note that the 'let is already stripped from
+         // the input by the time we get here, so this is really:
+         //
+         //   (define (rewrite expr)
+         //     (let ((locals (car expr))
+         //           (body   (cadr expr)))
+         //       (let ((params (map car locals)))
+         //         (let ((values (map cadr locals)))
+         //           (cons (list 'lambda params body) values)))))
+         //
+         // Wow, but that is fiendishly tail-recursive!
+         //
+         // Not shown in this pseudo-code, is of course the
+         // evaluation of that rewritten expression.
+         //
+         logrec("REWRITE INPUT:  ",reg.get(regArg0));
+         reg.set(regTmp0 , car(reg.get(regArg0))); // regTmp0 is locals
+         reg.set(regTmp2 , cdr(reg.get(regArg0)));
+         if ( TYPE_CELL != type(reg.get(regTmp2)) ) 
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp1 , reg.get(regTmp2));      // regTmp1 is body
+         logrec("REWRITE BODY A: ",reg.get(regTmp1));
+         store(reg.get(regTmp0));
+         store(reg.get(regTmp1));
+         reg.set(regArg0 , sub_car);
+         reg.set(regArg1 , reg.get(regTmp0));
+         gosub(sub_map,sub_let+0x1);
+         break;
+      case sub_let+0x1:
+         // Note: Acknowledged, there is some wasteful stack manips
+         // here, and a peek operation would be welcome, too.
+         reg.set(regTmp2 , reg.get(regRetval));    // regTmp2 is params
+         reg.set(regTmp1 , restore());         // restore body
+         logrec("REWRITE BODY B: ",reg.get(regTmp1));
+         reg.set(regTmp0 , restore());         // restore locals
+         store(reg.get(regTmp0));
+         store(reg.get(regTmp1));
+         store(reg.get(regTmp2));
+         reg.set(regArg0 , sub_cadr);
+         reg.set(regArg1 , reg.get(regTmp0));
+         gosub(sub_map,sub_let+0x2);
+         break;
+      case sub_let+0x2:
+         reg.set(regTmp3 , reg.get(regRetval));    // regTmp3 is values
+         reg.set(regTmp2 , restore());         // restore params
+         reg.set(regTmp1 , restore());         // restore body
+         logrec("REWRITE BODY C: ",reg.get(regTmp1));
+         reg.set(regTmp0 , restore());         // restore locals
+         reg.set(regTmp4 , reg.get(regTmp1));
+         reg.set(regTmp5 , cons( reg.get(regTmp2), reg.get(regTmp4) ));
+         reg.set(regTmp6 , cons( sub_lambda,   reg.get(regTmp5) ));
+         reg.set(regTmp7 , cons( reg.get(regTmp6), reg.get(regTmp3) ));
+         logrec("REWRITE OUTPUT: ",reg.get(regTmp7));
+         reg.set(regArg0 , reg.get(regTmp7));
+         reg.set(regArg1 , reg.get(regEnv));
+         gosub(sub_eval,blk_tail_call);
+         break;
+
+      case sub_map:
+         // Applies the operator in reg.get(regArg0) to each
+         // element of the list in reg.get(regArg1), and returns a
+         // list of the results in order.
+         //
+         // The surplus cons() before we call sub_apply is perhaps
+         // regrettable, but the rather than squeeze more
+         // complexity into the sub_apply family, I choose here to
+         // work around the variadicity checking and globbing in
+         // sub_appy.
+         //
+         // I would prefer it if this sub_map worked with
+         // either/both of builtins and user-defineds, and this way
+         // it does.
+         //
+         if ( NIL == reg.get(regArg1) )
+         {
+            reg.set(regRetval  , NIL);
+            returnsub();
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg1))); // head
+         reg.set(regTmp1 , cdr(reg.get(regArg1))); // rest
+         store(reg.get(regArg0));
+         store(reg.get(regTmp1));
+         reg.set(regArg0 , reg.get(regArg0));
+         reg.set(regArg1 , cons(reg.get(regTmp0),NIL));
+         gosub(sub_apply,sub_map+0x1);
+         break;
+      case sub_map+0x1:
+         reg.set(regArg1 , restore());  // restore rest of operands
+         reg.set(regArg0 , restore());  // restore operator
+         store(reg.get(regRetval));     // feed blk_tail_call_m_cons
+         gosub(sub_map,blk_tail_call_m_cons);
+         break;
+
+      case sub_begin:
+         // Evaluates all its args, returning the result of the
+         // last.  If no args, returns UNSPECIFIED.
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg0)));
+         reg.set(regTmp1 , cdr(reg.get(regArg0)));
+         reg.set(regArg0 , reg.get(regTmp0));
+         reg.set(regArg1 , reg.get(regEnv));
+         reg.set(regTmp2 , UNSPECIFIED);
+         if ( NIL == reg.get(regTmp1) )
+         {
+            reg.set(regTmp2 , blk_tail_call);
+         }
+         else
+         {
+            store(reg.get(regTmp1));             // store rest exprs
+            reg.set(regTmp2 , sub_begin+0x1);
+         }
+         gosub(sub_eval,reg.get(regTmp2));
+         break;
+      case sub_begin+0x1:
+         reg.set(regArg0 , restore());           // restore rest exprs
+         gosub(sub_begin,blk_tail_call);
+         break;
+
+      case sub_cond:
+         // Does this:
+         //
+         //   (cond (#f 1) (#f 2) (#t 3))  ==> 3
+         //
+         // That is, expects the args to be a list of lists, each
+         // of which is a test expression followed by a body.
+         //
+         // Evaluates the tests in order until one is true,
+         // whereupon it evaluates the body of that clause as an
+         // implicit (begin) statement.  If no args, returns
+         // UNSPECIFIED.
+         //
+         // Where the body of a clause is empty, returns the value
+         // of the test e.g.:
+         //
+         //   (cond (#f) (#t))   ==> 1
+         //   (cond (3)  (#t 1)) ==> 3
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0 , car(car(reg.get(regArg0))));  // test of first clause
+         reg.set(regTmp1 , cdr(car(reg.get(regArg0))));  // body of first clause
+         reg.set(regTmp2 , cdr(reg.get(regArg0)));       // rest of clauses
+         store(reg.get(regTmp1));                    // store body of 1st clause
+         store(reg.get(regTmp2));                    // store rest of clauses
+         logrec("test",reg.get(regTmp0));
+         reg.set(regArg0 , reg.get(regTmp0));
+         reg.set(regArg1 , reg.get(regEnv));
+         gosub(sub_eval,sub_cond+0x1);
+         break;
+      case sub_cond+0x1:
+         reg.set(regTmp2 , restore());               // store rest of clauses
+         reg.set(regTmp1 , restore());               // store body of 1st clause
+         if ( FALSE == reg.get(regRetval) )
+         {
+            logrec("rest",reg.get(regTmp2));
+            reg.set(regArg0 , reg.get(regTmp2));
+            gosub(sub_cond,blk_tail_call);
+         }
+         else if ( NIL == reg.get(regTmp1) )
+         {
+            log("no body");
+            reg.set(regRetval , reg.get(regRetval));
+            returnsub();
+         }
+         else
+         {
+            logrec("body",reg.get(regTmp1));
+            reg.set(regArg0 , reg.get(regTmp1));
+            gosub(sub_begin,blk_tail_call);
+         }
+         break;
+
+      case sub_case:
+         // Does:
+         //
+         //   (case 7 ((2 3) 100) ((4 5) 200) ((6 7) 300)) ==> 300
+         //
+         // Returns UNSPECIFIED if no match is found.
+         //
+         // Note: the key gets evaluated, and the body of the
+         // matching clause gets evaluated as an implicit (begin)
+         // form, but the labels do *not* get evaluated.
+         //
+         // This means (case) is useful with atomic literals as
+         // labels, and not for compound expressions, variables, or
+         // anything else fancy like that.  Think fixints,
+         // booleans, and character literals: even strings and
+         // symbols won't match
+         //
+         // Matching is per eqv?, not equal?.
+         //
+         // This makes (case) much less useful without "else" than
+         // (cond) is: (cond) can fall back on #t for the default
+         // catchall clause.  With (case), that would only work if
+         // the key's value were identical to #t, not just non-#f.
+         //
+         // I am vacillating about whether (case) belongs in the
+         // microcode layer.  It is weird, sort of un-Schemey in
+         // its semantics, and it requires the nontrivial "else"
+         // syntactic support to be useful - but then again it
+         // offers a lookup-table semantics that could potentially
+         // be implemented in constant time in the number of
+         // alternative paths. Neither (cond) nor an (if) chain can
+         // offer this.
+         //
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);       // missing key
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg0)));  // key
+         reg.set(regTmp1 , cdr(reg.get(regArg0)));  // clauses
+         if ( TYPE_CELL != type(reg.get(regTmp1)) )
+         {
+            raiseError(ERR_SEMANTIC);       // missing clauses
+            break;
+         }
+         logrec("key expr:  ",reg.get(regTmp0));
+         store(reg.get(regTmp1));               // store clauses
+         reg.set(regArg0 , reg.get(regTmp0));
+         reg.set(regArg1 , reg.get(regEnv));
+         gosub(sub_eval,sub_case+0x1);
+         break;
+      case sub_case+0x1:
+         reg.set(regTmp0 , reg.get(regRetval));     // value of key
+         reg.set(regTmp1 , restore());          // restore clauses
+         logrec("key value: ",reg.get(regTmp0));
+         logrec("clauses:   ",reg.get(regTmp1));
+         reg.set(regArg0 , reg.get(regTmp0));
+         reg.set(regArg1 , reg.get(regTmp1));
+         gosub(sub_case_search,blk_tail_call);
+         break;
+
+      case sub_case_search:
+         // reg.get(regArg0) is the value of the key
+         // reg.get(regArg1) is the list of clauses
+         logrec("key value:   ",reg.get(regArg0));
+         logrec("clause list: ",reg.get(regArg1));
+         if ( NIL == reg.get(regArg1) ) 
+         {
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg1)) )
+         {
+            raiseError(ERR_SEMANTIC);      // bogus clause list
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg1))); // first clause
+         reg.set(regTmp1 , cdr(reg.get(regArg1))); // rest clauses
+         logrec("first clause:",reg.get(regTmp0));
+         logrec("rest clauses:",reg.get(regTmp1));
+         if ( TYPE_CELL != type(reg.get(regTmp0)) )
+         {
+            raiseError(ERR_SEMANTIC);      // bogus clause
+            break;
+         }
+         reg.set(regTmp2 , car(reg.get(regTmp0))); // first clause label list
+         reg.set(regTmp3 , cdr(reg.get(regTmp0))); // first clause body
+         logrec("label list:  ",reg.get(regTmp2));
+         store(reg.get(regArg0));              // store key
+         store(reg.get(regTmp1));              // store rest clauses
+         store(reg.get(regTmp3));              // store body
+         reg.set(regArg0 , reg.get(regArg0));
+         reg.set(regArg1 , reg.get(regTmp2));
+         gosub(sub_case_in_list_p,sub_case_search+0x1);
+         break;
+      case sub_case_search+0x1:
+         reg.set(regTmp3 , restore());         // restore body
+         reg.set(regArg1 , restore());         // restore rest clauses
+         reg.set(regArg0 , restore());         // restore key
+         logrec("key:         ",reg.get(regArg0));
+         logrec("rest clauses:",reg.get(regArg1));
+         logrec("matchup:     ",reg.get(regRetval));
+         logrec("body:        ",reg.get(regTmp3));
+         if ( TYPE_CELL != type(reg.get(regTmp3)) )
+         {
+            // empty bodies are not cool in (case)
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( FALSE == reg.get(regRetval) )
+         {
+            gosub(sub_case_search,blk_tail_call);
+         }
+         else
+         {
+            reg.set(regArg0 , reg.get(regTmp3));
+            gosub(sub_begin,blk_tail_call);
+         }
+         break;
+
+      case sub_case_in_list_p:
+         // Returns TRUE if reg.get(regArg0) is hard-equal to any
+         // of the elements in the proper list in reg.get(regArg1),
+         // else FALSE.
+         //
+         // Only works w/ lables as per sub_case: fixints,
+         // booleans, and characer literals.  Nothing else will
+         // match.
+         logrec("key:   ",reg.get(regArg0));
+         logrec("labels:",reg.get(regArg1));
+         if ( NIL == reg.get(regArg1) ) 
+         {
+            reg.set(regRetval , FALSE);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg1)) ) 
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg1)));  // first element
+         reg.set(regTmp1 , cdr(reg.get(regArg1)));  // rest of elements
+         if ( reg.get(regArg0) == reg.get(regTmp0) )
+         {
+            // TODO: Check type?  We would not want them to both be
+            // interned strings, or would we...?
+            reg.set(regRetval  , TRUE);
+            returnsub();
+            break;
+         }
+         reg.set(regArg0 , reg.get(regArg0));
+         reg.set(regArg1 , reg.get(regTmp1));
+         gosub(sub_case_in_list_p,blk_tail_call);
+         break; 
+
+      case sub_apply:
+         // Applies the op in reg.get(regArg0) to the args in
+         // reg.get(regArg1), and return the results.
+         //
+         switch (type(reg.get(regArg0)))
+         {
+         case TYPE_SUBP:
+         case TYPE_SUBS:
+            gosub(sub_apply_builtin,blk_tail_call);
+            break;
+         case TYPE_CELL:
+            switch (car(reg.get(regArg0)))
+            {
+            case IS_PROCEDURE:
+            case IS_SPECIAL_FORM:
+               gosub(sub_apply_user,blk_tail_call);
+               break;
+            default:
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            break;
+         default:
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         break;
+         
+      case sub_apply_builtin:
+         // Applies the sub_foo in reg.get(regArg0) to the args in
+         // reg.get(regArg1), and return the results.
+         //
+         // get arity
+         //
+         // - if AX, just put the list of args in reg.get(regArg0).
+         //
+         // - if A<N>, assign N entries from list at
+         //   reg.get(regArg1) into reg.get(regArg0.regArg<N>).
+         //   Freak out if there are not exactly N args.
+         //
+         // Then just gosub()!
+         tmp0 = reg.get(regArg0);
+         final int arity = (tmp0 & MASK_ARITY) >>> SHIFT_ARITY;
+         log("tmp0:  " + pp(tmp0));
+         log("tmp0:  " + hex(tmp0,8));
+         log("arity: " + arity);
+         log("arg1:  " + pp(reg.get(regArg1)));
+         reg.set(regTmp0 , reg.get(regArg1));
+         reg.set(regArg0 , UNSPECIFIED);
+         reg.set(regArg1 , UNSPECIFIED);
+         reg.set(regArg2 , UNSPECIFIED);
+         //
+         // Note tricky dependency on reg order here.  At first
+         // this creeped me out, but it works good, and I got
+         // excited when I realized it was the first use of
+         // register-index-as-variable, and reflected that
+         // homoiconicity and "self-awareness" is part of the
+         // strength of a LISP system, and I shouldn't let it tweak
+         // me out at the lowest levels.
+         //
+         tmp1         = regArg0;
+         switch (arity << SHIFT_ARITY)
+         {
+         case AX:
+            reg.set(regArg0 , reg.get(regTmp0));
+            gosub(tmp0,blk_tail_call);
+            break;
+         case A3:
+            if ( NIL == reg.get(regTmp0) )
+            {
+               log("too few args");
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg.set(tmp1    , car(reg.get(regTmp0)));
+            reg.set(regTmp0 , cdr(reg.get(regTmp0)));
+            log("pop arg: " + pp(reg.get(regArg0)));
+            tmp1++;
+            // fall through
+         case A2:
+            if ( NIL == reg.get(regTmp0) )
+            {
+               log("too few args");
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg.set(tmp1    , car(reg.get(regTmp0)));
+            reg.set(regTmp0 , cdr(reg.get(regTmp0)));
+            log("pop arg: " + pp(reg.get(regArg0)));
+            tmp1++;
+         case A1:
+            if ( NIL == reg.get(regTmp0) )
+            {
+               log("too few args");
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg.set(tmp1    , car(reg.get(regTmp0)));
+            reg.set(regTmp0 , cdr(reg.get(regTmp0)));
+            log("pop arg: " + pp(reg.get(regArg0)));
+            tmp1++;
+         case A0:
+            if ( NIL != reg.get(regTmp0) )
+            {
+               log("too many args");
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            log("arg0: " + pp(reg.get(regArg0)));
+            log("arg1: " + pp(reg.get(regArg1)));
+            log("arg2: " + pp(reg.get(regArg2)));
+            gosub(tmp0,blk_tail_call);
+            break;
+         default:
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         break;
+
+      case sub_apply_user:
+         // Applies the user-defined procedure or special form in
+         // reg.get(regArg0) to the args in reg.get(regArg1), and
+         // return the results.
+         //
+         // We construct an env frame with the positional params
+         // bound to their corresponding args, extend the current
+         // env with that frame, and evaluate the body within the
+         // new env.
+         //
+         // The internal representation of a user-defined is:
+         //
+         //   '(IS_PROCEDURE arg-list body lexical-env)
+         //
+         if ( DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         if ( DEBUG && IS_PROCEDURE != car(reg.get(regArg0)) )
+         {
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         store(reg.get(regArg0));
+         reg.set(regArg0 , car(cdr(reg.get(regArg0))));
+         reg.set(regArg1 , reg.get(regArg1));
+         gosub(sub_zip,sub_apply_user+0x1);
+         break;
+      case sub_apply_user+0x1:
+         reg.set(regArg0 , restore());                        // restore op
+         reg.set(regTmp0 , reg.get(regRetval));                   // args frame
+         reg.set(regTmp1 , car(cdr(cdr(reg.get(regArg0)))));      // op body
+         reg.set(regTmp3 , car(cdr(cdr(cdr(reg.get(regArg0)))))); // op lexical env
+         reg.set(regTmp2 , cons(reg.get(regTmp0),reg.get(regEnv)));   // apply env
+         logrec("sub_apply_user BODY   ",reg.get(regTmp1));
+         logrec("sub_apply_user FRAME  ",reg.get(regTmp0));
+         //logrec("sub_apply_user CUR ENV",reg.get(regEnv));
+         //logrec("sub_apply_user LEX ENV",reg.get(regTmp3));
+
+         // going w/ lexical frames
+         reg.set(regTmp2 , cons(reg.get(regTmp0),reg.get(regTmp3)));
+
+         logrec("sub_apply_user ENV    ",reg.get(regTmp2));
+         reg.set(regArg0 , reg.get(regTmp1));
+         reg.set(regArg1 , reg.get(regTmp2));
+         //
+         // At first glance, this env manip feels like it should be
+         // the job of sub_eval. After all, sub_eval gets an
+         // environment arg, and sub_apply does not.
+         //
+         // After deeper soul searching, this is not true.  We
+         // certainly would not want (eval) to push/pop the env on
+         // *every* call, but only sub_apply_user and sub_let know
+         // what the new frames are, and only sub_apply_user knows
+         // where to find the lexical scope of a procedure or
+         // special form.
+         //
+         log("LEXICAL ENV PREPUSH:  " + pp(reg.get(regEnv)));
+         store(reg.get(regEnv));
+         reg.set(regEnv , reg.get(regTmp2));
+         log("LEXICAL ENV POSTPUSH: " + pp(reg.get(regEnv)));
+         gosub(sub_begin, sub_apply_user+0x2);
+         break;
+      case sub_apply_user+0x2:
+         // I am so sad that pushing that env above means we cannot
+         // be tail recursive.  At least this that is not true on
+         // every sub_eval.
+         //
+         log("LEXICAL ENV PREPOP:  " + pp(reg.get(regEnv)));
+         reg.set(regEnv , restore());
+         log("LEXICAL ENV POSTPOP: " + pp(reg.get(regEnv)));
+         returnsub();
+         break;
+
+      case sub_zip:
+         // Expects lists of equal lengths in reg.get(regArg0) and
+         // reg.get(regArg1). 
+         //
+         // Returns a new list of the same length, whose elments
+         // are cons() of corresponding elements from
+         // reg.get(regArg0) and reg.get(regArg1) respectively.
+         //
+         // TODO: if (when!) we have sub_mapcar, this is really
+         // just:
+         //
+         //   (mapcar cons listA listB)
+         //
+         if ( NIL == reg.get(regArg0) && NIL == reg.get(regArg1) )
+         {
+            reg.set(regRetval , NIL);
+            returnsub();
+            break;
+         }
+         if ( NIL == reg.get(regArg0) || NIL == reg.get(regArg1) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg0)));
+         reg.set(regTmp1 , car(reg.get(regArg1)));
+         reg.set(regTmp2 , cons(reg.get(regTmp0),reg.get(regTmp1)));
+         reg.set(regArg0 , cdr(reg.get(regArg0)));
+         reg.set(regArg1 , cdr(reg.get(regArg1)));
+         store(reg.get(regTmp2));
+         gosub(sub_zip,blk_tail_call_m_cons);
+         break;
+
+      case sub_print:
+         // Prints the expr in reg.get(regArg0) to reg.get(regOut).
+         //
+         // Returns UNSPECIFIED.
+         //
+         reg.set(regTmp0 , reg.get(regArg0));
+         if ( verb ) log("printing: " + pp(reg.get(regTmp0)));
+         switch (type(reg.get(regTmp0)))
+         {
+         case TYPE_SENTINEL:
+            switch (reg.get(regTmp0))
+            {
+            case UNSPECIFIED:
+               reg.set(regRetval , UNSPECIFIED);
+               returnsub();
+               break;
+            case NIL:
+               gosub(sub_print_list,blk_tail_call);
+               break;
+            case TRUE:
+               portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'t'));
+               reg.set(regRetval , UNSPECIFIED);
+               returnsub();
+               break;
+            case FALSE:
+               portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'f'));
+               reg.set(regRetval , UNSPECIFIED);
+               returnsub();
+               break;
+            default:
+               log("bogus sentinel: " + pp(reg.get(regTmp0)));
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            break;
+         case TYPE_CELL:
+            reg.set(regTmp1 , car(reg.get(regTmp0)));
+            reg.set(regTmp2 , cdr(reg.get(regTmp0)));
+            switch (reg.get(regTmp1))
+            {
+            case IS_STRING:
+               reg.set(regArg0 , reg.get(regTmp2));
+               gosub(sub_print_string,blk_tail_call);
+               break;
+            case IS_SYMBOL:
+               reg.set(regArg0 , reg.get(regTmp2));
+               gosub(sub_print_chars,blk_tail_call);
+               break;
+            case IS_PROCEDURE:
+               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+               reg.set(regRetval , UNSPECIFIED);
+               returnsub();
+               break;
+            default:
+               reg.set(regArg0 , reg.get(regTmp0));
+               gosub(sub_print_list,blk_tail_call);
+               break;
+            }
+            break;
+         case TYPE_CHAR:
+            portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
+            portPush(reg.get(regOut),code(TYPE_CHAR,'\\'));
+            switch (value(reg.get(regTmp0)))
+            {
+            case ' ':
+               portPush(reg.get(regOut),code(TYPE_CHAR,'s'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'a'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'c'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
+               break;
+            case '\n':
+               portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'w'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'l'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'i'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
+               break;
+            default:
+               portPush(reg.get(regOut),reg.get(regTmp0));
+               break;
+            }
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         case TYPE_FIXINT:
+            // We trick out the sign extension of our 28-bit
+            // twos-complement FIXINTs to match Java's 32 bits
+            // before proceeding.
+            reg.set(regTmp1 , value_fixint(reg.get(regTmp0)));
+            if ( reg.get(regTmp1) < 0 )
+            {
+               portPush(reg.get(regOut),code(TYPE_CHAR,'-'));
+               reg.set(regTmp1 , -reg.get(regTmp1));
+            }
+            if ( reg.get(regTmp1) == 0 )
+            {
+               portPush(reg.get(regOut),code(TYPE_CHAR,'0'));
+               returnsub();
+               break;
+            }
+            int factor = 1000000000; // big enough for 2**32 and less
+            while ( factor > 0 && 0 == reg.get(regTmp1)/factor )
+            {
+               factor /= 10;
+            }
+            while ( factor > 0 )
+            {
+               final int digit  = reg.get(regTmp1)/factor;
+               reg.set(regTmp1  , reg.get(regTmp1) - digit * factor);
+               factor          /= 10;
+               portPush(reg.get(regOut),code(TYPE_CHAR,'0'+digit));
+            }
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         case TYPE_SUBP:
+         case TYPE_SUBS:
+            // TODO: some decisions to be made here about how these
+            // really print, but that kind of depends on how I land
+            // about how they lex.
+            //
+            // In the mean time, this is sufficient to meet spec.
+            //
+            portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+            portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
+            portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         default:
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         break;
+            
+      case sub_print_string:
+         // Prints the list in reg.get(regArg0), whose elements are
+         // expected to all be TYPE_CHAR, to reg.get(regOut) in
+         // double-quotes.
+         //
+         portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
+         gosub(sub_print_chars,sub_print_string+0x1);
+         break;
+      case sub_print_string+0x1:
+         portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
+         reg.set(regRetval , UNSPECIFIED);
+         returnsub();
+         break;
+
+      case sub_print_chars:
+         // Prints the list in reg.get(regArg0), whose elements are
+         // expected to all be TYPE_CHAR, to reg.get(regOut).
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            if ( verb ) log("bogus non-cell: " + pp(reg.get(regArg0)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         reg.set(regTmp1 , car(reg.get(regArg0)));
+         reg.set(regTmp2 , cdr(reg.get(regArg0)));
+         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
+         {
+            if ( verb ) log("bogus: " + pp(reg.get(regTmp1)));
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         portPush(reg.get(regOut),reg.get(regTmp1));
+         reg.set(regArg0 , reg.get(regTmp2));
+         gosub(sub_print_chars,blk_tail_call);
+         break;
+
+      case sub_print_list:
+         // Prints the list (NIL or a cell) in reg.get(regArg0) to
+         // reg.get(regOut) in parens.
+         //
+         reg.set(regArg0 , reg.get(regArg0));
+         reg.set(regArg1 , TRUE);
+         portPush(reg.get(regOut),code(TYPE_CHAR,'('));
+         gosub(sub_print_list_elems,sub_print_list+0x1);
+         break;
+      case sub_print_list+0x1:
+         portPush(reg.get(regOut),code(TYPE_CHAR,')'));
+         reg.set(regRetval , UNSPECIFIED);
+         returnsub();
+         break;
+
+      case sub_print_list_elems:
+         // Prints the elements in the list (NIL or a cell) in
+         // reg.get(regArg0) to reg.get(regOut) with a space
+         // between each.
+         //
+         // Furthermore, reg.get(regArg1) should be TRUE if
+         // reg.get(regArg0) is the first item in the list, FALSE
+         // otherwise.
+         //
+         // Returns UNSPECIFIED.
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval  , UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         if ( FALSE == reg.get(regArg1) )
+         {
+            portPush(reg.get(regOut),code(TYPE_CHAR,' '));
+         }
+         store(reg.get(regArg0));
+         reg.set(regTmp0 , car(reg.get(regArg0)));
+         reg.set(regTmp1 , cdr(reg.get(regArg0)));
+         if ( NIL       != reg.get(regTmp1)       &&
+              TYPE_CELL != type(reg.get(regTmp1))  )
+         {
+            log("dotted list");
+            reg.set(regArg0 , reg.get(regTmp0));
+            gosub(sub_print,sub_print_list_elems+0x2);
+         }
+         else
+         {
+            log("regular list so far");
+            reg.set(regArg0 , reg.get(regTmp0));
+            gosub(sub_print,sub_print_list_elems+0x1);
+         }
+         break;
+      case sub_print_list_elems+0x1:
+         reg.set(regTmp0 , restore());
+         reg.set(regArg0 , cdr(reg.get(regTmp0)));
+         reg.set(regArg1 , FALSE);
+         gosub(sub_print_list_elems,blk_tail_call);
+         break;
+      case sub_print_list_elems+0x2:
+         reg.set(regTmp0 , restore());
+         reg.set(regArg0 , cdr(reg.get(regTmp0)));
+         portPush(reg.get(regOut),code(TYPE_CHAR,' '));
+         portPush(reg.get(regOut),code(TYPE_CHAR,'.'));
+         portPush(reg.get(regOut),code(TYPE_CHAR,' '));
+         gosub(sub_print,blk_tail_call);
+         break;
+
+      case sub_add:
+         if ( TYPE_FIXINT != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( TYPE_FIXINT != type(reg.get(regArg1)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
+         reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
+         reg.set(regTmp2   , reg.get(regTmp0) + reg.get(regTmp1));
+         reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp2)));
+         returnsub();
+         break;
+
+      case sub_add0:
+         reg.set(regRetval , code(TYPE_FIXINT,0));
+         returnsub();
+         break;
+
+      case sub_add1:
+         if ( TYPE_FIXINT != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regRetval , reg.get(regArg0));
+         returnsub();
+         break;
+
+      case sub_add3:
+         if ( TYPE_FIXINT != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( TYPE_FIXINT != type(reg.get(regArg1)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( TYPE_FIXINT != type(reg.get(regArg2)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
+         reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
+         reg.set(regTmp2   , value_fixint(reg.get(regArg2)));
+         reg.set(regTmp3   , reg.get(regTmp0) + reg.get(regTmp1) + reg.get(regTmp2));
+         reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp3)));
+         returnsub();
+         break;
+
+      case sub_mul:
+         if ( TYPE_FIXINT != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( TYPE_FIXINT != type(reg.get(regArg1)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
+         reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
+         reg.set(regTmp2   , reg.get(regTmp0) * reg.get(regTmp1));
+         reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp2)));
+         returnsub();
+         break;
+
+      case sub_sub:
+         if ( TYPE_FIXINT != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( TYPE_FIXINT != type(reg.get(regArg1)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
+         reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
+         reg.set(regTmp2   , reg.get(regTmp0) - reg.get(regTmp1));
+         reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp2)));
+         returnsub();
+         break;
+
+      case sub_lt_p:
+         if ( TYPE_FIXINT != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( TYPE_FIXINT != type(reg.get(regArg1)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0 , value_fixint(reg.get(regArg0)));
+         reg.set(regTmp1 , value_fixint(reg.get(regArg1)));
+         if ( reg.get(regTmp0) < reg.get(regTmp1) )
+         {
+            reg.set(regRetval,TRUE);
+         }
+         else
+         {
+            reg.set(regRetval,FALSE);
+         }
+         returnsub();
+         break;
+
+      case sub_cons:
+         log("cons: " + pp(reg.get(regArg0)));
+         log("cons: " + pp(reg.get(regArg1)));
+         reg.set(regRetval , cons(reg.get(regArg0),reg.get(regArg1)));
+         returnsub();
+         break;
+
+      case sub_car:
+         log("car: " + pp(reg.get(regArg0)));
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regRetval , car(reg.get(regArg0)));
+         returnsub();
+         break;
+
+      case sub_cdr:
+         log("cdr: " + pp(reg.get(regArg0)));
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regRetval , cdr(reg.get(regArg0)));
+         returnsub();
+         break;
+
+      case sub_cadr:
+         log("cadr: " + pp(reg.get(regArg0)));
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regRetval , car(cdr(reg.get(regArg0))));
+         returnsub();
+         break;
+
+      case sub_list:
+      case sub_quote:
+         // Commentary: I *love* how sub_quote and sub_list are the
+         // same once you abstract special form vs procedure into
+         // (eval) and arity into (apply).
+         //
+         // I totally get off on it!
+         //
+         reg.set(regRetval , reg.get(regArg0));
+         returnsub();
+         break;
+
+      case sub_if:
+         log("arg0: " + pp(reg.get(regArg0)));
+         log("arg1: " + pp(reg.get(regArg1)));
+         log("arg2: " + pp(reg.get(regArg2)));
+         store(reg.get(regArg1));
+         store(reg.get(regArg2));
+         reg.set(regArg0 , reg.get(regArg0));
+         reg.set(regArg1 , reg.get(regEnv));
+         gosub(sub_eval,sub_if+0x1);
+         break;
+      case sub_if+0x1:
+         reg.set(regArg2 , restore());
+         reg.set(regArg1 , restore());
+         if ( FALSE != reg.get(regRetval) )
+         {
+            reg.set(regArg0 , reg.get(regArg1));
+         }            
+         else
+         {
+            reg.set(regArg0 , reg.get(regArg2));
+         }
+         reg.set(regArg1 , reg.get(regEnv));
+         gosub(sub_eval,blk_tail_call);
+         break;
+
+      case sub_define:
+         // If a variable is bound in the current environment
+         // *frame*, changes it.  Else creates a new binding in the
+         // current *frame*.
+         //
+         // That is - at the top-level define creates or mutates a
+         // top-level binding, and an inner define creates or
+         // mutates an inner binding, but an inner define will not
+         // create or (most importantly) mutate a higher-level
+         // binding.
+         //
+         // Also - we have two forms of define, the one with a
+         // symbol arg which just defines a variable:
+         //
+         //   (define x 1)
+         //
+         // and the one with a list arg which is sugar:
+         //
+         //   (define (x) 1) equivalent to (define x (lambda () 1))
+         //
+         // sub_define is variadic.  The first form must have
+         // exactly two args.  The second form must have at least
+         // two args, which form the body of the method being
+         // defined within an implicit (begin) block.
+         //
+         logrec("args: ",reg.get(regArg0));
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);  // variadic with at least 2 args
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg0)));
+         reg.set(regTmp1 , cdr(reg.get(regArg0)));
+         logrec("head: ",reg.get(regTmp0));
+         logrec("rest: ",reg.get(regTmp1));
+         if ( TYPE_CELL != type(reg.get(regTmp0)) )
+         {
+            raiseError(ERR_SEMANTIC);  // first is symbol or arg list
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regTmp1)) )
+         {
+            raiseError(ERR_SEMANTIC);  // variadic with at least 2 args
+            break;
+         }
+         if ( IS_SYMBOL == car(reg.get(regTmp0)) )
+         {
+            if ( NIL != cdr(reg.get(regTmp1)) )
+            {
+               raiseError(ERR_SEMANTIC); // simple form takes exactly 2 args
+               break;
+            }
+            // reg.get(regTmp0) is already the symbol, how we want
+            // it for this case.
+            reg.set(regTmp1 , car(reg.get(regTmp1)));
+         }
+         else
+         {
+            // Note: by leveraging sub_lambda in this way, putting
+            // the literal value sub_lambda at the head of a
+            // constructed expression which is en route to
+            // sub_eval, we force the hand on other design
+            // decisions about the direct (eval)ability and
+            // (apply)ability of sub_foo in general.
+            //
+            // We do the same in sub_read_atom with sub_quote, so
+            // clearly I'm getting comfortable with this decision.
+            //
+            reg.set(regTmp2 , car(reg.get(regTmp0))); // actual symbol
+            reg.set(regTmp3 , cdr(reg.get(regTmp0))); // actual arg list
+            reg.set(regTmp0 , reg.get(regTmp2));      // regTmp0 good, regTmp2 free
+            logrec("proc symbol: ",reg.get(regTmp0));
+            logrec("proc args:   ",reg.get(regTmp3));
+            logrec("proc body:   ",reg.get(regTmp1));
+            reg.set(regTmp2 , cons(reg.get(regTmp3),reg.get(regTmp1)));
+            logrec("partial:     ",reg.get(regTmp2));
+            reg.set(regTmp1 , cons(sub_lambda,reg.get(regTmp2)));
+            logrec("proc lambda: ",reg.get(regTmp1));
+         }
+         // By here, reg.get(regTmp0) should be the the symbol,
+         // reg.get(regTmp1) the expr whose value we will bind to
+         // the symbol.
+         logrec("DEFINE SYMBOL: ",reg.get(regTmp0));
+         logrec("DEFINE BODY:   ",reg.get(regTmp1));
+         store(reg.get(regTmp0));              // store the symbol
+         reg.set(regArg0 , reg.get(regTmp1));  // eval the body
+         reg.set(regArg1 , reg.get(regEnv));   // we need an env arg here!
+         gosub(sub_eval,sub_define+0x1);
+         break;
+      case sub_define+0x1:
+         reg.set(regTmp0 , restore());         // restore the symbol
+         store(reg.get(regTmp0));              // store the symbol INEFFICIENT
+         store(reg.get(regRetval));            // store the body's value
+         reg.set(regArg0 , reg.get(regTmp0));     // lookup the binding
+         reg.set(regArg1 , car(reg.get(regEnv))); // we need an env arg here!
+         gosub(sub_eval_look_frame,sub_define+0x2);
+         break;
+      case sub_define+0x2:
+         reg.set(regTmp1 , restore());         // restore the body's value
+         reg.set(regTmp0 , restore());         // restore the symbol
+         if ( NIL == reg.get(regRetval) )
+         {
+            // create a new binding               // we need an env arg here!
+            reg.set(regTmp1 , cons(reg.get(regTmp0),reg.get(regTmp1)));
+            reg.set(regTmp2 , cons(reg.get(regTmp1),car(reg.get(regEnv))));
+            setcar(reg.get(regEnv),reg.get(regTmp2));
+            log("define new binding");
+               
+         }
+         else
+         {
+            // change the existing binding
+            setcdr(reg.get(regRetval),reg.get(regTmp1));
+            log("define old binding");
+         }
+         //logrec("define B",reg.get(regEnv));
+         reg.set(regRetval , UNSPECIFIED);
+         returnsub();
+         break;
+
+      case sub_lambda:
+         // Some key decisions here.  
+         //
+         // To get lambda, gotta decide how to represent a
+         // function.  
+         //
+         // From stubbing out sub_eval and sub_apply, I already
+         // know it's gonna be a list whose 1st element is
+         // IS_PROCEDURE.
+         //
+         // We're gonna need an arg list, a body, and a lexical
+         // environment as well.  Let's just say that's it:
+         //
+         //   '(IS_PROCEDURE arg-list body lexical-env)
+         //
+         // OK, done!
+         //
+         // sub_lambda is variadic and must have at least two args.
+         // The first must be a list, possibly empty.  The
+         // remaining args are the body of the new procedure, in an
+         // implicit (begin) block.
+         //
+         logrec("lambda args: ",reg.get(regArg0));
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);  // must have at least 2 args
+            break;
+         }
+         reg.set(regTmp0 , car(reg.get(regArg0)));
+         logrec("proc args:   ",reg.get(regTmp0));
+         if ( NIL != reg.get(regTmp0) && TYPE_CELL != type(reg.get(regTmp0))  )
+         {
+            raiseError(ERR_SEMANTIC);  // must have at least 2 args
+            break;
+         }
+         reg.set(regTmp1 , cdr(reg.get(regArg0)));
+         logrec("proc body:   ",reg.get(regTmp1));
+         if ( TYPE_CELL != type(reg.get(regTmp1)) )
+         {
+            raiseError(ERR_SEMANTIC);  // must have at least 2 args
+            break;
+         }
+         reg.set(regRetval , cons(reg.get(regEnv), NIL));
+         reg.set(regRetval , cons(reg.get(regTmp1),reg.get(regRetval)));
+         reg.set(regRetval , cons(reg.get(regTmp0),reg.get(regRetval)));
+         reg.set(regRetval , cons(IS_PROCEDURE,reg.get(regRetval)));
+         returnsub();
+         break;
+
+      case blk_tail_call:
+         // Just returns whatever retval left behind by the
+         // subroutine which continued to here.
+         //
+         returnsub();
+         break;
+
+      case blk_tail_call_m_cons:
+         // Returns the cons of the value on the stack with
+         // reg.get(regRetval).
+         //
+         // This has a distinctive pattern of use:
+         //
+         //   store(head_to_be);
+         //   gosub(sub_foo,blk_tail_call_m_cons);
+         //
+         if ( CLEVER_TAIL_CALL_MOD_CONS )
+         {
+            // Recycles the stack cell holding the m cons argument
+            // for the m cons operation.
+            //
+            // In effect, just reverses the end of the stack onto
+            // the return result.
+            reg.set(regTmp0   , reg.get(regStack));
+            reg.set(regStack  , cdr(reg.get(regStack)));
+            setcdr(reg.get(regTmp0),reg.get(regRetval));
+            reg.set(regRetval , reg.get(regTmp0));
+         }
+         else
+         {
+            reg.set(regTmp0   , restore());
+            reg.set(regTmp1   , reg.get(regRetval));
+            reg.set(regRetval , cons(reg.get(regTmp0),reg.get(regTmp1)));
+         }
+         returnsub();
+         break;
+
+      case blk_error:
+         return internal2external(reg.get(regError));
+
+      default:
+         if ( verb ) log("bogus op: " + pp(reg.get(regPc)));
+         raiseError(ERR_INTERNAL);
+         break;
+      }
 
       return INCOMPLETE;
    }
