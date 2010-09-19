@@ -98,8 +98,6 @@ public class TestScm
 
       driveEdgeCases();
 
-      //SILENT = false;
-
       expect("","");
 
       // first content: simple integer expressions are self-evaluating
@@ -118,12 +116,12 @@ public class TestScm
             { expr + "\n" ,           expr },
             { "\t" + expr + "\t\r\n", expr },
          };
+         SILENT = !JhwScm.USE_IO_BUFFER;
          batch(tests,RE_INDEPENDANT);
          batch(tests,RE_DEPENDANT);
          batch(tests,REP_INDEPENDANT);
          batch(tests,REP_DEPENDANT);
       }
-
 
       // second content: tweakier integer expressions are self-reading
       // and self-evaluating but not self-printing.

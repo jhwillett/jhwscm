@@ -14,7 +14,7 @@
 
 public class IOBuffer
 {
-   final byte[] buf   = new byte[13];
+   final byte[] buf   = new byte[512];
    int          start = 0;
    int          end   = 0;
    int          len   = 0;

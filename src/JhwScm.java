@@ -311,7 +311,10 @@ public class JhwScm
             {
                return i;
             }
-            iobuf.push(buf[off++]);
+            final byte b = buf[off++];
+            if ( verb ) log("input(): pushing byte " + b);
+            if ( verb ) log("input(): pushing char " + (char)b);
+            iobuf.push(b);
          }
          return max;
       }
@@ -325,9 +328,8 @@ public class JhwScm
       final int oldCdr = car(reg.get(regIn));
       for ( int i = 0; i < num; ++i )
       {
-         final byte c    = buf[off+i];
-         final int  code = code(TYPE_CHAR,0xFF&c);
-         queuePushBack(reg.get(regIn),code);
+         final byte b = buf[off+i];
+         queuePushBack(reg.get(regIn),code(TYPE_CHAR,0xFF&b));
          if ( ERR_OOM == reg.get(regError) )
          {
             // We back up to where we were before the OO, in
@@ -399,15 +401,21 @@ public class JhwScm
             {
                if ( 0 == i )
                {
+                  if ( verb ) log("output(): empty and done");
                   return -1;
                }
                else
                {
+                  if ( verb ) log("output(): empty, but shifted: " + i);
                   return i;
                }
             }
-            buf[off++] = iobuf.pop();
+            final byte b = iobuf.pop();
+            buf[off++] = b;
+            if ( verb ) log("output(): popped byte " + b);
+            if ( verb ) log("output(): popped char " + (char)b);
          }
+         if ( verb ) log("output(): shifted: " + max);
          return max;
       }
       if ( NIL == reg.get(regOut) )
@@ -3142,22 +3150,23 @@ public class JhwScm
     */
    private void queuePushBack ( final int queue, final int value )
    {
-      final boolean verb = false;
+      final boolean verb = true;
       if ( USE_IO_BUFFER )
       {
          if ( DEBUG && TYPE_IOBUF != type(queue) ) 
          {
-            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+            if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
             raiseError(ERR_INTERNAL);
             return;
          }
          if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
          {
-            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+            if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
             raiseError(ERR_INTERNAL);
             return;
          }
-         final IOBuffer buf = buffers[value(queue)];
+         final IOBuffer iobuf = buffers[value(queue)];
+         if ( verb ) log("  queuePushBack(): iobuf: " + iobuf);
          //
          // TODO: for now, an iobuf is EOF if empty, but later when we
          // add close() it'll be EOF when null, and an empty buffer
@@ -3166,18 +3175,23 @@ public class JhwScm
          // So we check for both conditions here.  Later on, it'll be
          // the isFull() clause which changes, not the null clause.
          //
-         if ( null == buf )
+         if ( null == iobuf )
          {
+            if ( verb ) log("  queuePushBack(): closed");
             raiseError(ERR_INTERNAL);
             return;
          }
-         if ( buf.isFull() )
+         if ( iobuf.isFull() )
          {
             // TODO: suspend
+            if ( verb ) log("  queuePushBack(): full");
             raiseError(ERR_NOT_IMPL);
             return;
          }
-         buf.push((byte)(0xFF&value));
+         if ( verb ) log("  queuePushBack(): value:  " + pp(value));
+         final int decode = value(value);
+         if ( verb ) log("  queuePushBack(): decode: " + decode);
+         iobuf.push((byte)decode);
          return;
       }
       final int queue_t = type(queue);
@@ -3263,7 +3277,7 @@ public class JhwScm
             raiseError(ERR_INTERNAL);
             return;
          }
-         final IOBuffer buf = buffers[value(queue)];
+         final IOBuffer iobuf = buffers[value(queue)];
          //
          // TODO: for now, an iobuf is EOF if empty, but later when we
          // add close() it'll be EOF when null, and an empty buffer
@@ -3272,13 +3286,13 @@ public class JhwScm
          // So we check for both conditions here.  Later on, it'll be
          // the isEmpty() clause which changes, not the null clause.
          //
-         if ( null == buf )
+         if ( null == iobuf )
          {
             if ( verb ) log("  queuePopFront(): closed");
             raiseError(ERR_INTERNAL);
             return;
          }
-         if ( buf.isEmpty() )
+         if ( iobuf.isEmpty() )
          {
             // TODO: suspend
             if ( verb ) log("  queuePopFront(): empty");
@@ -3286,7 +3300,7 @@ public class JhwScm
             return;
          }
          if ( verb ) log("  queuePopFront(): popping");
-         buf.pop();
+         iobuf.pop();
          return;
       }
       if ( DEBUG && TYPE_CELL != type(queue) ) 
@@ -3335,8 +3349,8 @@ public class JhwScm
             raiseError(ERR_INTERNAL);
             return EOF;
          }
-         final IOBuffer buf = buffers[value(queue)];
-         if ( verb ) log("  queuePeekFront(): iobuf " + buf);
+         final IOBuffer iobuf = buffers[value(queue)];
+         if ( verb ) log("  queuePeekFront(): iobuf " + iobuf);
          //
          // TODO: for now, an iobuf is EOF if empty, but later when we
          // add close() it'll be EOF when null, and an empty buffer
@@ -3345,19 +3359,20 @@ public class JhwScm
          // So we check for both conditions here.  Later on, it'll be
          // the isEmpty() clause which changes, not the null clause.
          //
-         if ( null == buf )
+         if ( null == iobuf )
          {
             if ( verb ) log("  queuePeekFront(): closed");
             return EOF;
          }
-         if ( buf.isEmpty() )
+         if ( iobuf.isEmpty() )
          {
             // TODO: suspend
             if ( verb ) log("  queuePeekFront(): empty");
             return EOF;
          }
-         final int value = buf.peek();
+         final int value = iobuf.peek();
          if ( verb ) log("  queuePeekFront(): value: " + value);
+         if ( verb ) log("  queuePeekFront(): value: " + (char)value);
          final int code  = code(TYPE_CHAR,value);
          if ( verb ) log("  queuePeekFront(): code:  " + pp(code));
          return code;
