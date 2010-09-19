@@ -86,54 +86,8 @@ public class JhwScm implements Firmware
       this.mach = machine;
       this.reg  = machine.reg;
 
-      for ( int i = 0; i < reg.length(); i++ )
-      {
-         reg.set(i,UNSPECIFIED);
-      }
-
-      reg.set(regStack,NIL);
-      reg.set(regError,NIL);
-
-      reg.set(regFreeCellList,NIL);
-
       reg.set(regArg0, doREP ? sub_rep : sub_rp);
       reg.set(regPc  , sub_init);
-
-      reg.set(regIn  , code(TYPE_IOBUF,0));
-      reg.set(regOut , code(TYPE_IOBUF,1));
-
-      reg.set(regEnv , cons(NIL,NIL));
-
-      prebind("+",      sub_add);
-      prebind("*",      sub_mul);
-      prebind("-",      sub_sub);
-      prebind("<",      sub_lt_p);
-      prebind("+0",     sub_add0);
-      prebind("+1",     sub_add1);
-      prebind("+3",     sub_add3);
-      prebind("cons",   sub_cons);
-      prebind("car",    sub_car);
-      prebind("cdr",    sub_cdr);
-      prebind("list",   sub_list);
-      prebind("if",     sub_if);
-      prebind("quote",  sub_quote);
-      prebind("define", sub_define);
-      prebind("lambda", sub_lambda);
-      prebind("equal?", sub_equal_p);
-      prebind("let",    sub_let);
-      prebind("begin",  sub_begin);
-      prebind("cond",   sub_cond);
-      prebind("case",   sub_case);
-      prebind("read",   sub_read);
-      if ( false )
-      {
-         prebind("print",sub_print);   // SICP, my preference from tradition
-      }
-      else
-      {
-         prebind("display",sub_print); // R5RS, Guile, Scsh, get off my lawn!
-      }
-      prebind("map",    sub_map);
    }
 
    private void prebind ( final String name, final int code )
@@ -195,8 +149,49 @@ public class JhwScm implements Firmware
       {
       case sub_init:
          // Initializes the machine and the environment, then
-         // calls the sub in reg.get(regArg0).
+         // transfers to the continuation in reg.get(regArg0).
          //
+         tmp0 = reg.get(regArg0);
+         for ( int i = 0; i < reg.length(); i++ )
+         {
+            reg.set(i,UNSPECIFIED);
+         }
+         reg.set(regArg0, tmp0);
+
+         reg.set(regStack,NIL);
+         reg.set(regError,NIL);
+
+         reg.set(regFreeCellList,NIL);
+
+         reg.set(regIn  , code(TYPE_IOBUF,0));
+         reg.set(regOut , code(TYPE_IOBUF,1));
+
+         reg.set(regEnv , cons(NIL,NIL));
+         
+         prebind("+",      sub_add);
+         prebind("*",      sub_mul);
+         prebind("-",      sub_sub);
+         prebind("<",      sub_lt_p);
+         prebind("+0",     sub_add0);
+         prebind("+1",     sub_add1);
+         prebind("+3",     sub_add3);
+         prebind("cons",   sub_cons);
+         prebind("car",    sub_car);
+         prebind("cdr",    sub_cdr);
+         prebind("list",   sub_list);
+         prebind("if",     sub_if);
+         prebind("quote",  sub_quote);
+         prebind("define", sub_define);
+         prebind("lambda", sub_lambda);
+         prebind("equal?", sub_equal_p);
+         prebind("let",    sub_let);
+         prebind("begin",  sub_begin);
+         prebind("cond",   sub_cond);
+         prebind("case",   sub_case);
+         prebind("read",   sub_read);
+         prebind("display",sub_print);
+         prebind("map",    sub_map);
+
          gosub(reg.get(regArg0),blk_tail_call);
          break;
 
