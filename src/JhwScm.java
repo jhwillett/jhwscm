@@ -41,17 +41,14 @@
  * All rights reserved.
  */
 
-public class JhwScm
+public class JhwScm implements Firmware
 {
    public static final boolean DEFER_HEAP_INIT           = true;
    public static final boolean PROPERLY_TAIL_RECURSIVE   = true;
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final int     SUCCESS          =  0;
-   //public static final int     PORT_CLOSED      = -1;
    public static final int     BAD_ARG          = -2;
-   public static final int     INCOMPLETE       = -3;
    public static final int     OUT_OF_MEMORY    = -4;
    public static final int     FAILURE_LEXICAL  = -5;
    public static final int     FAILURE_SEMANTIC = -6;
