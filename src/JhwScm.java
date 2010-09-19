@@ -261,7 +261,7 @@ public class JhwScm
     * PORT_CLOSED if close() has been called on the port, else the
     * number of bytes transferred from buf[off..n-1].
     */
-   public int input ( final byte[] buf, final int off, final int len ) 
+   public int input ( final byte[] buf, int off, final int len ) 
    {
       final boolean verb = true && !SILENT;
       if ( DEBUG ) javaDepth = 0;
@@ -299,7 +299,21 @@ public class JhwScm
       }
       if ( USE_IO_BUFFER )
       {
-         throw new RuntimeException("unimplemented");
+         final IOBuffer iobuf = buffers[0];
+         if ( null == buf )
+         {
+            return PORT_CLOSED;
+         }
+         final int max = DEBUG ? debugRand.nextInt(len+1) : len;
+         for ( int i = 0; i < max; ++i )
+         {
+            if ( iobuf.isFull() )
+            {
+               return i;
+            }
+            iobuf.push(buf[off++]);
+         }
+         return max;
       }
       if ( DEBUG && TYPE_CELL != type(reg.get(regIn)) )
       {
@@ -346,7 +360,7 @@ public class JhwScm
     * PORT_CLOSED if close() has been called on the port, else the
     * number of bytes transferred into buf[off..n-1].
     */
-   public int output ( final byte[] buf, final int off, final int len ) 
+   public int output ( final byte[] buf, int off, final int len ) 
    {
       final boolean verb = true && !SILENT;
       if ( DEBUG ) javaDepth = 0;
@@ -373,7 +387,21 @@ public class JhwScm
       }
       if ( USE_IO_BUFFER )
       {
-         throw new RuntimeException("unimplemented");
+         final IOBuffer iobuf = buffers[1];
+         if ( null == buf )
+         {
+            return PORT_CLOSED;
+         }
+         final int max = DEBUG ? debugRand.nextInt(len+1) : len;
+         for ( int i = 0; i < max; ++i )
+         {
+            if ( iobuf.isEmpty() )
+            {
+               return i;
+            }
+            buf[off++] = iobuf.pop();
+         }
+         return max;
       }
       if ( NIL == reg.get(regOut) )
       {
@@ -3047,7 +3075,6 @@ public class JhwScm
    {
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         if ( true ) throw new RuntimeException("bad cell in car: " + pp(cell));
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
@@ -3058,7 +3085,6 @@ public class JhwScm
    {
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
-         if ( true ) throw new RuntimeException("bad cell in cdr: " + pp(cell));
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
