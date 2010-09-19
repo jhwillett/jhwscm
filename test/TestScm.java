@@ -9,7 +9,6 @@
 import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
-import java.io.IOException;
 
 public class TestScm
 {
@@ -92,7 +91,6 @@ public class TestScm
    }
 
    public static void main ( final String[] argv )
-      throws java.io.IOException
    {
       ioEdgeCases();
 
@@ -1063,7 +1061,6 @@ public class TestScm
     * Special case cancelled.  TODO: clean up this comment.
     */
    private static void batch ( final Object[][] tests, final BatchType type )
-      throws java.io.IOException
    {
       numBatches++;
       JhwScm scm = null;
@@ -1080,7 +1077,6 @@ public class TestScm
       }
    }
 
-
    /**
     * If result is null, we expect driving to succeed but are
     * indifferent to the output.
@@ -1092,7 +1088,6 @@ public class TestScm
     * equal to result.
     */
    private static void expect ( final String expr, final Object result )
-      throws java.io.IOException
    {
       expect(expr,result,null);
    }
@@ -1110,7 +1105,6 @@ public class TestScm
    private static void expect ( final String expr,
                                 final Object result,
                                 JhwScm scm )
-      throws java.io.IOException
    {
       numExpects++;
       final int    expected_dcode;

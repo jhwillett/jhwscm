@@ -12,6 +12,19 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 084c4f8b4a3d5479c49ca164e6a3ed8b  test/TestScm.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
-test:   TestMem
+test:   TestIOBuffer
 host:   little-man
+TestIOBuffer
+  created
+  wrote: 0
+  wrote: 1
+  wrote: 2
+  wrote: 3
+  wrote: 4
+  wrote: 5
+  wrote: 6
+  wrote: 7
+  wrote: 8
+  wrote: 9
+  done writing
 make[1]: Leaving directory `/home/jwillett/jhwscm'

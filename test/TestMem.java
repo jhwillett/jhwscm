@@ -9,7 +9,6 @@
 import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
-import java.io.IOException;
 
 public class TestMem
 {
