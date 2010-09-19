@@ -11,7 +11,7 @@
 public class Computer
 {
    public final Machine  machine;
-   public final Firmware firmware;
+   public final JhwScm firmware; // TODO: to Firmware, after global+local think
 
    public static class Stats
    {
@@ -26,7 +26,7 @@ public class Computer
    private final boolean DEBUG;
 
    public Computer ( final Machine  machine,
-                     final Firmware firmware,
+                     final JhwScm firmware,
                      final boolean  PROFILE, 
                      final boolean  VERBOSE, 
                      final boolean  DEBUG )
@@ -36,5 +36,34 @@ public class Computer
       this.PROFILE = PROFILE;
       this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
+   }
+
+   /**
+    * Drives all pending computation to completion.
+    *
+    * @param numSteps the number of VM steps to execute
+    *
+    * @throws IllegalArgumentException if numSteps < 0
+    *
+    * @returns Firmware.SUCCESS on success, Firmware.INCOMPLETE if
+    * more cycles are needed, otherwise an error code.
+    */
+   public int drive ( final int numSteps )
+   {
+      if ( numSteps < 0 )
+      {
+         throw new IllegalArgumentException("neg numSteps: " + numSteps);
+      }
+      for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
+      {
+         if ( PROFILE ) local.numCycles  += 1;
+         if ( PROFILE ) global.numCycles += 1;
+         final int code = firmware.step();
+         if ( Firmware.INCOMPLETE != code )
+         {
+            return code;
+         }
+      }
+      return Firmware.INCOMPLETE;
    }
 }

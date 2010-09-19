@@ -48,7 +48,6 @@ public class JhwScm implements Firmware
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final int     BAD_ARG          = -2;
    public static final int     OUT_OF_MEMORY    = -4;
    public static final int     FAILURE_LEXICAL  = -5;
    public static final int     FAILURE_SEMANTIC = -6;
@@ -57,8 +56,7 @@ public class JhwScm implements Firmware
 
    public static class Stats
    {
-      public int numCycles = 0;
-      public int numCons   = 0;
+      public int numCons = 0;
    }
 
    public static final Stats global = new Stats();
@@ -176,45 +174,10 @@ public class JhwScm implements Firmware
    ////////////////////////////////////////////////////////////////////
 
    /**
-    * Drives all pending computation to completion.
-    *
-    * @param numSteps the number of VM steps to execute.  If numSteps
-    * < 0, runs to completion.
-    *
-    * @throws nothing, not ever
-    *
-    * @returns SUCCESS on success, INCOMPLETE if more cycles are
-    * needed, otherwise an error code.
+    * Drives a single step of computation.  
+    * 
+    * @returns SUCCESS, INCOMPLETE, or some other error code.
     */
-   public int drive ( final int numSteps )
-   {
-      final boolean verb = true && VERBOSE;
-
-      if ( DEBUG ) javaDepth = 0;
-      if ( verb ) log("drive():");
-      if ( DEBUG ) javaDepth = 1;
-      if ( verb ) log("numSteps: " + numSteps);
-
-      if ( numSteps < -1 )
-      {
-         return BAD_ARG;
-      }
-
-      for ( int step = 0; -1 == numSteps || step < numSteps; ++step )
-      {
-         if ( PROFILE ) local.numCycles  += 1;
-         if ( PROFILE ) global.numCycles += 1;
-         if ( DEBUG ) javaDepth = 1;
-         final int code = step();
-         if ( INCOMPLETE != code )
-         {
-            return code;
-         }
-      }
-
-      return INCOMPLETE;
-   }
-
    public int step ()
    {
       final boolean verb = true && VERBOSE;

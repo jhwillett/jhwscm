@@ -43,19 +43,24 @@ public class TestScm extends Util
    private static int numHappyExpects   = 0;
    private static int numUnhappyExpects = 0;
 
-   private static JhwScm newScm ( final boolean do_rep )
+   private static Computer newScm ( final boolean do_rep )
    {
-      final Machine machine = new Machine(PROFILE,VERBOSE,DEBUG);
-      final JhwScm  scm     = new JhwScm(machine,do_rep,PROFILE,VERBOSE,DEBUG);
-      return scm;
+      final Machine  mach = new Machine(PROFILE,VERBOSE,DEBUG);
+      final JhwScm   firm = new JhwScm(mach,do_rep,PROFILE,VERBOSE,DEBUG);
+      final Computer comp = new Computer(mach,firm,PROFILE,VERBOSE,DEBUG);
+      return comp;
    }
 
    private static void driveEdgeCases ()
    {
       assertEquals(JhwScm.INCOMPLETE,newScm(true).drive(0));
-      assertEquals(JhwScm.SUCCESS,   newScm(true).drive(-1)); // run-to-completion
-      assertEquals(JhwScm.BAD_ARG,   newScm(true).drive(-2));
-      assertEquals(JhwScm.BAD_ARG,   newScm(true).drive(-3));
+      try
+      {
+         newScm(true).drive(-1);
+      }
+      catch ( Throwable expected )
+      {
+      }
    }
 
    public static void main ( final String[] argv )
@@ -475,7 +480,7 @@ public class TestScm extends Util
       
       // defining symbols
       {
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect("(define a 100)","",   scm);
          expect("a",             "100",scm);
          expect("(define a 100)","",   scm);
@@ -489,7 +494,7 @@ public class TestScm extends Util
       expect("(define a 1)a(define a 2)a","12");
 
       {
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect("(define foo +)","",  scm);
          expect("(foo 13 18)",   "31",scm);
          expect("(foo 13 '())",SEMANTIC,      scm);
@@ -509,7 +514,7 @@ public class TestScm extends Util
       expect("((lambda (a) (* 3 a)) 13)",    "39");
       expect("((lambda (a b) (* a b)) 13 5)","65");
       {
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect("(define (foo a b) (+ a b))","",  scm);
          expect("(foo 13 18)",               "31",scm);
          expect("(foo 13 '())",SEMANTIC,                  scm);
@@ -527,7 +532,7 @@ public class TestScm extends Util
          // scale.
          final String fact = 
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect(fact,        "",       scm);
          expect("fact",      "???",    scm);
          expect("(fact -1)", "1",      scm);
@@ -539,14 +544,14 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         //report("fact simple:",scm.local,scm.machine.local);
+         report("fact simple:",scm.local,scm.firmware.local,scm.machine.local);
       }
       {
          final String help = 
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
          final String fact = 
             "(define (fact n) (help n 1))";
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect(fact,        "",       scm);
          expect(help,        "",       scm); // note, define help 2nd ;)
          expect("fact",      "???",    scm);
@@ -560,7 +565,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         //report("fact 2/ help:",scm.local,scm.machine.local);
+         report("fact 2/ help:",scm.local,scm.firmware.local,scm.machine.local);
       }
 
       {
@@ -578,7 +583,7 @@ public class TestScm extends Util
          //
          final String fib = 
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect(fib,"",scm);
          expect("fib","???",scm);
          expect("(fib 0)","0",scm);
@@ -604,7 +609,7 @@ public class TestScm extends Util
             // Takes like a minute...
             expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         //report("fib:",scm.local,scm.machine.local);
+         report("fib:",scm.local,scm.firmware.local,scm.machine.local);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -645,7 +650,7 @@ public class TestScm extends Util
          //
          // An overly simple early form of sub_let pushed frames onto
          // the env, but didn't pop them.
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect("(let ((a 10)) a)", "10", scm);
          expect("a",SEMANTIC,scm);
       }
@@ -669,7 +674,7 @@ public class TestScm extends Util
             "  (let ((help"                                                  +
             "        (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))))" +
             "    (help n 1)))";
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect(fact,       "",   scm);
          expect("fact",     "???",scm);
          expect("(fact -1)","1",  scm);
@@ -779,7 +784,7 @@ public class TestScm extends Util
       {
          // Are the nested-define defined symbols in scope of the
          // "real" body?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect("(define (a x) (define b 2) (+ x b))", "",    scm);
          expect("(a 10)",                              "12",  scm);
          expect("a",                                   "???", scm);
@@ -787,13 +792,13 @@ public class TestScm extends Util
       }
       {
          // Can we do more than one?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          expect("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expect("(f)","3",scm);
       }
       {
          // Can we do it for an inner helper function?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
@@ -811,7 +816,7 @@ public class TestScm extends Util
       }
       {
          // Do nested defines really act like (begin)?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String def = 
             "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
          expect(def,"",scm);
@@ -819,7 +824,7 @@ public class TestScm extends Util
       }
       {
          // Do nested defines really act like (begin) when we have args?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
          expect(def,"",scm);
@@ -828,7 +833,7 @@ public class TestScm extends Util
       }
       {
          // Are nested defines in one another's scope, in any order?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String F = 
             "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
          final String G = 
@@ -840,21 +845,21 @@ public class TestScm extends Util
       }
       {
          // What about defines in lambdas?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String def = 
             "((lambda (x) (define a 7) (+ x a)) 5)";
          expect(def,"12",scm);
       }
       {
          // What about closures?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String def = 
             "(((lambda (x) (lambda (y) (+ x y))) 10) 7)";
          expect(def,"17",scm);
       }
       {
          // What about closures?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String def = 
             "(define (f x) (lambda (y) (+ x y)))";
          expect(def,"",scm);
@@ -863,7 +868,7 @@ public class TestScm extends Util
       }
       {
          // What about closures?
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String def = 
             "(define (f x) (define (h y) (+ x y)) h)";
          expect(def,"",scm);
@@ -880,7 +885,7 @@ public class TestScm extends Util
 
       // check that map works w/ both builtins and user-defineds
       {
-         final JhwScm scm = newScm(true);
+         final Computer scm = newScm(true);
          final String def = "(define (f x) (+ x 10))";
          expect("(map display '())",      "()");     
          expect("(map display '(1 2 3))", "123(  )");
@@ -981,7 +986,7 @@ public class TestScm extends Util
       //
       // Weird.  So is it or is it not a symbol?
 
-      report("global:",JhwScm.global,Machine.global);
+      report("global:",Computer.global,JhwScm.global,Machine.global);
 
       log("numExpects: " + numExpects);
       log("  happy:    " + numHappyExpects);
@@ -1023,7 +1028,7 @@ public class TestScm extends Util
    private static void batch ( final Object[][] tests, final BatchType type )
    {
       numBatches++;
-      JhwScm scm = null;
+      Computer scm = null;
       for ( int i = 0; i < tests.length; ++i )
       {
          final Object[] test   =         tests[i];
@@ -1064,7 +1069,7 @@ public class TestScm extends Util
     */
    private static void expect ( final String expr,
                                 final Object result,
-                                JhwScm scm )
+                                Computer     scm )
    {
       numExpects++;
       final int    expected_dcode;
@@ -1111,7 +1116,19 @@ public class TestScm extends Util
       //
       // So we don't check dcode until after slurping output().
       //
-      final int dcode = scm.drive(-1);
+      final int dcode;
+      {
+         int code = 0;
+         while ( true )
+         {
+            code = scm.drive(debugRand.nextInt(100));
+            if ( Firmware.INCOMPLETE != code )
+            {
+               break;
+            }
+         }
+         dcode = code;
+      }
 
       final StringBuilder out = new StringBuilder();
       {
@@ -1152,13 +1169,14 @@ public class TestScm extends Util
       }
    }
 
-   private static void report ( final String        tag, 
-                                final JhwScm.Stats  ss,
-                                final Machine.Stats ms )
+   private static void report ( final String         tag, 
+                                final Computer.Stats cs,
+                                final JhwScm.Stats   ss,
+                                final Machine.Stats  ms )
    {
       if ( !PROFILE || !REPORT ) return;
       log(tag);
-      log("  numCycles:        " + ss.numCycles);
+      log("  numCycles:        " + cs.numCycles);
       log("  numCons:          " + ss.numCons);
       if ( true )
       {
