@@ -507,7 +507,7 @@ public class JhwScm
             //
             // (define (sub_read)
             //   (begin (sub_read_burn_space)
-            //          (let ((c (queue_peeek_front)))
+            //          (let ((c (port_peek)))
             //            (case c
             //              (( EOF ) EOF)
             //              (( #\) ) (err_lexical))
@@ -517,7 +517,7 @@ public class JhwScm
             gosub(sub_read_burn_space,sub_read+0x1);
             break;
          case sub_read+0x1:
-            reg.set(regTmp0, queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0, portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp0) )
             {
                reg.set(regRetval , EOF);
@@ -558,17 +558,17 @@ public class JhwScm
             // final ')'.
             //
             // (define (sub_read_list)
-            //   (if (!= #\( (queue_peek_front))
+            //   (if (!= #\( (port_peek))
             //       (err_lexical "expected open paren")
-            //       (begin (queue_pop_front)
+            //       (begin (port_pop)
             //              (sub_read_list_open))))
             //
-            if ( code(TYPE_CHAR,'(') != queuePeekFront(reg.get(regIn)) )
+            if ( code(TYPE_CHAR,'(') != portPeek(reg.get(regIn)) )
             {
                raiseError(ERR_LEXICAL);
                break;
             }
-            queuePopFront(reg.get(regIn));
+            portPop(reg.get(regIn));
             reg.set(regArg0 , FALSE);
             gosub(sub_read_list_open,blk_tail_call);
             break;
@@ -592,9 +592,9 @@ public class JhwScm
             //  
             // (define (sub_read_list_open)
             //   (burn-space)
-            //   (case (queue_peek_front)
+            //   (case (port_peek)
             //     ((eof) (error_lexical "eof in list expr"))
-            //     ((#\)  (begin (queue_peek_front) '()))
+            //     ((#\)  (begin (port_peek) '()))
             //     (else
             //       (let ((next (sub_read))
             //             (rest (sub_read_list_open))) ; wow, token lookahead!
@@ -614,7 +614,7 @@ public class JhwScm
             gosub(sub_read_burn_space,sub_read_list_open+0x1);
             break;
          case sub_read_list_open+0x1:
-            reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0 , portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp0) )
             {
                if ( verb ) log("eof in list expr");
@@ -624,7 +624,7 @@ public class JhwScm
             if ( code(TYPE_CHAR,')') == reg.get(regTmp0) )
             {
                if ( verb ) log("matching close-paren");
-               queuePopFront(reg.get(regIn));
+               portPop(reg.get(regIn));
                reg.set(regRetval , NIL);
                returnsub();
                break;
@@ -677,7 +677,7 @@ public class JhwScm
             // consumed from reg.get(regIn).
             //
             // (define (sub_read_atom)
-            //   (let ((c (queue_peek_front)))
+            //   (let ((c (port_peek)))
             //     (case c
             //       (( #\' ) (err_not_impl))
             //       (( #\" ) (sub_read_string))
@@ -685,15 +685,15 @@ public class JhwScm
             //       (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
             //        (sub_read_num))
             //       (( #\- ) (begin 
-            //                (queue_pop_front)
-            //                (let ((c (queue_peek_front)))
+            //                (port_pop)
+            //                (let ((c (port_peek)))
             //                  (case c
             //                    (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 )
             //                     (- (sub_read_num)))
             //                    (else (prepend #\- 
             //                                   (sub_read_symbol_body))))))))))
             //
-            reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0 , portPeek(reg.get(regIn)));
             if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
             {
                if ( verb ) log("non-char in input: " + pp(reg.get(regTmp0)));
@@ -704,7 +704,7 @@ public class JhwScm
             {
             case '\'':
                if ( verb ) log("quote (not belong here in sub_read_atom?)");
-               queuePopFront(reg.get(regIn));
+               portPop(reg.get(regIn));
                gosub(sub_read,sub_read_atom+0x3);
                break;
             case '"':
@@ -724,8 +724,8 @@ public class JhwScm
                // The minus sign is special.  We need to look ahead
                // *again* before we can decide whether it is part of a
                // symbol or part of a number.
-               queuePopFront(reg.get(regIn));
-               reg.set(regTmp2 , queuePeekFront(reg.get(regIn)));
+               portPop(reg.get(regIn));
+               reg.set(regTmp2 , portPeek(reg.get(regIn)));
                if ( TYPE_CHAR == type(reg.get(regTmp2)) && 
                     '0' <= value(reg.get(regTmp2))      && 
                     '9' >= value(reg.get(regTmp2))       )
@@ -818,7 +818,7 @@ public class JhwScm
             // A helper for sub_read_num, but still a sub_ in its own
             // right.
             //
-            reg.set(regTmp1 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp1 , portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp1) )
             {
                if ( verb ) log("eof: returning " + pp(reg.get(regArg0)));
@@ -862,7 +862,7 @@ public class JhwScm
                if ( verb ) log("first char: " + (char)value(reg.get(regTmp1)));
                if ( verb ) log("old accum:  " +       value(reg.get(regTmp2)));
                if ( verb ) log("new accum:  " +       tmp0);
-               queuePopFront(reg.get(regIn));
+               portPop(reg.get(regIn));
                reg.set(regArg0 , code(TYPE_FIXINT,tmp0));
                gosub(sub_read_num_loop,blk_tail_call);
                break;
@@ -872,14 +872,14 @@ public class JhwScm
          case sub_read_octo_tok:
             // Parses the next octothorpe literal reg.get(regIn).
             //
-            reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0 , portPeek(reg.get(regIn)));
             if ( reg.get(regTmp0) != code(TYPE_CHAR,'#') )
             {
                raiseError(ERR_INTERNAL);
                break;
             }
-            queuePopFront(reg.get(regIn));
-            reg.set(regTmp1 , queuePeekFront(reg.get(regIn)));
+            portPop(reg.get(regIn));
+            reg.set(regTmp1 , portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp1) )
             {
                if ( verb ) log("eof after octothorpe");
@@ -892,7 +892,7 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            queuePopFront(reg.get(regIn));
+            portPop(reg.get(regIn));
             switch (value(reg.get(regTmp1)))
             {
             case 't':
@@ -906,7 +906,7 @@ public class JhwScm
                returnsub();
                break;
             case '\\':
-               reg.set(regTmp2 , queuePeekFront(reg.get(regIn)));
+               reg.set(regTmp2 , portPeek(reg.get(regIn)));
                if ( EOF == reg.get(regTmp2) )
                {
                   if ( verb ) log("eof after octothorpe slash");
@@ -920,7 +920,7 @@ public class JhwScm
                   break;
                }
                if ( verb ) log("character literal: " + pp(reg.get(regTmp2)));
-               queuePopFront(reg.get(regIn));
+               portPop(reg.get(regIn));
                reg.set(regRetval , reg.get(regTmp2));
                returnsub();
                // TODO: so far, we only handle the 1-char sequences...
@@ -974,7 +974,7 @@ public class JhwScm
             // input will be the character immediately following the
             // end of the symbol.
             //
-            reg.set(regTmp1, queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp1, portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp1) )
             {
                if ( verb ) log("eof: returning");
@@ -1001,7 +1001,7 @@ public class JhwScm
                returnsub();
                break;
             default:
-               queuePopFront(reg.get(regIn));
+               portPop(reg.get(regIn));
                store(reg.get(regTmp1));
                gosub(sub_read_symbol_body,blk_tail_call_m_cons);
                break;
@@ -1014,24 +1014,24 @@ public class JhwScm
             // Expects that the next character in the input is known
             // to be the leading '"' of a string literal.
             //
-            reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0 , portPeek(reg.get(regIn)));
             if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
             {
                log("non-\" leading string literal: " + pp(reg.get(regTmp0)));
                raiseError(ERR_LEXICAL);
                break;
             }
-            queuePopFront(reg.get(regIn));
+            portPop(reg.get(regIn));
             gosub(sub_read_string_body,sub_read_string+0x1);
             break;
          case sub_read_string+0x1:
-            reg.set(regTmp0   , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0   , portPeek(reg.get(regIn)));
             if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
             {
                raiseError(ERR_LEXICAL);
                break;
             }
-            queuePopFront(reg.get(regIn));
+            portPop(reg.get(regIn));
             reg.set(regRetval , cons(IS_STRING,reg.get(regRetval)));
             returnsub();
             break;
@@ -1052,7 +1052,7 @@ public class JhwScm
             // consumed from the input, and the next character in the
             // input will be the trailing \".
             //
-            reg.set(regTmp1 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp1 , portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp1) )
             {
                log("eof in string literal");
@@ -1072,7 +1072,7 @@ public class JhwScm
                returnsub();
                break;
             default:
-               queuePopFront(reg.get(regIn));
+               portPop(reg.get(regIn));
                store(reg.get(regTmp1));
                gosub(sub_read_string_body,blk_tail_call_m_cons);
                break;
@@ -1084,7 +1084,7 @@ public class JhwScm
             //
             // Returns UNSPECIFIED.
             //
-            reg.set(regTmp0 , queuePeekFront(reg.get(regIn)));
+            reg.set(regTmp0 , portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp0) )
             {
                reg.set(regRetval , UNSPECIFIED);
@@ -1097,7 +1097,7 @@ public class JhwScm
             case '\t':
             case '\r':
             case '\n':
-               queuePopFront(reg.get(regIn));
+               portPop(reg.get(regIn));
                gosub(sub_read_burn_space,blk_tail_call);
                break;
             default:
@@ -2066,14 +2066,14 @@ public class JhwScm
                   gosub(sub_print_list,blk_tail_call);
                   break;
                case TRUE:
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'#'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'t'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'t'));
                   reg.set(regRetval , UNSPECIFIED);
                   returnsub();
                   break;
                case FALSE:
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'#'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'f'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'f'));
                   reg.set(regRetval , UNSPECIFIED);
                   returnsub();
                   break;
@@ -2097,9 +2097,9 @@ public class JhwScm
                   gosub(sub_print_chars,blk_tail_call);
                   break;
                case IS_PROCEDURE:
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'?'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'?'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'?'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
                   reg.set(regRetval , UNSPECIFIED);
                   returnsub();
                   break;
@@ -2110,28 +2110,28 @@ public class JhwScm
                }
                break;
             case TYPE_CHAR:
-               queuePushBack(reg.get(regOut),code(TYPE_CHAR,'#'));
-               queuePushBack(reg.get(regOut),code(TYPE_CHAR,'\\'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'\\'));
                switch (value(reg.get(regTmp0)))
                {
                case ' ':
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'s'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'p'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'a'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'c'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'e'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'s'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'a'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'c'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
                   break;
                case '\n':
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'n'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'e'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'w'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'l'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'i'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'n'));
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'e'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'w'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'l'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'i'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
                   break;
                default:
-                  queuePushBack(reg.get(regOut),reg.get(regTmp0));
+                  portPush(reg.get(regOut),reg.get(regTmp0));
                   break;
                }
                reg.set(regRetval , UNSPECIFIED);
@@ -2144,12 +2144,12 @@ public class JhwScm
                reg.set(regTmp1 , value_fixint(reg.get(regTmp0)));
                if ( reg.get(regTmp1) < 0 )
                {
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'-'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'-'));
                   reg.set(regTmp1 , -reg.get(regTmp1));
                }
                if ( reg.get(regTmp1) == 0 )
                {
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'0'));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'0'));
                   returnsub();
                   break;
                }
@@ -2163,7 +2163,7 @@ public class JhwScm
                   final int digit  = reg.get(regTmp1)/factor;
                   reg.set(regTmp1  , reg.get(regTmp1) - digit * factor);
                   factor          /= 10;
-                  queuePushBack(reg.get(regOut),code(TYPE_CHAR,'0'+digit));
+                  portPush(reg.get(regOut),code(TYPE_CHAR,'0'+digit));
                }
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
@@ -2176,9 +2176,9 @@ public class JhwScm
                //
                // In the mean time, this is sufficient to meet spec.
                //
-               queuePushBack(reg.get(regOut),code(TYPE_CHAR,'?'));
-               queuePushBack(reg.get(regOut),code(TYPE_CHAR,'p'));
-               queuePushBack(reg.get(regOut),code(TYPE_CHAR,'?'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
+               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
@@ -2193,11 +2193,11 @@ public class JhwScm
             // expected to all be TYPE_CHAR, to reg.get(regOut) in
             // double-quotes.
             //
-            queuePushBack(reg.get(regOut),code(TYPE_CHAR,'"'));
+            portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
             gosub(sub_print_chars,sub_print_string+0x1);
             break;
          case sub_print_string+0x1:
-            queuePushBack(reg.get(regOut),code(TYPE_CHAR,'"'));
+            portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
             reg.set(regRetval , UNSPECIFIED);
             returnsub();
             break;
@@ -2226,7 +2226,7 @@ public class JhwScm
                raiseError(ERR_INTERNAL);
                break;
             }
-            queuePushBack(reg.get(regOut),reg.get(regTmp1));
+            portPush(reg.get(regOut),reg.get(regTmp1));
             reg.set(regArg0 , reg.get(regTmp2));
             gosub(sub_print_chars,blk_tail_call);
             break;
@@ -2237,11 +2237,11 @@ public class JhwScm
             //
             reg.set(regArg0 , reg.get(regArg0));
             reg.set(regArg1 , TRUE);
-            queuePushBack(reg.get(regOut),code(TYPE_CHAR,'('));
+            portPush(reg.get(regOut),code(TYPE_CHAR,'('));
             gosub(sub_print_list_elems,sub_print_list+0x1);
             break;
          case sub_print_list+0x1:
-            queuePushBack(reg.get(regOut),code(TYPE_CHAR,')'));
+            portPush(reg.get(regOut),code(TYPE_CHAR,')'));
             reg.set(regRetval , UNSPECIFIED);
             returnsub();
             break;
@@ -2265,7 +2265,7 @@ public class JhwScm
             }
             if ( FALSE == reg.get(regArg1) )
             {
-               queuePushBack(reg.get(regOut),code(TYPE_CHAR,' '));
+               portPush(reg.get(regOut),code(TYPE_CHAR,' '));
             }
             store(reg.get(regArg0));
             reg.set(regTmp0 , car(reg.get(regArg0)));
@@ -2293,9 +2293,9 @@ public class JhwScm
          case sub_print_list_elems+0x2:
             reg.set(regTmp0 , restore());
             reg.set(regArg0 , cdr(reg.get(regTmp0)));
-            queuePushBack(reg.get(regOut),code(TYPE_CHAR,' '));
-            queuePushBack(reg.get(regOut),code(TYPE_CHAR,'.'));
-            queuePushBack(reg.get(regOut),code(TYPE_CHAR,' '));
+            portPush(reg.get(regOut),code(TYPE_CHAR,' '));
+            portPush(reg.get(regOut),code(TYPE_CHAR,'.'));
+            portPush(reg.get(regOut),code(TYPE_CHAR,' '));
             gosub(sub_print,blk_tail_call);
             break;
 
@@ -2734,13 +2734,6 @@ public class JhwScm
    // containing a pointer to the next cell.  NIL is used to indicate
    // the empty list.
    // 
-   // A queue is implemented as a cell.  If the queue is empty, both
-   // slots in the cell are NIL.  Otherwise, the first slot points to
-   // the first cell of a list, and the second slot points to the last
-   // cell of the same list.  While more complex than a simple list,
-   // this makes it easier to extend the queue either at the front or
-   // at the back.
-   // 
    // I have deliberately chosen for the bit pattern 0x00000000 to
    // always be invalid in any slot: it doesn't mean 0, NIL, the empty
    // list, false, or anything else.  Although I rule out some cute
@@ -2837,8 +2830,8 @@ public class JhwScm
 
    private static final int regEnv              =   6; // list of env frames
 
-   private static final int regIn               =   7; // input char queue
-   private static final int regOut              =   8; // output char queue
+   private static final int regIn               =   7; // input port
+   private static final int regOut              =   8; // output port
 
    private static final int regRetval           =   9; // return value
 
@@ -3056,32 +3049,40 @@ public class JhwScm
 
    ////////////////////////////////////////////////////////////////////
    //
-   // encoding queues
+   // encoding ports
    //
    ////////////////////////////////////////////////////////////////////
 
    /**
-    * Pushes value onto the back of the queue.
+    * Pushes value onto the back of the port.
     * 
-    * Leaves the queue unchanged in the event of any error.
+    * Value must be a TYPE_CHAR.
+    * 
+    * Leaves the port unchanged in the event of any error.
     */
-   private void queuePushBack ( final int queue, final int value )
+   private void portPush ( final int port, final int value )
    {
       final boolean verb = true;
-      if ( DEBUG && TYPE_IOBUF != type(queue) ) 
+      if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
-         if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
+         if ( verb ) log("  portPush(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
+      if ( DEBUG && TYPE_CHAR != type(value) ) 
       {
-         if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
+         if ( verb ) log("  portPush(): non-char " + pp(value));
          raiseError(ERR_INTERNAL);
          return;
       }
-      final IOBuffer iobuf = buffers[value(queue)];
-      if ( verb ) log("  queuePushBack(): iobuf: " + iobuf);
+      if ( DEBUG && ( 0 > value(port) || value(port) >= buffers.length ) )
+      {
+         if ( verb ) log("  portPush(): non-iobuf " + pp(port));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      final IOBuffer iobuf = buffers[value(port)];
+      if ( verb ) log("  portPush(): iobuf: " + iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
       // add close() it'll be EOF when null, and an empty buffer
@@ -3092,44 +3093,44 @@ public class JhwScm
       //
       if ( null == iobuf )
       {
-         if ( verb ) log("  queuePushBack(): closed");
+         if ( verb ) log("  portPush(): closed");
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( iobuf.isFull() )
       {
          // TODO: suspend
-         if ( verb ) log("  queuePushBack(): full");
+         if ( verb ) log("  portPush(): full");
          raiseError(ERR_NOT_IMPL);
          return;
       }
-      if ( verb ) log("  queuePushBack(): value:  " + pp(value));
+      if ( verb ) log("  portPush(): value:  " + pp(value));
       final int decode = value(value);
-      if ( verb ) log("  queuePushBack(): decode: " + decode);
+      if ( verb ) log("  portPush(): decode: " + decode);
       iobuf.push((byte)decode);
       return;
    }
 
    /**
-    * Removes the object at the front of the queue (in which case the
-    * queue is mutated to remove the object).
+    * Removes the object at the front of the port (in which case the
+    * port is mutated to remove the object).
     */
-   private void queuePopFront ( final int queue )
+   private void portPop ( final int port )
    {
       final boolean verb = true;
-      if ( DEBUG && TYPE_IOBUF != type(queue) ) 
+      if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
-         if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
+         if ( verb ) log("  portPop(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
+      if ( DEBUG && ( 0 > value(port) || value(port) >= buffers.length ) )
       {
-         if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
+         if ( verb ) log("  portPop(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
-      final IOBuffer iobuf = buffers[value(queue)];
+      final IOBuffer iobuf = buffers[value(port)];
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
       // add close() it'll be EOF when null, and an empty buffer
@@ -3140,42 +3141,42 @@ public class JhwScm
       //
       if ( null == iobuf )
       {
-         if ( verb ) log("  queuePopFront(): closed");
+         if ( verb ) log("  portPop(): closed");
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( iobuf.isEmpty() )
       {
          // TODO: suspend
-         if ( verb ) log("  queuePopFront(): empty");
+         if ( verb ) log("  portPop(): empty");
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( verb ) log("  queuePopFront(): popping");
+      if ( verb ) log("  portPop(): popping");
       iobuf.pop();
       return;
    }
 
    /**
-    * @returns the object at the front of the queue, or EOF if empty
+    * @returns the object at the front of the port, or EOF if empty
     */
-   private int queuePeekFront ( final int queue )
+   private int portPeek ( final int port )
    {
       final boolean verb = true;
-      if ( DEBUG && TYPE_IOBUF != type(queue) ) 
+      if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
-         if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+         if ( verb ) log("  portPeek(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
-      if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
+      if ( DEBUG && ( 0 > value(port) || value(port) >= buffers.length ) )
       {
-         if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+         if ( verb ) log("  portPeek(): non-iobuf " + pp(port));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
-      final IOBuffer iobuf = buffers[value(queue)];
-      if ( verb ) log("  queuePeekFront(): iobuf " + iobuf);
+      final IOBuffer iobuf = buffers[value(port)];
+      if ( verb ) log("  portPeek(): iobuf " + iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
       // add close() it'll be EOF when null, and an empty buffer
@@ -3186,20 +3187,20 @@ public class JhwScm
       //
       if ( null == iobuf )
       {
-         if ( verb ) log("  queuePeekFront(): closed");
+         if ( verb ) log("  portPeek(): closed");
          return EOF;
       }
       if ( iobuf.isEmpty() )
       {
          // TODO: suspend
-         if ( verb ) log("  queuePeekFront(): empty");
+         if ( verb ) log("  portPeek(): empty");
          return EOF;
       }
       final int value = iobuf.peek();
-      if ( verb ) log("  queuePeekFront(): value: " + value);
-      if ( verb ) log("  queuePeekFront(): value: " + (char)value);
+      if ( verb ) log("  portPeek(): value: " + value);
+      if ( verb ) log("  portPeek(): value: " + (char)value);
       final int code  = code(TYPE_CHAR,value);
-      if ( verb ) log("  queuePeekFront(): code:  " + pp(code));
+      if ( verb ) log("  portPeek(): code:  " + pp(code));
       return code;
    }
       
