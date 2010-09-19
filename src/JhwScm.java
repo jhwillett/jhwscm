@@ -51,8 +51,6 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final boolean USE_IO_BUFFER             = true;
-
    public static final boolean USE_PAGED_MEM             = false;
    public static final int     PAGE_SIZE                 = 1024;
    public static final int     PAGE_COUNT                = 6; // need 512 unopt
@@ -168,21 +166,14 @@ public class JhwScm
       reg.set(regFreeCellList,NIL);
 
       reg.set(regPc  , doREP ? sub_rep : sub_rp);
-      if ( USE_IO_BUFFER )
-      {
-         this.buffers = new IOBuffer[] { 
-            new IOBuffer(1024), 
-            new IOBuffer(1024) 
-         };
-         reg.set(regIn  , code(TYPE_IOBUF,0));
-         reg.set(regOut , code(TYPE_IOBUF,1));
-      }
-      else
-      {
-         this.buffers = null;
-         reg.set(regIn  , queueCreate());
-         reg.set(regOut , queueCreate());
-      }
+
+      this.buffers = new IOBuffer[] { 
+         new IOBuffer(1024), 
+         new IOBuffer(1024) 
+      };
+      reg.set(regIn  , code(TYPE_IOBUF,0));
+      reg.set(regOut , code(TYPE_IOBUF,1));
+
       reg.set(regEnv , cons(NIL,NIL));
 
       prebind("+",      sub_add);
@@ -289,10 +280,6 @@ public class JhwScm
          if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
-      if ( NIL == reg.get(regIn) )
-      {
-         return PORT_CLOSED;
-      }
       if ( NIL != reg.get(regError) )
       {
          // What we're doing here is saying "can't accept input on a
@@ -300,57 +287,26 @@ public class JhwScm
          // "encountered an error processing this input".
          return 0;
       }
-      if ( USE_IO_BUFFER )
+      final IOBuffer iobuf = buffers[0];
+      if ( null == buf )
       {
-         final IOBuffer iobuf = buffers[0];
-         if ( null == buf )
-         {
-            return PORT_CLOSED;
-         }
-         final int max = DEBUG ? debugRand.nextInt(len+1) : len;
-         for ( int i = 0; i < max; ++i )
-         {
-            if ( iobuf.isFull() )
-            {
-               return i;
-            }
-            final byte b = buf[off++];
-            if ( verb ) log("input(): pushing byte " + b);
-            if ( verb ) log("input(): pushing char " + (char)b);
-            iobuf.push(b);
-            if ( PROFILE ) local.numInput++;
-            if ( PROFILE ) global.numInput++;
-         }
-         return max;
+         return PORT_CLOSED;
       }
-      if ( DEBUG && TYPE_CELL != type(reg.get(regIn)) )
+      final int max = DEBUG ? debugRand.nextInt(len+1) : len;
+      for ( int i = 0; i < max; ++i )
       {
-         raiseError(ERR_INTERNAL);
-         return INTERNAL_ERROR;
-      }
-      final int num    = DEBUG ? debugRand.nextInt(len+1) : len;
-      final int oldCar = car(reg.get(regIn));
-      final int oldCdr = car(reg.get(regIn));
-      for ( int i = 0; i < num; ++i )
-      {
-         final byte b = buf[off+i];
-         queuePushBack(reg.get(regIn),code(TYPE_CHAR,0xFF&b));
-         if ( ERR_OOM == reg.get(regError) )
+         if ( iobuf.isFull() )
          {
-            // We back up to where we were before the OO, in
-            // anticipation of subsequent calls to drive() hopefully
-            // freeing something up and recovering.
-            resumeErrorContinuation();
             return i;
          }
-         if ( NIL != reg.get(regError) )
-         {
-            return internal2external(reg.get(regError));
-         }
+         final byte b = buf[off++];
+         if ( verb ) log("input(): pushing byte " + b);
+         if ( verb ) log("input(): pushing char " + (char)b);
+         iobuf.push(b);
          if ( PROFILE ) local.numInput++;
          if ( PROFILE ) global.numInput++;
       }
-      return num;
+      return max;
    }
 
    /**
@@ -392,71 +348,36 @@ public class JhwScm
          if ( verb ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
-      if ( USE_IO_BUFFER )
-      {
-         final IOBuffer iobuf = buffers[1];
-         if ( null == buf )
-         {
-            return PORT_CLOSED;
-         }
-         final int max = DEBUG ? debugRand.nextInt(len+1) : len;
-         for ( int i = 0; i < max; ++i )
-         {
-            if ( iobuf.isEmpty() )
-            {
-               if ( 0 == i )
-               {
-                  if ( verb ) log("output(): empty and done");
-                  return -1;
-               }
-               else
-               {
-                  if ( verb ) log("output(): empty, but shifted: " + i);
-                  return i;
-               }
-            }
-            final byte b = iobuf.pop();
-            buf[off++] = b;
-            if ( verb ) log("output(): popped byte " + b);
-            if ( verb ) log("output(): popped char " + (char)b);
-            if ( PROFILE ) local.numOutput++;
-            if ( PROFILE ) global.numOutput++;
-         }
-         if ( verb ) log("output(): shifted: " + max);
-         return max;
-      }
-      if ( NIL == reg.get(regOut) )
+      final IOBuffer iobuf = buffers[1];
+      if ( null == buf )
       {
          return PORT_CLOSED;
       }
-      for ( int i = 0; i < len; ++i )
+      final int max = DEBUG ? debugRand.nextInt(len+1) : len;
+      for ( int i = 0; i < max; ++i )
       {
-         if ( DEBUG && debugRand.nextInt(100) < STRESS_OUTPUT_PERCENT )
+         if ( iobuf.isEmpty() )
          {
-            if ( verb ) log("output(): stress: " + i);
-            return i;
-         }
-         final int f = queuePeekFront(reg.get(regOut));
-         if ( EOF == f )
-         {
-            if ( verb ) log("output(): eof: " + i);
             if ( 0 == i )
             {
+               if ( verb ) log("output(): empty and done");
                return -1;
             }
             else
             {
+               if ( verb ) log("output(): empty, but shifted: " + i);
                return i;
             }
          }
-         buf[off+i] = (byte)value(f);
-         if ( verb ) log("output(): popping: " + (char)buf[off+i] + " at " + (off+i) );
-         queuePopFront(reg.get(regOut));
+         final byte b = iobuf.pop();
+         buf[off++] = b;
+         if ( verb ) log("output(): popped byte " + b);
+         if ( verb ) log("output(): popped char " + (char)b);
          if ( PROFILE ) local.numOutput++;
          if ( PROFILE ) global.numOutput++;
       }
-      if ( verb ) log("output(): done: " + len);
-      return len;
+      if ( verb ) log("output(): shifted: " + max);
+      return max;
    }
 
    /**
@@ -3139,17 +3060,6 @@ public class JhwScm
    //
    ////////////////////////////////////////////////////////////////////
 
-   private int queueCreate ()
-   {
-      if ( USE_IO_BUFFER )
-      {
-         throw new RuntimeException("dead code");
-      }
-      final int queue = cons(NIL,NIL);
-      if ( false ) log("  queueCreate(): returning " + pp(queue));
-      return queue;
-   }
-
    /**
     * Pushes value onto the back of the queue.
     * 
@@ -3158,109 +3068,46 @@ public class JhwScm
    private void queuePushBack ( final int queue, final int value )
    {
       final boolean verb = true;
-      if ( USE_IO_BUFFER )
+      if ( DEBUG && TYPE_IOBUF != type(queue) ) 
       {
-         if ( DEBUG && TYPE_IOBUF != type(queue) ) 
-         {
-            if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-         if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
-         {
-            if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-         final IOBuffer iobuf = buffers[value(queue)];
-         if ( verb ) log("  queuePushBack(): iobuf: " + iobuf);
-         //
-         // TODO: for now, an iobuf is EOF if empty, but later when we
-         // add close() it'll be EOF when null, and an empty buffer
-         // means we need to suspend processing.
-         //
-         // So we check for both conditions here.  Later on, it'll be
-         // the isFull() clause which changes, not the null clause.
-         //
-         if ( null == iobuf )
-         {
-            if ( verb ) log("  queuePushBack(): closed");
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-         if ( iobuf.isFull() )
-         {
-            // TODO: suspend
-            if ( verb ) log("  queuePushBack(): full");
-            raiseError(ERR_NOT_IMPL);
-            return;
-         }
-         if ( verb ) log("  queuePushBack(): value:  " + pp(value));
-         final int decode = value(value);
-         if ( verb ) log("  queuePushBack(): decode: " + decode);
-         iobuf.push((byte)decode);
-         return;
-      }
-      final int queue_t = type(queue);
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verb ) log("  queuePushBack(): non-queue " + pp(queue));
+         if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && EOF == value ) 
+      if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
       {
-         // EOF cannot go in queues, lest it confuse the return value
-         // channel in one of the peeks or pops.
-         if ( verb ) log("  queuePushBack(): EOF");
+         if ( verb ) log("  queuePushBack(): non-iobuf " + pp(queue));
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && TYPE_CHAR != type(value) ) 
+      final IOBuffer iobuf = buffers[value(queue)];
+      if ( verb ) log("  queuePushBack(): iobuf: " + iobuf);
+      //
+      // TODO: for now, an iobuf is EOF if empty, but later when we
+      // add close() it'll be EOF when null, and an empty buffer
+      // means we need to suspend processing.
+      //
+      // So we check for both conditions here.  Later on, it'll be
+      // the isFull() clause which changes, not the null clause.
+      //
+      if ( null == iobuf )
       {
-         // OK, this is BS: I haven't decided for queues to be only of
-         // characters.  But so far I'm only using them as such ...
-         if ( verb ) log("  queuePushBack(): non-char " + pp(value));
+         if ( verb ) log("  queuePushBack(): closed");
          raiseError(ERR_INTERNAL);
          return;
       }
-
-      final int new_cell = cons(value,NIL);
-      if ( NIL == new_cell )
+      if ( iobuf.isFull() )
       {
-         if ( verb ) log("  queuePushBack(): oom");
-         return; // avoid further damage
-      }
-
-      // INVARIANT: head and tail are both NIL (e.g. empty) or they
-      // are both cells!
-      final int h = car(queue);
-      final int t = cdr(queue);
-
-      if ( NIL == h || NIL == t )
-      {
-         if ( NIL != h || NIL != t )
-         {
-            if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
-            raiseError(ERR_INTERNAL); // corrupt queue
-            return;
-         }
-         if ( verb ) log("  queuePushBack(): pushing to empty " + pp(value));
-         setcar(queue,new_cell);
-         setcdr(queue,new_cell);
+         // TODO: suspend
+         if ( verb ) log("  queuePushBack(): full");
+         raiseError(ERR_NOT_IMPL);
          return;
       }
-
-      if ( (TYPE_CELL != type(h)) || (TYPE_CELL != type(t)) )
-      {
-         if ( verb ) log("  queuePushBack(): bad " + pp(h) + " " + pp(t));
-         raiseError(ERR_INTERNAL); // corrupt queue
-         return;
-      }
-
-      if ( verb ) log("  queuePushBack(): pushing to nonempty " + pp(value));
-      setcdr(t,    new_cell);
-      setcdr(queue,new_cell);
+      if ( verb ) log("  queuePushBack(): value:  " + pp(value));
+      final int decode = value(value);
+      if ( verb ) log("  queuePushBack(): decode: " + decode);
+      iobuf.push((byte)decode);
+      return;
    }
 
    /**
@@ -3270,70 +3117,43 @@ public class JhwScm
    private void queuePopFront ( final int queue )
    {
       final boolean verb = true;
-      if ( USE_IO_BUFFER )
+      if ( DEBUG && TYPE_IOBUF != type(queue) ) 
       {
-         if ( DEBUG && TYPE_IOBUF != type(queue) ) 
-         {
-            if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-         if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
-         {
-            if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-         final IOBuffer iobuf = buffers[value(queue)];
-         //
-         // TODO: for now, an iobuf is EOF if empty, but later when we
-         // add close() it'll be EOF when null, and an empty buffer
-         // means we need to suspend processing.
-         //
-         // So we check for both conditions here.  Later on, it'll be
-         // the isEmpty() clause which changes, not the null clause.
-         //
-         if ( null == iobuf )
-         {
-            if ( verb ) log("  queuePopFront(): closed");
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-         if ( iobuf.isEmpty() )
-         {
-            // TODO: suspend
-            if ( verb ) log("  queuePopFront(): empty");
-            raiseError(ERR_INTERNAL);
-            return;
-         }
-         if ( verb ) log("  queuePopFront(): popping");
-         iobuf.pop();
-         return;
-      }
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verb ) log("  queuePopFront(): non-queue " + pp(queue));
+         if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
          raiseError(ERR_INTERNAL);
          return;
       }
-      final int head = car(queue);
-      if ( NIL == head )
+      if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
       {
-         if ( verb ) log("  queuePopFront(): empty " + pp(queue));
+         if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
+         raiseError(ERR_INTERNAL);
          return;
       }
-      if ( TYPE_CELL != type(head) ) 
+      final IOBuffer iobuf = buffers[value(queue)];
+      //
+      // TODO: for now, an iobuf is EOF if empty, but later when we
+      // add close() it'll be EOF when null, and an empty buffer
+      // means we need to suspend processing.
+      //
+      // So we check for both conditions here.  Later on, it'll be
+      // the isEmpty() clause which changes, not the null clause.
+      //
+      if ( null == iobuf )
       {
-         if ( verb ) log("  queuePopFront(): corrupt queue " + pp(head));
-         raiseError(ERR_INTERNAL); // corrupt queue
+         if ( verb ) log("  queuePopFront(): closed");
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( iobuf.isEmpty() )
+      {
+         // TODO: suspend
+         if ( verb ) log("  queuePopFront(): empty");
+         raiseError(ERR_INTERNAL);
          return;
       }
       if ( verb ) log("  queuePopFront(): popping");
-      setcar(queue,cdr(head));
-      if ( NIL == car(queue) )
-      {
-         setcdr(queue,NIL);
-      }
+      iobuf.pop();
+      return;
    }
 
    /**
@@ -3342,70 +3162,47 @@ public class JhwScm
    private int queuePeekFront ( final int queue )
    {
       final boolean verb = true;
-      if ( USE_IO_BUFFER )
+      if ( DEBUG && TYPE_IOBUF != type(queue) ) 
       {
-         if ( DEBUG && TYPE_IOBUF != type(queue) ) 
-         {
-            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
-            raiseError(ERR_INTERNAL);
-            return EOF;
-         }
-         if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
-         {
-            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
-            raiseError(ERR_INTERNAL);
-            return EOF;
-         }
-         final IOBuffer iobuf = buffers[value(queue)];
-         if ( verb ) log("  queuePeekFront(): iobuf " + iobuf);
-         //
-         // TODO: for now, an iobuf is EOF if empty, but later when we
-         // add close() it'll be EOF when null, and an empty buffer
-         // means we need to suspend processing.
-         //
-         // So we check for both conditions here.  Later on, it'll be
-         // the isEmpty() clause which changes, not the null clause.
-         //
-         if ( null == iobuf )
-         {
-            if ( verb ) log("  queuePeekFront(): closed");
-            return EOF;
-         }
-         if ( iobuf.isEmpty() )
-         {
-            // TODO: suspend
-            if ( verb ) log("  queuePeekFront(): empty");
-            return EOF;
-         }
-         final int value = iobuf.peek();
-         if ( verb ) log("  queuePeekFront(): value: " + value);
-         if ( verb ) log("  queuePeekFront(): value: " + (char)value);
-         final int code  = code(TYPE_CHAR,value);
-         if ( verb ) log("  queuePeekFront(): code:  " + pp(code));
-         return code;
-      }
-      if ( DEBUG && TYPE_CELL != type(queue) ) 
-      {
-         if ( verb ) log("  queuePeekFront(): non-queue " + pp(queue));
+         if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
-      final int head = car(queue);
-      if ( NIL == head )
+      if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
       {
-         if ( verb ) log("  queuePeekFront(): empty " + pp(queue));
+         if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+         raiseError(ERR_INTERNAL);
          return EOF;
       }
-      if ( TYPE_CELL != type(head) ) 
+      final IOBuffer iobuf = buffers[value(queue)];
+      if ( verb ) log("  queuePeekFront(): iobuf " + iobuf);
+      //
+      // TODO: for now, an iobuf is EOF if empty, but later when we
+      // add close() it'll be EOF when null, and an empty buffer
+      // means we need to suspend processing.
+      //
+      // So we check for both conditions here.  Later on, it'll be
+      // the isEmpty() clause which changes, not the null clause.
+      //
+      if ( null == iobuf )
       {
-         if ( verb ) log("  queuePeekFront(): corrupt queue " + pp(head));
-         raiseError(ERR_INTERNAL); // corrupt queue
+         if ( verb ) log("  queuePeekFront(): closed");
          return EOF;
       }
-      final int value = car(head);
-      if ( verb ) log("  queuePeekFront(): peeked " + pp(value));
-      return value;
+      if ( iobuf.isEmpty() )
+      {
+         // TODO: suspend
+         if ( verb ) log("  queuePeekFront(): empty");
+         return EOF;
+      }
+      final int value = iobuf.peek();
+      if ( verb ) log("  queuePeekFront(): value: " + value);
+      if ( verb ) log("  queuePeekFront(): value: " + (char)value);
+      final int code  = code(TYPE_CHAR,value);
+      if ( verb ) log("  queuePeekFront(): code:  " + pp(code));
+      return code;
    }
+      
 
    ////////////////////////////////////////////////////////////////////
    //
