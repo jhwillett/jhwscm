@@ -110,54 +110,9 @@ public class JhwScm
       this.SILENT  = SILENT;
       this.DEBUG   = DEBUG;
 
-      Mem mem = null;
-
-      mem = new MemSimple(32);
-      if ( PROFILE )
-      {
-         mem = new MemStats(mem,global.regStats,local.regStats);
-      }
-      this.reg = mem;
-
-      if ( USE_PAGED_MEM )
-      {
-         mem = new MemPaged(PAGE_SIZE, PAGE_COUNT);
-      }
-      else
-      {
-         //  16 kcells:  0.5 sec
-         //  32 kcells:  0.6 sec
-         //  64 kcells:  1.0 sec
-         // 128 kcells:  4.2 sec  *** big nonlinearity up
-         // 256 kcells: 10.6 sec  *** small nonlinearity up
-         // 512 kcells: 11.5 sec  *** small nonlinearity down
-         mem = new MemSimple(PAGE_SIZE * PAGE_COUNT);
-      }
-      if ( PROFILE )
-      {
-         mem = new MemStats(mem,global.heapStats,local.heapStats);
-      }
-      if ( USE_CACHED_MEM )
-      {
-         final MemCached.Stats glo;
-         final MemCached.Stats loc;
-         if ( PROFILE )
-         {
-            glo = global.cacheStats;
-            loc = local.cacheStats;
-         }
-         else
-         {
-            glo = null;
-            loc = null;
-         }
-         mem = new MemCached(mem,LINE_SIZE,LINE_COUNT,glo,loc);
-         if ( PROFILE )
-         {
-            mem = new MemStats(mem,global.cacheTopStats,local.cacheTopStats);
-         }
-      }
-      this.heap = mem;
+      this.reg     = machine.reg;
+      this.heap    = machine.heap;
+      this.buffers = machine.buffers;
 
       for ( int i = 0; i < reg.length(); i++ )
       {
@@ -171,10 +126,6 @@ public class JhwScm
 
       reg.set(regPc  , doREP ? sub_rep : sub_rp);
 
-      this.buffers = new IOBuffer[] { 
-         new IOBuffer(1024), 
-         new IOBuffer(1024) 
-      };
       reg.set(regIn  , code(TYPE_IOBUF,0));
       reg.set(regOut , code(TYPE_IOBUF,1));
 

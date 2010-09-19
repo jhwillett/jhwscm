@@ -33,8 +33,7 @@ public class TestScm extends Util
    private static final BatchType RE_DEPENDANT    = new BatchType(true, false);
    private static final BatchType RE_INDEPENDANT  = new BatchType(false,false);
 
-   private static final boolean REPORT = true;
-
+   private static boolean REPORT  = true;
    private static boolean PROFILE = true;
    private static boolean SILENT  = true;
    private static boolean DEBUG   = true;
