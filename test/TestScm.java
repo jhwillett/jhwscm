@@ -6,8 +6,6 @@
  * All rights reserved.
  */
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.Random;
 
 public class TestScm extends Util

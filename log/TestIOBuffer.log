@@ -7,10 +7,10 @@ cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
 bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
-c83626ba5f94cdf4a8a940830a17b6c4  test/TestIOBuffer.java
-c9d34a626ff426e93258e761f2f88655  test/TestMem.java
-d63c135c1a689288a6cac9610298199d  test/TestScm.java
-25e4279584ba519b70b5d52cddbb0f85  test/Util.java
+ff6e921ec52dbf5a611deffc61082faf  test/TestIOBuffer.java
+09e5ac937891078bb45422a5b3df6a26  test/TestMem.java
+418ee20c7d264832a99031291bf5bf9c  test/TestScm.java
+e6f4ff7f2ec88c11a94b3f1a9d7ed10f  test/Util.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestIOBuffer

@@ -6,11 +6,6 @@
  * All rights reserved.
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.Random;
-import java.io.IOException;
-
 public class TestIOBuffer extends Util
 {
    private static final boolean verbose = false;

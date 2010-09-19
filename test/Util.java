@@ -49,6 +49,8 @@
  * All rights reserved.
  */
 
+import org.junit.Assert;
+
 public class Util
 {
    protected static int depth = 0;
@@ -67,4 +69,17 @@ public class Util
       System.out.println(obj);
    }
 
+   public static void assertEquals ( final Object a, final Object b )
+   {
+      assertEquals(null,a,b);
+   }
+
+   public static void assertEquals ( final String msg, 
+                                     final Object a, 
+                                     final Object b )
+   {
+      //if ( a == b ) return;
+      //if ( null == a ) return;
+      Assert.assertEquals(msg,a,b);
+   }
 }
