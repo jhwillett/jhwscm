@@ -3110,6 +3110,43 @@ public class JhwScm
    private void queuePushBack ( final int queue, final int value )
    {
       final boolean verb = false;
+      if ( USE_IO_BUFFER )
+      {
+         if ( DEBUG && TYPE_IOBUF != type(queue) ) 
+         {
+            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+            raiseError(ERR_INTERNAL);
+            return;
+         }
+         if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
+         {
+            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+            raiseError(ERR_INTERNAL);
+            return;
+         }
+         final IOBuffer buf = buffers[value(queue)];
+         //
+         // TODO: for now, an iobuf is EOF if empty, but later when we
+         // add close() it'll be EOF when null, and an empty buffer
+         // means we need to suspend processing.
+         //
+         // So we check for both conditions here.  Later on, it'll be
+         // the isFull() clause which changes, not the null clause.
+         //
+         if ( null == buf )
+         {
+            raiseError(ERR_INTERNAL);
+            return;
+         }
+         if ( buf.isFull() )
+         {
+            // TODO: suspend
+            raiseError(ERR_NOT_IMPL);
+            return;
+         }
+         buf.push((byte)(0xFF&value));
+         return;
+      }
       final int queue_t = type(queue);
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
@@ -3178,7 +3215,41 @@ public class JhwScm
     */
    private int queuePopFront ( final int queue )
    {
-      final boolean verb = false;
+      final boolean verb = true;
+      if ( USE_IO_BUFFER )
+      {
+         if ( DEBUG && TYPE_IOBUF != type(queue) ) 
+         {
+            if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
+            raiseError(ERR_INTERNAL);
+            return EOF;
+         }
+         if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
+         {
+            if ( verb ) log("  queuePopFront(): non-iobuf " + pp(queue));
+            raiseError(ERR_INTERNAL);
+            return EOF;
+         }
+         final IOBuffer buf = buffers[value(queue)];
+         //
+         // TODO: for now, an iobuf is EOF if empty, but later when we
+         // add close() it'll be EOF when null, and an empty buffer
+         // means we need to suspend processing.
+         //
+         // So we check for both conditions here.  Later on, it'll be
+         // the isEmpty() clause which changes, not the null clause.
+         //
+         if ( null == buf )
+         {
+            return EOF;
+         }
+         if ( buf.isEmpty() )
+         {
+            // TODO: suspend
+            return EOF;
+         }
+         return buf.pop();
+      }
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
          if ( verb ) log("  queuePopFront(): non-queue " + pp(queue));
@@ -3213,6 +3284,40 @@ public class JhwScm
    private int queuePeekFront ( final int queue )
    {
       final boolean verb = false;
+      if ( USE_IO_BUFFER )
+      {
+         if ( DEBUG && TYPE_IOBUF != type(queue) ) 
+         {
+            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+            raiseError(ERR_INTERNAL);
+            return EOF;
+         }
+         if ( DEBUG && ( 0 > value(queue) || value(queue) >= buffers.length ) )
+         {
+            if ( verb ) log("  queuePeekFront(): non-iobuf " + pp(queue));
+            raiseError(ERR_INTERNAL);
+            return EOF;
+         }
+         final IOBuffer buf = buffers[value(queue)];
+         //
+         // TODO: for now, an iobuf is EOF if empty, but later when we
+         // add close() it'll be EOF when null, and an empty buffer
+         // means we need to suspend processing.
+         //
+         // So we check for both conditions here.  Later on, it'll be
+         // the isEmpty() clause which changes, not the null clause.
+         //
+         if ( null == buf )
+         {
+            return EOF;
+         }
+         if ( buf.isEmpty() )
+         {
+            // TODO: suspend
+            return EOF;
+         }
+         return buf.peek();
+      }
       if ( DEBUG && TYPE_CELL != type(queue) ) 
       {
          if ( verb ) log("  queuePeekFront(): non-queue " + pp(queue));
