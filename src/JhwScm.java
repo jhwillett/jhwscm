@@ -51,7 +51,7 @@ public class JhwScm
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final boolean USE_IO_BUFFER             = false;
+   public static final boolean USE_IO_BUFFER             = true;
 
    public static final boolean USE_PAGED_MEM             = false;
    public static final int     PAGE_SIZE                 = 1024;
@@ -318,6 +318,8 @@ public class JhwScm
             if ( verb ) log("input(): pushing byte " + b);
             if ( verb ) log("input(): pushing char " + (char)b);
             iobuf.push(b);
+            if ( PROFILE ) local.numInput++;
+            if ( PROFILE ) global.numInput++;
          }
          return max;
       }
@@ -417,6 +419,8 @@ public class JhwScm
             buf[off++] = b;
             if ( verb ) log("output(): popped byte " + b);
             if ( verb ) log("output(): popped char " + (char)b);
+            if ( PROFILE ) local.numOutput++;
+            if ( PROFILE ) global.numOutput++;
          }
          if ( verb ) log("output(): shifted: " + max);
          return max;

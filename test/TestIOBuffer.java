@@ -21,6 +21,8 @@ public class TestIOBuffer
    {
       log("TestIOBuffer");
 
+      // TODO: overflow, underflow, peek(), isFull(), isEmpty(), etc.
+
       final int[][] tests = {
          { 1, 0, 0 },
 
