@@ -49,8 +49,6 @@
  * All rights reserved.
  */
 
-//import org.junit.Assert;
-
 public class Util
 {
    protected static int depth = 0;
@@ -82,6 +80,5 @@ public class Util
       if ( null != a && a.equals(b) ) return;
       if ( null != b && b.equals(a) ) return;
       throw new RuntimeException(msg + " expected " + a + " got " + b);
-      //Assert.assertEquals(msg,a,b);
    }
 }
