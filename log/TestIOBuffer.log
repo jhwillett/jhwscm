@@ -1,22 +1,3 @@
-ca6181e21a8eb1a54063bd71aa0eabd3  Makefile
-68eb1d723e9e31430b8f25bacc502735  src/Computer.java
-be8279cc404b218de99abe6e94adc01c  src/Firmware.java
-340befb0624db4df68ca22dcf1d13fbd  src/IOBuffer.java
-499708d5570f6269dba68980f32a3ab0  src/JhwScm.java
-bfa1cdf8cc3f50ba71cc3872cfbae167  src/Machine.java
-250eaada9663cced79e89fea991d1600  src/Mem.java
-d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
-cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
-bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
-78bc95037b457bef1857201e70cdcc59  src/MemStats.java
-49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
-8aff396ffd18bc2832222c489f68c6fe  test/TestComputer.java
-4604f3d94e79b58b0c9ced2717a527c8  test/TestIOBuffer.java
-f24252a6da436427276117d6a24dbfae  test/TestMachine.java
-09e5ac937891078bb45422a5b3df6a26  test/TestMem.java
-39a444840f11ead6873de11f2d06af75  test/TestScm.java
-284afb8136984e30c4193f69f67b5680  test/TestUtil.java
-761a49ce6f74d7eb083bf7ac328b0894  test/Util.java
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestIOBuffer
 host:   little-man

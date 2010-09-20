@@ -28,13 +28,18 @@ DEPS := $(LIBS:%=$(DESTDIR)/%)
 test: $(TESTS:test/%.java=test-%)
 $(TESTS:test/%.java=test-%): test-%: $(LOGDIR)/%.log
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile
+$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(LOGDIR)/md5.log
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build.ok
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
 	@mkdir -p $(dir $@)
-	@md5sum Makefile $(SRC) $(TEST_SRC) $(DEPS)             >        $@.tmp
 	@time bash -c "set -o pipefail ;$(MAKE) rawtest-$* 2>&1 | tee -a $@.tmp"
 	@echo "date:   `date`"
 	@echo "uptime: `uptime`"
+	@mv $@.tmp $@
+
+$(LOGDIR)/md5.log: Makefile $(SRC) $(TEST_SRC) $(DEPS)
+	@mkdir -p $(dir $@)
+	md5sum $^ > $@.tmp
 	@mv $@.tmp $@
 
 .PHONY: rawtest $(TESTS:test/%.java=rawtest-%)
