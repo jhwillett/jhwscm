@@ -69,8 +69,8 @@ public class JhwScm implements Firmware
 
    public Machine mach = null; // TODO: hacky non-state member should be param
 
-   private int scmDepth  = 0; // debug
-   private int javaDepth = 0; // debug
+   private int javaDepth = 0; // debug logging only
+   private int scmDepth  = 0; // debug logging only, icky b/c lasts over calls
 
    ////////////////////////////////////////////////////////////////////
    //
@@ -96,6 +96,10 @@ public class JhwScm implements Firmware
     */
    public void boot ( final Machine mach )
    {
+      if ( DEBUG ) javaDepth = 0;
+      log("boot: ");
+      if ( DEBUG ) javaDepth = 1;
+
       final Mem reg = mach.reg;
       reg.set(regPc,sub_init);
    }
