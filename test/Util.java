@@ -76,9 +76,19 @@ public class Util
                                      final Object a, 
                                      final Object b )
    {
-      if ( a == b ) return;
+      if ( a == b )                   return;
       if ( null != a && a.equals(b) ) return;
       if ( null != b && b.equals(a) ) return;
-      throw new RuntimeException(msg + " expected " + a + " got " + b);
+      final StringBuilder buf = new StringBuilder();
+      if ( null != msg )
+      {
+         buf.append(msg);
+         buf.append(" ");
+      }
+      buf.append("expected ");
+      buf.append(a);
+      buf.append(" got ");
+      buf.append(b);
+      throw new RuntimeException(buf.toString());
    }
 }

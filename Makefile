@@ -10,10 +10,10 @@ SRC       += $(wildcard src/*.java)
 # Maintaining TESTS explicitly so I can control ordering.
 #
 TESTS     += test/TestUtil.java
+TESTS     += test/TestMem.java
+TESTS     += test/TestIOBuffer.java
 TESTS     += test/TestMachine.java
 TESTS     += test/TestComputer.java
-TESTS     += test/TestIOBuffer.java
-TESTS     += test/TestMem.java
 TESTS     += test/TestScm.java
 
 TEST_SRC  := $(wildcard test/*.java)

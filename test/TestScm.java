@@ -51,22 +51,8 @@ public class TestScm extends Util
       return comp;
    }
 
-   private static void driveEdgeCases ()
-   {
-      assertEquals(JhwScm.INCOMPLETE,newScm(true).drive(0));
-      try
-      {
-         newScm(true).drive(-1);
-      }
-      catch ( Throwable expected )
-      {
-      }
-   }
-
    public static void main ( final String[] argv )
    {
-      driveEdgeCases();
-
       expect("","");
 
       // first content: simple integer expressions are self-evaluating
