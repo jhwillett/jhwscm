@@ -69,7 +69,6 @@ public class JhwScm implements Firmware
 
    public  final Machine mach;
 
-   private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug
    private int javaDepth = 0; // debug
 
@@ -136,15 +135,13 @@ public class JhwScm implements Firmware
             reg.set(i,UNSPECIFIED);
          }
 
-         reg.set(regStack,NIL);
-         reg.set(regError,NIL);
-
-         reg.set(regFreeCellList,NIL);
-
-         reg.set(regIn  , code(TYPE_IOBUF,0));
-         reg.set(regOut , code(TYPE_IOBUF,1));
-
-         reg.set(regEnv , cons(NIL,NIL));
+         reg.set(regStack,     NIL);
+         reg.set(regError,     NIL);
+         reg.set(regFreeCells, NIL);
+         reg.set(regHeapTop,   code(TYPE_FIXINT,0));
+         reg.set(regIn,        code(TYPE_IOBUF,0));
+         reg.set(regOut,       code(TYPE_IOBUF,1));
+         reg.set(regEnv,       cons(NIL,NIL));
          
          prebind("+",      sub_add);
          prebind("*",      sub_mul);
@@ -2560,7 +2557,7 @@ public class JhwScm implements Firmware
    private static final int ERR_SEMANTIC        = TYPE_SENTINEL |  7;
    private static final int ERR_NOT_IMPL        = TYPE_SENTINEL | 87;
 
-   private static final int regFreeCellList     =   0; // unused cells
+   private static final int regFreeCells        =   0; // unused cells
 
    private static final int regStack            =   1; // the runtime stack
    private static final int regPc               =   2; // opcode to return to
@@ -2590,6 +2587,8 @@ public class JhwScm implements Firmware
    private static final int regTmp7             =  27; // temporary
    private static final int regTmp8             =  28; // temporary
    private static final int regTmp9             =  29; // temporary
+
+   private static final int regHeapTop          =  31; // alloc support: int
 
    // With opcodes, proper subroutines entry points (entry points
    // which can be expected to follow stack discipline and balance)
@@ -2698,9 +2697,10 @@ public class JhwScm implements Firmware
          local.numCons++;
          global.numCons++;
       }
-      int cell = reg.get(regFreeCellList);
+      int cell = reg.get(regFreeCells);
       if ( NIL == cell )
       {
+         int heapTop = value_fixint(reg.get(regHeapTop));
          if ( heapTop >= heap.length() )
          {
             raiseError(ERR_OOM);
@@ -2709,9 +2709,9 @@ public class JhwScm implements Firmware
          final int top;
          if ( DEFER_HEAP_INIT )
          {
-            // heapTop in slots, 2* for cells, only init a piece of it
-            // this pass.
-            top = heapTop + 2*256;
+            // reg.get(regHeapTop) in slots, 2* for cells, only init a
+            // piece of it this pass.
+            top = reg.get(regHeapTop) + 2*256;
          }
          else
          {
@@ -2730,11 +2730,12 @@ public class JhwScm implements Firmware
             // Notice that how half the space in the free cell list,
             // the car()s, is unused.  Is this an opportunity for
             // something?
-            heap.set(heapTop+0   , UNSPECIFIED);
-            heap.set(heapTop+1   , reg.get(regFreeCellList));
-            reg.set(regFreeCellList , code(TYPE_CELL,(heapTop >>> 1)));
+            heap.set(heapTop + 0, UNSPECIFIED);
+            heap.set(heapTop + 1, reg.get(regFreeCells));
+            reg.set(regFreeCells , code(TYPE_CELL,(heapTop >>> 1)));
          }
-         cell = reg.get(regFreeCellList);
+         reg.set(regHeapTop, code(TYPE_FIXINT,heapTop));
+         cell = reg.get(regFreeCells);
       }
       final int t          = type(cell);
       if ( DEBUG && TYPE_CELL != t )
@@ -2745,7 +2746,7 @@ public class JhwScm implements Firmware
       final int v          = value(cell);
       final int ar         = v << 1;
       final int dr         = ar + 1;
-      reg.set(regFreeCellList , heap.get(dr));
+      reg.set(regFreeCells , heap.get(dr));
       heap.set(ar          , car);
       heap.set(dr          , cdr);
       return cell;
@@ -3020,8 +3021,8 @@ public class JhwScm implements Firmware
          //
          // This optimization may not be sustainable in the
          // medium-term.
-         setcdr(cell,reg.get(regFreeCellList));
-         reg.set(regFreeCellList , cell);
+         setcdr(cell, reg.get(regFreeCells));
+         reg.set(regFreeCells, cell);
       }
       return head;
    }
