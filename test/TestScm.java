@@ -1063,7 +1063,7 @@ public class TestScm extends Util
       if ( null == result || result instanceof String )
       {
          numHappyExpects++;
-         expected_dcode  = JhwScm.SUCCESS;
+         expected_dcode  = JhwScm.COMPLETE;
          expected_output = (String)result;
       }
       else

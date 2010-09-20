@@ -46,7 +46,7 @@ public class Computer
     *
     * @throws IllegalArgumentException if numSteps < 0
     *
-    * @returns Firmware.SUCCESS on success, Firmware.INCOMPLETE if
+    * @returns Firmware.COMPLETE on success, Firmware.INCOMPLETE if
     * more cycles are needed, otherwise an error code.
     */
    public int drive ( final int numSteps )

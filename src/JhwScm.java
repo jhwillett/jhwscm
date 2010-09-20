@@ -107,7 +107,7 @@ public class JhwScm implements Firmware
    /**
     * Drives a single step of computation.  
     * 
-    * @returns SUCCESS, INCOMPLETE, or some other error code.
+    * @returns COMPLETE, INCOMPLETE, or some other error code.
     */
    public int step ()
    {
@@ -2442,7 +2442,7 @@ public class JhwScm implements Firmware
          // input.
          //
          gosub(sub_top,blk_halt);
-         return SUCCESS;
+         return COMPLETE;
 
       default:
          log("bogus op: ",pp(reg.get(regPc)));

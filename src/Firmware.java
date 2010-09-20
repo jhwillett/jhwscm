@@ -11,7 +11,7 @@
 
 public interface Firmware
 {
-   public static final int SUCCESS    =  0;
+   public static final int COMPLETE   =  0;
    public static final int INCOMPLETE = -1;
 
    /**
@@ -24,7 +24,7 @@ public interface Firmware
    /**
     * Drives a single step of computation.  
     * 
-    * @returns SUCCESS, INCOMPLETE, or some other error code.
+    * @returns COMPLETE, INCOMPLETE, or some other error code.
     */
    public int step ();
 }

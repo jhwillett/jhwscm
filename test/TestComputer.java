@@ -27,7 +27,7 @@ public class TestComputer extends Util
       public int step ()
       {
          numStep++;
-         return ( numStep >= maxStep ) ? SUCCESS : INCOMPLETE;
+         return ( numStep >= maxStep ) ? COMPLETE : INCOMPLETE;
       }
    }
    
@@ -68,7 +68,7 @@ public class TestComputer extends Util
       assertEquals(Firmware.INCOMPLETE,comp.drive(10));
       assertEquals(1,firm.numBoot);
       assertEquals(42,firm.numStep);
-      assertEquals(Firmware.SUCCESS,comp.drive(10));
+      assertEquals(Firmware.COMPLETE,comp.drive(10));
       assertEquals(1,firm.numBoot);
       assertEquals(50,firm.numStep);
 

@@ -32,6 +32,7 @@ $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(LOGDIR)/md5.log
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build.ok
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
 	@mkdir -p $(dir $@)
+	@cat /dev/null > $@.tmp
 	@time bash -c "set -o pipefail ;$(MAKE) rawtest-$* 2>&1 | tee -a $@.tmp"
 	@echo "date:   `date`"
 	@echo "uptime: `uptime`"
@@ -39,6 +40,7 @@ $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
 
 $(LOGDIR)/md5.log: Makefile $(SRC) $(TEST_SRC) $(DEPS)
 	@mkdir -p $(dir $@)
+	@cat /dev/null > $@.tmp
 	md5sum $^ > $@.tmp
 	@mv $@.tmp $@
 
