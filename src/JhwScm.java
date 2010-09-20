@@ -111,10 +111,8 @@ public class JhwScm implements Firmware
     */
    public int step ()
    {
-      final boolean verb = true && VERBOSE;
-
       if ( DEBUG ) javaDepth = 0;
-      if ( verb ) log("step: " + pp(reg.get(regPc)));
+      log("step: ",pp(reg.get(regPc)));
       if ( DEBUG ) javaDepth = 1;
 
       // Temp variables: note, any block can overwrite any of these.
@@ -260,14 +258,14 @@ public class JhwScm implements Firmware
          }
          if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
          {
-            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp0)));
+            log("non-char in input: ",pp(reg.get(regTmp0)));
             raiseError(ERR_INTERNAL);
             break;
          }
          switch (value(reg.get(regTmp0)))
          {
          case ')':
-            if ( verb ) log("mismatch close paren");
+            log("mismatch close paren");
             raiseError(ERR_LEXICAL);
             break;
          case '(':
@@ -351,13 +349,13 @@ public class JhwScm implements Firmware
          reg.set(regTmp0 , portPeek(reg.get(regIn)));
          if ( EOF == reg.get(regTmp0) )
          {
-            if ( verb ) log("eof in list expr");
+            log("eof in list expr");
             raiseError(ERR_LEXICAL);
             break;
          }
          if ( code(TYPE_CHAR,')') == reg.get(regTmp0) )
          {
-            if ( verb ) log("matching close-paren");
+            log("matching close-paren");
             portPop(reg.get(regIn));
             reg.set(regRetval , NIL);
             returnsub();
@@ -390,8 +388,6 @@ public class JhwScm implements Firmware
          if ( NIL == cdr(reg.get(regTmp1)) )
          {
             log("happy dotted list");
-            log("  " + pp(reg.get(regTmp0)) + " " + pp(car(reg.get(regTmp0))));
-            log("  " + pp(reg.get(regTmp1)) + " " + pp(car(reg.get(regTmp1))));
             reg.set(regRetval , car(reg.get(regTmp1)));
             returnsub();
             break;
@@ -430,28 +426,28 @@ public class JhwScm implements Firmware
          reg.set(regTmp0 , portPeek(reg.get(regIn)));
          if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
          {
-            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp0)));
+            log("non-char in input: ",pp(reg.get(regTmp0)));
             raiseError(ERR_INTERNAL);
             break;
          }
          switch (value(reg.get(regTmp0)))
          {
          case '\'':
-            if ( verb ) log("quote (not belong here in sub_read_atom?)");
+            log("quote (not belong here in sub_read_atom?)");
             portPop(reg.get(regIn));
             gosub(sub_read,sub_read_atom+0x3);
             break;
          case '"':
-            if ( verb ) log("string literal");
+            log("string literal");
             gosub(sub_read_string,blk_tail_call);
             break;
          case '#':
-            if ( verb ) log("octothorpe special");
+            log("octothorpe special");
             gosub(sub_read_octo_tok,blk_tail_call);
             break;
          case '0': case '1': case '2': case '3': case '4':
          case '5': case '6': case '7': case '8': case '9':
-            if ( verb ) log("non-negated number");
+            log("non-negated number");
             gosub(sub_read_num,blk_tail_call);
             break;
          case '-':
@@ -464,25 +460,25 @@ public class JhwScm implements Firmware
                  '0' <= value(reg.get(regTmp2))      && 
                  '9' >= value(reg.get(regTmp2))       )
             {
-               if ( verb ) log("minus-starting-number");
+               log("minus-starting-number");
                gosub(sub_read_num,sub_read_atom+0x1);
             }
             else if ( EOF == reg.get(regTmp2) )
             {
-               if ( verb ) log("lonliest minus in the world");
+               log("lonliest minus in the world");
                reg.set(regTmp0   , cons(code(TYPE_CHAR,'-'),NIL));
                reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp0)));
                returnsub();
             }
             else
             {
-               if ( verb ) log("minus-starting-symbol");
+               log("minus-starting-symbol");
                reg.set(regArg0   , code(TYPE_CHAR,'-'));
                gosub(sub_read_symbol,blk_tail_call);
             }
             break;
          default:
-            if ( verb ) log("symbol");
+            log("symbol");
             reg.set(regArg0   , NIL);
             gosub(sub_read_symbol,blk_tail_call);
             break;
@@ -494,9 +490,9 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         if ( verb ) log("negating: " + pp(reg.get(regRetval)));
+         log("negating: ",pp(reg.get(regRetval)));
          reg.set(regRetval , code(TYPE_FIXINT,-value(reg.get(regRetval))));
-         if ( verb ) log("  to:       " + pp(reg.get(regRetval)));
+         log("  to:       ",pp(reg.get(regRetval)));
          returnsub();
          break;
       case sub_read_atom+0x2:
@@ -555,21 +551,21 @@ public class JhwScm implements Firmware
          reg.set(regTmp1 , portPeek(reg.get(regIn)));
          if ( EOF == reg.get(regTmp1) )
          {
-            if ( verb ) log("eof: returning " + pp(reg.get(regArg0)));
+            log("eof: returning ",pp(reg.get(regArg0)));
             reg.set(regRetval , reg.get(regArg0));
             returnsub();
             break;
          }
          if ( TYPE_CHAR != type(reg.get(regTmp1)) )
          {
-            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
+            log("non-char in input: ",pp(reg.get(regTmp1)));
             raiseError(ERR_INTERNAL);
             break;
          }
          reg.set(regTmp2 , reg.get(regArg0));
          if ( TYPE_FIXINT != type(reg.get(regTmp2)) )
          {
-            if ( verb ) log("non-fixint in arg: " + pp(reg.get(regTmp2)));
+            log("non-fixint in arg: ",pp(reg.get(regTmp2)));
             raiseError(ERR_LEXICAL);
             break;
          }
@@ -588,14 +584,14 @@ public class JhwScm implements Firmware
          default:
             if ( value(reg.get(regTmp1)) < '0' || value(reg.get(regTmp1)) > '9' )
             {
-               if ( verb ) log("non-digit in input: " + pp(reg.get(regTmp1)));
+               log("non-digit in input: ",pp(reg.get(regTmp1)));
                raiseError(ERR_LEXICAL);
                break;
             }
             tmp0 = 10 * value(reg.get(regTmp2)) + (value(reg.get(regTmp1)) - '0');
-            if ( verb ) log("first char: " + (char)value(reg.get(regTmp1)));
-            if ( verb ) log("old accum:  " +       value(reg.get(regTmp2)));
-            if ( verb ) log("new accum:  " +       tmp0);
+            log("first char: ",(char)value(reg.get(regTmp1)));
+            log("old accum:  ",value(reg.get(regTmp2)));
+            log("new accum:  ",tmp0);
             portPop(reg.get(regIn));
             reg.set(regArg0 , code(TYPE_FIXINT,tmp0));
             gosub(sub_read_num_loop,blk_tail_call);
@@ -616,13 +612,13 @@ public class JhwScm implements Firmware
          reg.set(regTmp1 , portPeek(reg.get(regIn)));
          if ( EOF == reg.get(regTmp1) )
          {
-            if ( verb ) log("eof after octothorpe");
+            log("eof after octothorpe");
             raiseError(ERR_LEXICAL);
             break;
          }
          if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp1)) )
          {
-            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
+            log("non-char in input: ",pp(reg.get(regTmp1)));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -630,12 +626,12 @@ public class JhwScm implements Firmware
          switch (value(reg.get(regTmp1)))
          {
          case 't':
-            if ( verb ) log("true");
+            log("true");
             reg.set(regRetval , TRUE);
             returnsub();
             break;
          case 'f':
-            if ( verb ) log("false");
+            log("false");
             reg.set(regRetval , FALSE);
             returnsub();
             break;
@@ -643,24 +639,24 @@ public class JhwScm implements Firmware
             reg.set(regTmp2 , portPeek(reg.get(regIn)));
             if ( EOF == reg.get(regTmp2) )
             {
-               if ( verb ) log("eof after octothorpe slash");
+               log("eof after octothorpe slash");
                raiseError(ERR_LEXICAL);
                break;
             }
             if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp2)) )
             {
-               if ( verb ) log("non-char in input: " + pp(reg.get(regTmp2)));
+               log("non-char in input: ",pp(reg.get(regTmp2)));
                raiseError(ERR_INTERNAL);
                break;
             }
-            if ( verb ) log("character literal: " + pp(reg.get(regTmp2)));
+            log("character literal: ",pp(reg.get(regTmp2)));
             portPop(reg.get(regIn));
             reg.set(regRetval , reg.get(regTmp2));
             returnsub();
             // TODO: so far, we only handle the 1-char sequences...
             break;
          default:
-            log("unexpected after octothorpe: " + pp(reg.get(regTmp1)));
+            log("unexpected after octothorpe: ",pp(reg.get(regTmp1)));
             raiseError(ERR_LEXICAL);
             break;
          }
@@ -711,14 +707,14 @@ public class JhwScm implements Firmware
          reg.set(regTmp1, portPeek(reg.get(regIn)));
          if ( EOF == reg.get(regTmp1) )
          {
-            if ( verb ) log("eof: returning");
+            log("eof: returning");
             reg.set(regRetval , NIL);
             returnsub();
             break;
          }
          if ( TYPE_CHAR != type(reg.get(regTmp1)) )
          {
-            if ( verb ) log("non-char in input: " + pp(reg.get(regTmp1)));
+            log("non-char in input: ",pp(reg.get(regTmp1)));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -751,7 +747,7 @@ public class JhwScm implements Firmware
          reg.set(regTmp0 , portPeek(reg.get(regIn)));
          if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
          {
-            log("non-\" leading string literal: " + pp(reg.get(regTmp0)));
+            log("non-\" leading string literal: ",pp(reg.get(regTmp0)));
             raiseError(ERR_LEXICAL);
             break;
          }
@@ -795,7 +791,7 @@ public class JhwScm implements Firmware
          }
          if ( TYPE_CHAR != type(reg.get(regTmp1)) )
          {
-            log("non-char in input: " + pp(reg.get(regTmp1)));
+            log("non-char in input: ",pp(reg.get(regTmp1)));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -864,7 +860,7 @@ public class JhwScm implements Firmware
                raiseError(ERR_SEMANTIC);
                break;
             default:
-               if ( verb ) log("unexpected value: " + pp(reg.get(regArg0)));
+               log("unexpected value: ",pp(reg.get(regArg0)));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -914,7 +910,7 @@ public class JhwScm implements Firmware
             }
             break;
          default:
-            if ( verb ) log("unexpected type: " + pp(reg.get(regArg0)));
+            log("unexpected type: ",pp(reg.get(regArg0)));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -1054,11 +1050,11 @@ public class JhwScm implements Firmware
          if ( true )
          {
             logrec("sub_eval_look_env SYM",reg.get(regArg0));
-            log(   "sub_eval_look_env ENV " + pp(reg.get(regArg1)));
+            log(   "sub_eval_look_env ENV ",pp(reg.get(regArg1)));
          }
          if ( NIL == reg.get(regArg1) )
          {
-            if ( verb ) log("empty env: symbol not found");
+            log("empty env: symbol not found");
             reg.set(regRetval  , NIL);
             returnsub();
             break;
@@ -1073,7 +1069,7 @@ public class JhwScm implements Firmware
          reg.set(regArg0 , restore());
          if ( NIL != reg.get(regRetval) )
          {
-            if ( verb ) log("symbol found w/ bind: " + pp(reg.get(regRetval)));
+            log("symbol found w/ bind: ",pp(reg.get(regRetval)));
             returnsub();
             break;
          }
@@ -1145,26 +1141,26 @@ public class JhwScm implements Firmware
          //
          if ( reg.get(regArg0) == reg.get(regArg1) )
          {
-            //if ( verb ) log("identical");
+            log("identical");
             reg.set(regRetval , TRUE);
             returnsub();
             break;
          }
          if ( type(reg.get(regArg0)) != type(reg.get(regArg1)) )
          {
-            //if ( verb ) log("different types");
+            log("different types");
             reg.set(regRetval , FALSE);
             returnsub();
             break;
          }
          if ( type(reg.get(regArg0)) != TYPE_CELL )
          {
-            //if ( verb ) log("not cells");
+            log("not cells");
             reg.set(regRetval , FALSE);
             returnsub();
             break;
          }
-         //if ( verb ) log("checking car");
+         log("checking car");
          store(reg.get(regArg0));
          store(reg.get(regArg1));
          reg.set(regArg0 , car(reg.get(regArg0)));
@@ -1176,11 +1172,11 @@ public class JhwScm implements Firmware
          reg.set(regArg0 , restore());
          if ( FALSE == reg.get(regRetval) )
          {
-            //if ( verb ) log("car mismatch");
+            log("car mismatch");
             returnsub();
             break;
          }
-         //if ( verb ) log("checking cdr");
+         log("checking cdr");
          reg.set(regArg0 , cdr(reg.get(regArg0)));
          reg.set(regArg1 , cdr(reg.get(regArg1)));
          gosub(sub_equal_p,blk_tail_call);
@@ -1596,10 +1592,10 @@ public class JhwScm implements Firmware
          // Then just gosub()!
          tmp0 = reg.get(regArg0);
          final int arity = (tmp0 & MASK_ARITY) >>> SHIFT_ARITY;
-         log("tmp0:  " + pp(tmp0));
-         log("tmp0:  " + hex(tmp0,8));
-         log("arity: " + arity);
-         log("arg1:  " + pp(reg.get(regArg1)));
+         log("tmp0:  ",pp(tmp0));
+         log("tmp0:  ",hex(tmp0,8));
+         log("arity: ",arity);
+         log("arg1:  ",pp(reg.get(regArg1)));
          reg.set(regTmp0 , reg.get(regArg1));
          reg.set(regArg0 , UNSPECIFIED);
          reg.set(regArg1 , UNSPECIFIED);
@@ -1629,7 +1625,7 @@ public class JhwScm implements Firmware
             }
             reg.set(tmp1    , car(reg.get(regTmp0)));
             reg.set(regTmp0 , cdr(reg.get(regTmp0)));
-            log("pop arg: " + pp(reg.get(regArg0)));
+            log("pop arg: ",pp(reg.get(regArg0)));
             tmp1++;
             // fall through
          case A2:
@@ -1641,7 +1637,7 @@ public class JhwScm implements Firmware
             }
             reg.set(tmp1    , car(reg.get(regTmp0)));
             reg.set(regTmp0 , cdr(reg.get(regTmp0)));
-            log("pop arg: " + pp(reg.get(regArg0)));
+            log("pop arg: ",pp(reg.get(regArg0)));
             tmp1++;
          case A1:
             if ( NIL == reg.get(regTmp0) )
@@ -1652,7 +1648,7 @@ public class JhwScm implements Firmware
             }
             reg.set(tmp1    , car(reg.get(regTmp0)));
             reg.set(regTmp0 , cdr(reg.get(regTmp0)));
-            log("pop arg: " + pp(reg.get(regArg0)));
+            log("pop arg: ",pp(reg.get(regArg0)));
             tmp1++;
          case A0:
             if ( NIL != reg.get(regTmp0) )
@@ -1661,9 +1657,9 @@ public class JhwScm implements Firmware
                raiseError(ERR_SEMANTIC);
                break;
             }
-            log("arg0: " + pp(reg.get(regArg0)));
-            log("arg1: " + pp(reg.get(regArg1)));
-            log("arg2: " + pp(reg.get(regArg2)));
+            log("arg0: ",pp(reg.get(regArg0)));
+            log("arg1: ",pp(reg.get(regArg1)));
+            log("arg2: ",pp(reg.get(regArg2)));
             gosub(tmp0,blk_tail_call);
             break;
          default:
@@ -1730,10 +1726,10 @@ public class JhwScm implements Firmware
          // where to find the lexical scope of a procedure or
          // special form.
          //
-         log("LEXICAL ENV PREPUSH:  " + pp(reg.get(regEnv)));
+         log("LEXICAL ENV PREPUSH:  ",pp(reg.get(regEnv)));
          store(reg.get(regEnv));
          reg.set(regEnv , reg.get(regTmp2));
-         log("LEXICAL ENV POSTPUSH: " + pp(reg.get(regEnv)));
+         log("LEXICAL ENV POSTPUSH: ",pp(reg.get(regEnv)));
          gosub(sub_begin, sub_apply_user+0x2);
          break;
       case sub_apply_user+0x2:
@@ -1741,9 +1737,9 @@ public class JhwScm implements Firmware
          // be tail recursive.  At least this that is not true on
          // every sub_eval.
          //
-         log("LEXICAL ENV PREPOP:  " + pp(reg.get(regEnv)));
+         log("LEXICAL ENV PREPOP:  ",pp(reg.get(regEnv)));
          reg.set(regEnv , restore());
-         log("LEXICAL ENV POSTPOP: " + pp(reg.get(regEnv)));
+         log("LEXICAL ENV POSTPOP: ",pp(reg.get(regEnv)));
          returnsub();
          break;
 
@@ -1786,7 +1782,7 @@ public class JhwScm implements Firmware
          // Returns UNSPECIFIED.
          //
          reg.set(regTmp0 , reg.get(regArg0));
-         if ( verb ) log("printing: " + pp(reg.get(regTmp0)));
+         log("printing: ",pp(reg.get(regTmp0)));
          switch (type(reg.get(regTmp0)))
          {
          case TYPE_SENTINEL:
@@ -1812,7 +1808,7 @@ public class JhwScm implements Firmware
                returnsub();
                break;
             default:
-               log("bogus sentinel: " + pp(reg.get(regTmp0)));
+               log("bogus sentinel: ",pp(reg.get(regTmp0)));
                raiseError(ERR_INTERNAL);
                break;
             }
@@ -1948,7 +1944,7 @@ public class JhwScm implements Firmware
          }
          if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
-            if ( verb ) log("bogus non-cell: " + pp(reg.get(regArg0)));
+            log("bogus non-cell: ",pp(reg.get(regArg0)));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -1956,7 +1952,7 @@ public class JhwScm implements Firmware
          reg.set(regTmp2 , cdr(reg.get(regArg0)));
          if ( TYPE_CHAR != type(reg.get(regTmp1)) )
          {
-            if ( verb ) log("bogus: " + pp(reg.get(regTmp1)));
+            log("bogus: ",pp(reg.get(regTmp1)));
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -2151,14 +2147,14 @@ public class JhwScm implements Firmware
          break;
 
       case sub_cons:
-         log("cons: " + pp(reg.get(regArg0)));
-         log("cons: " + pp(reg.get(regArg1)));
+         log("cons: ",pp(reg.get(regArg0)));
+         log("cons: ",pp(reg.get(regArg1)));
          reg.set(regRetval , cons(reg.get(regArg0),reg.get(regArg1)));
          returnsub();
          break;
 
       case sub_car:
-         log("car: " + pp(reg.get(regArg0)));
+         log("car: ",pp(reg.get(regArg0)));
          if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
             raiseError(ERR_SEMANTIC);
@@ -2169,7 +2165,7 @@ public class JhwScm implements Firmware
          break;
 
       case sub_cdr:
-         log("cdr: " + pp(reg.get(regArg0)));
+         log("cdr: ",pp(reg.get(regArg0)));
          if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
             raiseError(ERR_SEMANTIC);
@@ -2180,7 +2176,7 @@ public class JhwScm implements Firmware
          break;
 
       case sub_cadr:
-         log("cadr: " + pp(reg.get(regArg0)));
+         log("cadr: ",pp(reg.get(regArg0)));
          if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
             raiseError(ERR_SEMANTIC);
@@ -2203,9 +2199,9 @@ public class JhwScm implements Firmware
          break;
 
       case sub_if:
-         log("arg0: " + pp(reg.get(regArg0)));
-         log("arg1: " + pp(reg.get(regArg1)));
-         log("arg2: " + pp(reg.get(regArg2)));
+         log("arg0: ",pp(reg.get(regArg0)));
+         log("arg1: ",pp(reg.get(regArg1)));
+         log("arg2: ",pp(reg.get(regArg2)));
          store(reg.get(regArg1));
          store(reg.get(regArg2));
          reg.set(regArg0 , reg.get(regArg0));
@@ -2449,7 +2445,7 @@ public class JhwScm implements Firmware
          return SUCCESS;
 
       default:
-         if ( verb ) log("bogus op: " + pp(reg.get(regPc)));
+         log("bogus op: ",pp(reg.get(regPc)));
          raiseError(ERR_INTERNAL);
          break;
       }
@@ -2810,24 +2806,24 @@ public class JhwScm implements Firmware
       final boolean verb = false;
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
-         if ( verb ) log("  portPush(): non-iobuf " + pp(port));
+         log("  portPush(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( DEBUG && TYPE_CHAR != type(value) ) 
       {
-         if ( verb ) log("  portPush(): non-char " + pp(value));
+         log("  portPush(): non-char ",pp(value));
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
       {
-         if ( verb ) log("  portPush(): non-iobuf " + pp(port));
+         log("  portPush(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
       final IOBuffer iobuf = mach.buffers[value(port)];
-      if ( verb ) log("  portPush(): iobuf: " + iobuf);
+      log("  portPush(): iobuf: ",iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
       // add close() it'll be EOF when null, and an empty buffer
@@ -2838,20 +2834,20 @@ public class JhwScm implements Firmware
       //
       if ( null == iobuf )
       {
-         if ( verb ) log("  portPush(): closed");
+         log("  portPush(): closed");
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( iobuf.isFull() )
       {
          // TODO: suspend
-         if ( verb ) log("  portPush(): full");
+         log("  portPush(): full");
          raiseError(ERR_NOT_IMPL);
          return;
       }
-      if ( verb ) log("  portPush(): value:  " + pp(value));
+      log("  portPush(): value:  ",pp(value));
       final int decode = value(value);
-      if ( verb ) log("  portPush(): decode: " + decode);
+      log("  portPush(): decode: ",decode);
       iobuf.push((byte)decode);
       return;
    }
@@ -2865,13 +2861,13 @@ public class JhwScm implements Firmware
       final boolean verb = false;
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
-         if ( verb ) log("  portPop(): non-iobuf " + pp(port));
+         log("  portPop(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
       {
-         if ( verb ) log("  portPop(): non-iobuf " + pp(port));
+         log("  portPop(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
@@ -2886,18 +2882,18 @@ public class JhwScm implements Firmware
       //
       if ( null == iobuf )
       {
-         if ( verb ) log("  portPop(): closed");
+         log("  portPop(): closed");
          raiseError(ERR_INTERNAL);
          return;
       }
       if ( iobuf.isEmpty() )
       {
          // TODO: suspend
-         if ( verb ) log("  portPop(): empty");
+         log("  portPop(): empty");
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( verb ) log("  portPop(): popping");
+      log("  portPop(): popping");
       iobuf.pop();
       return;
    }
@@ -2910,18 +2906,18 @@ public class JhwScm implements Firmware
       final boolean verb = false;
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
-         if ( verb ) log("  portPeek(): non-iobuf " + pp(port));
+         log("  portPeek(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
       if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
       {
-         if ( verb ) log("  portPeek(): non-iobuf " + pp(port));
+         log("  portPeek(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
       final IOBuffer iobuf = mach.buffers[value(port)];
-      if ( verb ) log("  portPeek(): iobuf " + iobuf);
+      log("  portPeek(): iobuf ",iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
       // add close() it'll be EOF when null, and an empty buffer
@@ -2932,20 +2928,20 @@ public class JhwScm implements Firmware
       //
       if ( null == iobuf )
       {
-         if ( verb ) log("  portPeek(): closed");
+         log("  portPeek(): closed");
          return EOF;
       }
       if ( iobuf.isEmpty() )
       {
          // TODO: suspend
-         if ( verb ) log("  portPeek(): empty");
+         log("  portPeek(): empty");
          return EOF;
       }
       final int value = iobuf.peek();
-      if ( verb ) log("  portPeek(): value: " + value);
-      if ( verb ) log("  portPeek(): value: " + (char)value);
+      log("  portPeek(): value: ",value);
+      log("  portPeek(): value: ",(char)value);
       final int code  = code(TYPE_CHAR,value);
-      if ( verb ) log("  portPeek(): code:  " + pp(code));
+      log("  portPeek(): code:  ",pp(code));
       return code;
    }
       
@@ -2962,17 +2958,17 @@ public class JhwScm implements Firmware
       final boolean verb = false;
       if ( NIL != reg.get(regError) )
       {
-         if ( verb ) log("store(): flow suspended for error");
+         log("store(): flow suspended for error");
          return;
       }
       final int cell = cons(value,reg.get(regStack));
       if ( NIL == cell )
       {
          // error already raised in cons()
-         if ( verb ) log("store(): oom");
+         log("store(): oom");
          return;
       }
-      if ( verb ) log("stored:   " + pp(value));
+      log("stored:   ",pp(value));
       reg.set(regStack , cell);
    }
 
@@ -2982,18 +2978,18 @@ public class JhwScm implements Firmware
       final boolean verb = false;
       if ( NIL != reg.get(regError) )
       {
-         if ( verb ) log("restore(): flow suspended for error");
+         log("restore(): flow suspended for error");
          return UNSPECIFIED;
       }
       if ( DEBUG && NIL == reg.get(regStack) )
       {
-         if ( verb ) log("restore(): stack underflow");
+         log("restore(): stack underflow");
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
       if ( DEBUG && TYPE_CELL != type(reg.get(regStack)) )
       {
-         if ( verb ) log("restore(): corrupt stack");
+         log("restore(): corrupt stack");
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
@@ -3001,7 +2997,7 @@ public class JhwScm implements Firmware
       final int head = car(cell);
       final int rest = cdr(cell);
       reg.set(regStack  , rest);
-      if ( verb ) log("restored: " + pp(head));
+      log("restored: ",pp(head));
       if ( CLEVER_STACK_RECYCLING && NIL == reg.get(regError) )
       {
          // Recycle stack cell which is unreachable from user code.
@@ -3041,27 +3037,27 @@ public class JhwScm implements Firmware
    private void gosub ( final int nextOp, final int continuationOp )
    {
       final boolean verb = false;
-      if ( verb ) log("  gosub()");
-      if ( verb ) log("    old stack: " + reg.get(regStack));
+      log("  gosub()");
+      log("    old stack: ",reg.get(regStack));
       if ( DEBUG )
       {
          final int tn = type(nextOp);
          if ( TYPE_SUBP != tn && TYPE_SUBS != tn )
          {
-            if ( verb ) log("    non-op: " + pp(nextOp));
+            log("    non-op: ",pp(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
          if ( 0 != ( MASK_BLOCKID & nextOp ) )
          {
-            if ( verb ) log("    non-sub: " + pp(nextOp));
+            log("    non-sub: ",pp(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
          final int tc = type(continuationOp);
          if ( TYPE_SUBP != tc && TYPE_SUBS != tc )
          {
-            if ( verb ) log("    non-op: " + pp(continuationOp));
+            log("    non-op: ",pp(continuationOp));
             raiseError(ERR_INTERNAL);
             return;
          }
@@ -3072,14 +3068,14 @@ public class JhwScm implements Firmware
             // to return to a subroutine entrypoint.
             //
             // I could be wrong about this being an error.
-            if ( verb ) log("    full-sub: " + pp(continuationOp));
+            log("    full-sub: ",pp(continuationOp));
             raiseError(ERR_INTERNAL);
             return;
          }
       }
       if ( NIL != reg.get(regError) )
       {
-         if ( verb ) log("    flow suspended for error: " + reg.get(regError));
+         log("    flow suspended for error: ",pp(reg.get(regError)));
          return;
       }
       if ( PROPERLY_TAIL_RECURSIVE && blk_tail_call == continuationOp )
@@ -3123,10 +3119,10 @@ public class JhwScm implements Firmware
    private void raiseError ( final int err )
    {
       final boolean verb = true;
-      if ( verb ) log("raiseError():");
-      if ( verb ) log("  err:   " + pp(err));
-      if ( verb ) log("  pc:    " + pp(reg.get(regPc)));
-      if ( verb ) log("  stack: " + pp(reg.get(regStack)));
+      log("raiseError():");
+      log("  err:   ",pp(err));
+      log("  pc:    ",pp(reg.get(regPc)));
+      log("  stack: ",pp(reg.get(regStack)));
       if ( verb )
       {
          final Thread              thread = Thread.currentThread();
@@ -3142,24 +3138,24 @@ public class JhwScm implements Firmware
                active = true;
                continue;
             }
-            if ( verb ) log("  java:  " + elm);
+            log("  java:  ",elm);
          }
          for ( int c = reg.get(regStack); NIL != c; c = cdr(c) )
          {
             // TODO: protect against corrupt cyclic stack
-            if ( verb ) log("  scm:   " + pp(car(c)));
+            log("  scm:   ",pp(car(c)));
          }
       }
       if ( NIL == reg.get(regError) ) 
       {
-         if ( verb ) log("  first: documenting");
+         log("  first: documenting");
          reg.set(regError      , err);
          reg.set(regErrorPc    , reg.get(regPc));
          reg.set(regErrorStack , reg.get(regStack));
       }
       else
       {
-         if ( verb ) log("  late:  supressing");
+         log("  late:  supressing");
       }
       reg.set(regPc    , blk_error);
       reg.set(regStack , NIL);
@@ -3235,7 +3231,7 @@ public class JhwScm implements Firmware
    // scmDepth and javaDepth are ONLY used for debug: they are *not*
    // sanctioned VM state.
    //
-   private void log ( final Object msg )
+   private void log ( final Object... msgs )
    {
       if ( !VERBOSE ) return;
       final int lim = (scmDepth + javaDepth);
@@ -3243,7 +3239,11 @@ public class JhwScm implements Firmware
       {
          System.out.print("  ");
       }
-      System.out.println(msg);
+      for ( final Object msg : msgs )
+      {
+         System.out.print(msg);
+      }
+      System.out.println();
    }
 
    private void logrec ( String tag, int c )
@@ -3262,16 +3262,16 @@ public class JhwScm implements Firmware
             {
                buf.append((char)value(car(c)));
             }
-            log(tag + pp(first) + " " + buf);
+            log(tag,pp(first)," ",buf);
             break;
          case IS_PROCEDURE:
          case IS_SPECIAL_FORM:
-            log(tag + pp(first));
+            log(tag,pp(first));
             tag += " ";
             logrec(tag,car(cdr(c))); // just show the arg list, env might cycle
             break;
          default:
-            log(tag + pp(c));
+            log(tag,pp(c));
             tag += " ";
             logrec(tag,car(c));
             logrec(tag,cdr(c));
@@ -3280,12 +3280,13 @@ public class JhwScm implements Firmware
       }
       else
       {
-         log(tag + pp(c));
+         log(tag,pp(c));
       }
    }
 
-   private static String pp ( final int code )
+   private String pp ( final int code )
    {
+      if ( !VERBOSE ) return "";
       switch (code)
       {
       case NIL:                  return "NIL";

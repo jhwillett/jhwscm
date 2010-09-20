@@ -544,7 +544,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         report("fact simple:",scm);
+         //report("fact simple:",scm);
       }
       {
          final String help = 
@@ -565,7 +565,7 @@ public class TestScm extends Util
          expect("(fact 5)",  "120",    scm);
          expect("(fact 6)",  "720",    scm);
          expect("(fact 10)", "3628800",scm);
-         report("fact 2/ help:",scm);
+         //report("fact 2/ help:",scm);
       }
 
       {
@@ -609,7 +609,7 @@ public class TestScm extends Util
             // Takes like a minute...
             expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         report("fib:",scm);
+         //report("fib:",scm);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
