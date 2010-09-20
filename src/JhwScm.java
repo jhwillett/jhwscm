@@ -62,7 +62,7 @@ public class JhwScm implements Firmware
    public static final Stats global = new Stats();
    public        final Stats local  = new Stats();
 
-   private final boolean DO_REP;
+   private final boolean DO_EVAL;
    private final boolean PROFILE;
    private final boolean VERBOSE;
    private final boolean DEBUG;  // check things which should never happen
@@ -81,12 +81,12 @@ public class JhwScm implements Firmware
    ////////////////////////////////////////////////////////////////////
 
    public JhwScm ( final Machine machine,
-                   final boolean DO_REP, 
+                   final boolean DO_EVAL, 
                    final boolean PROFILE, 
                    final boolean VERBOSE, 
                    final boolean DEBUG )
    {
-      this.DO_REP  = DO_REP;
+      this.DO_EVAL = DO_EVAL;
       this.PROFILE = PROFILE;
       this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
@@ -130,7 +130,7 @@ public class JhwScm implements Firmware
       {
       case sub_init:
          // Initializes the machine and the environment, then
-         // transfers to sub_rep if DO_REP, else to sub_rp.
+         // transfers to sub_top.
          //
          for ( int i = 0; i < reg.length(); i++ )
          {
@@ -170,70 +170,53 @@ public class JhwScm implements Firmware
          prebind("read",   sub_read);
          prebind("display",sub_print);
          prebind("map",    sub_map);
-
-         gosub( DO_REP ? sub_rep : sub_rp, blk_tail_call );
+         gosub( sub_top, blk_halt );
          break;
 
-      case sub_rep:
-         // Reads the next expr from reg.get(regIn), evaluates it,
-         // and prints the result in reg.get(regOut).
+      case sub_top:
+         // The top-level loop: read-eval-print if DO_EVAL, read-print
+         // otherwise.
          //
-         // Top-level entry point for the interactive interpreter.
+         // Reads the next expr from reg.get(regIn).  If DO_EVAL,
+         // evaluates the expression in the global environment.
+         // Prints the result in reg.get(regOut).
          //
-         // Does not return in the Scheme sense, but may exit the
-         // VM (returning in the Java sense).
+         // Returns UNSPECIFIED.
+         // 
+         // (define (sub_top)
+         //   (let ((expr (sub_read)))
+         //     (if 
+         //     (let ((value (if DO_EVAL (sub_eval expr (global_env)) expr)))
+         //       (sub_print value)
+         //       (sub_top)))) ;; TODO: show UNSPECIFIED?
          //
-         // (define (sub_rep)
-         //   (begin (sub_print (sub_eval (sub_read) global_env))
-         //          (sub_rep)))
-         //
-         gosub(sub_read,sub_rep+0x1);
+         gosub(sub_read,sub_top+0x1);
          break;
-      case sub_rep+0x1:
+      case sub_top+0x1:
          if ( EOF == reg.get(regRetval) )
          {
-            reg.set(regPc , sub_rep);
-            return SUCCESS;
+            reg.set(regRetval , UNSPECIFIED);
+            returnsub();
+            break;
          }
-         reg.set(regArg0 , reg.get(regRetval));
-         reg.set(regArg1 , reg.get(regEnv));
-         gosub(sub_eval,sub_rep+0x2);
-         break;
-      case sub_rep+0x2:
-         reg.set(regArg0 , reg.get(regRetval));
-         gosub(sub_print,sub_rep+0x3);
-         break;
-      case sub_rep+0x3:
-         gosub(sub_rep,blk_tail_call);
-         break;
-
-      case sub_rp:
-         // Reads the next expr from reg.get(regIn), and prints the
-         // result in reg.get(regOut).
-         //
-         // A useful entry point for testing sub_read and sub_print
-         // decoupled from sub_eval and sub_apply.
-         //
-         // Does not return in the Scheme sense, but may exit the
-         // VM (returning in the Java sense).
-         //
-         // (define (sub_rp)
-         //   (begin (sub_print (sub_read))
-         //          (sub_rp)))
-         //
-         gosub(sub_read,sub_rp+0x1);
-         break;
-      case sub_rp+0x1:
-         if ( EOF == reg.get(regRetval) )
+         if ( DO_EVAL )
          {
-            reg.set(regPc , sub_rp);
-            return SUCCESS;
+            reg.set(regArg0 , reg.get(regRetval));
+            reg.set(regArg1 , reg.get(regEnv));
+            gosub(sub_eval,sub_top+0x2);
+         }         
+         else
+         {
+            reg.set(regArg0 , reg.get(regRetval));
+            gosub(sub_print,sub_top+0x3);
          }
-         reg.set(regArg0 , reg.get(regRetval));
-         gosub(sub_print,sub_rp+0x2);
          break;
-      case sub_rp+0x2:
-         gosub(sub_rp,blk_tail_call);
+      case sub_top+0x2:
+         reg.set(regArg0 , reg.get(regRetval));
+         gosub(sub_print,sub_top+0x3);
+         break;
+      case sub_top+0x3:
+         gosub(sub_top,blk_tail_call);
          break;
 
       case sub_read:
@@ -2453,6 +2436,18 @@ public class JhwScm implements Firmware
       case blk_error:
          return internal2external(reg.get(regError));
 
+      case blk_halt:
+         // NOTE: we gosub then return, unlike elsewhere where we
+         // gosub then break.  
+         //
+         // We want to goto sub_top to be ready for any subsequent
+         // inputs, but also we want to return control to the caller
+         // because there is nothing more for us to do without more
+         // input.
+         //
+         gosub(sub_top,blk_halt);
+         return SUCCESS;
+
       default:
          if ( verb ) log("bogus op: " + pp(reg.get(regPc)));
          raiseError(ERR_INTERNAL);
@@ -2621,9 +2616,8 @@ public class JhwScm implements Firmware
    private static final int A3                   =       0x3 << SHIFT_ARITY;
    private static final int AX                   =       0xF << SHIFT_ARITY;
 
-   private static final int sub_init             = TYPE_SUBP | A1 |  0x1000;
-   private static final int sub_rep              = TYPE_SUBP | A0 |  0x1100;
-   private static final int sub_rp               = TYPE_SUBP | A0 |  0x1200;
+   private static final int sub_init             = TYPE_SUBP | A0 |  0x1000;
+   private static final int sub_top              = TYPE_SUBP | A0 |  0x1100;
 
    private static final int sub_read             = TYPE_SUBP | A0 |  0x2000;
    private static final int sub_read_list        = TYPE_SUBP | A0 |  0x2100;
@@ -2686,6 +2680,7 @@ public class JhwScm implements Firmware
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
    private static final int blk_error            = TYPE_SUBP | A0 | 0x10003;
+   private static final int blk_halt             = TYPE_SUBP | A0 | 0x10004;
 
    ////////////////////////////////////////////////////////////////////
    //
@@ -2812,7 +2807,7 @@ public class JhwScm implements Firmware
     */
    private void portPush ( final int port, final int value )
    {
-      final boolean verb = true;
+      final boolean verb = false;
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
          if ( verb ) log("  portPush(): non-iobuf " + pp(port));
@@ -2867,7 +2862,7 @@ public class JhwScm implements Firmware
     */
    private void portPop ( final int port )
    {
-      final boolean verb = true;
+      final boolean verb = false;
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
          if ( verb ) log("  portPop(): non-iobuf " + pp(port));
@@ -2912,7 +2907,7 @@ public class JhwScm implements Firmware
     */
    private int portPeek ( final int port )
    {
-      final boolean verb = true;
+      final boolean verb = false;
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
          if ( verb ) log("  portPeek(): non-iobuf " + pp(port));
@@ -3310,6 +3305,7 @@ public class JhwScm implements Firmware
       case blk_tail_call:        return "blk_tail_call";
       case blk_tail_call_m_cons: return "blk_tail_call_m_cons";
       case blk_error:            return "blk_error";
+      case blk_halt:             return "blk_halt";
       }
       final int t = type(code);
       final int v = value(code);
@@ -3325,8 +3321,7 @@ public class JhwScm implements Firmware
          switch (code & ~MASK_BLOCKID)
          {
          case sub_init:             buf.append("sub_init");             break;
-         case sub_rep:              buf.append("sub_rep");              break;
-         case sub_rp:               buf.append("sub_rp");               break;
+         case sub_top:              buf.append("sub_top");              break;
          case sub_read:             buf.append("sub_read");             break;
          case sub_read_list:        buf.append("sub_read_list");        break;
          case sub_read_list_open:   buf.append("sub_read_list_open");   break;

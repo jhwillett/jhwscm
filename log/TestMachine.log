@@ -2,7 +2,7 @@
 68eb1d723e9e31430b8f25bacc502735  src/Computer.java
 be8279cc404b218de99abe6e94adc01c  src/Firmware.java
 340befb0624db4df68ca22dcf1d13fbd  src/IOBuffer.java
-fe59d635bd0aa42b10320b2f9d43e0c0  src/JhwScm.java
+a5c49d21d7634498145b8016d6e904da  src/JhwScm.java
 bfa1cdf8cc3f50ba71cc3872cfbae167  src/Machine.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
@@ -14,7 +14,7 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 4604f3d94e79b58b0c9ced2717a527c8  test/TestIOBuffer.java
 f24252a6da436427276117d6a24dbfae  test/TestMachine.java
 09e5ac937891078bb45422a5b3df6a26  test/TestMem.java
-b0355b14c6cdd59d28f73a4d3d10aa9b  test/TestScm.java
+34958a7407cbb7020cf77f54aa94989b  test/TestScm.java
 e6f4ff7f2ec88c11a94b3f1a9d7ed10f  test/Util.java
 8a498c3d820db50cc7255d8c46c1ebd1  build/junit-4.8.2.jar
 make[1]: Entering directory `/home/jwillett/jhwscm'
