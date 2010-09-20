@@ -67,7 +67,7 @@ public class JhwScm implements Firmware
    private final boolean VERBOSE;
    private final boolean DEBUG;  // check things which should never happen
 
-   public  final Machine mach;
+   public Machine mach = null; // TODO: hacky non-state member should be param
 
    private int scmDepth  = 0; // debug
    private int javaDepth = 0; // debug
@@ -78,8 +78,7 @@ public class JhwScm implements Firmware
    //
    ////////////////////////////////////////////////////////////////////
 
-   public JhwScm ( final Machine machine,
-                   final boolean DO_EVAL, 
+   public JhwScm ( final boolean DO_EVAL, 
                    final boolean PROFILE, 
                    final boolean VERBOSE, 
                    final boolean DEBUG )
@@ -88,7 +87,6 @@ public class JhwScm implements Firmware
       this.PROFILE = PROFILE;
       this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
-      this.mach    = machine;
    }
 
    /**
@@ -109,6 +107,8 @@ public class JhwScm implements Firmware
     */
    public int step ( final Machine mach )
    {
+      this.mach = mach; // TODO: hacky non-state member should be param
+
       final Mem reg = mach.reg;
 
       if ( DEBUG ) javaDepth = 0;
