@@ -7,7 +7,7 @@ global:
   numInput:         6430
   numOutput:        1788
   reg.numSet:       4151669
-  reg.numGet:       7259756
+  reg.numGet:       7260504
   reg.maxAddr:      31
   heap.numSet:      3454592
   heap.numGet:      4084896
@@ -20,13 +20,13 @@ global:
   cacheTop.numSet:  4657312
   cacheTop.numGet:  1431261
   cacheTop.maxAddr: 6143
-  reg   ops:        11411425
+  reg   ops:        11412173
   cache ops:        6088573
   heap  ops:        7539488
-  reg   ops/cell:   368110.48387096776
+  reg   ops/cell:   368134.6129032258
   cache ops/cell:   991.1399967442618
   heap  ops/cell:   1227.3299690704866
-  ops   reg/cache:  1.8742363768981665
+  ops   reg/cache:  1.8743592299870593
   ops   cache/heap: 0.8075578872199279
   ALG:                       4
   LINE_SIZE:                 16

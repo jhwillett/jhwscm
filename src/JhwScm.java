@@ -228,10 +228,10 @@ public class JhwScm implements Firmware
 
       case sub_readv:
          // Parses the next expr from the input port, and leaves the
-         // results in reg.get(regRetval).
+         // results in regRetval.
          //
-         // Is variadic, 0 or 1 argument: if regArg0 is found, is
-         // expected to be a port to read from.  Else regIn is used.
+         // Is variadic, 0 or 1 argument: if regArg0 is non-NIL, it is
+         // expected to be an input port.  Otherwise regIn is used.
          //
          // Top-level entry point for the parser.
          //
@@ -296,7 +296,8 @@ public class JhwScm implements Firmware
          //
          if ( TYPE_IOBUF != type(reg.get(regArg0)) )
          {
-               raiseError(ERR_SEMANTIC);
+            raiseError(ERR_SEMANTIC);
+            break;
          }
          store(reg.get(regArg0));        // store port
          gosub(sub_read_burn_space,sub_read+0x1);
@@ -1840,11 +1841,55 @@ public class JhwScm implements Firmware
          gosub(sub_zip,blk_tail_call_m_cons);
          break;
 
+      case sub_printv:
+         // Parses the value in regArg0 to an output input port.
+         //
+         // Is variadic, 1 or 2 arguments: if regArg1 is non-NIL, it
+         // is expected to be an output port.  Otherwise, regIn is
+         // used.
+         //
+         // (define (sub_printv val)      (sub_print val regIn))
+         // (define (sub_printv val port) (sub_print val port))
+         //
+         // TODO: get more ports, and test that this mess works with
+         // other than regOut!
+         //
+         if ( NIL == reg.get(regArg1) )
+         {
+            log("default arg: ",pp(reg.get(regArg1)));
+            reg.set(regArg1, reg.get(regOut));
+         }
+         else if ( TYPE_CELL != type(reg.get(regArg1)) )
+         {
+            log("bogus arg: ",pp(reg.get(regArg1)));
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         else
+         {
+            reg.set(regTmp0, car(reg.get(regArg1)));
+            reg.set(regTmp1, cdr(reg.get(regArg1)));
+            if ( NIL != reg.get(regTmp1) )
+            {
+               // too many args
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg.set(regArg1, reg.get(regTmp0));
+         }
+         gosub(sub_print,blk_tail_call);
+         break;
+
       case sub_print:
          // Prints the expr in reg.get(regArg0) to reg.get(regOut).
          //
          // Returns UNSPECIFIED.
          //
+         if ( TYPE_IOBUF != type(reg.get(regOut)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
          reg.set(regTmp0 , reg.get(regArg0));
          log("printing: ",pp(reg.get(regTmp0)));
          switch (type(reg.get(regTmp0)))
@@ -2704,7 +2749,8 @@ public class JhwScm implements Firmware
    private static final int sub_apply_builtin    = TYPE_SUBP | A2 |  0x4100;
    private static final int sub_apply_user       = TYPE_SUBP | A2 |  0x4200;
 
-   private static final int sub_print            = TYPE_SUBP | A1 |  0x5000;
+   private static final int sub_printv           = TYPE_SUBP | AX |  0x5000;
+   private static final int sub_print            = TYPE_SUBP | A1 |  0x5010;
    private static final int sub_print_list       = TYPE_SUBP | A1 |  0x5100;
    private static final int sub_print_list_elems = TYPE_SUBP | A1 |  0x5200;
    private static final int sub_print_string     = TYPE_SUBP | A1 |  0x5300;
@@ -3436,6 +3482,7 @@ public class JhwScm implements Firmware
          case sub_apply:            buf.append("sub_apply");            break;
          case sub_apply_builtin:    buf.append("sub_apply_builtin");    break;
          case sub_apply_user:       buf.append("sub_apply_user");       break;
+         case sub_printv:           buf.append("sub_printv");           break;
          case sub_print:            buf.append("sub_print");            break;
          case sub_print_list:       buf.append("sub_print_list");       break;
          case sub_print_list_elems: buf.append("sub_print_list_elems"); break;
