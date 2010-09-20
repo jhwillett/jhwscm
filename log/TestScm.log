@@ -2,32 +2,32 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 global:
-  numCycles:        322718
-  numCons:          418438
+  numCycles:        324123
+  numCons:          426424
   numInput:         6430
   numOutput:        1788
-  reg.numSet:       4106917
-  reg.numGet:       7369006
+  reg.numSet:       4151669
+  reg.numGet:       7259756
   reg.maxAddr:      31
-  heap.numSet:      3449840
-  heap.numGet:      4089168
+  heap.numSet:      3454592
+  heap.numGet:      4084896
   heap.maxAddr:     6143
-  cache.numHits:    5785100
-  cache.numMisses:  246581
-  cache.numFlush:   215615
-  cache.numDrop:    30966
-  cache.numLoad:    255573
-  cacheTop.numSet:  4633370
-  cacheTop.numGet:  1407303
+  cache.numHits:    5833267
+  cache.numMisses:  246314
+  cache.numFlush:   215912
+  cache.numDrop:    30402
+  cache.numLoad:    255306
+  cacheTop.numSet:  4657312
+  cacheTop.numGet:  1431261
   cacheTop.maxAddr: 6143
-  reg   ops:        11475923
-  cache ops:        6040673
-  heap  ops:        7539008
-  reg   ops/cell:   370191.06451612903
-  cache ops/cell:   983.3425036627056
-  heap  ops/cell:   1227.2518313527592
-  ops   reg/cache:  1.8997755713643165
-  ops   cache/heap: 0.8012556824452236
+  reg   ops:        11411425
+  cache ops:        6088573
+  heap  ops:        7539488
+  reg   ops/cell:   368110.48387096776
+  cache ops/cell:   991.1399967442618
+  heap  ops/cell:   1227.3299690704866
+  ops   reg/cache:  1.8742363768981665
+  ops   cache/heap: 0.8075578872199279
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -35,8 +35,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9591190250280146
-  cache write/miss:          0.8744185480633139
+  cache hit/op:              0.9594850368800086
+  cache write/miss:          0.876572180225241
 numExpects: 748
   happy:    648
   unhappy:  100

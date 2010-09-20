@@ -146,6 +146,7 @@ public class TestScm extends Util
             { "((()())",          LEXICAL  },
             { "(())",             SEMANTIC },
          };
+         //VERBOSE = true;
          batch(tests,REP_INDEPENDANT);
       }  
 

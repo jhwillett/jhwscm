@@ -167,7 +167,7 @@ public class JhwScm implements Firmware
          prebind("begin",  sub_begin);
          prebind("cond",   sub_cond);
          prebind("case",   sub_case);
-         prebind("read",   sub_read);
+         prebind("read",   sub_readv);
          prebind("display",sub_print);
          prebind("map",    sub_map);
          gosub( sub_top, blk_halt );
@@ -177,20 +177,25 @@ public class JhwScm implements Firmware
          // The top-level loop: read-eval-print if DO_EVAL, read-print
          // otherwise.
          //
-         // Reads the next expr from reg.get(regIn).  If DO_EVAL,
+         // Reads the next expr the port at regIn.  If DO_EVAL,
          // evaluates the expression in the global environment.
-         // Prints the result in reg.get(regOut).
+         // Prints the result in the port at regOut.
          //
-         // Returns UNSPECIFIED.
+         // Returns UNSPECIFIED after processing everything on the
+         // input port.
          // 
          // (define (sub_top)
-         //   (let ((expr (sub_read)))
-         //     (if 
-         //     (let ((value (if DO_EVAL (sub_eval expr (global_env)) expr)))
-         //       (sub_print value)
-         //       (sub_top)))) ;; TODO: show UNSPECIFIED?
+         //   (let ((expr (sub_read regIn)))
+         //     (if (= EOF expr)
+         //         UNSPECIFIED
+         //         (begin
+         //           (if DO_EVAL
+         //               (sub_print (sub_eval expr (global_env)) regOut)
+         //               (sub_print expr                         regOut))
+         //           (sub_top)))))
          //
-         gosub(sub_read,sub_top+0x1);
+         reg.set(regArg0,NIL);
+         gosub(sub_readv,sub_top+0x1);
          break;
       case sub_top+0x1:
          if ( EOF == reg.get(regRetval) )
@@ -207,21 +212,26 @@ public class JhwScm implements Firmware
          }         
          else
          {
-            reg.set(regArg0 , reg.get(regRetval));
+            reg.set(regArg0, reg.get(regRetval));
+            reg.set(regArg1, NIL);
             gosub(sub_print,sub_top+0x3);
          }
          break;
       case sub_top+0x2:
-         reg.set(regArg0 , reg.get(regRetval));
+         reg.set(regArg0, reg.get(regRetval));
+         reg.set(regArg1, NIL);
          gosub(sub_print,sub_top+0x3);
          break;
       case sub_top+0x3:
          gosub(sub_top,blk_tail_call);
          break;
 
-      case sub_read:
-         // Parses the next expr from reg.get(regIn), and leaves
-         // the results in reg.get(regRetval).
+      case sub_readv:
+         // Parses the next expr from the input port, and leaves the
+         // results in reg.get(regRetval).
+         //
+         // Is variadic, 0 or 1 argument: if regArg0 is found, is
+         // expected to be a port to read from.  Else regIn is used.
          //
          // Top-level entry point for the parser.
          //
@@ -239,19 +249,61 @@ public class JhwScm implements Firmware
          //   representation is incomplete and therefore not
          //   parsable, an error is signalled.
          //
-         // (define (sub_read)
-         //   (begin (sub_read_burn_space)
-         //          (let ((c (port_peek)))
+         // (define (sub_readv)      (sub_read regIn))
+         // (define (sub_readv port) (sub_read port))
+         //
+         // TODO: get more ports, and test that this mess works with
+         // non-regIn input ports!
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            log("default arg: ",pp(reg.get(regArg0)));
+            reg.set(regArg0, reg.get(regIn));
+         }
+         else if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            log("bogus arg: ",pp(reg.get(regArg0)));
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         else
+         {
+            reg.set(regTmp0, car(reg.get(regArg0)));
+            reg.set(regTmp1, cdr(reg.get(regArg0)));
+            if ( NIL != reg.get(regTmp1) )
+            {
+               // too many args
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            reg.set(regArg0, reg.get(regTmp0));
+         }
+         gosub(sub_read,blk_tail_call);
+         break;
+
+      case sub_read:
+         // Parses the next expr from regArg0, and leaves the results
+         // in regRetval.
+         //
+         // (define (sub_read port)
+         //   (begin (sub_read_burn_space port)
+         //          (let ((c (port_peek port)))
          //            (case c
          //              (( EOF ) EOF)
          //              (( #\) ) (err_lexical))
-         //              (( #\( ) (sub_read_list))
-         //              (else    (sub_read_atom))))))
+         //              (( #\( ) (sub_read_list port))
+         //              (else    (sub_read_atom port))))))
          //
+         if ( TYPE_IOBUF != type(reg.get(regArg0)) )
+         {
+               raiseError(ERR_SEMANTIC);
+         }
+         store(reg.get(regArg0));        // store port
          gosub(sub_read_burn_space,sub_read+0x1);
          break;
       case sub_read+0x1:
-         reg.set(regTmp0, portPeek(reg.get(regIn)));
+         reg.set(regArg0, restore());    // restore port
+         reg.set(regTmp0, portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp0) )
          {
             reg.set(regRetval , EOF);
@@ -280,36 +332,36 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_list:
-         // Reads the next list expr from reg.get(regIn), returning
-         // the result in reg.get(regRetval). Also handles dotted
-         // lists.
+         // Reads the next list expr from the port at regArg0,
+         // returning the result in regRetval.
+         //
+         // Also handles dotted lists.
          // 
-         // On entry, expects the next char from reg.get(regIn) to
-         // be the opening '(' a list expression.
+         // On entry, expects the next char on the port to be
+         // the opening '(' a list expression.
          // 
          // On exit, precisely the list expression will have been
-         // consumed from reg.get(regIn), up to and including the
-         // final ')'.
+         // consumed from the port, up to and including the final ')'.
          //
-         // (define (sub_read_list)
-         //   (if (!= #\( (port_peek))
+         // (define (sub_read_list port)
+         //   (if (!= #\( (port_peek port))
          //       (err_lexical "expected open paren")
-         //       (begin (port_pop)
-         //              (sub_read_list_open))))
+         //       (begin (port_pop port)
+         //              (sub_read_list_open port))))
          //
-         if ( code(TYPE_CHAR,'(') != portPeek(reg.get(regIn)) )
+         if ( code(TYPE_CHAR,'(') != portPeek(reg.get(regArg0)) )
          {
             raiseError(ERR_LEXICAL);
             break;
          }
-         portPop(reg.get(regIn));
-         reg.set(regArg0 , FALSE);
+         portPop(reg.get(regArg0));
+         reg.set(regArg0 , reg.get(regArg0));
          gosub(sub_read_list_open,blk_tail_call);
          break;
 
       case sub_read_list_open:
-         // Reads all exprs from reg.get(regIn) until a loose EOF,
-         // a ')', or a '.' is encountered.
+         // Reads all exprs from the port at regArg0 until a loose
+         // EOF, a ')', or a '.' is encountered.
          //
          // EOF results in an error (mismatchd paren).
          //
@@ -321,17 +373,17 @@ public class JhwScm implements Firmware
          // the closing ')'.
          // 
          // On exit, precisely the list expression will have been
-         // consumed from reg.get(regIn), up to and including the
-         // final ')'.
+         // consumed from the port at reg.get(regArg0), up to and
+         // including the final ')'.
          //  
-         // (define (sub_read_list_open)
-         //   (burn-space)
-         //   (case (port_peek)
+         // (define (sub_read_list_open port)
+         //   (burn-space port)
+         //   (case (port_peek port)
          //     ((eof) (error_lexical "eof in list expr"))
-         //     ((#\)  (begin (port_peek) '()))
+         //     ((#\)  (begin (port_peek port) '()))
          //     (else
-         //       (let ((next (sub_read))
-         //             (rest (sub_read_list_open))) ; wow, token lookahead!
+         //       (let ((next (sub_read port))
+         //             (rest (sub_read_list_open port))) ; token lookahead?!
          //         ;; Philosophical question: is it an abuse to let the
          //         ;; next be parsed as a symbol before rejecting it, when
          //         ;; what I am after is not the semantic entity "the 
@@ -345,10 +397,12 @@ public class JhwScm implements Firmware
          //          (else                 (err_lexical "many after dot"))
          //          )))))
          //
+         store(reg.get(regArg0));         // store port
          gosub(sub_read_burn_space,sub_read_list_open+0x1);
          break;
-      case sub_read_list_open+0x1:
-         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+      case sub_read_list_open+0x1:    
+         reg.set(regArg0 , restore());    // restore port
+         reg.set(regTmp0 , portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp0) )
          {
             log("eof in list expr");
@@ -358,19 +412,23 @@ public class JhwScm implements Firmware
          if ( code(TYPE_CHAR,')') == reg.get(regTmp0) )
          {
             log("matching close-paren");
-            portPop(reg.get(regIn));
+            portPop(reg.get(regArg0));
             reg.set(regRetval , NIL);
             returnsub();
             break;
          }
+         store(reg.get(regArg0));         // store port
          gosub(sub_read,sub_read_list_open+0x2);
          break;
       case sub_read_list_open+0x2:
-         store(reg.get(regRetval));
+         reg.set(regArg0 , restore());    // restore port
+         store(reg.get(regArg0));         // store port
+         store(reg.get(regRetval));       // store next
          gosub(sub_read_list_open,sub_read_list_open+0x3);
          break;
       case sub_read_list_open+0x3:
-         reg.set(regTmp0 , restore());      // next
+         reg.set(regTmp0 , restore());    // restore next
+         reg.set(regArg0 , restore());    // restore port
          reg.set(regTmp1 , reg.get(regRetval)); // rest
          if ( TYPE_CELL           != type(reg.get(regTmp0))     ||
               IS_SYMBOL           != car(reg.get(regTmp0))      ||
@@ -399,33 +457,34 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_atom:
-         // Reads the next atomic expr from reg.get(regIn),
-         // returning the result in reg.get(regRetval).
+         // Reads the next atomic expr from the port at regArg0,
+         // returning the result in regRetval.
          // 
-         // On entry, expects the next char from reg.get(regIn) to
-         // be the initial character of an atomic expression.
+         // On entry, expects the next char from the port to be the
+         // initial character of an atomic expression.
          // 
          // On exit, precisely the atomic expression will have been
-         // consumed from reg.get(regIn).
+         // consumed from the port.
          //
-         // (define (sub_read_atom)
-         //   (let ((c (port_peek)))
+         // (define (sub_read_atom port)
+         //   (let ((c (port_peek port)))
          //     (case c
          //       (( #\' ) (err_not_impl))
-         //       (( #\" ) (sub_read_string))
-         //       (( #\# ) (sub_read_octo_tok))
+         //       (( #\" ) (sub_read_string port))
+         //       (( #\# ) (sub_read_octo_tok port))
          //       (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
-         //        (sub_read_num))
+         //        (sub_read_num port))
          //       (( #\- ) (begin 
-         //                (port_pop)
-         //                (let ((c (port_peek)))
+         //                (port_pop port)
+         //                (let ((c (port_peek port)))
          //                  (case c
          //                    (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 )
-         //                     (- (sub_read_num)))
-         //                    (else (prepend #\- 
-         //                                   (sub_read_symbol_body))))))))))
+         //                     (- (sub_read_num port)))
+         //                    (else 
+         //                     (prepend #\- 
+         //                       (sub_read_symbol_body port))))))))))
          //
-         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         reg.set(regTmp0 , portPeek(reg.get(regArg0)));
          if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
          {
             log("non-char in input: ",pp(reg.get(regTmp0)));
@@ -436,7 +495,7 @@ public class JhwScm implements Firmware
          {
          case '\'':
             log("quote (not belong here in sub_read_atom?)");
-            portPop(reg.get(regIn));
+            portPop(reg.get(regArg0));
             gosub(sub_read,sub_read_atom+0x3);
             break;
          case '"':
@@ -456,8 +515,8 @@ public class JhwScm implements Firmware
             // The minus sign is special.  We need to look ahead
             // *again* before we can decide whether it is part of a
             // symbol or part of a number.
-            portPop(reg.get(regIn));
-            reg.set(regTmp2 , portPeek(reg.get(regIn)));
+            portPop(reg.get(regArg0));
+            reg.set(regTmp2 , portPeek(reg.get(regArg0)));
             if ( TYPE_CHAR == type(reg.get(regTmp2)) && 
                  '0' <= value(reg.get(regTmp2))      && 
                  '9' >= value(reg.get(regTmp2))       )
@@ -475,13 +534,13 @@ public class JhwScm implements Firmware
             else
             {
                log("minus-starting-symbol");
-               reg.set(regArg0   , code(TYPE_CHAR,'-'));
+               reg.set(regArg1, code(TYPE_CHAR,'-'));
                gosub(sub_read_symbol,blk_tail_call);
             }
             break;
          default:
             log("symbol");
-            reg.set(regArg0   , NIL);
+            reg.set(regArg1, NIL);
             gosub(sub_read_symbol,blk_tail_call);
             break;
          }
@@ -537,24 +596,23 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_num:
-         // Parses the next number from reg.get(regIn).
+         // Parses the next number from the port at regArg0.
          //
-         reg.set(regArg0 , code(TYPE_FIXINT,0));
+         reg.set(regArg1 , code(TYPE_FIXINT,0));
          gosub(sub_read_num_loop,blk_tail_call);
          break;
       case sub_read_num_loop:
-         // Parses the next number from reg.get(regIn), expecting
-         // the accumulated value-so-far as a TYPE_FIXINT in
-         // reg.get(regArg0).
+         // Parses the next number from regArg0, expecting the
+         // accumulated value-so-far as a TYPE_FIXINT in regArg1.
          //
          // A helper for sub_read_num, but still a sub_ in its own
          // right.
          //
-         reg.set(regTmp1 , portPeek(reg.get(regIn)));
+         reg.set(regTmp1 , portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp1) )
          {
-            log("eof: returning ",pp(reg.get(regArg0)));
-            reg.set(regRetval , reg.get(regArg0));
+            log("eof: returning ",pp(reg.get(regArg1)));
+            reg.set(regRetval , reg.get(regArg1));
             returnsub();
             break;
          }
@@ -564,7 +622,7 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         reg.set(regTmp2 , reg.get(regArg0));
+         reg.set(regTmp2 , reg.get(regArg1));
          if ( TYPE_FIXINT != type(reg.get(regTmp2)) )
          {
             log("non-fixint in arg: ",pp(reg.get(regTmp2)));
@@ -580,38 +638,41 @@ public class JhwScm implements Firmware
          case '(':
          case ')':
             // terminator
-            reg.set(regRetval , reg.get(regArg0));
+            reg.set(regRetval , reg.get(regArg1));
             returnsub();
             break;
          default:
-            if ( value(reg.get(regTmp1)) < '0' || value(reg.get(regTmp1)) > '9' )
+            if ( value(reg.get(regTmp1)) < '0' || 
+                 value(reg.get(regTmp1)) > '9' )
             {
                log("non-digit in input: ",pp(reg.get(regTmp1)));
                raiseError(ERR_LEXICAL);
                break;
             }
-            tmp0 = 10 * value(reg.get(regTmp2)) + (value(reg.get(regTmp1)) - '0');
+            tmp0  = 10 * value(reg.get(regTmp2));
+            tmp0 += value(reg.get(regTmp1));
+            tmp0 -= '0';
             log("first char: ",(char)value(reg.get(regTmp1)));
             log("old accum:  ",value(reg.get(regTmp2)));
             log("new accum:  ",tmp0);
-            portPop(reg.get(regIn));
-            reg.set(regArg0 , code(TYPE_FIXINT,tmp0));
+            portPop(reg.get(regArg0));
+            reg.set(regArg1 , code(TYPE_FIXINT,tmp0));
             gosub(sub_read_num_loop,blk_tail_call);
             break;
          }
          break;
 
       case sub_read_octo_tok:
-         // Parses the next octothorpe literal reg.get(regIn).
+         // Parses the next octothorpe literal regArg0.
          //
-         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         reg.set(regTmp0 , portPeek(reg.get(regArg0)));
          if ( reg.get(regTmp0) != code(TYPE_CHAR,'#') )
          {
             raiseError(ERR_INTERNAL);
             break;
          }
-         portPop(reg.get(regIn));
-         reg.set(regTmp1 , portPeek(reg.get(regIn)));
+         portPop(reg.get(regArg0));
+         reg.set(regTmp1 , portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp1) )
          {
             log("eof after octothorpe");
@@ -624,7 +685,7 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         portPop(reg.get(regIn));
+         portPop(reg.get(regArg0));
          switch (value(reg.get(regTmp1)))
          {
          case 't':
@@ -638,7 +699,7 @@ public class JhwScm implements Firmware
             returnsub();
             break;
          case '\\':
-            reg.set(regTmp2 , portPeek(reg.get(regIn)));
+            reg.set(regTmp2 , portPeek(reg.get(regArg0)));
             if ( EOF == reg.get(regTmp2) )
             {
                log("eof after octothorpe slash");
@@ -652,7 +713,7 @@ public class JhwScm implements Firmware
                break;
             }
             log("character literal: ",pp(reg.get(regTmp2)));
-            portPop(reg.get(regIn));
+            portPop(reg.get(regArg0));
             reg.set(regRetval , reg.get(regTmp2));
             returnsub();
             // TODO: so far, we only handle the 1-char sequences...
@@ -665,36 +726,35 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_symbol:
-         // Parses the next symbol from reg.get(regIn).
+         // Parses the next symbol from regArg0.
          //
          // Expects that the next character in the input is known
          // to be the first character of a symbol.
          //
-         // reg.get(regArg0) is expected to be a 'prepend'
-         // character.  If non-NIL, reg.get(regArg0) is prepended
-         // to the symbol.
+         // regArg1 is expected to be a 'prepend' character.  If
+         // non-NIL, regArg1 is prepended to the symbol.
          //
-         if ( NIL == reg.get(regArg0) )
+         if ( NIL == reg.get(regArg1) )
          {
             store(IS_SYMBOL);
             gosub(sub_read_symbol_body,blk_tail_call_m_cons);
          }
          else
          {
-            store(reg.get(regArg0));
+            store(reg.get(regArg1));
             gosub(sub_read_symbol_body,sub_read_symbol+0x1);
          }
          break;
       case sub_read_symbol+0x1: // TODO: blk_tail_call_m_cons_m_cons ???
-         reg.set(regArg0,   restore()); // restore prepend character
-         reg.set(regTmp0,   cons(reg.get(regArg0), reg.get(regRetval)));
+         reg.set(regArg1,   restore()); // restore prepend character
+         reg.set(regTmp0,   cons(reg.get(regArg1), reg.get(regRetval)));
          reg.set(regTmp1,   cons(IS_SYMBOL,        reg.get(regTmp0)));
          reg.set(regRetval, reg.get(regTmp1));
          returnsub();
          break;
 
       case sub_read_symbol_body:
-         // Parses the next symbol from reg.get(regIn).
+         // Parses the next symbol from regArg0.
          //
          // A helper for sub_read_symbol, but still a sub_ in its
          // own right.
@@ -706,11 +766,11 @@ public class JhwScm implements Firmware
          // input will be the character immediately following the
          // end of the symbol.
          //
-         reg.set(regTmp1, portPeek(reg.get(regIn)));
+         reg.set(regTmp1, portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp1) )
          {
             log("eof: returning");
-            reg.set(regRetval , NIL);
+            reg.set(regRetval, NIL);
             returnsub();
             break;
          }
@@ -733,7 +793,7 @@ public class JhwScm implements Firmware
             returnsub();
             break;
          default:
-            portPop(reg.get(regIn));
+            portPop(reg.get(regArg0));
             store(reg.get(regTmp1));
             gosub(sub_read_symbol_body,blk_tail_call_m_cons);
             break;
@@ -741,35 +801,37 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_string:
-         // Parses the next string literal from reg.get(regIn).
+         // Parses the next string literal from regArg0.
          //
          // Expects that the next character in the input is known
          // to be the leading '"' of a string literal.
          //
-         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         reg.set(regTmp0 , portPeek(reg.get(regArg0)));
          if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
          {
             log("non-\" leading string literal: ",pp(reg.get(regTmp0)));
             raiseError(ERR_LEXICAL);
             break;
          }
-         portPop(reg.get(regIn));
+         portPop(reg.get(regArg0));
+         store(reg.get(regArg0));      // store port
          gosub(sub_read_string_body,sub_read_string+0x1);
          break;
       case sub_read_string+0x1:
-         reg.set(regTmp0   , portPeek(reg.get(regIn)));
+         reg.set(regArg0, restore());  // restore port
+         reg.set(regTmp0, portPeek(reg.get(regArg0)));
          if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
          {
             raiseError(ERR_LEXICAL);
             break;
          }
-         portPop(reg.get(regIn));
-         reg.set(regRetval , cons(IS_STRING,reg.get(regRetval)));
+         portPop(reg.get(regArg0));
+         reg.set(regRetval, cons(IS_STRING,reg.get(regRetval)));
          returnsub();
          break;
 
       case sub_read_string_body:
-         // Parses the next string from reg.get(regIn).
+         // Parses the next string from regArg0.
          //
          // A helper for sub_read_string, but still a sub_ in its
          // own right.
@@ -784,7 +846,7 @@ public class JhwScm implements Firmware
          // consumed from the input, and the next character in the
          // input will be the trailing \".
          //
-         reg.set(regTmp1 , portPeek(reg.get(regIn)));
+         reg.set(regTmp1, portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp1) )
          {
             log("eof in string literal");
@@ -804,7 +866,7 @@ public class JhwScm implements Firmware
             returnsub();
             break;
          default:
-            portPop(reg.get(regIn));
+            portPop(reg.get(regArg0));
             store(reg.get(regTmp1));
             gosub(sub_read_string_body,blk_tail_call_m_cons);
             break;
@@ -812,14 +874,14 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_burn_space:
-         // Consumes any whitespace from reg.get(regIn).
+         // Consumes any whitespace from reg.get(regArg0).
          //
          // Returns UNSPECIFIED.
          //
-         reg.set(regTmp0 , portPeek(reg.get(regIn)));
+         reg.set(regTmp0 , portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp0) )
          {
-            reg.set(regRetval , UNSPECIFIED);
+            reg.set(regRetval, UNSPECIFIED);
             returnsub();
             break;
          }
@@ -829,11 +891,11 @@ public class JhwScm implements Firmware
          case '\t':
          case '\r':
          case '\n':
-            portPop(reg.get(regIn));
+            portPop(reg.get(regArg0));
             gosub(sub_read_burn_space,blk_tail_call);
             break;
          default:
-            reg.set(regRetval , UNSPECIFIED);
+            reg.set(regRetval, UNSPECIFIED);
             returnsub();
             break;
          }
@@ -2619,18 +2681,19 @@ public class JhwScm implements Firmware
    private static final int sub_init             = TYPE_SUBP | A0 |  0x1000;
    private static final int sub_top              = TYPE_SUBP | A0 |  0x1100;
 
-   private static final int sub_read             = TYPE_SUBP | A0 |  0x2000;
-   private static final int sub_read_list        = TYPE_SUBP | A0 |  0x2100;
-   private static final int sub_read_list_open   = TYPE_SUBP | A0 |  0x2110;
-   private static final int sub_read_atom        = TYPE_SUBP | A0 |  0x2200;
-   private static final int sub_read_num         = TYPE_SUBP | A0 |  0x2300;
-   private static final int sub_read_num_loop    = TYPE_SUBP | A0 |  0x2310;
-   private static final int sub_read_octo_tok    = TYPE_SUBP | A0 |  0x2400;
-   private static final int sub_read_symbol      = TYPE_SUBP | A0 |  0x2500;
-   private static final int sub_read_string      = TYPE_SUBP | A0 |  0x2600;
-   private static final int sub_read_symbol_body = TYPE_SUBP | A0 |  0x2700;
-   private static final int sub_read_string_body = TYPE_SUBP | A0 |  0x2800;
-   private static final int sub_read_burn_space  = TYPE_SUBP | A0 |  0x2900;
+   private static final int sub_readv            = TYPE_SUBP | AX |  0x2000;
+   private static final int sub_read             = TYPE_SUBP | AX |  0x2010;
+   private static final int sub_read_list        = TYPE_SUBP | A1 |  0x2100;
+   private static final int sub_read_list_open   = TYPE_SUBP | A1 |  0x2110;
+   private static final int sub_read_atom        = TYPE_SUBP | A1 |  0x2200;
+   private static final int sub_read_num         = TYPE_SUBP | A1 |  0x2300;
+   private static final int sub_read_num_loop    = TYPE_SUBP | A2 |  0x2310;
+   private static final int sub_read_octo_tok    = TYPE_SUBP | A1 |  0x2400;
+   private static final int sub_read_symbol      = TYPE_SUBP | A1 |  0x2500;
+   private static final int sub_read_string      = TYPE_SUBP | A1 |  0x2600;
+   private static final int sub_read_symbol_body = TYPE_SUBP | A1 |  0x2700;
+   private static final int sub_read_string_body = TYPE_SUBP | A1 |  0x2800;
+   private static final int sub_read_burn_space  = TYPE_SUBP | A1 |  0x2900;
 
    private static final int sub_eval             = TYPE_SUBS | A2 |  0x3000;
    private static final int sub_eval_look_env    = TYPE_SUBS | A2 |  0x3100;
@@ -3055,27 +3118,27 @@ public class JhwScm implements Firmware
    {
       final Mem reg = mach.reg;
       final boolean verb = false;
-      log("  gosub()");
-      log("    old stack: ",reg.get(regStack));
+      //log("  gosub()");
+      //log("    old stack: ",reg.get(regStack));
       if ( DEBUG )
       {
          final int tn = type(nextOp);
          if ( TYPE_SUBP != tn && TYPE_SUBS != tn )
          {
-            log("    non-op: ",pp(nextOp));
+            //log("    non-op: ",pp(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
          if ( 0 != ( MASK_BLOCKID & nextOp ) )
          {
-            log("    non-sub: ",pp(nextOp));
+            //log("    non-sub: ",pp(nextOp));
             raiseError(ERR_INTERNAL);
             return;
          }
          final int tc = type(continuationOp);
          if ( TYPE_SUBP != tc && TYPE_SUBS != tc )
          {
-            log("    non-op: ",pp(continuationOp));
+            //log("    non-op: ",pp(continuationOp));
             raiseError(ERR_INTERNAL);
             return;
          }
@@ -3086,14 +3149,14 @@ public class JhwScm implements Firmware
             // to return to a subroutine entrypoint.
             //
             // I could be wrong about this being an error.
-            log("    full-sub: ",pp(continuationOp));
+            //log("    full-sub: ",pp(continuationOp));
             raiseError(ERR_INTERNAL);
             return;
          }
       }
       if ( NIL != reg.get(regError) )
       {
-         log("    flow suspended for error: ",pp(reg.get(regError)));
+         //log("    flow suspended for error: ",pp(reg.get(regError)));
          return;
       }
       if ( PROPERLY_TAIL_RECURSIVE && blk_tail_call == continuationOp )
@@ -3116,7 +3179,14 @@ public class JhwScm implements Firmware
    private void returnsub ()
    {
       final Mem reg = mach.reg;
-      if ( DEBUG ) scmDepth--;
+      if ( DEBUG )
+      {
+         scmDepth--;
+         if ( 0 > scmDepth )
+         {
+            throw new RuntimeException("scmDepth underflow: " + scmDepth);
+         }
+      }
       final int c = restore();
       final int t = type(c);
       if ( TYPE_SUBP != t && TYPE_SUBS != t)
@@ -3339,12 +3409,14 @@ public class JhwScm implements Firmware
       case TYPE_CELL:     buf.append("cell");     break;
       case TYPE_CHAR:     buf.append("char");     break;
       case TYPE_SENTINEL: buf.append("sentinel"); break;
+      case TYPE_IOBUF:    buf.append("iobuf"); break;
       case TYPE_SUBP:
       case TYPE_SUBS:
          switch (code & ~MASK_BLOCKID)
          {
          case sub_init:             buf.append("sub_init");             break;
          case sub_top:              buf.append("sub_top");              break;
+         case sub_readv:            buf.append("sub_readv");            break;
          case sub_read:             buf.append("sub_read");             break;
          case sub_read_list:        buf.append("sub_read_list");        break;
          case sub_read_list_open:   buf.append("sub_read_list_open");   break;
