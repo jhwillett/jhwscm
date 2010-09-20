@@ -49,7 +49,7 @@
  * All rights reserved.
  */
 
-import org.junit.Assert;
+//import org.junit.Assert;
 
 public class Util
 {
@@ -78,8 +78,10 @@ public class Util
                                      final Object a, 
                                      final Object b )
    {
-      //if ( a == b ) return;
-      //if ( null == a ) return;
-      Assert.assertEquals(msg,a,b);
+      if ( a == b ) return;
+      if ( null != a && a.equals(b) ) return;
+      if ( null != b && b.equals(a) ) return;
+      throw new RuntimeException(msg + " expected " + a + " got " + b);
+      //Assert.assertEquals(msg,a,b);
    }
 }

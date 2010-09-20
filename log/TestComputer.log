@@ -18,8 +18,8 @@ f24252a6da436427276117d6a24dbfae  test/TestMachine.java
 284afb8136984e30c4193f69f67b5680  test/TestUtil.java
 761a49ce6f74d7eb083bf7ac328b0894  test/Util.java
 make[1]: Entering directory `/home/jwillett/jhwscm'
-test:   TestMem
+test:   TestComputer
 host:   little-man
-TestMem:
-  success
+TestComputer
+  TODO: write me
 make[1]: Leaving directory `/home/jwillett/jhwscm'

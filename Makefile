@@ -9,14 +9,16 @@ SRC       += $(wildcard src/*.java)
 
 # Maintaining TESTS explicitly so I can control ordering.
 #
+TESTS     += test/TestUtil.java
 TESTS     += test/TestMachine.java
+TESTS     += test/TestComputer.java
 TESTS     += test/TestIOBuffer.java
 TESTS     += test/TestMem.java
 TESTS     += test/TestScm.java
 
 TEST_SRC  := $(wildcard test/*.java)
 
-LIBS                 += junit-4.8.2.jar
+#LIBS                 += junit-4.8.2.jar
 HOME-junit-4.8.2.jar := http://github.com/downloads/KentBeck/junit
 MD5-junit-4.8.2.jar  := 8a498c3d820db50cc7255d8c46c1ebd1
 
