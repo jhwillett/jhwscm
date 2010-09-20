@@ -168,7 +168,7 @@ public class JhwScm implements Firmware
          prebind("cond",   sub_cond);
          prebind("case",   sub_case);
          prebind("read",   sub_readv);
-         prebind("display",sub_print);
+         prebind("display",sub_printv);
          prebind("map",    sub_map);
          gosub( sub_top, blk_halt );
          break;
@@ -227,11 +227,12 @@ public class JhwScm implements Firmware
          break;
 
       case sub_readv:
-         // Parses the next expr from the input port, and leaves the
+         // Parses the next expr from an input port, and leaves the
          // results in regRetval.
          //
-         // Is variadic, 0 or 1 argument: if regArg0 is non-NIL, it is
-         // expected to be an input port.  Otherwise regIn is used.
+         // Is variadic, 0 or 1 argument: if the first arg is present,
+         // it is expected to be an input port.  Otherwise regIn is
+         // used.
          //
          // Top-level entry point for the parser.
          //
@@ -1842,11 +1843,11 @@ public class JhwScm implements Firmware
          break;
 
       case sub_printv:
-         // Parses the value in regArg0 to an output input port.
+         // Parses the first arg to an output input port.
          //
-         // Is variadic, 1 or 2 arguments: if regArg1 is non-NIL, it
-         // is expected to be an output port.  Otherwise, regIn is
-         // used.
+         // Is variadic, 1 or 2 arguments: if the second arg is
+         // present, is expected to be an output port.  Otherwise,
+         // regIn is used.
          //
          // (define (sub_printv val)      (sub_print val regIn))
          // (define (sub_printv val port) (sub_print val port))
@@ -1854,34 +1855,43 @@ public class JhwScm implements Firmware
          // TODO: get more ports, and test that this mess works with
          // other than regOut!
          //
-         if ( NIL == reg.get(regArg1) )
+         if ( NIL == reg.get(regArg0) )
          {
-            log("default arg: ",pp(reg.get(regArg1)));
+            log("too few args");
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0, car(reg.get(regArg0)));
+         reg.set(regTmp1, cdr(reg.get(regArg0)));
+         reg.set(regArg0, reg.get(regTmp0));
+         if ( NIL == reg.get(regTmp1) )
+         {
+            log("defaulting to regOut");
             reg.set(regArg1, reg.get(regOut));
          }
-         else if ( TYPE_CELL != type(reg.get(regArg1)) )
+         else if ( TYPE_CELL != type(reg.get(regTmp1)) )
          {
-            log("bogus arg: ",pp(reg.get(regArg1)));
+            log("bogus arg: ",pp(reg.get(regTmp1)));
             raiseError(ERR_SEMANTIC);
             break;
          }
          else
          {
-            reg.set(regTmp0, car(reg.get(regArg1)));
-            reg.set(regTmp1, cdr(reg.get(regArg1)));
-            if ( NIL != reg.get(regTmp1) )
+            reg.set(regTmp2, car(reg.get(regTmp1)));
+            reg.set(regTmp3, cdr(reg.get(regTmp1)));
+            if ( NIL != reg.get(regTmp3) )
             {
-               // too many args
+               log("too many args");
                raiseError(ERR_SEMANTIC);
                break;
             }
-            reg.set(regArg1, reg.get(regTmp0));
+            reg.set(regArg1, reg.get(regTmp2));
          }
          gosub(sub_print,blk_tail_call);
          break;
 
       case sub_print:
-         // Prints the expr in reg.get(regArg0) to reg.get(regOut).
+         // Prints the expr in regArg0 to regOut.
          //
          // Returns UNSPECIFIED.
          //

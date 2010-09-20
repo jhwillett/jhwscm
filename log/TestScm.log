@@ -2,12 +2,12 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 global:
-  numCycles:        324123
+  numCycles:        324135
   numCons:          426424
   numInput:         6430
   numOutput:        1788
-  reg.numSet:       4151669
-  reg.numGet:       7260504
+  reg.numSet:       4151717
+  reg.numGet:       7260528
   reg.maxAddr:      31
   heap.numSet:      3454592
   heap.numGet:      4084896
@@ -20,13 +20,13 @@ global:
   cacheTop.numSet:  4657312
   cacheTop.numGet:  1431261
   cacheTop.maxAddr: 6143
-  reg   ops:        11412173
+  reg   ops:        11412245
   cache ops:        6088573
   heap  ops:        7539488
-  reg   ops/cell:   368134.6129032258
+  reg   ops/cell:   368136.93548387097
   cache ops/cell:   991.1399967442618
   heap  ops/cell:   1227.3299690704866
-  ops   reg/cache:  1.8743592299870593
+  ops   reg/cache:  1.8743710554180757
   ops   cache/heap: 0.8075578872199279
   ALG:                       4
   LINE_SIZE:                 16
