@@ -68,7 +68,6 @@ public class JhwScm implements Firmware
    private final boolean DEBUG;  // check things which should never happen
 
    public  final Machine mach;
-   private final Mem     reg;
 
    private int heapTop   = 0; // allocator support, perhaps should be a reg?
    private int scmDepth  = 0; // debug
@@ -91,7 +90,6 @@ public class JhwScm implements Firmware
       this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
       this.mach    = machine;
-      this.reg     = machine.reg;
    }
 
    /**
@@ -99,8 +97,9 @@ public class JhwScm implements Firmware
     *
     * The firmware should initialize the Machine to a base state.
     */
-   public void boot ()
+   public void boot ( final Machine mach )
    {
+      final Mem reg = mach.reg;
       reg.set(regPc,sub_init);
    }
 
@@ -109,8 +108,10 @@ public class JhwScm implements Firmware
     * 
     * @returns COMPLETE, INCOMPLETE, or some other error code.
     */
-   public int step ()
+   public int step ( final Machine mach )
    {
+      final Mem reg = mach.reg;
+
       if ( DEBUG ) javaDepth = 0;
       log("step: ",pp(reg.get(regPc)));
       if ( DEBUG ) javaDepth = 1;
@@ -2690,6 +2691,8 @@ public class JhwScm implements Firmware
     */
    private int cons ( final int car, final int cdr )
    {
+      final Mem reg  = mach.reg;
+      final Mem heap = mach.heap;
       if ( PROFILE )
       {
          local.numCons++;
@@ -2698,7 +2701,7 @@ public class JhwScm implements Firmware
       int cell = reg.get(regFreeCellList);
       if ( NIL == cell )
       {
-         if ( heapTop >= mach.heap.length() )
+         if ( heapTop >= heap.length() )
          {
             raiseError(ERR_OOM);
             return UNSPECIFIED;
@@ -2719,16 +2722,16 @@ public class JhwScm implements Firmware
             // Even if you're going to use all of it, at least we
             // don't initialize a piece of heap until right before the
             // higher-level program was going to get to it anyhow.
-            top = mach.heap.length();
+            top = heap.length();
          }
-         final int lim = (top < mach.heap.length()) ? top : mach.heap.length();
+         final int lim = (top < heap.length()) ? top : heap.length();
          for ( ; heapTop < lim; heapTop += 2 )
          {
             // Notice that how half the space in the free cell list,
             // the car()s, is unused.  Is this an opportunity for
             // something?
-            mach.heap.set(heapTop+0   , UNSPECIFIED);
-            mach.heap.set(heapTop+1   , reg.get(regFreeCellList));
+            heap.set(heapTop+0   , UNSPECIFIED);
+            heap.set(heapTop+1   , reg.get(regFreeCellList));
             reg.set(regFreeCellList , code(TYPE_CELL,(heapTop >>> 1)));
          }
          cell = reg.get(regFreeCellList);
@@ -2742,50 +2745,54 @@ public class JhwScm implements Firmware
       final int v          = value(cell);
       final int ar         = v << 1;
       final int dr         = ar + 1;
-      reg.set(regFreeCellList , mach.heap.get(dr));
-      mach.heap.set(ar          , car);
-      mach.heap.set(dr          , cdr);
+      reg.set(regFreeCellList , heap.get(dr));
+      heap.set(ar          , car);
+      heap.set(dr          , cdr);
       return cell;
    }
 
    private int car ( final int cell )
    {
+      final Mem heap = mach.heap;
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
-      return mach.heap.get((value(cell) << 1) + 0);
+      return heap.get((value(cell) << 1) + 0);
    }
 
    private int cdr ( final int cell )
    {
+      final Mem heap = mach.heap;
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
          return UNSPECIFIED;
       }
-      return mach.heap.get((value(cell) << 1) + 1);
+      return heap.get((value(cell) << 1) + 1);
    }
 
    private void setcar ( final int cell, final int value )
    {
+      final Mem heap = mach.heap;
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
          return;
       }
-      mach.heap.set( (value(cell) << 1) + 0 , value );
+      heap.set( (value(cell) << 1) + 0 , value );
    }
 
    private void setcdr ( final int cell, final int value )
    {
+      final Mem heap = mach.heap;
       if ( DEBUG && TYPE_CELL != type(cell) )
       {
          raiseError(ERR_INTERNAL);
          return;
       }
-      mach.heap.set( (value(cell) << 1) + 1 , value );
+      heap.set( (value(cell) << 1) + 1 , value );
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -2816,13 +2823,14 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
+      final IOBuffer[] iobufs = mach.iobufs;
+      if ( DEBUG && ( 0 > value(port) || value(port) >= iobufs.length ) )
       {
          log("  portPush(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
-      final IOBuffer iobuf = mach.buffers[value(port)];
+      final IOBuffer iobuf = iobufs[value(port)];
       log("  portPush(): iobuf: ",iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
@@ -2865,13 +2873,14 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
+      final IOBuffer[] iobufs = mach.iobufs;
+      if ( DEBUG && ( 0 > value(port) || value(port) >= iobufs.length ) )
       {
          log("  portPop(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return;
       }
-      final IOBuffer iobuf = mach.buffers[value(port)];
+      final IOBuffer iobuf = iobufs[value(port)];
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
       // add close() it'll be EOF when null, and an empty buffer
@@ -2910,13 +2919,14 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return EOF;
       }
-      if ( DEBUG && ( 0 > value(port) || value(port) >= mach.buffers.length ) )
+      final IOBuffer[] iobufs = mach.iobufs;
+      if ( DEBUG && ( 0 > value(port) || value(port) >= iobufs.length ) )
       {
          log("  portPeek(): non-iobuf ",pp(port));
          raiseError(ERR_INTERNAL);
          return EOF;
       }
-      final IOBuffer iobuf = mach.buffers[value(port)];
+      final IOBuffer iobuf = iobufs[value(port)];
       log("  portPeek(): iobuf ",iobuf);
       //
       // TODO: for now, an iobuf is EOF if empty, but later when we
@@ -2956,6 +2966,7 @@ public class JhwScm implements Firmware
    private void store ( final int value )
    {
       final boolean verb = false;
+      final Mem reg = mach.reg;
       if ( NIL != reg.get(regError) )
       {
          log("store(): flow suspended for error");
@@ -2976,6 +2987,7 @@ public class JhwScm implements Firmware
    private int restore ()
    {
       final boolean verb = false;
+      final Mem reg = mach.reg;
       if ( NIL != reg.get(regError) )
       {
          log("restore(): flow suspended for error");
@@ -3036,6 +3048,7 @@ public class JhwScm implements Firmware
 
    private void gosub ( final int nextOp, final int continuationOp )
    {
+      final Mem reg = mach.reg;
       final boolean verb = false;
       log("  gosub()");
       log("    old stack: ",reg.get(regStack));
@@ -3097,6 +3110,7 @@ public class JhwScm implements Firmware
 
    private void returnsub ()
    {
+      final Mem reg = mach.reg;
       if ( DEBUG ) scmDepth--;
       final int c = restore();
       final int t = type(c);
@@ -3119,6 +3133,7 @@ public class JhwScm implements Firmware
    private void raiseError ( final int err )
    {
       final boolean verb = true;
+      final Mem reg = mach.reg;
       log("raiseError():");
       log("  err:   ",pp(err));
       log("  pc:    ",pp(reg.get(regPc)));
@@ -3171,6 +3186,7 @@ public class JhwScm implements Firmware
     */
    private void resumeErrorContinuation ()
    {
+      final Mem reg = mach.reg;
       reg.set(regError , NIL);
       reg.set(regPc    , reg.get(regErrorPc));
       reg.set(regStack , reg.get(regErrorStack));
@@ -3209,6 +3225,7 @@ public class JhwScm implements Firmware
       // to maintianging longer term until *after* I've got (eval)
       // working and the entry points in the microcode tied down more.
       //
+      final Mem reg = mach.reg;
       int tmp = NIL;
       for ( int i = name.length()-1; i >= 0 ; --i )
       {

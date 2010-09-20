@@ -19,12 +19,12 @@ public interface Firmware
     *
     * The firmware should initialize the Machine to a base state.
     */
-   public void boot ();
+   public void boot ( final Machine mach );
 
    /**
     * Drives a single step of computation.  
     * 
     * @returns COMPLETE, INCOMPLETE, or some other error code.
     */
-   public int step ();
+   public int step ( final Machine mach );
 }

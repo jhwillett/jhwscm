@@ -19,12 +19,12 @@ public class TestComputer extends Util
          this.maxStep = maxStep;
       }
 
-      public void boot ()
+      public void boot ( final Machine mach )
       {
          numBoot++;
       }
 
-      public int step ()
+      public int step ( final Machine mach )
       {
          numStep++;
          return ( numStep >= maxStep ) ? COMPLETE : INCOMPLETE;

@@ -36,7 +36,7 @@ public class Computer
       this.PROFILE  = PROFILE;
       this.VERBOSE  = VERBOSE;
       this.DEBUG    = DEBUG;
-      this.firmware.boot();
+      this.firmware.boot(machine);
    }
 
    /**
@@ -59,7 +59,7 @@ public class Computer
       {
          if ( PROFILE ) local.numCycles  += 1;
          if ( PROFILE ) global.numCycles += 1;
-         final int code = firmware.step();
+         final int code = firmware.step(machine);
          if ( Firmware.INCOMPLETE != code )
          {
             return code;

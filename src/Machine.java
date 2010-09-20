@@ -43,7 +43,7 @@ public class Machine
 
    public final Mem        reg;
    public final Mem        heap;
-   public final IOBuffer[] buffers;
+   public final IOBuffer[] iobufs;
 
    private int scmDepth  = 0; // debug
    private int javaDepth = 0; // debug
@@ -105,7 +105,7 @@ public class Machine
       }
       this.heap = mem;
 
-      this.buffers = new IOBuffer[] { 
+      this.iobufs = new IOBuffer[] { 
          new IOBuffer(1024), 
          new IOBuffer(1024) 
       };
@@ -155,7 +155,7 @@ public class Machine
          if ( VERBOSE ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
-      final IOBuffer iobuf = buffers[0];
+      final IOBuffer iobuf = iobufs[0];
       if ( null == buf )
       {
          return PORT_CLOSED;
@@ -215,7 +215,7 @@ public class Machine
          if ( VERBOSE ) log("output(): " + off + "+" + len + " / " + buf.length);
          return BAD_ARG;
       }
-      final IOBuffer iobuf = buffers[1];
+      final IOBuffer iobuf = iobufs[1];
       if ( null == buf )
       {
          return PORT_CLOSED;
