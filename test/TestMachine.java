@@ -19,67 +19,33 @@ public class TestMachine extends Util
       return machine;
    }
 
-   private static void ioEdgeCases ()
-   {
-      assertEquals(Machine.BAD_ARG,newMachine().input(null,0,0));
-      assertEquals(Machine.BAD_ARG,newMachine().output(null,0,0));
-
-      assertEquals(Machine.BAD_ARG,newMachine().input(new byte[0],-1,0));
-      assertEquals(Machine.BAD_ARG,newMachine().input(new byte[0],0,-1));
-      assertEquals(Machine.BAD_ARG,newMachine().input(new byte[0],2,3));
-      assertEquals(Machine.BAD_ARG,newMachine().input(new byte[0],3,2));
-      assertEquals(Machine.BAD_ARG,newMachine().output(new byte[0],-1,0));
-      assertEquals(Machine.BAD_ARG,newMachine().output(new byte[0],-1,0));
-      assertEquals(Machine.BAD_ARG,newMachine().output(new byte[0],0,-1));
-      assertEquals(Machine.BAD_ARG,newMachine().output(new byte[0],0,-1));
-      assertEquals(Machine.BAD_ARG,newMachine().output(new byte[0],2,3));
-      assertEquals(Machine.BAD_ARG,newMachine().output(new byte[0],3,2));
-      assertEquals(Machine.BAD_ARG,newMachine().output(new byte[3],2,3));
-
-      assertEquals(0,              newMachine().input(new byte[0],0,0));
-      assertEquals(0,              newMachine().input(new byte[0],0,0));
-      assertEquals(0,              newMachine().input(new byte[0],0,0));
-      assertEquals(0,              newMachine().input(new byte[1],1,0));
-      assertEquals(0,              newMachine().output(new byte[0],0,0));
-      
-      {
-         final int code = newMachine().output(new byte[5],2,3);
-         if ( -1 != code && 0 != code )
-         {
-            throw new RuntimeException("output() out of spec");
-         }
-      }
-   }
-
    public static void main ( final String[] argv )
    {
       log("TestMachine");
       depth++;
 
-      ioEdgeCases();
-
       final Machine mach = newMachine();
       final int num = mach.numIoBufs();
       try
       {
-         mach.iobuf(-1);
-         throw new RuntimeException("Machine.iobuf() out of spec"); 
+         mach.ioBuf(-1);
+         throw new RuntimeException("Machine.ioBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
       }
       try
       {
-         mach.iobuf(num);
-         throw new RuntimeException("Machine.iobuf() out of spec"); 
+         mach.ioBuf(num);
+         throw new RuntimeException("Machine.ioBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
       }
       try
       {
-         mach.iobuf(num+1);
-         throw new RuntimeException("Machine.iobuf() out of spec"); 
+         mach.ioBuf(num+1);
+         throw new RuntimeException("Machine.ioBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -111,25 +77,25 @@ public class TestMachine extends Util
 
       for ( int i = 0; i < num; ++i )
       {
-         final IOBuffer buf = mach.iobuf(i);
+         final IOBuffer buf = mach.ioBuf(i);
          if ( null == buf )
          {
-            throw new RuntimeException("Machine.iobuf() out of spec"); 
+            throw new RuntimeException("Machine.ioBuf() out of spec"); 
          }
       }
       if ( 0 < num )
       {
          mach.closeIoBuf(0);
-         if ( null != mach.iobuf(0) )
+         if ( null != mach.ioBuf(0) )
          {
-            throw new RuntimeException("Machine.iobuf() out of spec"); 
+            throw new RuntimeException("Machine.ioBuf() out of spec"); 
          }
          mach.closeIoBuf(0);
          mach.closeIoBuf(0);
          mach.closeIoBuf(0);
-         if ( null != mach.iobuf(0) )
+         if ( null != mach.ioBuf(0) )
          {
-            throw new RuntimeException("Machine.iobuf() out of spec"); 
+            throw new RuntimeException("Machine.ioBuf() out of spec"); 
          }
       }
    }

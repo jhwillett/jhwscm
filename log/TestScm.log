@@ -4,8 +4,8 @@ host:   little-man
 global:
   numCycles:        324155
   numCons:          427177
-  numInput:         6434
-  numOutput:        1788
+  numInput:         0
+  numOutput:        0
   reg.numSet:       4280334
   reg.numGet:       7390036
   reg.maxAddr:      31

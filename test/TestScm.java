@@ -1086,7 +1086,8 @@ public class TestScm extends Util
          while ( input_off < input_buf.length )
          {
             final int input_len = input_buf.length - input_off;
-            final int code = machine.input(input_buf, input_off, input_len);
+            final int code = 
+               machine.ioBuf(0).input(input_buf, input_off, input_len);
             if ( 0 <= code )
             {
                input_off += code;
@@ -1124,7 +1125,8 @@ public class TestScm extends Util
          for ( int off = 0; true; )
          {
             final int output_len = output_buf.length - output_off;
-            final int code = machine.output(output_buf, output_off, output_len);
+            final int code = 
+               machine.ioBuf(1).output(output_buf, output_off, output_len);
             if ( -1 > code )
             {
                throw new RuntimeException("output() out of spec: " + code);
