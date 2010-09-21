@@ -65,10 +65,10 @@ public class TestScm extends Util
          final Object[][] tests = { 
             { expr,                   expr },
             { " " + expr,             expr },
-            { expr + " " ,            expr },
+            { expr + " ",             expr },
             { " " + expr + " ",       expr },
             { "\n" + expr,            expr },
-            { expr + "\n" ,           expr },
+            { expr + "\n",            expr },
             { "\t" + expr + "\t\r\n", expr },
          };
          batch(tests,RE_INDEPENDANT);
@@ -87,7 +87,7 @@ public class TestScm extends Util
          final Object[][] tests = { 
             { pair[0],             pair[1] },
             { " " + pair[0],       pair[1] },
-            { pair[0] + " " ,      pair[1] },
+            { pair[0] + " ",       pair[1] },
             { " " + pair[0] + " ", pair[1] },
          };
          batch(tests,RE_INDEPENDANT);
@@ -248,10 +248,10 @@ public class TestScm extends Util
       {
          expect(expr,                   expr);
          expect(" " + expr,             expr);
-         expect(expr + " " ,            expr);
+         expect(expr + " ",             expr);
          expect(" " + expr + " ",       expr);
          expect("\n" + expr,            expr);
-         expect(expr + "\n" ,           expr);
+         expect(expr + "\n",            expr);
          expect("\t" + expr + "\t\r\n", expr);
       }
       final String[][] tweakyChars = { 
@@ -271,7 +271,7 @@ public class TestScm extends Util
       {
          expect(pair[0],             pair[1]);
          expect(" " + pair[0],       pair[1]);
-         expect(pair[0] + " " ,      pair[1]);
+         expect(pair[0] + " ",       pair[1]);
          expect(" " + pair[0] + " ", pair[1]);
       }
       expect("#",LEXICAL);
@@ -293,10 +293,10 @@ public class TestScm extends Util
       {
          expect(expr,                   expr);
          expect(" " + expr,             expr);
-         expect(expr + " " ,            expr);
+         expect(expr + " ",             expr);
          expect(" " + expr + " ",       expr);
          expect("\n" + expr,            expr);
-         expect(expr + "\n" ,           expr);
+         expect(expr + "\n",            expr);
          expect("\t" + expr + "\t\r\n", expr);
       }
       expect("\"",LEXICAL);
