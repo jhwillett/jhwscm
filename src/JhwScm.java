@@ -2055,8 +2055,8 @@ public class JhwScm implements Firmware
          break;
 
       case sub_print_chars:
-         // Prints the list in reg.get(regArg0), whose elements are
-         // expected to all be TYPE_CHAR, to reg.get(regOut).
+         // Prints the list in regArg0, whose elements are expected to
+         // all be TYPE_CHAR, to the output port in regArg1.
          //
          if ( NIL == reg.get(regArg0) )
          {
@@ -2090,7 +2090,7 @@ public class JhwScm implements Firmware
          store(reg.get(regArg1));         // store port
          reg.set(regArg0 , reg.get(regArg0));
          reg.set(regArg2 , TRUE);
-         portPush(reg.get(regOut),code(TYPE_CHAR,'('));
+         portPush(reg.get(regArg1),code(TYPE_CHAR,'('));
          gosub(sub_print_list_elems,sub_print_list+0x1);
          break;
       case sub_print_list+0x1:
