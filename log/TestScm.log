@@ -3,31 +3,31 @@ test:   TestScm
 host:   little-man
 global:
   numCycles:        324135
-  numCons:          426424
+  numCons:          426595
   numInput:         6430
   numOutput:        1788
-  reg.numSet:       4151717
-  reg.numGet:       7260528
+  reg.numSet:       4152572
+  reg.numGet:       7262145
   reg.maxAddr:      31
-  heap.numSet:      3454592
-  heap.numGet:      4084896
+  heap.numSet:      3454608
+  heap.numGet:      4084912
   heap.maxAddr:     6143
-  cache.numHits:    5833267
-  cache.numMisses:  246314
-  cache.numFlush:   215912
+  cache.numHits:    5834292
+  cache.numMisses:  246315
+  cache.numFlush:   215913
   cache.numDrop:    30402
-  cache.numLoad:    255306
-  cacheTop.numSet:  4657312
-  cacheTop.numGet:  1431261
+  cache.numLoad:    255307
+  cacheTop.numSet:  4657825
+  cacheTop.numGet:  1431774
   cacheTop.maxAddr: 6143
-  reg   ops:        11412245
-  cache ops:        6088573
-  heap  ops:        7539488
-  reg   ops/cell:   368136.93548387097
-  cache ops/cell:   991.1399967442618
-  heap  ops/cell:   1227.3299690704866
-  ops   reg/cache:  1.8743710554180757
-  ops   cache/heap: 0.8075578872199279
+  reg   ops:        11414717
+  cache ops:        6089599
+  heap  ops:        7539520
+  reg   ops/cell:   368216.67741935485
+  cache ops/cell:   991.3070161159043
+  heap  ops/cell:   1227.3351782516686
+  ops   reg/cache:  1.8744611919438374
+  ops   cache/heap: 0.8076905426340139
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -35,8 +35,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9594850368800086
-  cache write/miss:          0.876572180225241
+  cache hit/op:              0.9594917086402722
+  cache write/miss:          0.8765726813226965
 numExpects: 748
   happy:    648
   unhappy:  100

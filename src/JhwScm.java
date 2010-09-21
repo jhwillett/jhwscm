@@ -213,13 +213,13 @@ public class JhwScm implements Firmware
          else
          {
             reg.set(regArg0, reg.get(regRetval));
-            reg.set(regArg1, NIL);
+            reg.set(regArg1, reg.get(regOut));
             gosub(sub_print,sub_top+0x3);
          }
          break;
       case sub_top+0x2:
          reg.set(regArg0, reg.get(regRetval));
-         reg.set(regArg1, NIL);
+         reg.set(regArg1, reg.get(regOut));
          gosub(sub_print,sub_top+0x3);
          break;
       case sub_top+0x3:
@@ -1885,27 +1885,28 @@ public class JhwScm implements Firmware
                raiseError(ERR_SEMANTIC);
                break;
             }
+            logrec("HO:",reg.get(regTmp1));
             reg.set(regArg1, reg.get(regTmp2));
          }
          gosub(sub_print,blk_tail_call);
          break;
 
       case sub_print:
-         // Prints the expr in regArg0 to regOut.
+         // Prints the expr in regArg0 to the ouput port in regArg1.
          //
          // Returns UNSPECIFIED.
          //
-         if ( TYPE_IOBUF != type(reg.get(regOut)) )
+         if ( TYPE_IOBUF != type(reg.get(regArg1)) )
          {
             raiseError(ERR_SEMANTIC);
             break;
          }
-         reg.set(regTmp0 , reg.get(regArg0));
-         log("printing: ",pp(reg.get(regTmp0)));
-         switch (type(reg.get(regTmp0)))
+         reg.set(regTmp0, UNSPECIFIED);
+         log("printing: ",pp(reg.get(regArg0)));
+         switch (type(reg.get(regArg0)))
          {
          case TYPE_SENTINEL:
-            switch (reg.get(regTmp0))
+            switch (reg.get(regArg0))
             {
             case UNSPECIFIED:
                reg.set(regRetval , UNSPECIFIED);
@@ -1915,26 +1916,26 @@ public class JhwScm implements Firmware
                gosub(sub_print_list,blk_tail_call);
                break;
             case TRUE:
-               portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'t'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'#'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'t'));
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
             case FALSE:
-               portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'f'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'#'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'f'));
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
             default:
-               log("bogus sentinel: ",pp(reg.get(regTmp0)));
+               log("bogus sentinel: ",pp(reg.get(regArg0)));
                raiseError(ERR_INTERNAL);
                break;
             }
             break;
          case TYPE_CELL:
-            reg.set(regTmp1 , car(reg.get(regTmp0)));
-            reg.set(regTmp2 , cdr(reg.get(regTmp0)));
+            reg.set(regTmp1 , car(reg.get(regArg0)));
+            reg.set(regTmp2 , cdr(reg.get(regArg0)));
             switch (reg.get(regTmp1))
             {
             case IS_STRING:
@@ -1946,41 +1947,41 @@ public class JhwScm implements Firmware
                gosub(sub_print_chars,blk_tail_call);
                break;
             case IS_PROCEDURE:
-               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
             default:
-               reg.set(regArg0 , reg.get(regTmp0));
+               reg.set(regArg0 , reg.get(regArg0));
                gosub(sub_print_list,blk_tail_call);
                break;
             }
             break;
          case TYPE_CHAR:
-            portPush(reg.get(regOut),code(TYPE_CHAR,'#'));
-            portPush(reg.get(regOut),code(TYPE_CHAR,'\\'));
-            switch (value(reg.get(regTmp0)))
+            portPush(reg.get(regArg1),code(TYPE_CHAR,'#'));
+            portPush(reg.get(regArg1),code(TYPE_CHAR,'\\'));
+            switch (value(reg.get(regArg0)))
             {
             case ' ':
-               portPush(reg.get(regOut),code(TYPE_CHAR,'s'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'a'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'c'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'s'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'p'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'a'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'c'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'e'));
                break;
             case '\n':
-               portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'w'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'l'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'i'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'n'));
-               portPush(reg.get(regOut),code(TYPE_CHAR,'e'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'n'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'e'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'w'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'l'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'i'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'n'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'e'));
                break;
             default:
-               portPush(reg.get(regOut),reg.get(regTmp0));
+               portPush(reg.get(regArg1),reg.get(regArg0));
                break;
             }
             reg.set(regRetval , UNSPECIFIED);
@@ -1990,15 +1991,15 @@ public class JhwScm implements Firmware
             // We trick out the sign extension of our 28-bit
             // twos-complement FIXINTs to match Java's 32 bits
             // before proceeding.
-            reg.set(regTmp1 , value_fixint(reg.get(regTmp0)));
+            reg.set(regTmp1 , value_fixint(reg.get(regArg0)));
             if ( reg.get(regTmp1) < 0 )
             {
-               portPush(reg.get(regOut),code(TYPE_CHAR,'-'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'-'));
                reg.set(regTmp1 , -reg.get(regTmp1));
             }
             if ( reg.get(regTmp1) == 0 )
             {
-               portPush(reg.get(regOut),code(TYPE_CHAR,'0'));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'0'));
                returnsub();
                break;
             }
@@ -2012,7 +2013,7 @@ public class JhwScm implements Firmware
                final int digit  = reg.get(regTmp1)/factor;
                reg.set(regTmp1  , reg.get(regTmp1) - digit * factor);
                factor          /= 10;
-               portPush(reg.get(regOut),code(TYPE_CHAR,'0'+digit));
+               portPush(reg.get(regArg1),code(TYPE_CHAR,'0'+digit));
             }
             reg.set(regRetval , UNSPECIFIED);
             returnsub();
@@ -2025,9 +2026,9 @@ public class JhwScm implements Firmware
             //
             // In the mean time, this is sufficient to meet spec.
             //
-            portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
-            portPush(reg.get(regOut),code(TYPE_CHAR,'p'));
-            portPush(reg.get(regOut),code(TYPE_CHAR,'?'));
+            portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
+            portPush(reg.get(regArg1),code(TYPE_CHAR,'p'));
+            portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
             reg.set(regRetval , UNSPECIFIED);
             returnsub();
             break;
@@ -2038,15 +2039,17 @@ public class JhwScm implements Firmware
          break;
             
       case sub_print_string:
-         // Prints the list in reg.get(regArg0), whose elements are
-         // expected to all be TYPE_CHAR, to reg.get(regOut) in
+         // Prints the list in regArg0, whose elements are expected to
+         // all be TYPE_CHAR, to the output port in regArg1 in
          // double-quotes.
          //
-         portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
+         store(reg.get(regArg1));         // store port
+         portPush(reg.get(regArg1),code(TYPE_CHAR,'"'));
          gosub(sub_print_chars,sub_print_string+0x1);
          break;
       case sub_print_string+0x1:
-         portPush(reg.get(regOut),code(TYPE_CHAR,'"'));
+         reg.set(regArg1,restore());      // restore port
+         portPush(reg.get(regArg1),code(TYPE_CHAR,'"'));
          reg.set(regRetval , UNSPECIFIED);
          returnsub();
          break;
@@ -2075,34 +2078,34 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         portPush(reg.get(regOut),reg.get(regTmp1));
+         portPush(reg.get(regArg1),reg.get(regTmp1));
          reg.set(regArg0 , reg.get(regTmp2));
          gosub(sub_print_chars,blk_tail_call);
          break;
 
       case sub_print_list:
-         // Prints the list (NIL or a cell) in reg.get(regArg0) to
-         // reg.get(regOut) in parens.
+         // Prints the list (NIL or a cell) in regArg0 to the output
+         // port in regArg1, in parens.
          //
+         store(reg.get(regArg1));         // store port
          reg.set(regArg0 , reg.get(regArg0));
-         reg.set(regArg1 , TRUE);
+         reg.set(regArg2 , TRUE);
          portPush(reg.get(regOut),code(TYPE_CHAR,'('));
          gosub(sub_print_list_elems,sub_print_list+0x1);
          break;
       case sub_print_list+0x1:
-         portPush(reg.get(regOut),code(TYPE_CHAR,')'));
+         reg.set(regArg1,restore());      // restore port
+         portPush(reg.get(regArg1),code(TYPE_CHAR,')'));
          reg.set(regRetval , UNSPECIFIED);
          returnsub();
          break;
 
       case sub_print_list_elems:
-         // Prints the elements in the list (NIL or a cell) in
-         // reg.get(regArg0) to reg.get(regOut) with a space
-         // between each.
+         // Prints the elements in the list (NIL or a cell) in regArg0
+         // to the ouput port in regArg1 with a space between each.
          //
-         // Furthermore, reg.get(regArg1) should be TRUE if
-         // reg.get(regArg0) is the first item in the list, FALSE
-         // otherwise.
+         // Furthermore, regArg2 should be TRUE if regArg0 is the
+         // first item in the list, FALSE otherwise.
          //
          // Returns UNSPECIFIED.
          //
@@ -2112,11 +2115,12 @@ public class JhwScm implements Firmware
             returnsub();
             break;
          }
-         if ( FALSE == reg.get(regArg1) )
+         if ( FALSE == reg.get(regArg2) )
          {
-            portPush(reg.get(regOut),code(TYPE_CHAR,' '));
+            portPush(reg.get(regArg1),code(TYPE_CHAR,' '));
          }
          store(reg.get(regArg0));
+         store(reg.get(regArg1));
          reg.set(regTmp0 , car(reg.get(regArg0)));
          reg.set(regTmp1 , cdr(reg.get(regArg0)));
          if ( NIL       != reg.get(regTmp1)       &&
@@ -2134,17 +2138,19 @@ public class JhwScm implements Firmware
          }
          break;
       case sub_print_list_elems+0x1:
+         reg.set(regArg1 , restore());
          reg.set(regTmp0 , restore());
          reg.set(regArg0 , cdr(reg.get(regTmp0)));
-         reg.set(regArg1 , FALSE);
+         reg.set(regArg2 , FALSE);
          gosub(sub_print_list_elems,blk_tail_call);
          break;
       case sub_print_list_elems+0x2:
+         reg.set(regArg1 , restore());
          reg.set(regTmp0 , restore());
          reg.set(regArg0 , cdr(reg.get(regTmp0)));
-         portPush(reg.get(regOut),code(TYPE_CHAR,' '));
-         portPush(reg.get(regOut),code(TYPE_CHAR,'.'));
-         portPush(reg.get(regOut),code(TYPE_CHAR,' '));
+         portPush(reg.get(regArg1),code(TYPE_CHAR,' '));
+         portPush(reg.get(regArg1),code(TYPE_CHAR,'.'));
+         portPush(reg.get(regArg1),code(TYPE_CHAR,' '));
          gosub(sub_print,blk_tail_call);
          break;
 
