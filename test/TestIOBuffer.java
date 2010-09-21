@@ -12,6 +12,11 @@ public class TestIOBuffer extends Util
    private static boolean VERBOSE = false;
    private static boolean DEBUG   = true;
 
+   private static IOBuffer newBuf ()
+   {
+      return new IOBuffer(64,PROFILE,VERBOSE,DEBUG);
+   }
+
    public static void main ( final String[] argv )
    {
       log("TestIOBuffer");
@@ -49,6 +54,34 @@ public class TestIOBuffer extends Util
          depth++;
          test(byteCount,numOps,mutation);
          depth--;
+      }
+
+      assertEquals(IOBuffer.BAD_ARG,newBuf().input(null,0,0));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(null,0,0));
+
+      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],-1,0));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],0,-1));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],2,3));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],3,2));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],-1,0));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],-1,0));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],0,-1));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],0,-1));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],2,3));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],3,2));
+      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[3],2,3));
+      assertEquals(0,               newBuf().input(new byte[0],0,0));
+      assertEquals(0,               newBuf().input(new byte[0],0,0));
+      assertEquals(0,               newBuf().input(new byte[0],0,0));
+      assertEquals(0,               newBuf().input(new byte[1],1,0));
+      assertEquals(0,               newBuf().output(new byte[0],0,0));
+      
+      {
+         final int code = newBuf().output(new byte[5],2,3);
+         if ( -1 != code && 0 != code )
+         {
+            throw new RuntimeException("output() out of spec");
+         }
       }
 
       log("success");

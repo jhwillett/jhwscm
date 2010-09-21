@@ -11,7 +11,7 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 0b9496524e9d0d965e5cf639613f22d0  test/TestComputer.java
-46522a2a6f492c8ceee546a0d2829bf8  test/TestIOBuffer.java
+e54e7bb305aded1df93edfe9435dd7e0  test/TestIOBuffer.java
 288342cd802f9bd06b3017b61b76d2ee  test/TestMachine.java
 09e5ac937891078bb45422a5b3df6a26  test/TestMem.java
 86fdb6fca899b8a8f3ca2746bcc7e2e3  test/TestScm.java
