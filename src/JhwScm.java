@@ -1916,14 +1916,14 @@ public class JhwScm implements Firmware
                gosub(sub_print_list,blk_tail_call);
                break;
             case TRUE:
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'#'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'t'));
+               portPush(regArg1,code(TYPE_CHAR,'#'));
+               portPush(regArg1,code(TYPE_CHAR,'t'));
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
             case FALSE:
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'#'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'f'));
+               portPush(regArg1,code(TYPE_CHAR,'#'));
+               portPush(regArg1,code(TYPE_CHAR,'f'));
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
@@ -1947,9 +1947,9 @@ public class JhwScm implements Firmware
                gosub(sub_print_chars,blk_tail_call);
                break;
             case IS_PROCEDURE:
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
+               portPush(regArg1,code(TYPE_CHAR,'?'));
+               portPush(regArg1,code(TYPE_CHAR,'?'));
+               portPush(regArg1,code(TYPE_CHAR,'?'));
                reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
@@ -1960,28 +1960,28 @@ public class JhwScm implements Firmware
             }
             break;
          case TYPE_CHAR:
-            portPush(reg.get(regArg1),code(TYPE_CHAR,'#'));
-            portPush(reg.get(regArg1),code(TYPE_CHAR,'\\'));
+            portPush(regArg1,code(TYPE_CHAR,'#'));
+            portPush(regArg1,code(TYPE_CHAR,'\\'));
             switch (value(reg.get(regArg0)))
             {
             case ' ':
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'s'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'p'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'a'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'c'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'e'));
+               portPush(regArg1,code(TYPE_CHAR,'s'));
+               portPush(regArg1,code(TYPE_CHAR,'p'));
+               portPush(regArg1,code(TYPE_CHAR,'a'));
+               portPush(regArg1,code(TYPE_CHAR,'c'));
+               portPush(regArg1,code(TYPE_CHAR,'e'));
                break;
             case '\n':
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'n'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'e'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'w'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'l'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'i'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'n'));
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'e'));
+               portPush(regArg1,code(TYPE_CHAR,'n'));
+               portPush(regArg1,code(TYPE_CHAR,'e'));
+               portPush(regArg1,code(TYPE_CHAR,'w'));
+               portPush(regArg1,code(TYPE_CHAR,'l'));
+               portPush(regArg1,code(TYPE_CHAR,'i'));
+               portPush(regArg1,code(TYPE_CHAR,'n'));
+               portPush(regArg1,code(TYPE_CHAR,'e'));
                break;
             default:
-               portPush(reg.get(regArg1),reg.get(regArg0));
+               portPush(regArg1,reg.get(regArg0));
                break;
             }
             reg.set(regRetval , UNSPECIFIED);
@@ -1994,12 +1994,12 @@ public class JhwScm implements Firmware
             reg.set(regTmp1 , value_fixint(reg.get(regArg0)));
             if ( reg.get(regTmp1) < 0 )
             {
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'-'));
+               portPush(regArg1,code(TYPE_CHAR,'-'));
                reg.set(regTmp1 , -reg.get(regTmp1));
             }
             if ( reg.get(regTmp1) == 0 )
             {
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'0'));
+               portPush(regArg1,code(TYPE_CHAR,'0'));
                returnsub();
                break;
             }
@@ -2013,7 +2013,7 @@ public class JhwScm implements Firmware
                final int digit  = reg.get(regTmp1)/factor;
                reg.set(regTmp1  , reg.get(regTmp1) - digit * factor);
                factor          /= 10;
-               portPush(reg.get(regArg1),code(TYPE_CHAR,'0'+digit));
+               portPush(regArg1,code(TYPE_CHAR,'0'+digit));
             }
             reg.set(regRetval , UNSPECIFIED);
             returnsub();
@@ -2026,9 +2026,9 @@ public class JhwScm implements Firmware
             //
             // In the mean time, this is sufficient to meet spec.
             //
-            portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
-            portPush(reg.get(regArg1),code(TYPE_CHAR,'p'));
-            portPush(reg.get(regArg1),code(TYPE_CHAR,'?'));
+            portPush(regArg1,code(TYPE_CHAR,'?'));
+            portPush(regArg1,code(TYPE_CHAR,'p'));
+            portPush(regArg1,code(TYPE_CHAR,'?'));
             reg.set(regRetval , UNSPECIFIED);
             returnsub();
             break;
@@ -2044,12 +2044,12 @@ public class JhwScm implements Firmware
          // double-quotes.
          //
          store(reg.get(regArg1));         // store port
-         portPush(reg.get(regArg1),code(TYPE_CHAR,'"'));
+         portPush(regArg1,code(TYPE_CHAR,'"'));
          gosub(sub_print_chars,sub_print_string+0x1);
          break;
       case sub_print_string+0x1:
          reg.set(regArg1,restore());      // restore port
-         portPush(reg.get(regArg1),code(TYPE_CHAR,'"'));
+         portPush(regArg1,code(TYPE_CHAR,'"'));
          reg.set(regRetval , UNSPECIFIED);
          returnsub();
          break;
@@ -2078,7 +2078,7 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         portPush(reg.get(regArg1),reg.get(regTmp1));
+         portPush(regArg1,reg.get(regTmp1));
          reg.set(regArg0 , reg.get(regTmp2));
          gosub(sub_print_chars,blk_tail_call);
          break;
@@ -2090,12 +2090,12 @@ public class JhwScm implements Firmware
          store(reg.get(regArg1));         // store port
          reg.set(regArg0 , reg.get(regArg0));
          reg.set(regArg2 , TRUE);
-         portPush(reg.get(regArg1),code(TYPE_CHAR,'('));
+         portPush(regArg1,code(TYPE_CHAR,'('));
          gosub(sub_print_list_elems,sub_print_list+0x1);
          break;
       case sub_print_list+0x1:
          reg.set(regArg1,restore());      // restore port
-         portPush(reg.get(regArg1),code(TYPE_CHAR,')'));
+         portPush(regArg1,code(TYPE_CHAR,')'));
          reg.set(regRetval , UNSPECIFIED);
          returnsub();
          break;
@@ -2117,7 +2117,7 @@ public class JhwScm implements Firmware
          }
          if ( FALSE == reg.get(regArg2) )
          {
-            portPush(reg.get(regArg1),code(TYPE_CHAR,' '));
+            portPush(regArg1,code(TYPE_CHAR,' '));
          }
          store(reg.get(regArg0));
          store(reg.get(regArg1));
@@ -2148,9 +2148,9 @@ public class JhwScm implements Firmware
          reg.set(regArg1 , restore());
          reg.set(regTmp0 , restore());
          reg.set(regArg0 , cdr(reg.get(regTmp0)));
-         portPush(reg.get(regArg1),code(TYPE_CHAR,' '));
-         portPush(reg.get(regArg1),code(TYPE_CHAR,'.'));
-         portPush(reg.get(regArg1),code(TYPE_CHAR,' '));
+         portPush(regArg1,code(TYPE_CHAR,' '));
+         portPush(regArg1,code(TYPE_CHAR,'.'));
+         portPush(regArg1,code(TYPE_CHAR,' '));
          gosub(sub_print,blk_tail_call);
          break;
 
@@ -2932,15 +2932,15 @@ public class JhwScm implements Firmware
    ////////////////////////////////////////////////////////////////////
 
    /**
-    * Pushes value onto the back of the port.
-    * 
-    * Value must be a TYPE_CHAR.
+    * Pushes value, which must be a TYPE_CHAR, onto the back of the
+    * output port specified in reg.get(regPort).
     * 
     * Leaves the port unchanged in the event of any error.
     */
-   private void portPush ( final int port, final int value )
+   private void portPush ( final int regPort, final int value )
    {
       final boolean verb = false;
+      final int port = mach.reg.get(regPort);
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
       {
          log("  portPush(): non-iobuf ",pp(port));
