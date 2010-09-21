@@ -968,9 +968,10 @@ public class JhwScm implements Firmware
                // Evaluate the operator: the type of the result
                // will determine whether we evaluate the args prior
                // to apply.
-               store(cdr(reg.get(regArg0)));    // store the arg exprs
-               store(reg.get(regArg1));         // store the env
-               reg.set(regArg0 , tmp0);         // forward the op
+               reg.set(regTmp0,cdr(reg.get(regArg0)));
+               store(reg.get(regTmp0));             // store the arg exprs
+               store(reg.get(regArg1));             // store the env
+               reg.set(regArg0 , tmp0);             // forward the op
                reg.set(regArg1 , reg.get(regArg1)); // forward the env
                gosub(sub_eval,sub_eval+0x2);
                break;
@@ -1079,7 +1080,8 @@ public class JhwScm implements Firmware
             returnsub();
             break;
          }
-         store(cdr(reg.get(regArg0)));          // the rest of the list
+         reg.set(regTmp0,cdr(reg.get(regArg0)));
+         store(reg.get(regTmp0));               // the rest of the list
          store(reg.get(regArg1));               // the env
          reg.set(regArg0 , car(reg.get(regArg0)));  // the head of the list
          reg.set(regArg1 , reg.get(regArg1));       // the env
@@ -3228,7 +3230,8 @@ public class JhwScm implements Firmware
       }
       else
       {
-         store(continuationOp);
+         reg.set(regTmp0,continuationOp);
+         store(reg.get(regTmp0));
          if ( NIL != reg.get(regError) )
          {
             // error already reported in store()
