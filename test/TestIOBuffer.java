@@ -8,13 +8,12 @@
 
 public class TestIOBuffer extends Util
 {
-   private static boolean PROFILE = true;
    private static boolean VERBOSE = false;
    private static boolean DEBUG   = true;
 
    private static IOBuffer newBuf ()
    {
-      return new IOBuffer(64,PROFILE,VERBOSE,DEBUG);
+      return new IOBuffer(64,VERBOSE,DEBUG,null,null);
    }
 
    public static void main ( final String[] argv )
@@ -190,7 +189,7 @@ public class TestIOBuffer extends Util
       log("numOps:    " + numOps);
       log("mutation:  " + mutation);
 
-      final IOBuffer iobuf = new IOBuffer(byteCount,PROFILE,VERBOSE,DEBUG);
+      final IOBuffer iobuf = new IOBuffer(byteCount,VERBOSE,DEBUG,null,null);
       for ( int i = 0; i < numOps; ++i )
       {
          final byte a = (byte)(i+mutation);

@@ -52,10 +52,16 @@ global:
   numCons:          427177
   iobuf:            0
     numInput:       6434
-    numOutput:      1788
+    numOutput:      0
     numPeek:        17306
-    numPop:         8213
-    numPush:        8222
+    numPop:         6425
+    numPush:        6434
+  iobuf:            1
+    numInput:       0
+    numOutput:      1788
+    numPeek:        0
+    numPop:         1788
+    numPush:        1788
   reg.numSet:       4280334
   reg.numGet:       7390036
   reg.maxAddr:      31

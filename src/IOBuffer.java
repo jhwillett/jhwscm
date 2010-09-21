@@ -29,10 +29,9 @@ public class IOBuffer
       public int numPush   = 0;
    }
 
-   public static final Stats global = new Stats();
-   public        final Stats local  = new Stats();
+   public final Stats global;
+   public final Stats local;
 
-   public final boolean PROFILE;
    public final boolean VERBOSE;
    public final boolean DEBUG;
 
@@ -42,13 +41,15 @@ public class IOBuffer
    private int          len   = 0;
 
    public IOBuffer ( final int     byteCount,
-                     final boolean PROFILE, 
                      final boolean VERBOSE, 
-                     final boolean DEBUG )
+                     final boolean DEBUG,
+                     final Stats   global, 
+                     final Stats   local )
    {
-      this.PROFILE = PROFILE;
       this.VERBOSE = VERBOSE;
       this.DEBUG   = DEBUG;
+      this.global  = global;
+      this.local   = local;
       if ( byteCount <= 0 )
       {
          throw new IllegalArgumentException("nonpos byteCount " + byteCount);
@@ -82,8 +83,8 @@ public class IOBuffer
     */
    public byte peek ()
    {
-      if ( PROFILE ) local.numPeek++;
-      if ( PROFILE ) global.numPeek++;
+      if ( null != local )  local.numPeek++;
+      if ( null != global ) global.numPeek++;
       if ( isEmpty() )
       {
          throw new SegFault("peek() when isEmpty()");
@@ -110,8 +111,8 @@ public class IOBuffer
     */
    public byte pop ()
    {
-      if ( PROFILE ) local.numPop++;
-      if ( PROFILE ) global.numPop++;
+      if ( null != local )  local.numPop++;
+      if ( null != global ) global.numPop++;
       if ( isEmpty() )
       {
          throw new SegFault("pop() when isEmpty()");
@@ -140,8 +141,8 @@ public class IOBuffer
     */
    public void push ( final byte value )
    {
-      if ( PROFILE ) local.numPush++;
-      if ( PROFILE ) global.numPush++;
+      if ( null != local )  local.numPush++;
+      if ( null != global ) global.numPush++;
       if ( isFull() )
       {
          throw new SegFault("push() when isFull()");
@@ -185,8 +186,8 @@ public class IOBuffer
          if ( VERBOSE ) log("input(): pushing byte " + b);
          if ( VERBOSE ) log("input(): pushing char " + (char)b);
          push(b);
-         if ( PROFILE ) local.numInput++;
-         if ( PROFILE ) global.numInput++;
+         if ( null != local )  local.numInput++;
+         if ( null != global ) global.numInput++;
       }
       return max;
    }
@@ -225,8 +226,8 @@ public class IOBuffer
          buf[off++] = b;
          if ( VERBOSE ) log("output(): popped byte " + b);
          if ( VERBOSE ) log("output(): popped char " + (char)b);
-         if ( PROFILE ) local.numOutput++;
-         if ( PROFILE ) global.numOutput++;
+         if ( null != local )  local.numOutput++;
+         if ( null != global ) global.numOutput++;
       }
       if ( VERBOSE ) log("output(): shifted: " + max);
       return max;

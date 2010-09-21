@@ -1164,7 +1164,7 @@ public class TestScm extends Util
              Computer.global,
              JhwScm.global,
              Machine.global,
-             IOBuffer.global);
+             Machine.global.ioStats);
    }
 
    private static void report ( final String tag, final Computer scm )
@@ -1173,15 +1173,14 @@ public class TestScm extends Util
              scm.local,
              ((JhwScm)scm.firmware).local,
              scm.machine.local,
-             scm.machine.ioBuf(0).local,
-             scm.machine.ioBuf(1).local);
+             scm.machine.local.ioStats);
    }
 
-   private static void report ( final String         tag, 
-                                final Computer.Stats cs,
-                                final JhwScm.Stats   ss,
-                                final Machine.Stats  ms,
-                                final IOBuffer.Stats ... is )
+   private static void report ( final String           tag, 
+                                final Computer.Stats   cs,
+                                final JhwScm.Stats     ss,
+                                final Machine.Stats    ms,
+                                final IOBuffer.Stats[] is )
    {
       if ( !PROFILE || !REPORT ) return;
       log(tag);

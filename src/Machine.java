@@ -21,12 +21,23 @@ public class Machine
    private static final int    IO_STRESS_PERCENT = 13;
    private static final Random debugRand         = new Random(11031978);
 
+   private static final int numIoBufs = 2;
+
    public static class Stats
    {
-      public final MemStats.Stats  heapStats     = new MemStats.Stats();
-      public final MemStats.Stats  regStats      = new MemStats.Stats();
-      public final MemCached.Stats cacheStats    = new MemCached.Stats();
-      public final MemStats.Stats  cacheTopStats = new MemStats.Stats();
+      public final MemStats.Stats   heapStats     = new MemStats.Stats();
+      public final MemStats.Stats   regStats      = new MemStats.Stats();
+      public final MemCached.Stats  cacheStats    = new MemCached.Stats();
+      public final MemStats.Stats   cacheTopStats = new MemStats.Stats();
+      public final IOBuffer.Stats[] ioStats;
+      private Stats ()
+      {
+         this.ioStats = new IOBuffer.Stats[numIoBufs];
+         for ( int i = 0; i < numIoBufs; ++i )
+         {
+            this.ioStats[i] = new IOBuffer.Stats();
+         }
+      }
    }
 
    public static final Stats global = new Stats();
@@ -97,12 +108,23 @@ public class Machine
       }
       this.heap = mem;
 
-      final int numIoBufs = 2;
       final int ioBufSize = 1024;
       this.iobufs = new IOBuffer[numIoBufs];
       for ( int i = 0; i < numIoBufs; ++i )
       {
-         this.iobufs[i] = new IOBuffer(ioBufSize,PROFILE,VERBOSE,DEBUG);
+         final IOBuffer.Stats glo;
+         final IOBuffer.Stats loc;
+         if ( PROFILE )
+         {
+            glo = global.ioStats[i];
+            loc = local.ioStats[i];
+         }
+         else
+         {
+            glo = null;
+            loc = null;
+         }
+         this.iobufs[i] = new IOBuffer(ioBufSize,VERBOSE,DEBUG,glo,loc);
       }
    }
 
