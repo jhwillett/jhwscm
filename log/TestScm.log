@@ -2,32 +2,32 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 global:
-  numCycles:        324135
-  numCons:          426595
-  numInput:         6430
+  numCycles:        324155
+  numCons:          427177
+  numInput:         6434
   numOutput:        1788
-  reg.numSet:       4279628
-  reg.numGet:       7389167
+  reg.numSet:       4280334
+  reg.numGet:       7390053
   reg.maxAddr:      31
-  heap.numSet:      3454608
-  heap.numGet:      4084912
+  heap.numSet:      3458048
+  heap.numGet:      4092240
   heap.maxAddr:     6143
-  cache.numHits:    5834292
-  cache.numMisses:  246315
-  cache.numFlush:   215913
-  cache.numDrop:    30402
-  cache.numLoad:    255307
-  cacheTop.numSet:  4657825
-  cacheTop.numGet:  1431774
+  cache.numHits:    5835652
+  cache.numMisses:  246773
+  cache.numFlush:   216128
+  cache.numDrop:    30645
+  cache.numLoad:    255765
+  cacheTop.numSet:  4659009
+  cacheTop.numGet:  1432408
   cacheTop.maxAddr: 6143
-  reg   ops:        11668795
-  cache ops:        6089599
-  heap  ops:        7539520
-  reg   ops/cell:   376412.7419354839
-  cache ops/cell:   991.3070161159043
-  heap  ops/cell:   1227.3351782516686
-  ops   reg/cache:  1.9161844646913533
-  ops   cache/heap: 0.8076905426340139
+  reg   ops:        11670387
+  cache ops:        6091417
+  heap  ops:        7550288
+  reg   ops/cell:   376464.0967741936
+  cache ops/cell:   991.6029627217972
+  heap  ops/cell:   1229.0880677193554
+  ops   reg/cache:  1.9158739255578792
+  ops   cache/heap: 0.8067794235133812
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -35,8 +35,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9594917086402722
-  cache write/miss:          0.8765726813226965
+  cache hit/op:              0.9594285174087638
+  cache write/miss:          0.8758170464353879
 numExpects: 748
   happy:    648
   unhappy:  100

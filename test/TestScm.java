@@ -873,8 +873,8 @@ public class TestScm extends Util
       {
          final Computer scm = newScm(true);
          final String def = "(define (f x) (+ x 10))";
-         expect("(map display '())",      "()");     
-         expect("(map display '(1 2 3))", "123(  )");
+         expect("(map1 display '())",      "()");     
+         expect("(map1 display '(1 2 3))", "123(  )");
 
          // TODO: On the preceeding, Guile sez:
          //
@@ -900,8 +900,8 @@ public class TestScm extends Util
          expect(def,                      "",           scm);
          expect("f",                      "???",        scm);
          expect("(f 13)",                 "23",         scm);
-         expect("(map f '())",            "()",         scm);
-         expect("(map f '(1 2 3))",       "(11 12 13)", scm);
+         expect("(map1 f '())",            "()",         scm);
+         expect("(map1 f '(1 2 3))",       "(11 12 13)", scm);
       }
       
       // TODO: user-level variadics

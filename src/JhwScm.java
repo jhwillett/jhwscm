@@ -169,7 +169,7 @@ public class JhwScm implements Firmware
          prebind("case",   sub_case);
          prebind("read",   sub_readv);
          prebind("display",sub_printv);
-         prebind("map",    sub_map);
+         prebind("map1",   sub_map1);
          gosub( sub_top, blk_halt );
          break;
 
@@ -1059,12 +1059,8 @@ public class JhwScm implements Firmware
          //               (rest  (sub_eval_list (cdr list) env))
          //           (cons first rest))))
          //
-         // Using something most like the second varsion: I get to
+         // Using something most like the second version: I get to
          // exploit blk_tail_call_m_cons again! :)
-         //
-         // NOTE: This almost sub_map e.g. (map eval list), except
-         // except sub_eval is binary and sub_map works with unary
-         // functions.
          //
          if ( NIL == reg.get(regArg0) )
          {
@@ -1291,7 +1287,7 @@ public class JhwScm implements Firmware
          store(regTmp1);
          reg.set(regArg0,  sub_car);
          reg.set(regArg1,  reg.get(regTmp0));
-         gosub(sub_map,sub_let+0x1);
+         gosub(sub_map1,sub_let+0x1);
          break;
       case sub_let+0x1:
          // Note: Acknowledged, there is some wasteful stack manips
@@ -1305,7 +1301,7 @@ public class JhwScm implements Firmware
          store(regTmp2);
          reg.set(regArg0,  sub_cadr);
          reg.set(regArg1,  reg.get(regTmp0));
-         gosub(sub_map,sub_let+0x2);
+         gosub(sub_map1,sub_let+0x2);
          break;
       case sub_let+0x2:
          reg.set(regTmp3,  reg.get(regRetval));    // regTmp3 is values
@@ -1323,20 +1319,25 @@ public class JhwScm implements Firmware
          gosub(sub_eval,blk_tail_call);
          break;
 
-      case sub_map:
-         // Applies the operator in reg.get(regArg0) to each
-         // element of the list in reg.get(regArg1), and returns a
-         // list of the results in order.
+      case sub_map1:
+         // Applies the unary operator in regArg0 to each element of
+         // the list in regArg1, and returns a list of the results in
+         // order.
          //
          // The surplus cons() before we call sub_apply is perhaps
          // regrettable, but the rather than squeeze more
          // complexity into the sub_apply family, I choose here to
          // work around the variadicity checking and globbing in
-         // sub_appy.
+         // sub_apply.
          //
-         // I would prefer it if this sub_map worked with
-         // either/both of builtins and user-defineds, and this way
-         // it does.
+         // I would prefer it if this sub_map1 worked with either/both
+         // of builtins and user-defineds, and this way it does.
+         //
+         // Called sub_map1 because it only handles unary operators.
+         // The real Scheme "map" is variadic, but that proved out of
+         // scope here in the fundamental layer.  While sub_map1 is a
+         // useful utility here below, a sub_mapN would be difficult
+         // to make correct, succinct and tail-recursive.
          //
          if ( NIL == reg.get(regArg1) )
          {
@@ -1344,19 +1345,19 @@ public class JhwScm implements Firmware
             returnsub();
             break;
          }
-         reg.set(regTmp0,  car(reg.get(regArg1))); // head
-         reg.set(regTmp1,  cdr(reg.get(regArg1))); // rest
-         store(regArg0);
-         store(regTmp1);
-         reg.set(regArg0,  reg.get(regArg0));
-         reg.set(regArg1,  cons(reg.get(regTmp0),NIL));
-         gosub(sub_apply,sub_map+0x1);
+         reg.set(regTmp0, car(reg.get(regArg1))); // head
+         reg.set(regTmp1, cdr(reg.get(regArg1))); // rest
+         store(regArg0);                          // store operator
+         store(regTmp1);                          // store rest of operands
+         reg.set(regArg0, reg.get(regArg0));
+         reg.set(regArg1, cons(reg.get(regTmp0),NIL));
+         gosub(sub_apply,sub_map1+0x1);
          break;
-      case sub_map+0x1:
-         restore(regArg1);  // restore rest of operands
-         restore(regArg0);  // restore operator
-         store(regRetval);     // feed blk_tail_call_m_cons
-         gosub(sub_map,blk_tail_call_m_cons);
+      case sub_map1+0x1:
+         restore(regArg1);                        // restore rest of operands
+         restore(regArg0);                        // restore operator
+         store(regRetval);                        // feed blk_tail_call_m_cons
+         gosub(sub_map1,blk_tail_call_m_cons);
          break;
 
       case sub_begin:
@@ -1805,17 +1806,20 @@ public class JhwScm implements Firmware
          break;
 
       case sub_zip:
-         // Expects lists of equal lengths in reg.get(regArg0) and
-         // reg.get(regArg1). 
+         // Expects lists of equal lengths in regArg0 and regArg1.
          //
-         // Returns a new list of the same length, whose elments
-         // are cons() of corresponding elements from
-         // reg.get(regArg0) and reg.get(regArg1) respectively.
+         // Returns a new list of the same length, whose elments are
+         // cons() of corresponding elements from the argument lists
+         // respectively e.g.:
          //
-         // TODO: if (when!) we have sub_mapcar, this is really
-         // just:
+         //   (sub_zip '(1 2) '(10 20)) ===> '((1 10) (2 20)
          //
-         //   (mapcar cons listA listB)
+         // Note: If (when!) we have sub_map2, this is really just:
+         //
+         //   (sub_map2 cons listA listB)
+         //
+         // But, then, maybe sub_map2 would want to use sub_zip in the
+         // implementation. ;)
          //
          if ( NIL == reg.get(regArg0) && NIL == reg.get(regArg1) )
          {
@@ -2796,7 +2800,7 @@ public class JhwScm implements Firmware
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
 
-   private static final int sub_map              = TYPE_SUBP | A2 |  0x8000;
+   private static final int sub_map1             = TYPE_SUBP | A2 |  0x8000;
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
@@ -3522,7 +3526,7 @@ public class JhwScm implements Firmware
          case sub_quote:            buf.append("sub_quote");            break;
          case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
-         case sub_map:              buf.append("sub_map");              break;
+         case sub_map1:             buf.append("sub_map1");             break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
