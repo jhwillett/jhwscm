@@ -56,20 +56,113 @@ public class TestIOBuffer extends Util
          depth--;
       }
 
-      assertEquals(IOBuffer.BAD_ARG,newBuf().input(null,0,0));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(null,0,0));
+      try
+      {
+         newBuf().input(null,0,0);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( NullPointerException expected )
+      {
+      }
 
-      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],-1,0));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],0,-1));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],2,3));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().input(new byte[0],3,2));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],-1,0));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],-1,0));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],0,-1));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],0,-1));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],2,3));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[0],3,2));
-      assertEquals(IOBuffer.BAD_ARG,newBuf().output(new byte[3],2,3));
+      try
+      {
+         newBuf().output(null,0,0);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( NullPointerException expected )
+      {
+      }
+
+      try
+      {
+         newBuf().input(new byte[0],-1,0);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().input(new byte[0],0,-1);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().input(new byte[0],2,3);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().input(new byte[0],3,2);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().output(new byte[0],-1,0);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().output(new byte[0],-1,0);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().output(new byte[0],0,-1);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().output(new byte[0],0,-1);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().output(new byte[0],2,3);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().output(new byte[0],3,2);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+      try
+      {
+         newBuf().output(new byte[3],2,3);
+         throw new RuntimeException("out of spec");
+      }
+      catch ( IndexOutOfBoundsException expected )
+      {
+      }
+
       assertEquals(0,               newBuf().input(new byte[0],0,0));
       assertEquals(0,               newBuf().input(new byte[0],0,0));
       assertEquals(0,               newBuf().input(new byte[0],0,0));
