@@ -27,7 +27,7 @@ public class TestComputer extends Util
       public int step ( final Machine mach )
       {
          numStep++;
-         return ( numStep >= maxStep ) ? COMPLETE : INCOMPLETE;
+         return ( numStep >= maxStep ) ? ERROR_COMPLETE : ERROR_INCOMPLETE;
       }
    }
    
@@ -47,28 +47,28 @@ public class TestComputer extends Util
       assertEquals(1,firm.numBoot);
       assertEquals(0,firm.numStep);
 
-      assertEquals(Firmware.INCOMPLETE,comp.drive(0));
+      assertEquals(Firmware.ERROR_INCOMPLETE,comp.drive(0));
       assertEquals(1,firm.numBoot);
       assertEquals(0,firm.numStep);
-      assertEquals(Firmware.INCOMPLETE,comp.drive(1));
+      assertEquals(Firmware.ERROR_INCOMPLETE,comp.drive(1));
       assertEquals(1,firm.numBoot);
       assertEquals(1,firm.numStep);
-      assertEquals(Firmware.INCOMPLETE,comp.drive(1));
+      assertEquals(Firmware.ERROR_INCOMPLETE,comp.drive(1));
       assertEquals(1,firm.numBoot);
       assertEquals(2,firm.numStep);
-      assertEquals(Firmware.INCOMPLETE,comp.drive(10));
+      assertEquals(Firmware.ERROR_INCOMPLETE,comp.drive(10));
       assertEquals(1,firm.numBoot);
       assertEquals(12,firm.numStep);
-      assertEquals(Firmware.INCOMPLETE,comp.drive(10));
+      assertEquals(Firmware.ERROR_INCOMPLETE,comp.drive(10));
       assertEquals(1,firm.numBoot);
       assertEquals(22,firm.numStep);
-      assertEquals(Firmware.INCOMPLETE,comp.drive(10));
+      assertEquals(Firmware.ERROR_INCOMPLETE,comp.drive(10));
       assertEquals(1,firm.numBoot);
       assertEquals(32,firm.numStep);
-      assertEquals(Firmware.INCOMPLETE,comp.drive(10));
+      assertEquals(Firmware.ERROR_INCOMPLETE,comp.drive(10));
       assertEquals(1,firm.numBoot);
       assertEquals(42,firm.numStep);
-      assertEquals(Firmware.COMPLETE,comp.drive(10));
+      assertEquals(Firmware.ERROR_COMPLETE,comp.drive(10));
       assertEquals(1,firm.numBoot);
       assertEquals(50,firm.numStep);
 

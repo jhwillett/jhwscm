@@ -48,11 +48,11 @@ public class JhwScm implements Firmware
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final int     OUT_OF_MEMORY    = -4;
-   public static final int     FAILURE_LEXICAL  = -5;
-   public static final int     FAILURE_SEMANTIC = -6;
-   public static final int     INTERNAL_ERROR   = -7;
-   public static final int     UNIMPLEMENTED    = -8;
+   public static final int     ERROR_OUT_OF_MEMORY       = -4;
+   public static final int     ERROR_FAILURE_LEXICAL     = -5;
+   public static final int     ERROR_FAILURE_SEMANTIC    = -6;
+   public static final int     ERROR_INTERNAL_ERROR      = -7;
+   public static final int     ERROR_UNIMPLEMENTED       = -8;
 
    public static class Stats
    {
@@ -107,7 +107,8 @@ public class JhwScm implements Firmware
    /**
     * Drives a single step of computation.  
     * 
-    * @returns COMPLETE, INCOMPLETE, or some other error code.
+    * @returns ERROR_COMPLETE, ERROR_INCOMPLETE, or one of the
+    * ERROR_foo codes defined here.
     */
    public int step ( final Machine mach )
    {
@@ -2565,7 +2566,7 @@ public class JhwScm implements Firmware
          // input.
          //
          gosub(sub_top,blk_halt);
-         return COMPLETE;
+         return ERROR_COMPLETE;
 
       default:
          log("bogus op: ",pp(reg.get(regPc)));
@@ -2573,7 +2574,7 @@ public class JhwScm implements Firmware
          break;
       }
 
-      return INCOMPLETE;
+      return ERROR_INCOMPLETE;
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -3336,11 +3337,11 @@ public class JhwScm implements Firmware
    {
       switch ( err )
       {
-      case ERR_OOM:       return OUT_OF_MEMORY;
-      case ERR_LEXICAL:   return FAILURE_LEXICAL;
-      case ERR_SEMANTIC:  return FAILURE_SEMANTIC;
-      case ERR_NOT_IMPL:  return UNIMPLEMENTED;
-      default:            return INTERNAL_ERROR;
+      case ERR_OOM:       return ERROR_OUT_OF_MEMORY;
+      case ERR_LEXICAL:   return ERROR_FAILURE_LEXICAL;
+      case ERR_SEMANTIC:  return ERROR_FAILURE_SEMANTIC;
+      case ERR_NOT_IMPL:  return ERROR_UNIMPLEMENTED;
+      default:            return ERROR_INTERNAL_ERROR;
       }
    }
 

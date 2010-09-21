@@ -46,8 +46,9 @@ public class Computer
     *
     * @throws IllegalArgumentException if numSteps < 0
     *
-    * @returns Firmware.COMPLETE on success, Firmware.INCOMPLETE if
-    * more cycles are needed, otherwise an error code.
+    * @returns Firmware.ERROR_INCOMPLETE if more cycles are needed,
+    * otherwise an error code arising from the firmware which could be
+    * Firmware.ERROR_COMPLETE on success, else some other error.
     */
    public int drive ( final int numSteps )
    {
@@ -60,11 +61,11 @@ public class Computer
          if ( PROFILE ) local.numCycles  += 1;
          if ( PROFILE ) global.numCycles += 1;
          final int code = firmware.step(machine);
-         if ( Firmware.INCOMPLETE != code )
+         if ( Firmware.ERROR_INCOMPLETE != code )
          {
             return code;
          }
       }
-      return Firmware.INCOMPLETE;
+      return Firmware.ERROR_INCOMPLETE;
    }
 }

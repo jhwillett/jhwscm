@@ -14,8 +14,8 @@ public class TestScm extends Util
 
    private static final Random debugRand = new Random(1234);
 
-   private static final int LEXICAL  = JhwScm.FAILURE_LEXICAL;
-   private static final int SEMANTIC = JhwScm.FAILURE_SEMANTIC;
+   private static final int LEXICAL  = JhwScm.ERROR_FAILURE_LEXICAL;
+   private static final int SEMANTIC = JhwScm.ERROR_FAILURE_SEMANTIC;
 
    private static class BatchType
    {
@@ -1064,7 +1064,7 @@ public class TestScm extends Util
       if ( null == result || result instanceof String )
       {
          numHappyExpects++;
-         expected_dcode  = JhwScm.COMPLETE;
+         expected_dcode  = JhwScm.ERROR_COMPLETE;
          expected_output = (String)result;
       }
       else
@@ -1110,7 +1110,7 @@ public class TestScm extends Util
          while ( true )
          {
             code = scm.drive(debugRand.nextInt(100));
-            if ( Firmware.INCOMPLETE != code )
+            if ( Firmware.ERROR_INCOMPLETE != code )
             {
                break;
             }

@@ -11,8 +11,8 @@
 
 public interface Firmware
 {
-   public static final int COMPLETE   =  0;
-   public static final int INCOMPLETE = -1;
+   public static final int ERROR_COMPLETE   =  0;
+   public static final int ERROR_INCOMPLETE = -1;
 
    /**
     * Called before step(), not allowed to fail.  
@@ -24,7 +24,8 @@ public interface Firmware
    /**
     * Drives a single step of computation.  
     * 
-    * @returns COMPLETE, INCOMPLETE, or some other error code.
+    * @returns ERROR_COMPLETE, ERROR_INCOMPLETE, or some other error
+    * code.
     */
    public int step ( final Machine mach );
 }
