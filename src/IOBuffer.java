@@ -24,6 +24,9 @@ public class IOBuffer
    {
       public int numInput  = 0;
       public int numOutput = 0;
+      public int numPeek   = 0;
+      public int numPop    = 0;
+      public int numPush   = 0;
    }
 
    public static final Stats global = new Stats();
@@ -79,6 +82,8 @@ public class IOBuffer
     */
    public byte peek ()
    {
+      if ( PROFILE ) local.numPeek++;
+      if ( PROFILE ) global.numPeek++;
       if ( isEmpty() )
       {
          throw new SegFault("peek() when isEmpty()");
@@ -105,6 +110,8 @@ public class IOBuffer
     */
    public byte pop ()
    {
+      if ( PROFILE ) local.numPop++;
+      if ( PROFILE ) global.numPop++;
       if ( isEmpty() )
       {
          throw new SegFault("pop() when isEmpty()");
@@ -133,6 +140,8 @@ public class IOBuffer
     */
    public void push ( final byte value )
    {
+      if ( PROFILE ) local.numPush++;
+      if ( PROFILE ) global.numPush++;
       if ( isFull() )
       {
          throw new SegFault("push() when isFull()");

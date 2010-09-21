@@ -27,8 +27,6 @@ public class Machine
       public final MemStats.Stats  regStats      = new MemStats.Stats();
       public final MemCached.Stats cacheStats    = new MemCached.Stats();
       public final MemStats.Stats  cacheTopStats = new MemStats.Stats();
-      public       int             numInput      = 0;
-      public       int             numOutput     = 0;
    }
 
    public static final Stats global = new Stats();

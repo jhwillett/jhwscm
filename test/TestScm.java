@@ -595,7 +595,7 @@ public class TestScm extends Util
             // Takes like a minute...
             expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
          }
-         //report("fib:",scm);
+         report("fib:",scm);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -1160,18 +1160,28 @@ public class TestScm extends Util
 
    private static void reportGlobal ()
    {
-      report("global:",Computer.global,JhwScm.global,Machine.global);
+      report("global:",
+             Computer.global,
+             JhwScm.global,
+             Machine.global,
+             IOBuffer.global);
    }
 
    private static void report ( final String tag, final Computer scm )
    {
-      report(tag,scm.local,((JhwScm)scm.firmware).local,scm.machine.local);
+      report(tag,
+             scm.local,
+             ((JhwScm)scm.firmware).local,
+             scm.machine.local,
+             scm.machine.ioBuf(0).local,
+             scm.machine.ioBuf(1).local);
    }
 
    private static void report ( final String         tag, 
                                 final Computer.Stats cs,
                                 final JhwScm.Stats   ss,
-                                final Machine.Stats  ms )
+                                final Machine.Stats  ms,
+                                final IOBuffer.Stats ... is )
    {
       if ( !PROFILE || !REPORT ) return;
       log(tag);
@@ -1179,8 +1189,16 @@ public class TestScm extends Util
       log("  numCons:          " + ss.numCons);
       if ( true )
       {
-         log("  numInput:         " + ms.numInput);
-         log("  numOutput:        " + ms.numOutput);
+         for ( int i = 0; i < is.length; ++i )
+         {
+            log("  iobuf:            " + i);
+            final IOBuffer.Stats stats = is[i];
+            log("    numInput:       " + stats.numInput);
+            log("    numOutput:      " + stats.numOutput);
+            log("    numPeek:        " + stats.numPeek);
+            log("    numPop:         " + stats.numPop);
+            log("    numPush:        " + stats.numPush);
+         }
       }
       log("  reg.numSet:       " + ms.regStats.numSet);
       log("  reg.numGet:       " + ms.regStats.numGet);

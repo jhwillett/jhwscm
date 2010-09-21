@@ -1,11 +1,61 @@
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
+fib:
+  numCycles:        168974
+  numCons:          186318
+  iobuf:            0
+    numInput:       123
+    numOutput:      0
+    numPeek:        391
+    numPop:         123
+    numPush:        123
+  iobuf:            1
+    numInput:       0
+    numOutput:      12
+    numPeek:        0
+    numPop:         12
+    numPush:        12
+  reg.numSet:       1321407
+  reg.numGet:       2997201
+  reg.maxAddr:      31
+  heap.numSet:      59408
+  heap.numGet:      383296
+  heap.maxAddr:     6143
+  cache.numHits:    1281544
+  cache.numMisses:  23940
+  cache.numFlush:   3713
+  cache.numDrop:    20227
+  cache.numLoad:    23956
+  cacheTop.numSet:  564210
+  cacheTop.numGet:  741290
+  cacheTop.maxAddr: 6143
+  reg   ops:        4318608
+  cache ops:        1305500
+  heap  ops:        442704
+  reg   ops/cell:   139309.93548387097
+  cache ops/cell:   212.51831352759237
+  heap  ops/cell:   72.06641706006837
+  ops   reg/cache:  3.30801072386059
+  ops   cache/heap: 2.9489229823990746
+  ALG:                       4
+  LINE_SIZE:                 16
+  LINE_COUNT:                16
+  PROPERLY_TAIL_RECURSIVE:   true
+  CLEVER_TAIL_CALL_MOD_CONS: true
+  CLEVER_STACK_RECYCLING:    true
+  CLEVER_STACK_RECYCLING:    true
+  cache hit/op:              0.9816619736434916
+  cache write/miss:          0.15509607351712615
 global:
   numCycles:        324155
   numCons:          427177
-  numInput:         0
-  numOutput:        0
+  iobuf:            0
+    numInput:       6434
+    numOutput:      1788
+    numPeek:        17306
+    numPop:         8213
+    numPush:        8222
   reg.numSet:       4280334
   reg.numGet:       7390036
   reg.maxAddr:      31
