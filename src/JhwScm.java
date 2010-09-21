@@ -738,7 +738,8 @@ public class JhwScm implements Firmware
          //
          if ( NIL == reg.get(regArg1) )
          {
-            store(IS_SYMBOL);
+            reg.set(regTmp0,IS_SYMBOL);
+            store(reg.get(regTmp0));
             gosub(sub_read_symbol_body,blk_tail_call_m_cons);
          }
          else
@@ -1428,16 +1429,16 @@ public class JhwScm implements Firmware
          reg.set(regTmp0 , car(car(reg.get(regArg0))));  // test of first clause
          reg.set(regTmp1 , cdr(car(reg.get(regArg0))));  // body of first clause
          reg.set(regTmp2 , cdr(reg.get(regArg0)));       // rest of clauses
-         store(reg.get(regTmp1));                    // store body of 1st clause
-         store(reg.get(regTmp2));                    // store rest of clauses
+         store(reg.get(regTmp1));        // store body of 1st clause
+         store(reg.get(regTmp2));        // store rest of clauses
          logrec("test",reg.get(regTmp0));
          reg.set(regArg0 , reg.get(regTmp0));
          reg.set(regArg1 , reg.get(regEnv));
          gosub(sub_eval,sub_cond+0x1);
          break;
       case sub_cond+0x1:
-         restore(regTmp2);               // store rest of clauses
-         restore(regTmp1);               // store body of 1st clause
+         restore(regTmp2);               // restore rest of clauses
+         restore(regTmp1);               // restore body of 1st clause
          if ( FALSE == reg.get(regRetval) )
          {
             logrec("rest",reg.get(regTmp2));
@@ -2525,8 +2526,8 @@ public class JhwScm implements Firmware
          break;
 
       case blk_tail_call_m_cons:
-         // Returns the cons of the value on the stack with
-         // reg.get(regRetval).
+         // Returns the cons of the top value on the stack with
+         // regRetval.
          //
          // This has a distinctive pattern of use:
          //
