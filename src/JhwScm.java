@@ -170,7 +170,7 @@ public class JhwScm implements Firmware
          prebind("read",   sub_readv);
          prebind("display",sub_printv);
          prebind("map1",   sub_map1);
-         gosub( sub_top, blk_halt );
+         gosub(sub_top, blk_halt);
          break;
 
       case sub_top:
@@ -357,7 +357,7 @@ public class JhwScm implements Firmware
             break;
          }
          portPop(reg.get(regArg0));
-         reg.set(regArg0,  reg.get(regArg0));
+         reg.set(regArg0, reg.get(regArg0));
          gosub(sub_read_list_open,blk_tail_call);
          break;
 
@@ -404,7 +404,7 @@ public class JhwScm implements Firmware
          break;
       case sub_read_list_open+0x1:    
          restore(regArg0);    // restore port
-         reg.set(regTmp0,  portPeek(reg.get(regArg0)));
+         reg.set(regTmp0, portPeek(reg.get(regArg0)));
          if ( EOF == reg.get(regTmp0) )
          {
             log("eof in list expr");
@@ -415,7 +415,7 @@ public class JhwScm implements Firmware
          {
             log("matching close-paren");
             portPop(reg.get(regArg0));
-            reg.set(regRetval,  NIL);
+            reg.set(regRetval, NIL);
             returnsub();
             break;
          }
@@ -423,21 +423,21 @@ public class JhwScm implements Firmware
          gosub(sub_read,sub_read_list_open+0x2);
          break;
       case sub_read_list_open+0x2:
-         restore(regArg0);    // restore port
+         restore(regArg0);       // restore port
          store(regArg0);         // store port
          store(regRetval);       // store next
          gosub(sub_read_list_open,sub_read_list_open+0x3);
          break;
       case sub_read_list_open+0x3:
-         restore(regTmp0);    // restore next
-         restore(regArg0);    // restore port
-         reg.set(regTmp1,  reg.get(regRetval)); // rest
+         restore(regTmp0);       // restore next
+         restore(regArg0);       // restore port
+         reg.set(regTmp1, reg.get(regRetval)); // rest
          if ( TYPE_CELL           != type(reg.get(regTmp0))     ||
               IS_SYMBOL           != car(reg.get(regTmp0))      ||
               code(TYPE_CHAR,'.') != car(cdr(reg.get(regTmp0))) ||
               NIL                 != cdr(cdr(reg.get(regTmp0)))  )
          {
-            reg.set(regRetval,  cons(reg.get(regTmp0),reg.get(regTmp1)));
+            reg.set(regRetval, cons(reg.get(regTmp0),reg.get(regTmp1)));
             returnsub();
             break;
          }
@@ -450,7 +450,7 @@ public class JhwScm implements Firmware
          if ( NIL == cdr(reg.get(regTmp1)) )
          {
             log("happy dotted list");
-            reg.set(regRetval,  car(reg.get(regTmp1)));
+            reg.set(regRetval, car(reg.get(regTmp1)));
             returnsub();
             break;
          }
@@ -947,12 +947,11 @@ public class JhwScm implements Firmware
                //   reg.get(regArg0) already contains the symbol
                //   reg.get(regArg1) already contains the env
                //
-               // TODO: w/ a different variant of
-               // sub_eval_look_env, could this be a tail call?
-               // And I don't just mean making a new function that
-               // calls sub_eval_look_env that has our same
-               // continuation sub_eval+0x1... I mean something
-               // that tail-recurses all the way to the
+               // TODO: w/ a different variant of sub_eval_look_env,
+               // could this be a tail call?  And I don't just mean
+               // making a new function that calls sub_eval_look_env
+               // that has our same continuation sub_eval+0x1... I
+               // mean something that tail-recurses all the way to the
                // success-or-symbol-not-found logic.
                gosub(sub_eval_look_env,sub_eval+0x1);
                break;
