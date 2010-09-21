@@ -562,14 +562,6 @@ public class JhwScm implements Firmware
          restore(regTmp0);
          reg.set(regTmp1   , car(reg.get(regTmp0)));
          reg.set(regRetval , cons(IS_SYMBOL,reg.get(regTmp1)));
-         if ( DEBUG )
-         {
-            reg.set(regTmp1 , reg.get(regTmp0));
-            while ( NIL != reg.get(regTmp1) )
-            {
-               reg.set(regTmp1 , cdr(reg.get(regTmp1)));
-            }
-         }
          returnsub();
          break;
       case sub_read_atom+0x3:
@@ -2003,6 +1995,7 @@ public class JhwScm implements Firmware
             if ( reg.get(regTmp1) == 0 )
             {
                portPush(regArg1,code(TYPE_CHAR,'0'));
+               reg.set(regRetval , UNSPECIFIED);
                returnsub();
                break;
             }
@@ -2114,7 +2107,7 @@ public class JhwScm implements Firmware
          //
          if ( NIL == reg.get(regArg0) )
          {
-            reg.set(regRetval  , UNSPECIFIED);
+            reg.set(regRetval , UNSPECIFIED);
             returnsub();
             break;
          }
@@ -2206,11 +2199,11 @@ public class JhwScm implements Firmware
             raiseError(ERR_SEMANTIC);
             break;
          }
-         reg.set(regTmp0   , value_fixint(reg.get(regArg0)));
-         reg.set(regTmp1   , value_fixint(reg.get(regArg1)));
-         reg.set(regTmp2   , value_fixint(reg.get(regArg2)));
-         reg.set(regTmp3   , reg.get(regTmp0) + reg.get(regTmp1) + reg.get(regTmp2));
-         reg.set(regRetval , code(TYPE_FIXINT,reg.get(regTmp3)));
+         reg.set(regTmp0,   value_fixint(reg.get(regArg0)));
+         reg.set(regTmp1,   value_fixint(reg.get(regArg1)));
+         reg.set(regTmp2,   value_fixint(reg.get(regArg2)));
+         reg.set(regTmp3,   reg.get(regTmp0)+reg.get(regTmp1)+reg.get(regTmp2));
+         reg.set(regRetval, code(TYPE_FIXINT,reg.get(regTmp3)));
          returnsub();
          break;
 
@@ -2554,7 +2547,7 @@ public class JhwScm implements Firmware
             reg.set(regTmp1   , reg.get(regRetval));
             reg.set(regRetval , cons(reg.get(regTmp0),reg.get(regTmp1)));
          }
-         returnsub();
+        returnsub();
          break;
 
       case blk_error:
