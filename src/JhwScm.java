@@ -424,7 +424,7 @@ public class JhwScm implements Firmware
          break;
       case sub_read_list_open+0x2:
          restore(regArg0);       // restore port
-         store(regArg0);         // store port
+         store(regArg0);         // store port INEFFICIENT
          store(regRetval);       // store next
          gosub(sub_read_list_open,sub_read_list_open+0x3);
          break;
@@ -1293,10 +1293,9 @@ public class JhwScm implements Firmware
          // here, and a peek operation would be welcome, too.
          reg.set(regTmp2,  reg.get(regRetval));    // regTmp2 is params
          restore(regTmp1);         // restore body
-         logrec("REWRITE BODY B: ",reg.get(regTmp1));
          restore(regTmp0);         // restore locals
-         store(regTmp0);
-         store(regTmp1);
+         store(regTmp0);           // store locals INEFFICIENT
+         store(regTmp1);           // store body INEFFICIENT
          store(regTmp2);
          reg.set(regArg0,  sub_cadr);
          reg.set(regArg1,  reg.get(regTmp0));
@@ -2431,17 +2430,17 @@ public class JhwScm implements Firmware
          // the symbol.
          logrec("DEFINE SYMBOL: ",reg.get(regTmp0));
          logrec("DEFINE BODY:   ",reg.get(regTmp1));
-         store(regTmp0);              // store the symbol
+         store(regTmp0);                       // store the symbol
          reg.set(regArg0,  reg.get(regTmp1));  // eval the body
          reg.set(regArg1,  reg.get(regEnv));   // we need an env arg here!
          gosub(sub_eval,sub_define+0x1);
          break;
       case sub_define+0x1:
-         restore(regTmp0);         // restore the symbol
+         restore(regTmp0);            // restore the symbol
          store(regTmp0);              // store the symbol INEFFICIENT
          store(regRetval);            // store the body's value
-         reg.set(regArg0,  reg.get(regTmp0));     // lookup the binding
-         reg.set(regArg1,  car(reg.get(regEnv))); // we need an env arg here!
+         reg.set(regArg0, reg.get(regTmp0));     // lookup the binding
+         reg.set(regArg1, car(reg.get(regEnv))); // we need an env arg here!
          gosub(sub_eval_look_frame,sub_define+0x2);
          break;
       case sub_define+0x2:

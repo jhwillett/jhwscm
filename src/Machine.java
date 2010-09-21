@@ -105,10 +105,13 @@ public class Machine
       }
       this.heap = mem;
 
-      this.iobufs = new IOBuffer[] { 
-         new IOBuffer(1024), 
-         new IOBuffer(1024) 
-      };
+      final int numIoBufs = 2;
+      final int ioBufSize = 1024;
+      this.iobufs = new IOBuffer[numIoBufs];
+      for ( int i = 0; i < numIoBufs; ++i )
+      {
+         this.iobufs[i] = new IOBuffer(ioBufSize);
+      }
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -116,6 +119,47 @@ public class Machine
    // client control points
    //
    ////////////////////////////////////////////////////////////////////
+
+   /**
+    * Valid ioBufIds are in 0 .. numIoBufs()-1.
+    *
+    * @returns the number of buffers
+    */
+   public int numIoBufs ()
+   {
+      return iobufs.length;
+   }
+
+   /**
+    * @throws IndexOutOfBoundsException if n < 0 or n >= numIoBufs()
+    *
+    * @returns null if the buffer at ioBufId has been close()d, else
+    * the IOBuffer at ioBufId.
+    */
+   public IOBuffer iobuf ( final int ioBufId )
+   {
+      if ( ioBufId < 0 || ioBufId >= iobufs.length )
+      {
+         final String msg = "ioBufId " + ioBufId + " / " + iobufs.length;
+         throw new IndexOutOfBoundsException(msg);
+      }
+      return iobufs[ioBufId];
+   }
+
+   /**
+    * Closes the buffer at ioBufId.
+    *
+    * @throws IndexOutOfBoundsException if n < 0 or n >= numIoBufs()
+    */
+   public void closeIoBuf ( final int ioBufId )
+   {
+      if ( ioBufId < 0 || ioBufId >= iobufs.length )
+      {
+         final String msg = "ioBufId " + ioBufId + " / " + iobufs.length;
+         throw new IndexOutOfBoundsException(msg);
+      }
+      iobufs[ioBufId] = null;
+   }
 
    /**
     * Transfers up to len bytes from in[off..len-1] to the VM's input

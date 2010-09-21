@@ -726,8 +726,9 @@ public class TestScm extends Util
 
       // TODO: control special form: case
       //
-      // We need user-code-accesible side-effects to detect that (case)
-      // only evaluates the matching clause.
+      // We need user-code-accesible side-effects to detect that
+      // (case) only evaluates the matching clause.
+      //
       expect("(case)",SEMANTIC);
       expect("(case 1)",SEMANTIC);
       expect("(case 1 1)",SEMANTIC);
