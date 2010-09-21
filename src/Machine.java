@@ -110,7 +110,7 @@ public class Machine
       this.iobufs = new IOBuffer[numIoBufs];
       for ( int i = 0; i < numIoBufs; ++i )
       {
-         this.iobufs[i] = new IOBuffer(ioBufSize);
+         this.iobufs[i] = new IOBuffer(ioBufSize,PROFILE,VERBOSE,DEBUG);
       }
    }
 

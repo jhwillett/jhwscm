@@ -8,6 +8,10 @@
 
 public class TestIOBuffer extends Util
 {
+   private static boolean PROFILE = true;
+   private static boolean VERBOSE = false;
+   private static boolean DEBUG   = true;
+
    public static void main ( final String[] argv )
    {
       log("TestIOBuffer");
@@ -60,7 +64,7 @@ public class TestIOBuffer extends Util
       log("numOps:    " + numOps);
       log("mutation:  " + mutation);
 
-      final IOBuffer iobuf = new IOBuffer(byteCount);
+      final IOBuffer iobuf = new IOBuffer(byteCount,PROFILE,VERBOSE,DEBUG);
       for ( int i = 0; i < numOps; ++i )
       {
          final byte a = (byte)(i+mutation);
