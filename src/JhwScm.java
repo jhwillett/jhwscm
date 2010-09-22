@@ -2004,10 +2004,9 @@ public class JhwScm implements Firmware
                gosub(sub_print_const,blk_tail_call);
                break;
             case FALSE:
-               portPush(regArg1,code(TYPE_CHAR,'#'));
-               portPush(regArg1,code(TYPE_CHAR,'f'));
-               reg.set(regRetval,  UNSPECIFIED);
-               returnsub();
+               reg.set(regArg0, const_false);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
                break;
             default:
                log("bogus sentinel: ",pp(reg.get(regArg0)));
@@ -2029,11 +2028,9 @@ public class JhwScm implements Firmware
                gosub(sub_print_chars,blk_tail_call);
                break;
             case IS_PROCEDURE:
-               portPush(regArg1,code(TYPE_CHAR,'?'));
-               portPush(regArg1,code(TYPE_CHAR,'?'));
-               portPush(regArg1,code(TYPE_CHAR,'?'));
-               reg.set(regRetval,  UNSPECIFIED);
-               returnsub();
+               reg.set(regArg0, const_huh3);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
                break;
             default:
                reg.set(regArg0,  reg.get(regArg0));
@@ -2109,11 +2106,9 @@ public class JhwScm implements Firmware
             //
             // In the mean time, this is sufficient to meet spec.
             //
-            portPush(regArg1,code(TYPE_CHAR,'?'));
-            portPush(regArg1,code(TYPE_CHAR,'p'));
-            portPush(regArg1,code(TYPE_CHAR,'?'));
-            reg.set(regRetval,  UNSPECIFIED);
-            returnsub();
+            reg.set(regArg0, const_huhPhuh);
+            reg.set(regArg2, code(TYPE_FIXINT,0));
+            gosub(sub_print_const,blk_tail_call);
             break;
          default:
             raiseError(ERR_INTERNAL);
@@ -2174,6 +2169,8 @@ public class JhwScm implements Firmware
          //
          tmp0 = value_fixint(reg.get(regArg0)); // const offset
          tmp1 = value_fixint(reg.get(regArg2)); // string offset
+         log("tmp0: " + tmp0);
+         log("tmp1: " + tmp1);
          if ( DEBUG && (tmp0 < 0 || tmp0 >= const_str.length ))
          {
             log("bad tmp0: " + tmp0 + " of " + const_str.length);
@@ -2947,6 +2944,8 @@ public class JhwScm implements Firmware
    private static final int      const_false;
    private static final int      const_newline;
    private static final int      const_space;
+   private static final int      const_huh3;
+   private static final int      const_huhPhuh;
    static 
    {
       int i = 0;
@@ -2983,10 +2982,16 @@ public class JhwScm implements Firmware
       const_val[i]  = FALSE;                const_str[i++] = "#f";
 
       const_newline = code(TYPE_FIXINT,i);
-      const_val[i]  = code(TYPE_CHAR,'\n'); const_str[i++] = "newline";
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "newline";
 
       const_space   = code(TYPE_FIXINT,i);
-      const_val[i]  = code(TYPE_CHAR,' ');  const_str[i++] = "space";
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "space";
+
+      const_huh3    = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "???";
+
+      const_huhPhuh = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?p?";
    }
 
    ////////////////////////////////////////////////////////////////////
