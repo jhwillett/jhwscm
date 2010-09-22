@@ -437,7 +437,8 @@ public class JhwScm implements Firmware
          //       (begin (port_pop port)
          //              (sub_read_list_open port))))
          //
-         if ( code(TYPE_CHAR,'(') != portPeek(reg.get(regArg0)) )
+         reg.set(regTmp0, portPeek(reg.get(regArg0)));
+         if ( code(TYPE_CHAR,'(') != reg.get(regTmp0) )
          {
             raiseError(ERR_LEXICAL);
             break;
@@ -2074,7 +2075,7 @@ public class JhwScm implements Firmware
       case sub_print_string+0x1:
          restore(regArg1);      // restore port
          portPush(regArg1,code(TYPE_CHAR,'"'));
-         reg.set(regRetval,  UNSPECIFIED);
+         reg.set(regRetval, UNSPECIFIED);
          returnsub();
          break;
 
@@ -2103,7 +2104,7 @@ public class JhwScm implements Firmware
             break;
          }
          portPush(regArg1,reg.get(regTmp1));
-         reg.set(regArg0,  reg.get(regTmp2));
+         reg.set(regArg0, reg.get(regTmp2));
          gosub(sub_print_chars,blk_tail_call);
          break;
 
