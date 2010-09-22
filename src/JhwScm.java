@@ -190,7 +190,7 @@ public class JhwScm implements Firmware
          break;
 
       case sub_const_symbol:
-         // Returns a symbol corresponding to the const_strs[] at offset
+         // Returns a symbol corresponding to the const_str[] at offset
          // regArg0, with regArg0 expected to be a fixint.
          // 
          // Because of how the const table is implemented, we cheat
@@ -210,10 +210,10 @@ public class JhwScm implements Firmware
          break;
 
       case sub_const_chars:
-         // Returns a list of the characters from const_strs
+         // Returns a list of the characters from const_str
          // corresponding to:
          //
-         //   const_strs[reg.get(regArg0)][reg.get(regArg1) ... ]
+         //   const_str[reg.get(regArg0)][reg.get(regArg1) ... ]
          // 
          // ...to the end of the const. 
          //
@@ -225,19 +225,19 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         if ( tmp1 == const_strs[tmp0].length() )
+         if ( tmp1 == const_str[tmp0].length() )
          {
             reg.set(regRetval,NIL);
             returnsub();
             break;
          }
-         if ( DEBUG && (tmp1 < 0 || tmp1 >= const_strs[tmp0].length() ))
+         if ( DEBUG && (tmp1 < 0 || tmp1 >= const_str[tmp0].length() ))
          {
-            log("bad tmp1: " + tmp1 + " of " + const_strs[tmp0].length());
+            log("bad tmp1: " + tmp1 + " of " + const_str[tmp0].length());
             raiseError(ERR_INTERNAL);
             break;
          }
-         tmp0 = code(TYPE_CHAR,const_strs[tmp0].charAt(tmp1));
+         tmp0 = code(TYPE_CHAR,const_str[tmp0].charAt(tmp1));
          tmp1 = tmp1 + 1;
          reg.set(regArg1,tmp1);
          reg.set(regTmp0,tmp0);
@@ -246,7 +246,7 @@ public class JhwScm implements Firmware
          break;
 
       case sub_const_val:
-         // Returns the const_vals[] at offset regArg0, with regArg0
+         // Returns the const_val[] at offset regArg0, with regArg0
          // expected to be a fixint.
          // 
          tmp0 = value_fixint(reg.get(regArg0));
@@ -256,7 +256,7 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         reg.set(regRetval,const_vals[tmp0]);
+         reg.set(regRetval,const_val[tmp0]);
          returnsub();
          break;
 
@@ -2907,8 +2907,8 @@ public class JhwScm implements Firmware
    // numConsts is the actual number of valid records.
    //
    private static final int      constTableSize = 50;
-   private static final String[] const_strs     = new String[constTableSize];
-   private static final int[]    const_vals     = new int[constTableSize];
+   private static final String[] const_str      = new String[constTableSize];
+   private static final int[]    const_val      = new int[constTableSize];
    private static final int      numConsts;
    private static final int      const_add;
    private static final int      const_mul;
@@ -2936,98 +2936,29 @@ public class JhwScm implements Firmware
    static 
    {
       int i         = 0;
-      const_add     = i;
-      const_vals[i] = sub_add;
-      const_strs[i] = "+";
-      i++;
-      const_mul     = i;
-      const_vals[i] = sub_mul;
-      const_strs[i] = "*";
-      i++;
-      const_sub     = i;
-      const_vals[i] = sub_sub;
-      const_strs[i] = "-";
-      i++;
-      const_lt_p    = i;
-      const_vals[i] = sub_lt_p;
-      const_strs[i] = "<";
-      i++;
-      const_add0    = i;
-      const_vals[i] = sub_add0;
-      const_strs[i] = "+0";
-      i++;
-      const_add1    = i;
-      const_vals[i] = sub_add1;
-      const_strs[i] = "+1";
-      i++;
-      const_add3    = i;
-      const_vals[i] = sub_add3;
-      const_strs[i] = "+3";
-      i++;
-      const_cons    = i;
-      const_vals[i] = sub_cons;
-      const_strs[i] = "cons";
-      i++;
-      const_car     = i;
-      const_vals[i] = sub_car;
-      const_strs[i] = "car";
-      i++;
-      const_cdr     = i;
-      const_vals[i] = sub_cdr;
-      const_strs[i] = "cdr";
-      i++;
-      const_list    = i;
-      const_vals[i] = sub_list;
-      const_strs[i] = "list";
-      i++;
-      const_if      = i;
-      const_vals[i] = sub_if;
-      const_strs[i] = "if";
-      i++;
-      const_quote   = i;
-      const_vals[i] = sub_quote;
-      const_strs[i] = "quote";
-      i++;
-      const_define  = i;
-      const_vals[i] = sub_define;
-      const_strs[i] = "define";
-      i++;
-      const_lambda  = i;
-      const_vals[i] = sub_lambda;
-      const_strs[i] = "lambda";
-      i++;
-      const_equal_p = i;
-      const_vals[i] = sub_equal_p;
-      const_strs[i] = "equal?";
-      i++;
-      const_let     = i;
-      const_vals[i] = sub_let;
-      const_strs[i] = "let";
-      i++;
-      const_begin   = i;
-      const_vals[i] = sub_begin;
-      const_strs[i] = "begin";
-      i++;
-      const_cond    = i;
-      const_vals[i] = sub_cond;
-      const_strs[i] = "cond";
-      i++;
-      const_case    = i;
-      const_vals[i] = sub_case;
-      const_strs[i] = "case";
-      i++;
-      const_readv   = i;
-      const_vals[i] = sub_readv;
-      const_strs[i] = "read";
-      i++;
-      const_printv  = i;
-      const_vals[i] = sub_printv;
-      const_strs[i] = "display";
-      i++;
-      const_map1    = i;
-      const_vals[i] = sub_map1;
-      const_strs[i] = "map1";
-      i++;
+      const_add     = i; const_val[i] = sub_add;     const_str[i++] = "+";
+      const_mul     = i; const_val[i] = sub_mul;     const_str[i++] = "*";
+      const_sub     = i; const_val[i] = sub_sub;     const_str[i++] = "-";
+      const_lt_p    = i; const_val[i] = sub_lt_p;    const_str[i++] = "<";
+      const_add0    = i; const_val[i] = sub_add0;    const_str[i++] = "+0";
+      const_add1    = i; const_val[i] = sub_add1;    const_str[i++] = "+1";
+      const_add3    = i; const_val[i] = sub_add3;    const_str[i++] = "+3";
+      const_cons    = i; const_val[i] = sub_cons;    const_str[i++] = "cons";
+      const_car     = i; const_val[i] = sub_car;     const_str[i++] = "car";
+      const_cdr     = i; const_val[i] = sub_cdr;     const_str[i++] = "cdr";
+      const_list    = i; const_val[i] = sub_list;    const_str[i++] = "list";
+      const_if      = i; const_val[i] = sub_if;      const_str[i++] = "if";
+      const_quote   = i; const_val[i] = sub_quote;   const_str[i++] = "quote";
+      const_define  = i; const_val[i] = sub_define;  const_str[i++] = "define";
+      const_lambda  = i; const_val[i] = sub_lambda;  const_str[i++] = "lambda";
+      const_equal_p = i; const_val[i] = sub_equal_p; const_str[i++] = "equal?";
+      const_let     = i; const_val[i] = sub_let;     const_str[i++] = "let";
+      const_begin   = i; const_val[i] = sub_begin;   const_str[i++] = "begin";
+      const_cond    = i; const_val[i] = sub_cond;    const_str[i++] = "cond";
+      const_case    = i; const_val[i] = sub_case;    const_str[i++] = "case";
+      const_readv   = i; const_val[i] = sub_readv;   const_str[i++] = "read";
+      const_printv  = i; const_val[i] = sub_printv;  const_str[i++] = "display";
+      const_map1    = i; const_val[i] = sub_map1;    const_str[i++] = "map1";
       numConsts     = i;
    }
 
