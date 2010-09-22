@@ -392,6 +392,7 @@ public class JhwScm implements Firmware
       case sub_read+0x1:
          restore(regArg0);    // restore port
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( EOF == reg.get(regTmp0) )
          {
             reg.set(regRetval,  EOF);
@@ -438,6 +439,7 @@ public class JhwScm implements Firmware
          //              (sub_read_list_open port))))
          //
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( code(TYPE_CHAR,'(') != reg.get(regTmp0) )
          {
             raiseError(ERR_LEXICAL);
@@ -492,6 +494,7 @@ public class JhwScm implements Firmware
       case sub_read_list_open+0x1:    
          restore(regArg0);    // restore port
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( EOF == reg.get(regTmp0) )
          {
             log("eof in list expr");
@@ -574,6 +577,7 @@ public class JhwScm implements Firmware
          //                       (sub_read_symbol_body port))))))))))
          //
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
          {
             log("non-char in input: ",pp(reg.get(regTmp0)));
@@ -606,6 +610,7 @@ public class JhwScm implements Firmware
             // symbol or part of a number.
             portPop(regArg0);
             reg.set(regTmp2, portPeek(regArg0));
+            //reg.set(regTmp2, reg.get(regIO));
             if ( TYPE_CHAR == type(reg.get(regTmp2)) && 
                  '0' <= value(reg.get(regTmp2))      && 
                  '9' >= value(reg.get(regTmp2))       )
@@ -690,6 +695,7 @@ public class JhwScm implements Firmware
          // right.
          //
          reg.set(regTmp1, portPeek(regArg0));
+         //reg.set(regTmp1, reg.get(regIO));
          if ( EOF == reg.get(regTmp1) )
          {
             log("eof: returning ",pp(reg.get(regArg1)));
@@ -747,6 +753,7 @@ public class JhwScm implements Firmware
          // Parses the next octothorpe literal regArg0.
          //
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( reg.get(regTmp0) != code(TYPE_CHAR,'#') )
          {
             raiseError(ERR_INTERNAL);
@@ -754,6 +761,7 @@ public class JhwScm implements Firmware
          }
          portPop(regArg0);
          reg.set(regTmp1, portPeek(regArg0));
+         //reg.set(regTmp1, reg.get(regIO));
          if ( EOF == reg.get(regTmp1) )
          {
             log("eof after octothorpe");
@@ -781,6 +789,7 @@ public class JhwScm implements Firmware
             break;
          case '\\':
             reg.set(regTmp2, portPeek(regArg0));
+            //reg.set(regTmp2, reg.get(regIO));
             if ( EOF == reg.get(regTmp2) )
             {
                log("eof after octothorpe slash");
@@ -849,6 +858,7 @@ public class JhwScm implements Firmware
          // end of the symbol.
          //
          reg.set(regTmp1, portPeek(regArg0));
+         //reg.set(regTmp1, reg.get(regIO));
          if ( EOF == reg.get(regTmp1) )
          {
             log("eof: returning");
@@ -889,6 +899,7 @@ public class JhwScm implements Firmware
          // to be the leading '"' of a string literal.
          //
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
          {
             log("non-\" leading string literal: ",pp(reg.get(regTmp0)));
@@ -902,6 +913,7 @@ public class JhwScm implements Firmware
       case sub_read_string+0x1:
          restore(regArg0);  // restore port
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
          {
             raiseError(ERR_LEXICAL);
@@ -929,6 +941,7 @@ public class JhwScm implements Firmware
          // input will be the trailing \".
          //
          reg.set(regTmp1, portPeek(regArg0));
+         //reg.set(regTmp1, reg.get(regIO));
          if ( EOF == reg.get(regTmp1) )
          {
             log("eof in string literal");
@@ -961,6 +974,7 @@ public class JhwScm implements Firmware
          // Returns UNSPECIFIED.
          //
          reg.set(regTmp0, portPeek(regArg0));
+         //reg.set(regTmp0, reg.get(regIO));
          if ( EOF == reg.get(regTmp0) )
          {
             reg.set(regRetval, UNSPECIFIED);
@@ -2069,11 +2083,13 @@ public class JhwScm implements Firmware
          // double-quotes.
          //
          store(regArg1);         // store port
+         reg.set(regIO,code(TYPE_CHAR,'"'));
          portPush(regArg1,code(TYPE_CHAR,'"'));
          gosub(sub_print_chars,sub_print_string+0x1);
          break;
       case sub_print_string+0x1:
          restore(regArg1);      // restore port
+         reg.set(regIO,code(TYPE_CHAR,'"'));
          portPush(regArg1,code(TYPE_CHAR,'"'));
          reg.set(regRetval, UNSPECIFIED);
          returnsub();
@@ -2103,6 +2119,7 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
+         reg.set(regIO,reg.get(regTmp1));
          portPush(regArg1,reg.get(regTmp1));
          reg.set(regArg0, reg.get(regTmp2));
          gosub(sub_print_chars,blk_tail_call);
@@ -2138,6 +2155,7 @@ public class JhwScm implements Firmware
          }
          tmp0 = code(TYPE_CHAR,const_str[tmp0].charAt(tmp1));
          tmp1 = tmp1 + 1;
+         reg.set(regIO,tmp0);
          portPush(regArg1,tmp0);
          reg.set(regArg2, code(TYPE_FIXINT,tmp1));
          gosub(sub_print_const,blk_tail_call);
@@ -2170,6 +2188,7 @@ public class JhwScm implements Firmware
             gosub(sub_print_const,blk_tail_call);
             break;
          default:
+            reg.set(regIO,reg.get(regArg0));
             portPush(regArg1,reg.get(regArg0));
             reg.set(regRetval, UNSPECIFIED);
             returnsub();
@@ -2185,11 +2204,13 @@ public class JhwScm implements Firmware
          reg.set(regTmp1,  value_fixint(reg.get(regArg0)));
          if ( reg.get(regTmp1) < 0 )
          {
+            reg.set(regIO,code(TYPE_CHAR,'-'));
             portPush(regArg1,code(TYPE_CHAR,'-'));
             reg.set(regTmp1,  -reg.get(regTmp1));
          }
          if ( reg.get(regTmp1) == 0 )
          {
+            reg.set(regIO,code(TYPE_CHAR,'0'));
             portPush(regArg1,code(TYPE_CHAR,'0'));
             reg.set(regRetval,  UNSPECIFIED);
             returnsub();
@@ -2205,6 +2226,7 @@ public class JhwScm implements Firmware
             final int digit  = reg.get(regTmp1)/factor;
             reg.set(regTmp1,   reg.get(regTmp1) - digit * factor);
             factor          /= 10;
+            reg.set(regIO,code(TYPE_CHAR,'0'+digit));
             portPush(regArg1,code(TYPE_CHAR,'0'+digit));
          }
          reg.set(regRetval,  UNSPECIFIED);
@@ -2218,11 +2240,13 @@ public class JhwScm implements Firmware
          store(regArg1);         // store port
          reg.set(regArg0,  reg.get(regArg0));
          reg.set(regArg2,  TRUE);
+         reg.set(regIO,code(TYPE_CHAR,'('));
          portPush(regArg1,code(TYPE_CHAR,'('));
          gosub(sub_print_list_elems,sub_print_list+0x1);
          break;
       case sub_print_list+0x1:
          restore(regArg1);      // restore port
+         reg.set(regIO,code(TYPE_CHAR,')'));
          portPush(regArg1,code(TYPE_CHAR,')'));
          reg.set(regRetval,  UNSPECIFIED);
          returnsub();
@@ -2245,6 +2269,7 @@ public class JhwScm implements Firmware
          }
          if ( FALSE == reg.get(regArg2) )
          {
+            reg.set(regIO,code(TYPE_CHAR,' '));
             portPush(regArg1,code(TYPE_CHAR,' '));
          }
          store(regArg0);
@@ -2276,8 +2301,11 @@ public class JhwScm implements Firmware
          restore(regArg1);
          restore(regTmp0);
          reg.set(regArg0,  cdr(reg.get(regTmp0)));
+         reg.set(regIO,code(TYPE_CHAR,' '));
          portPush(regArg1,code(TYPE_CHAR,' '));
+         reg.set(regIO,code(TYPE_CHAR,'.'));
          portPush(regArg1,code(TYPE_CHAR,'.'));
+         reg.set(regIO,code(TYPE_CHAR,' '));
          portPush(regArg1,code(TYPE_CHAR,' '));
          gosub(sub_print,blk_tail_call);
          break;
@@ -2843,6 +2871,7 @@ public class JhwScm implements Firmware
    private static final int regTmp8             =  28; // temporary
    private static final int regTmp9             =  29; // temporary
 
+   private static final int regIO               =  30; // port[Push|Peek]()
    private static final int regHeapTop          =  31; // alloc support: int
 
    // With opcodes, proper subroutines entry points (entry points
