@@ -203,19 +203,46 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
+         reg.set(regArg1,code(TYPE_FIXINT,0));
+         reg.set(regTmp0,IS_SYMBOL);
+         store(regTmp0);
+         gosub(sub_const_chars,blk_tail_call_m_cons);
+         break;
+
+      case sub_const_chars:
+         // Returns a list of the characters from const_strs
+         // corresponding to:
+         //
+         //   const_strs[reg.get(regArg0)][reg.get(regArg1) ... ]
+         // 
+         // ...to the end of the const. 
+         //
+         tmp0 = value_fixint(reg.get(regArg0));
+         tmp1 = value_fixint(reg.get(regArg1));
+         if ( DEBUG && (tmp0 < 0 || tmp0 >= numConsts ))
          {
-            // TODO: go recursive, and too much Java!
-            final String str = const_strs[tmp0];
-            int tmp = NIL;
-            for ( int i = str.length()-1; i >= 0 ; --i )
-            {
-               final int c = code(TYPE_CHAR,str.charAt(i));
-               tmp = cons(c,tmp);
-            }
-            tmp = cons(IS_SYMBOL,tmp);
-            reg.set(regRetval,tmp);
+            log("bad tmp0: " + tmp0 + " of " + numConsts);
+            raiseError(ERR_INTERNAL);
+            break;
          }
-         returnsub();
+         if ( tmp1 == const_strs[tmp0].length() )
+         {
+            reg.set(regRetval,NIL);
+            returnsub();
+            break;
+         }
+         if ( DEBUG && (tmp1 < 0 || tmp1 >= const_strs[tmp0].length() ))
+         {
+            log("bad tmp1: " + tmp1 + " of " + const_strs[tmp0].length());
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         tmp0 = code(TYPE_CHAR,const_strs[tmp0].charAt(tmp1));
+         tmp1 = tmp1 + 1;
+         reg.set(regArg1,tmp1);
+         reg.set(regTmp0,tmp0);
+         store(regTmp0);
+         gosub(sub_const_chars,blk_tail_call_m_cons);
          break;
 
       case sub_const_val:
@@ -2862,7 +2889,8 @@ public class JhwScm implements Firmware
    private static final int sub_map1             = TYPE_SUBP | A2 |  0x8000;
 
    private static final int sub_const_symbol     = TYPE_SUBP | A1 |  0x9000;
-   private static final int sub_const_val        = TYPE_SUBP | A1 |  0x9100;
+   private static final int sub_const_chars      = TYPE_SUBP | A1 |  0x9100;
+   private static final int sub_const_val        = TYPE_SUBP | A1 |  0x9200;
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
@@ -3701,6 +3729,7 @@ public class JhwScm implements Firmware
          case sub_lambda:           buf.append("sub_lambda");           break;
          case sub_map1:             buf.append("sub_map1");             break;
          case sub_const_symbol:     buf.append("sub_const_symbol");     break;
+         case sub_const_chars:      buf.append("sub_const_chars");      break;
          case sub_const_val:        buf.append("sub_const_val");        break;
          default:
             buf.append("sub_"); 
