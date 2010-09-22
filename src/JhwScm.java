@@ -1992,7 +1992,7 @@ public class JhwScm implements Firmware
             switch (reg.get(regArg0))
             {
             case UNSPECIFIED:
-               reg.set(regRetval,  UNSPECIFIED);
+               reg.set(regRetval, UNSPECIFIED);
                returnsub();
                break;
             case NIL:
@@ -2014,89 +2014,11 @@ public class JhwScm implements Firmware
                break;
             }
             break;
-         case TYPE_CELL:
-            reg.set(regTmp1,  car(reg.get(regArg0)));
-            reg.set(regTmp2,  cdr(reg.get(regArg0)));
-            switch (reg.get(regTmp1))
-            {
-            case IS_STRING:
-               reg.set(regArg0,  reg.get(regTmp2));
-               gosub(sub_print_string,blk_tail_call);
-               break;
-            case IS_SYMBOL:
-               reg.set(regArg0,  reg.get(regTmp2));
-               gosub(sub_print_chars,blk_tail_call);
-               break;
-            case IS_PROCEDURE:
-               reg.set(regArg0, const_huh3);
-               reg.set(regArg2, code(TYPE_FIXINT,0));
-               gosub(sub_print_const,blk_tail_call);
-               break;
-            default:
-               reg.set(regArg0,  reg.get(regArg0));
-               gosub(sub_print_list,blk_tail_call);
-               break;
-            }
-            break;
          case TYPE_CHAR:
-            portPush(regArg1,code(TYPE_CHAR,'#'));
-            portPush(regArg1,code(TYPE_CHAR,'\\'));
-            switch (value(reg.get(regArg0)))
-            {
-            case ' ':
-               portPush(regArg1,code(TYPE_CHAR,'s'));
-               portPush(regArg1,code(TYPE_CHAR,'p'));
-               portPush(regArg1,code(TYPE_CHAR,'a'));
-               portPush(regArg1,code(TYPE_CHAR,'c'));
-               portPush(regArg1,code(TYPE_CHAR,'e'));
-               break;
-            case '\n':
-               portPush(regArg1,code(TYPE_CHAR,'n'));
-               portPush(regArg1,code(TYPE_CHAR,'e'));
-               portPush(regArg1,code(TYPE_CHAR,'w'));
-               portPush(regArg1,code(TYPE_CHAR,'l'));
-               portPush(regArg1,code(TYPE_CHAR,'i'));
-               portPush(regArg1,code(TYPE_CHAR,'n'));
-               portPush(regArg1,code(TYPE_CHAR,'e'));
-               break;
-            default:
-               portPush(regArg1,reg.get(regArg0));
-               break;
-            }
-            reg.set(regRetval,  UNSPECIFIED);
-            returnsub();
+            gosub(sub_print_char,blk_tail_call);
             break;
          case TYPE_FIXINT:
-            // We trick out the sign extension of our 28-bit
-            // twos-complement FIXINTs to match Java's 32 bits
-            // before proceeding.
-            reg.set(regTmp1,  value_fixint(reg.get(regArg0)));
-            if ( reg.get(regTmp1) < 0 )
-            {
-               portPush(regArg1,code(TYPE_CHAR,'-'));
-               reg.set(regTmp1,  -reg.get(regTmp1));
-            }
-            if ( reg.get(regTmp1) == 0 )
-            {
-               portPush(regArg1,code(TYPE_CHAR,'0'));
-               reg.set(regRetval,  UNSPECIFIED);
-               returnsub();
-               break;
-            }
-            int factor = 1000000000; // big enough for 2**32 and less
-            while ( factor > 0 && 0 == reg.get(regTmp1)/factor )
-            {
-               factor /= 10;
-            }
-            while ( factor > 0 )
-            {
-               final int digit  = reg.get(regTmp1)/factor;
-               reg.set(regTmp1,   reg.get(regTmp1) - digit * factor);
-               factor          /= 10;
-               portPush(regArg1,code(TYPE_CHAR,'0'+digit));
-            }
-            reg.set(regRetval,  UNSPECIFIED);
-            returnsub();
+            gosub(sub_print_fixint,blk_tail_call);
             break;
          case TYPE_SUBP:
          case TYPE_SUBS:
@@ -2109,6 +2031,30 @@ public class JhwScm implements Firmware
             reg.set(regArg0, const_huhPhuh);
             reg.set(regArg2, code(TYPE_FIXINT,0));
             gosub(sub_print_const,blk_tail_call);
+            break;
+         case TYPE_CELL:
+            reg.set(regTmp1, car(reg.get(regArg0)));
+            reg.set(regTmp2, cdr(reg.get(regArg0)));
+            switch (reg.get(regTmp1))
+            {
+            case IS_STRING:
+               reg.set(regArg0, reg.get(regTmp2));
+               gosub(sub_print_string,blk_tail_call);
+               break;
+            case IS_SYMBOL:
+               reg.set(regArg0, reg.get(regTmp2));
+               gosub(sub_print_chars,blk_tail_call);
+               break;
+            case IS_PROCEDURE:
+               reg.set(regArg0, const_huh3);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
+               break;
+            default:
+               reg.set(regArg0, reg.get(regArg0));
+               gosub(sub_print_list,blk_tail_call);
+               break;
+            }
             break;
          default:
             raiseError(ERR_INTERNAL);
@@ -2194,6 +2140,73 @@ public class JhwScm implements Firmware
          portPush(regArg1,tmp0);
          reg.set(regArg2,  code(TYPE_FIXINT,tmp1));
          gosub(sub_print_const,blk_tail_call);
+         break;
+
+      case sub_print_char:
+         // Prints the char at regArg0 to the ouput port at regArg1.
+         //
+         // Returns UNSPECIFIED.
+         //
+         portPush(regArg1,code(TYPE_CHAR,'#'));
+         portPush(regArg1,code(TYPE_CHAR,'\\'));
+         switch (value(reg.get(regArg0)))
+         {
+         case ' ':
+            portPush(regArg1,code(TYPE_CHAR,'s'));
+            portPush(regArg1,code(TYPE_CHAR,'p'));
+            portPush(regArg1,code(TYPE_CHAR,'a'));
+            portPush(regArg1,code(TYPE_CHAR,'c'));
+            portPush(regArg1,code(TYPE_CHAR,'e'));
+            break;
+         case '\n':
+            portPush(regArg1,code(TYPE_CHAR,'n'));
+            portPush(regArg1,code(TYPE_CHAR,'e'));
+            portPush(regArg1,code(TYPE_CHAR,'w'));
+            portPush(regArg1,code(TYPE_CHAR,'l'));
+            portPush(regArg1,code(TYPE_CHAR,'i'));
+            portPush(regArg1,code(TYPE_CHAR,'n'));
+            portPush(regArg1,code(TYPE_CHAR,'e'));
+            break;
+         default:
+            portPush(regArg1,reg.get(regArg0));
+            break;
+         }
+         reg.set(regRetval,  UNSPECIFIED);
+         returnsub();
+         break;
+
+      case sub_print_fixint:
+         // Prints the fixint at regArg0 to the ouput port at regArg1.
+         //
+         // Returns UNSPECIFIED.
+         //
+         reg.set(regTmp1,  value_fixint(reg.get(regArg0)));
+         if ( reg.get(regTmp1) < 0 )
+         {
+            portPush(regArg1,code(TYPE_CHAR,'-'));
+            reg.set(regTmp1,  -reg.get(regTmp1));
+         }
+         if ( reg.get(regTmp1) == 0 )
+         {
+            portPush(regArg1,code(TYPE_CHAR,'0'));
+            reg.set(regRetval,  UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         int factor = 1000000000; // big enough up to 2**32, we have 2**28
+         while ( factor > 0 && 0 == reg.get(regTmp1)/factor )
+         {
+            factor /= 10;
+         }
+         while ( factor > 0 )
+         {
+            final int digit  = reg.get(regTmp1)/factor;
+            reg.set(regTmp1,   reg.get(regTmp1) - digit * factor);
+            factor          /= 10;
+            portPush(regArg1,code(TYPE_CHAR,'0'+digit));
+         }
+         reg.set(regRetval,  UNSPECIFIED);
+         returnsub();
          break;
 
       case sub_print_list:
@@ -2886,6 +2899,8 @@ public class JhwScm implements Firmware
    private static final int sub_print_string     = TYPE_SUBP | A2 |  0x5300;
    private static final int sub_print_chars      = TYPE_SUBP | A2 |  0x5400;
    private static final int sub_print_const      = TYPE_SUBP | A3 |  0x5500;
+   private static final int sub_print_char       = TYPE_SUBP | A2 |  0x5600;
+   private static final int sub_print_fixint     = TYPE_SUBP | A2 |  0x5700;
 
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
@@ -3667,6 +3682,8 @@ public class JhwScm implements Firmware
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_print_const:      buf.append("sub_print_const");      break;
+         case sub_print_char:       buf.append("sub_print_char");       break;
+         case sub_print_fixint:     buf.append("sub_print_fixint");     break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_let:              buf.append("sub_let");              break;
          case sub_begin:            buf.append("sub_begin");            break;
