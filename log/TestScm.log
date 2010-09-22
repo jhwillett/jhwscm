@@ -16,8 +16,8 @@ fib:
     numPeek:        0
     numPop:         12
     numPush:        12
-  reg.numSet:       1323560
-  reg.numGet:       3001590
+  reg.numSet:       1323972
+  reg.numGet:       3002014
   reg.maxAddr:      31
   heap.numSet:      59056
   heap.numGet:      386736
@@ -30,13 +30,13 @@ fib:
   cacheTop.numSet:  564970
   cacheTop.numGet:  925975
   cacheTop.maxAddr: 6143
-  reg   ops:        4325150
+  reg   ops:        4325986
   cache ops:        1490945
   heap  ops:        445792
-  reg   ops/cell:   139520.96774193548
+  reg   ops/cell:   139547.93548387097
   cache ops/cell:   242.70633241087415
   heap  ops/cell:   72.56910304411525
-  ops   reg/cache:  2.900945373571795
+  ops   reg/cache:  2.901506091774009
   ops   cache/heap: 3.3444857691479433
   ALG:                       4
   LINE_SIZE:                 16
@@ -62,8 +62,8 @@ global:
     numPeek:        0
     numPop:         1788
     numPush:        1788
-  reg.numSet:       5470389
-  reg.numGet:       9830796
+  reg.numSet:       5489165
+  reg.numGet:       9851084
   reg.maxAddr:      31
   heap.numSet:      3474416
   heap.numGet:      4111104
@@ -76,13 +76,13 @@ global:
   cacheTop.numSet:  5087020
   cacheTop.numGet:  2316821
   cacheTop.maxAddr: 6143
-  reg   ops:        15301185
+  reg   ops:        15340249
   cache ops:        7403841
   heap  ops:        7585520
-  reg   ops/cell:   493586.6129032258
+  reg   ops/cell:   494846.7419354839
   cache ops/cell:   1205.2484128276087
   heap  ops/cell:   1234.8233762005534
-  ops   reg/cache:  2.0666549970481536
+  ops   reg/cache:  2.0719311773443
   ops   cache/heap: 0.9760492359126336
   ALG:                       4
   LINE_SIZE:                 16
