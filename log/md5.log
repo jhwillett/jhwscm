@@ -2,7 +2,7 @@
 b35a307ab5f239a6a033737e7423faef  src/Computer.java
 c806822c0885819e9d2a1a79e5e37479  src/Firmware.java
 d6b434e0bfad3b18a503572f438bcd28  src/IOBuffer.java
-91268a563c0675450ea5e3441462c593  src/JhwScm.java
+a4cd2a0017b3c3bf433953e3825d4e8a  src/JhwScm.java
 1438adb8df2341903ea1f5653bacf846  src/Machine.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
 d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java

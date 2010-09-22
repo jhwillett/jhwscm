@@ -154,40 +154,83 @@ public class JhwScm implements Firmware
          // Expects regArg0 to be a fixint specifying an entry in the
          // const table.
          // 
-         // Because of how the const table is implemented, we cheat
-         // slightly on the "no-Java" rule.
-         // 
          // Return value is UNSPECIFIED.
          // 
          tmp0 = value_fixint(reg.get(regArg0));
-         {
-            final String str = const_strs[tmp0];
-            final int    op  = const_val[tmp0];
-            prebind(str, op);
-         }
-         tmp1 = 1 + tmp0;
-         if ( tmp1 >= numConsts ) 
+         log("prebind considering: " + tmp0 + " of " + numConsts);
+         if ( tmp0 >= numConsts ) 
          {
             reg.set(regRetval,UNSPECIFIED);
             returnsub();
             break;
          }
-         reg.set(regArg0, code(TYPE_FIXINT,tmp1));
+         store(regArg0);     // store const id
+         gosub(sub_const_symbol,sub_prebind+0x1);
+         break;
+      case sub_prebind+0x1:
+         restore(regArg0);   // restore const id
+         store(regArg0);     // store const id INEFFICIENT
+         store(regRetval);   // store symbol
+         gosub(sub_const_val,sub_prebind+0x2);
+         break;
+      case sub_prebind+0x2:
+         restore(regTmp0);   // restore symbol
+         restore(regArg0);   // restore const id INEFFICIENT
+         {
+            // TODO: get rid of vars!
+            final int bind  = cons(reg.get(regTmp0),reg.get(regRetval));
+            final int frame = car(reg.get(regEnv));
+            final int newfr = cons(bind,frame);
+            setcar(reg.get(regEnv),newfr);
+         }
+         tmp0 = value_fixint(reg.get(regArg0));
+         tmp1 = tmp0 + 1;
+         reg.set(regArg0,code(TYPE_FIXINT,tmp1));
          gosub(sub_prebind,blk_tail_call);
          break;
 
       case sub_const_symbol:
-         // Returns a symbol corresponding to the const_str at offset
+         // Returns a symbol corresponding to the const_strs[] at offset
          // regArg0, with regArg0 expected to be a fixint.
+         // 
+         // Because of how the const table is implemented, we cheat
+         // slightly on the "no-Java" rule.
          //
-         raiseError(ERR_NOT_IMPL);
+         tmp0 = value_fixint(reg.get(regArg0));
+         if ( DEBUG && (tmp0 < 0 || tmp0 >= numConsts ))
+         {
+            log("bad tmp0: " + tmp0 + " of " + numConsts);
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         {
+            // TODO: go recursive, and too much Java!
+            final String str = const_strs[tmp0];
+            int tmp = NIL;
+            for ( int i = str.length()-1; i >= 0 ; --i )
+            {
+               final int c = code(TYPE_CHAR,str.charAt(i));
+               tmp = cons(c,tmp);
+            }
+            tmp = cons(IS_SYMBOL,tmp);
+            reg.set(regRetval,tmp);
+         }
+         returnsub();
          break;
 
       case sub_const_val:
-         // Returns the const_val at offset regArg0, with regArg0
+         // Returns the const_vals[] at offset regArg0, with regArg0
          // expected to be a fixint.
          // 
-         raiseError(ERR_NOT_IMPL);
+         tmp0 = value_fixint(reg.get(regArg0));
+         if ( DEBUG && (tmp0 < 0 || tmp0 >= numConsts ))
+         {
+            log("bad tmp0: " + tmp0 + " of " + numConsts);
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         reg.set(regRetval,const_vals[tmp0]);
+         returnsub();
          break;
 
       case sub_top:
@@ -2837,7 +2880,7 @@ public class JhwScm implements Firmware
    //
    private static final int      constTableSize = 50;
    private static final String[] const_strs     = new String[constTableSize];
-   private static final int[]    const_val      = new int[constTableSize];
+   private static final int[]    const_vals     = new int[constTableSize];
    private static final int      numConsts;
    private static final int      const_add;
    private static final int      const_mul;
@@ -2866,95 +2909,95 @@ public class JhwScm implements Firmware
    {
       int i         = 0;
       const_add     = i;
-      const_val[i]  = sub_add;
+      const_vals[i] = sub_add;
       const_strs[i] = "+";
       i++;
       const_mul     = i;
-      const_val[i]  = sub_mul;
+      const_vals[i] = sub_mul;
       const_strs[i] = "*";
       i++;
       const_sub     = i;
-      const_val[i]  = sub_sub;
+      const_vals[i] = sub_sub;
       const_strs[i] = "-";
       i++;
       const_lt_p    = i;
-      const_val[i]  = sub_lt_p;
+      const_vals[i] = sub_lt_p;
       const_strs[i] = "<";
       i++;
       const_add0    = i;
-      const_val[i]  = sub_add0;
+      const_vals[i] = sub_add0;
       const_strs[i] = "+0";
       i++;
       const_add1    = i;
-      const_val[i]  = sub_add1;
+      const_vals[i] = sub_add1;
       const_strs[i] = "+1";
       i++;
       const_add3    = i;
-      const_val[i]  = sub_add3;
+      const_vals[i] = sub_add3;
       const_strs[i] = "+3";
       i++;
       const_cons    = i;
-      const_val[i]  = sub_cons;
+      const_vals[i] = sub_cons;
       const_strs[i] = "cons";
       i++;
       const_car     = i;
-      const_val[i]  = sub_car;
+      const_vals[i] = sub_car;
       const_strs[i] = "car";
       i++;
       const_cdr     = i;
-      const_val[i]  = sub_cdr;
+      const_vals[i] = sub_cdr;
       const_strs[i] = "cdr";
       i++;
       const_list    = i;
-      const_val[i]  = sub_list;
+      const_vals[i] = sub_list;
       const_strs[i] = "list";
       i++;
       const_if      = i;
-      const_val[i]  = sub_if;
+      const_vals[i] = sub_if;
       const_strs[i] = "if";
       i++;
       const_quote   = i;
-      const_val[i]  = sub_quote;
+      const_vals[i] = sub_quote;
       const_strs[i] = "quote";
       i++;
       const_define  = i;
-      const_val[i]  = sub_define;
+      const_vals[i] = sub_define;
       const_strs[i] = "define";
       i++;
       const_lambda  = i;
-      const_val[i]  = sub_lambda;
+      const_vals[i] = sub_lambda;
       const_strs[i] = "lambda";
       i++;
       const_equal_p = i;
-      const_val[i]  = sub_equal_p;
+      const_vals[i] = sub_equal_p;
       const_strs[i] = "equal?";
       i++;
       const_let     = i;
-      const_val[i]  = sub_let;
+      const_vals[i] = sub_let;
       const_strs[i] = "let";
       i++;
       const_begin   = i;
-      const_val[i]  = sub_begin;
+      const_vals[i] = sub_begin;
       const_strs[i] = "begin";
       i++;
       const_cond    = i;
-      const_val[i]  = sub_cond;
+      const_vals[i] = sub_cond;
       const_strs[i] = "cond";
       i++;
       const_case    = i;
-      const_val[i]  = sub_case;
+      const_vals[i] = sub_case;
       const_strs[i] = "case";
       i++;
       const_readv   = i;
-      const_val[i]  = sub_readv;
+      const_vals[i] = sub_readv;
       const_strs[i] = "read";
       i++;
       const_printv  = i;
-      const_val[i]  = sub_printv;
+      const_vals[i] = sub_printv;
       const_strs[i] = "display";
       i++;
       const_map1    = i;
-      const_val[i]  = sub_map1;
+      const_vals[i] = sub_map1;
       const_strs[i] = "map1";
       i++;
       numConsts     = i;
@@ -3466,6 +3509,10 @@ public class JhwScm implements Firmware
       {
          throw new RuntimeException("detonate on ERR_INTERNAL");
       }
+      if ( true && err == ERR_NOT_IMPL )
+      {
+         throw new RuntimeException("detonate on ERR_NOT_IMPL");
+      }
    }
 
    /**
@@ -3497,34 +3544,6 @@ public class JhwScm implements Firmware
       case ERR_NOT_IMPL:  return ERROR_UNIMPLEMENTED;
       default:            return ERROR_INTERNAL_ERROR;
       }
-   }
-
-   private void prebind ( final String name, final int code )
-   {
-      // TODO: this is sloppy, non-LISPy, magic, and has no error
-      // checking.
-      //
-      // Longer-term I want lexical-level bindings for this stuff, and
-      // to just express the "standard" name bindings as a series of
-      // defines against the lexically supported stuff.
-      //
-      // But I did this now because I don't want to go inventing some
-      // off-specification lexical bindings which I will be committed
-      // to maintianging longer term until *after* I've got (eval)
-      // working and the entry points in the microcode tied down more.
-      //
-      final Mem reg = mach.reg;
-      int tmp = NIL;
-      for ( int i = name.length()-1; i >= 0 ; --i )
-      {
-         final int c = code(TYPE_CHAR,name.charAt(i));
-         tmp = cons(c,tmp);
-      }
-      final int symbol   = cons(IS_SYMBOL,tmp);
-      final int binding  = cons(symbol,code);
-      final int frame    = car(reg.get(regEnv));
-      final int newframe = cons(binding,frame);
-      setcar(reg.get(regEnv),newframe);
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -3693,6 +3712,7 @@ public class JhwScm implements Firmware
          buf.append('?'); 
          buf.append(t>>SHIFT_TYPE); 
          buf.append('?'); 
+         if ( true ) throw new RuntimeException("WFT A");
          break;
       }
       buf.append("|");

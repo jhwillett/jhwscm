@@ -2,8 +2,8 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 fib:
-  numCycles:        168998
-  numCons:          186319
+  numCycles:        169091
+  numCons:          186434
   iobuf:            0
     numInput:       123
     numOutput:      0
@@ -16,28 +16,28 @@ fib:
     numPeek:        0
     numPop:         12
     numPush:        12
-  reg.numSet:       1321460
-  reg.numGet:       2997306
+  reg.numSet:       1322175
+  reg.numGet:       2998851
   reg.maxAddr:      31
-  heap.numSet:      59584
-  heap.numGet:      383184
+  heap.numSet:      59696
+  heap.numGet:      383584
   heap.maxAddr:     6143
-  cache.numHits:    1281557
-  cache.numMisses:  23933
-  cache.numFlush:   3724
-  cache.numDrop:    20209
-  cache.numLoad:    23949
-  cacheTop.numSet:  564213
-  cacheTop.numGet:  741293
+  cache.numHits:    1282222
+  cache.numMisses:  23958
+  cache.numFlush:   3731
+  cache.numDrop:    20227
+  cache.numLoad:    23974
+  cacheTop.numSet:  564558
+  cacheTop.numGet:  741638
   cacheTop.maxAddr: 6143
-  reg   ops:        4318766
-  cache ops:        1305506
-  heap  ops:        442768
-  reg   ops/cell:   139315.03225806452
-  cache ops/cell:   212.51929024906397
-  heap  ops/cell:   72.07683542243204
-  ops   reg/cache:  3.30811654638125
-  ops   cache/heap: 2.948510280779099
+  reg   ops:        4321026
+  cache ops:        1306196
+  heap  ops:        443280
+  reg   ops/cell:   139387.93548387097
+  cache ops/cell:   212.63161321829725
+  heap  ops/cell:   72.16018232134137
+  ops   reg/cache:  3.308099243911327
+  ops   cache/heap: 2.9466612524815017
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -45,11 +45,11 @@ fib:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9816674198959777
-  cache write/miss:          0.15560105293945597
+  cache hit/op:              0.9816579644459416
+  cache write/miss:          0.15573086234243258
 global:
-  numCycles:        337643
-  numCons:          427739
+  numCycles:        389909
+  numCons:          492369
   iobuf:            0
     numInput:       6434
     numOutput:      0
@@ -62,28 +62,28 @@ global:
     numPeek:        0
     numPop:         1788
     numPush:        1788
-  reg.numSet:       4310120
-  reg.numGet:       7449046
+  reg.numSet:       4711950
+  reg.numGet:       8317336
   reg.maxAddr:      31
-  heap.numSet:      3458240
-  heap.numGet:      4090880
+  heap.numSet:      3465856
+  heap.numGet:      4096944
   heap.maxAddr:     6143
-  cache.numHits:    5839109
-  cache.numMisses:  246688
-  cache.numFlush:   216140
-  cache.numDrop:    30548
-  cache.numLoad:    255680
-  cacheTop.numSet:  4660695
-  cacheTop.numGet:  1434094
+  cache.numHits:    6226510
+  cache.numMisses:  247067
+  cache.numFlush:   216616
+  cache.numDrop:    30451
+  cache.numLoad:    256059
+  cacheTop.numSet:  4854585
+  cacheTop.numGet:  1627984
   cacheTop.maxAddr: 6143
-  reg   ops:        11759166
-  cache ops:        6094789
-  heap  ops:        7549120
-  reg   ops/cell:   379327.93548387097
-  cache ops/cell:   992.1518801888328
-  heap  ops/cell:   1228.8979326062185
-  ops   reg/cache:  1.9293803280146367
-  ops   cache/heap: 0.8073509230214913
+  reg   ops:        13029286
+  cache ops:        6482569
+  heap  ops:        7562800
+  reg   ops/cell:   420299.5483870968
+  cache ops/cell:   1055.2773888979325
+  heap  ops/cell:   1231.124857561452
+  ops   reg/cache:  2.009895459654961
+  ops   cache/heap: 0.8571652033638335
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -91,8 +91,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9594649640794788
-  cache write/miss:          0.8761674665974835
+  cache hit/op:              0.9618345468046491
+  cache write/miss:          0.8767500313680094
 numExpects: 748
   happy:    648
   unhappy:  100
