@@ -3204,62 +3204,6 @@ public class JhwScm implements Firmware
    }
 
    /**
-    * Pops the top of the inport port specified in reg.get(regPort).
-    * 
-    * Should only be called after portPeek() has verified that there
-    * is something there to pop: this is a non-blocking call which
-    * raise an error if the port is empty or closed.
-    */
-   private void portPop ( final int regPort )
-   {
-      final int port = mach.reg.get(regPort);
-      if ( DEBUG && TYPE_IOBUF != type(port) ) 
-      {
-         log("  portPop(): non-iobuf ",pp(port));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      if ( DEBUG && TYPE_IOBUF != type(port) ) 
-      {
-         log("  portPop(): non-iobuf ",pp(port));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      final IOBuffer[] iobufs = mach.iobufs;
-      if ( DEBUG && ( 0 > value(port) || value(port) >= iobufs.length ) )
-      {
-         log("  portPop(): non-iobuf ",pp(port));
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      final IOBuffer iobuf = iobufs[value(port)];
-      //
-      // TODO: for now, an iobuf is EOF if empty, but later when we
-      // add close() it'll be EOF when null, and an empty buffer
-      // means we need to suspend processing.
-      //
-      // So we check for both conditions here.  Later on, it'll be
-      // the isEmpty() clause which changes, not the null clause.
-      //
-      if ( null == iobuf )
-      {
-         log("  portPop(): closed");
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      if ( iobuf.isEmpty() )
-      {
-         // TODO: suspend
-         log("  portPop(): empty");
-         raiseError(ERR_INTERNAL);
-         return;
-      }
-      log("  portPop(): popping");
-      iobuf.pop();
-      return;
-   }
-
-   /**
     * Peeks at the top of the inport port specified in
     * reg.get(regPort).
     * 
@@ -3316,6 +3260,62 @@ public class JhwScm implements Firmware
       final int code  = code(TYPE_CHAR,value);
       log("  portPeek(): code:  ",pp(code));
       return code;
+   }
+
+   /**
+    * Pops the top of the inport port specified in reg.get(regPort).
+    * 
+    * Should only be called after portPeek() has verified that there
+    * is something there to pop: this is a non-blocking call which
+    * raise an error if the port is empty or closed.
+    */
+   private void portPop ( final int regPort )
+   {
+      final int port = mach.reg.get(regPort);
+      if ( DEBUG && TYPE_IOBUF != type(port) ) 
+      {
+         log("  portPop(): non-iobuf ",pp(port));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( DEBUG && TYPE_IOBUF != type(port) ) 
+      {
+         log("  portPop(): non-iobuf ",pp(port));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      final IOBuffer[] iobufs = mach.iobufs;
+      if ( DEBUG && ( 0 > value(port) || value(port) >= iobufs.length ) )
+      {
+         log("  portPop(): non-iobuf ",pp(port));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      final IOBuffer iobuf = iobufs[value(port)];
+      //
+      // TODO: for now, an iobuf is EOF if empty, but later when we
+      // add close() it'll be EOF when null, and an empty buffer
+      // means we need to suspend processing.
+      //
+      // So we check for both conditions here.  Later on, it'll be
+      // the isEmpty() clause which changes, not the null clause.
+      //
+      if ( null == iobuf )
+      {
+         log("  portPop(): closed");
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( iobuf.isEmpty() )
+      {
+         // TODO: suspend
+         log("  portPop(): empty");
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      log("  portPop(): popping");
+      iobuf.pop();
+      return;
    }
 
   
