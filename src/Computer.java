@@ -46,9 +46,9 @@ public class Computer
     *
     * @throws IllegalArgumentException if numSteps < 0
     *
-    * @returns Firmware.ERROR_INCOMPLETE if more cycles are needed,
-    * otherwise an error code arising from the firmware which could be
-    * Firmware.ERROR_COMPLETE on success, else some other error.
+    * @returns a code from Firmware.ERROR_foo.  ERROR_INCOMPLETE
+    * indicates more cycles are needed.  Firmware.ERROR_COMPLETE
+    * indicates that the firmware ran to completion.
     */
    public int drive ( final int numSteps )
    {

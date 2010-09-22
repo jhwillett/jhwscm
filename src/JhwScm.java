@@ -48,12 +48,6 @@ public class JhwScm implements Firmware
    public static final boolean CLEVER_TAIL_CALL_MOD_CONS = true;
    public static final boolean CLEVER_STACK_RECYCLING    = true;
 
-   public static final int     ERROR_OUT_OF_MEMORY       = -4;
-   public static final int     ERROR_FAILURE_LEXICAL     = -5;
-   public static final int     ERROR_FAILURE_SEMANTIC    = -6;
-   public static final int     ERROR_INTERNAL_ERROR      = -7;
-   public static final int     ERROR_UNIMPLEMENTED       = -8;
-
    public static class Stats
    {
       public int numCons = 0;
