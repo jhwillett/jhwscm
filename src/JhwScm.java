@@ -141,7 +141,7 @@ public class JhwScm implements Firmware
          reg.set(regIn,        code(TYPE_IOBUF,0));
          reg.set(regOut,       code(TYPE_IOBUF,1));
          reg.set(regEnv,       cons(NIL,NIL));
-         reg.set(regArg0,      code(TYPE_FIXINT,0));
+         reg.set(regArg0,      code(TYPE_FIXINT,primitives_start));
          gosub(sub_prebind, sub_init+0x1);
          break;
       case sub_init+0x1:
@@ -157,8 +157,7 @@ public class JhwScm implements Firmware
          // Return value is UNSPECIFIED.
          // 
          tmp0 = value_fixint(reg.get(regArg0));
-         log("prebind considering: " + tmp0 + " of " + numConsts);
-         if ( tmp0 >= numConsts ) 
+         if ( tmp0 >= primitives_end ) 
          {
             reg.set(regRetval,UNSPECIFIED);
             returnsub();
@@ -197,9 +196,9 @@ public class JhwScm implements Firmware
          // slightly on the "no-Java" rule.
          //
          tmp0 = value_fixint(reg.get(regArg0));
-         if ( DEBUG && (tmp0 < 0 || tmp0 >= numConsts ))
+         if ( DEBUG && (tmp0 < 0 || tmp0 >= primitives_end ))
          {
-            log("bad tmp0: " + tmp0 + " of " + numConsts);
+            log("bad tmp0: " + tmp0 + " of " + primitives_end);
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -219,9 +218,9 @@ public class JhwScm implements Firmware
          //
          tmp0 = value_fixint(reg.get(regArg0));
          tmp1 = value_fixint(reg.get(regArg1));
-         if ( DEBUG && (tmp0 < 0 || tmp0 >= numConsts ))
+         if ( DEBUG && (tmp0 < 0 || tmp0 >= primitives_end ))
          {
-            log("bad tmp0: " + tmp0 + " of " + numConsts);
+            log("bad tmp0: " + tmp0 + " of " + primitives_end);
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -250,9 +249,9 @@ public class JhwScm implements Firmware
          // expected to be a fixint.
          // 
          tmp0 = value_fixint(reg.get(regArg0));
-         if ( DEBUG && (tmp0 < 0 || tmp0 >= numConsts ))
+         if ( DEBUG && (tmp0 < 0 || tmp0 >= primitives_end ))
          {
-            log("bad tmp0: " + tmp0 + " of " + numConsts);
+            log("bad tmp0: " + tmp0 + " of " + primitives_end);
             raiseError(ERR_INTERNAL);
             break;
          }
@@ -2903,16 +2902,20 @@ public class JhwScm implements Firmware
    // We let Java construct it for us at class-load time: but some
    // day, we may need a linker. ;)
    //
-   // Note, constTableSize is how big we alloc the arrays in Java, but
-   // numConsts is the actual number of valid records.
+   // Note, constTableSize is the size we allocate the arrays in Java,
+   // but not necessarily the number of valid records.
    //
    private static final int      constTableSize = 50;
    private static final String[] const_str      = new String[constTableSize];
    private static final int[]    const_val      = new int[constTableSize];
-   private static final int      numConsts;
+   private static final int      primitives_start;
+   private static final int      primitives_end;
+   private static final int      print_table_start;
+   private static final int      print_table_end;
    static 
    {
-      int i         = 0;
+      int i = 0;
+      primitives_start = i;
       const_val[i] = sub_add;     const_str[i++] = "+";
       const_val[i] = sub_mul;     const_str[i++] = "*";
       const_val[i] = sub_sub;     const_str[i++] = "-";
@@ -2936,7 +2939,14 @@ public class JhwScm implements Firmware
       const_val[i] = sub_readv;   const_str[i++] = "read";
       const_val[i] = sub_printv;  const_str[i++] = "display";
       const_val[i] = sub_map1;    const_str[i++] = "map1";
-      numConsts     = i;
+      primitives_end = i;
+
+      print_table_start = i;
+      const_val[i] = TRUE;                 const_str[i++] = "#t";
+      const_val[i] = FALSE;                const_str[i++] = "#f";
+      const_val[i] = code(TYPE_CHAR,'\n'); const_str[i++] = "newline";
+      const_val[i] = code(TYPE_CHAR,' ');  const_str[i++] = "space";
+      print_table_end = i;
    }
 
    ////////////////////////////////////////////////////////////////////
