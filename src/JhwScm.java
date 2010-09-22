@@ -2138,7 +2138,7 @@ public class JhwScm implements Firmware
          tmp0 = code(TYPE_CHAR,const_str[tmp0].charAt(tmp1));
          tmp1 = tmp1 + 1;
          portPush(regArg1,tmp0);
-         reg.set(regArg2,  code(TYPE_FIXINT,tmp1));
+         reg.set(regArg2, code(TYPE_FIXINT,tmp1));
          gosub(sub_print_const,blk_tail_call);
          break;
 
@@ -2147,32 +2147,33 @@ public class JhwScm implements Firmware
          //
          // Returns UNSPECIFIED.
          //
-         portPush(regArg1,code(TYPE_CHAR,'#'));
-         portPush(regArg1,code(TYPE_CHAR,'\\'));
+         store(regArg0);                            // store char
+         store(regArg1);                            // store port
+         reg.set(regArg0, const_prechar);           // "#\\"
+         reg.set(regArg2, code(TYPE_FIXINT,0));
+         gosub(sub_print_const,sub_print_char+0x1);
+         break;
+      case sub_print_char+0x1:
+         restore(regArg1);                          // restore port
+         restore(regArg0);                          // restore char
          switch (value(reg.get(regArg0)))
          {
          case ' ':
-            portPush(regArg1,code(TYPE_CHAR,'s'));
-            portPush(regArg1,code(TYPE_CHAR,'p'));
-            portPush(regArg1,code(TYPE_CHAR,'a'));
-            portPush(regArg1,code(TYPE_CHAR,'c'));
-            portPush(regArg1,code(TYPE_CHAR,'e'));
+            reg.set(regArg0, const_space);
+            reg.set(regArg2, code(TYPE_FIXINT,0));
+            gosub(sub_print_const,blk_tail_call);
             break;
          case '\n':
-            portPush(regArg1,code(TYPE_CHAR,'n'));
-            portPush(regArg1,code(TYPE_CHAR,'e'));
-            portPush(regArg1,code(TYPE_CHAR,'w'));
-            portPush(regArg1,code(TYPE_CHAR,'l'));
-            portPush(regArg1,code(TYPE_CHAR,'i'));
-            portPush(regArg1,code(TYPE_CHAR,'n'));
-            portPush(regArg1,code(TYPE_CHAR,'e'));
+            reg.set(regArg0, const_newline);
+            reg.set(regArg2, code(TYPE_FIXINT,0));
+            gosub(sub_print_const,blk_tail_call);
             break;
          default:
             portPush(regArg1,reg.get(regArg0));
+            reg.set(regRetval, UNSPECIFIED);
+            returnsub();
             break;
          }
-         reg.set(regRetval,  UNSPECIFIED);
-         returnsub();
          break;
 
       case sub_print_fixint:
@@ -2958,6 +2959,7 @@ public class JhwScm implements Firmware
    private static final int      const_true;
    private static final int      const_false;
    private static final int      const_newline;
+   private static final int      const_prechar;
    private static final int      const_space;
    private static final int      const_huh3;
    private static final int      const_huhPhuh;
@@ -2998,6 +3000,9 @@ public class JhwScm implements Firmware
 
       const_newline = code(TYPE_FIXINT,i);
       const_val[i]  = UNSPECIFIED;          const_str[i++] = "newline";
+
+      const_prechar = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "#\\";
 
       const_space   = code(TYPE_FIXINT,i);
       const_val[i]  = UNSPECIFIED;          const_str[i++] = "space";
@@ -3300,7 +3305,6 @@ public class JhwScm implements Firmware
     */
    private void store ( final int regId )
    {
-      final boolean verb = false;
       final Mem reg = mach.reg;
       if ( NIL != reg.get(regError) )
       {
@@ -3325,7 +3329,6 @@ public class JhwScm implements Firmware
     */
    private void restore ( final int regId )
    {
-      final boolean verb = false;
       final Mem reg = mach.reg;
       if ( NIL != reg.get(regError) )
       {
@@ -3344,9 +3347,11 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      final int cell = reg.get(regStack);
+      final int cell  = reg.get(regStack);
+      final int value = car(cell);
       reg.set(regId,    car(cell));
       reg.set(regStack, cdr(cell));
+      log("restored: ",pp(value));
       if ( CLEVER_STACK_RECYCLING && NIL == reg.get(regError) )
       {
          // Recycle stack cell which is unreachable from user code.
