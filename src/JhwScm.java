@@ -3176,11 +3176,17 @@ public class JhwScm implements Firmware
     * Pushes the value in regIO, which must be a TYPE_CHAR, onto the
     * back of the output port specified in regPort.
     * 
-    * TODO: This is a blocking call: will block is the port is full.
+    * TODO: This is a blocking call: will block is the port is
+    * full. Upon completion, control continues at continuationOp.
     * 
     * Leaves the port and regIO unchanged in the event of any error.
     * 
     * Will fail if the port is closed.
+    *
+    * TODO: Changes no registers.  Callers need not use the same
+    * discipline required by gosub(): the continuation can expect the
+    * same stack and the same registers as were present on entry to
+    * portPush().
     */
    private void portPush ( final int regPort )
    {
@@ -3242,11 +3248,17 @@ public class JhwScm implements Firmware
     * will return some TYPE_CHAR.
     * 
     * TODO: This is a blocking call: will block if the port is empty
-    * but not closed.
+    * but not closed. Upon completion, control continues at
+    * continuationOp.
     * 
     * On resume, the peeked value will be in regIO.
     * 
     * Leaves the port unchanged.
+    *
+    * TODO: Changes no registers other than regIO.  Callers need not
+    * use the same discipline required by gosub(): excepting regIO,
+    * the continuation can expect the same stack and the same
+    * registers as were present on entry to portPush().
     */
    private void portPeek ( final int regPort )
    {
@@ -3452,6 +3464,18 @@ public class JhwScm implements Firmware
    // Of course, at some point I'll probably be introducing a
    // conditional branch...
 
+   /**
+    * Passes control to nextOp.  Upon return, control continues at
+    * continuationOp.
+    *
+    * On entry to the continuation, the stack will be the same as it
+    * was on entry to gosub().
+    *
+    * Any and all registers may change over the course of a subroutine
+    * call: it is the caller's responsibility to store() any values
+    * needed by the continuation, and to restore() those values in the
+    * continuation.
+    */
    private void gosub ( final int nextOp, final int continuationOp )
    {
       final Mem reg = mach.reg;
