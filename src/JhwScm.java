@@ -195,7 +195,7 @@ public class JhwScm implements Firmware
          // Because of how the const table is implemented, we cheat
          // slightly on the "no-Java" rule.
          //
-         tmp0 = value_fixint(reg.get(regArg0));
+         tmp0 = value_fixint(reg.get(regArg0)); // const offset
          if ( DEBUG && (tmp0 < 0 || tmp0 >= primitives_end ))
          {
             log("bad tmp0: " + tmp0 + " of " + primitives_end);
@@ -216,21 +216,21 @@ public class JhwScm implements Firmware
          // 
          // ...to the end of the const. 
          //
-         tmp0 = value_fixint(reg.get(regArg0));
-         tmp1 = value_fixint(reg.get(regArg1));
+         tmp0 = value_fixint(reg.get(regArg0)); // const offset
+         tmp1 = value_fixint(reg.get(regArg1)); // string offset
          if ( DEBUG && (tmp0 < 0 || tmp0 >= primitives_end ))
          {
             log("bad tmp0: " + tmp0 + " of " + primitives_end);
             raiseError(ERR_INTERNAL);
             break;
          }
-         if ( tmp1 == const_str[tmp0].length() )
+         if ( tmp1 >= const_str[tmp0].length() )
          {
             reg.set(regRetval,NIL);
             returnsub();
             break;
          }
-         if ( DEBUG && (tmp1 < 0 || tmp1 >= const_str[tmp0].length() ))
+         if ( DEBUG && tmp1 < 0 )
          {
             log("bad tmp1: " + tmp1 + " of " + const_str[tmp0].length());
             raiseError(ERR_INTERNAL);
@@ -1999,10 +1999,9 @@ public class JhwScm implements Firmware
                gosub(sub_print_list,blk_tail_call);
                break;
             case TRUE:
-               portPush(regArg1,code(TYPE_CHAR,'#'));
-               portPush(regArg1,code(TYPE_CHAR,'t'));
-               reg.set(regRetval,  UNSPECIFIED);
-               returnsub();
+               reg.set(regArg0, const_true);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
                break;
             case FALSE:
                portPush(regArg1,code(TYPE_CHAR,'#'));
@@ -2165,6 +2164,39 @@ public class JhwScm implements Firmware
          portPush(regArg1,reg.get(regTmp1));
          reg.set(regArg0,  reg.get(regTmp2));
          gosub(sub_print_chars,blk_tail_call);
+         break;
+
+      case sub_print_const:
+         // Prints the chars in the const_str[] at regArg0 to the
+         // output port in regArg1 beginning at offset regArg2.
+         //
+         // Returns UNSPECIFIED.
+         //
+         tmp0 = value_fixint(reg.get(regArg0)); // const offset
+         tmp1 = value_fixint(reg.get(regArg2)); // string offset
+         if ( DEBUG && (tmp0 < 0 || tmp0 >= const_str.length ))
+         {
+            log("bad tmp0: " + tmp0 + " of " + const_str.length);
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         if ( tmp1 >= const_str[tmp0].length() )
+         {
+            reg.set(regRetval,UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         if ( DEBUG && tmp1 < 0 )
+         {
+            log("bad tmp1: " + tmp1 + " of " + const_str[tmp0].length());
+            raiseError(ERR_INTERNAL);
+            break;
+         }
+         tmp0 = code(TYPE_CHAR,const_str[tmp0].charAt(tmp1));
+         tmp1 = tmp1 + 1;
+         portPush(regArg1,tmp0);
+         reg.set(regArg2,  code(TYPE_FIXINT,tmp1));
+         gosub(sub_print_const,blk_tail_call);
          break;
 
       case sub_print_list:
@@ -2851,11 +2883,12 @@ public class JhwScm implements Firmware
    private static final int sub_apply_user       = TYPE_SUBP | A2 |  0x4200;
 
    private static final int sub_printv           = TYPE_SUBP | AX |  0x5000;
-   private static final int sub_print            = TYPE_SUBP | A1 |  0x5010;
-   private static final int sub_print_list       = TYPE_SUBP | A1 |  0x5100;
-   private static final int sub_print_list_elems = TYPE_SUBP | A1 |  0x5200;
-   private static final int sub_print_string     = TYPE_SUBP | A1 |  0x5300;
-   private static final int sub_print_chars      = TYPE_SUBP | A1 |  0x5400;
+   private static final int sub_print            = TYPE_SUBP | A2 |  0x5010;
+   private static final int sub_print_list       = TYPE_SUBP | A2 |  0x5100;
+   private static final int sub_print_list_elems = TYPE_SUBP | A2 |  0x5200;
+   private static final int sub_print_string     = TYPE_SUBP | A2 |  0x5300;
+   private static final int sub_print_chars      = TYPE_SUBP | A2 |  0x5400;
+   private static final int sub_print_const      = TYPE_SUBP | A3 |  0x5500;
 
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
@@ -2910,8 +2943,10 @@ public class JhwScm implements Firmware
    private static final int[]    const_val      = new int[constTableSize];
    private static final int      primitives_start;
    private static final int      primitives_end;
-   private static final int      print_table_start;
-   private static final int      print_table_end;
+   private static final int      const_true;
+   private static final int      const_false;
+   private static final int      const_newline;
+   private static final int      const_space;
    static 
    {
       int i = 0;
@@ -2941,12 +2976,17 @@ public class JhwScm implements Firmware
       const_val[i] = sub_map1;    const_str[i++] = "map1";
       primitives_end = i;
 
-      print_table_start = i;
-      const_val[i] = TRUE;                 const_str[i++] = "#t";
-      const_val[i] = FALSE;                const_str[i++] = "#f";
-      const_val[i] = code(TYPE_CHAR,'\n'); const_str[i++] = "newline";
-      const_val[i] = code(TYPE_CHAR,' ');  const_str[i++] = "space";
-      print_table_end = i;
+      const_true    = code(TYPE_FIXINT,i);
+      const_val[i]  = TRUE;                 const_str[i++] = "#t";
+
+      const_false   = code(TYPE_FIXINT,i);
+      const_val[i]  = FALSE;                const_str[i++] = "#f";
+
+      const_newline = code(TYPE_FIXINT,i);
+      const_val[i]  = code(TYPE_CHAR,'\n'); const_str[i++] = "newline";
+
+      const_space   = code(TYPE_FIXINT,i);
+      const_val[i]  = code(TYPE_CHAR,' ');  const_str[i++] = "space";
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -3621,6 +3661,7 @@ public class JhwScm implements Firmware
          case sub_print_list_elems: buf.append("sub_print_list_elems"); break;
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
+         case sub_print_const:      buf.append("sub_print_const");      break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_let:              buf.append("sub_let");              break;
          case sub_begin:            buf.append("sub_begin");            break;

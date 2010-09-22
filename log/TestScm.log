@@ -48,7 +48,7 @@ fib:
   cache hit/op:              0.9815188017787245
   cache write/miss:          0.15280480231836058
 global:
-  numCycles:        505681
+  numCycles:        505729
   numCons:          550255
   iobuf:            0
     numInput:       6434
@@ -62,8 +62,8 @@ global:
     numPeek:        0
     numPop:         1788
     numPush:        1788
-  reg.numSet:       5464468
-  reg.numGet:       9822372
+  reg.numSet:       5464580
+  reg.numGet:       9822612
   reg.maxAddr:      31
   heap.numSet:      3474512
   heap.numGet:      4111984
@@ -76,13 +76,13 @@ global:
   cacheTop.numSet:  5086129
   cacheTop.numGet:  1859528
   cacheTop.maxAddr: 6143
-  reg   ops:        15286840
+  reg   ops:        15287192
   cache ops:        6945657
   heap  ops:        7586496
-  reg   ops/cell:   493123.87096774194
+  reg   ops/cell:   493135.22580645164
   cache ops/cell:   1130.6620543708286
   heap  ops/cell:   1234.9822562265995
-  ops   reg/cache:  2.2009206616451116
+  ops   reg/cache:  2.2009713407961264
   ops   cache/heap: 0.9155289872953205
   ALG:                       4
   LINE_SIZE:                 16
