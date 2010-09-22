@@ -128,13 +128,12 @@ public class JhwScm implements Firmware
       {
       case sub_init:
          // Initializes the machine and the environment, then
-         // transfers to sub_top.
+         // transfers to the top-level loop, sub_top.
          //
          for ( int i = 0; i < reg.length(); i++ )
          {
             reg.set(i,UNSPECIFIED);
          }
-
          reg.set(regStack,     NIL);
          reg.set(regError,     NIL);
          reg.set(regFreeCells, NIL);
@@ -142,7 +141,19 @@ public class JhwScm implements Firmware
          reg.set(regIn,        code(TYPE_IOBUF,0));
          reg.set(regOut,       code(TYPE_IOBUF,1));
          reg.set(regEnv,       cons(NIL,NIL));
+         reg.set(regArg0,      code(TYPE_FIXINT,0));
+         gosub(sub_prebind, sub_init+0x1);
+         break;
+      case sub_init+0x1:
+         gosub(sub_top, blk_halt);
+         break;
          
+      case sub_prebind:
+         // Initializes the primitivemost environment. 
+         //
+         // Expects regArg0 to be a fixint specifying an entry in the
+         // const table.
+         // 
          prebind("+",      sub_add);
          prebind("*",      sub_mul);
          prebind("-",      sub_sub);
@@ -166,7 +177,7 @@ public class JhwScm implements Firmware
          prebind("read",   sub_readv);
          prebind("display",sub_printv);
          prebind("map1",   sub_map1);
-         gosub(sub_top, blk_halt);
+         returnsub();
          break;
 
       case sub_top:
@@ -2734,7 +2745,8 @@ public class JhwScm implements Firmware
    private static final int AX                   =       0xF << SHIFT_ARITY;
 
    private static final int sub_init             = TYPE_SUBP | A0 |  0x1000;
-   private static final int sub_top              = TYPE_SUBP | A0 |  0x1100;
+   private static final int sub_prebind          = TYPE_SUBP | A1 |  0x1100;
+   private static final int sub_top              = TYPE_SUBP | A0 |  0x1200;
 
    private static final int sub_readv            = TYPE_SUBP | AX |  0x2000;
    private static final int sub_read             = TYPE_SUBP | AX |  0x2010;
@@ -3603,6 +3615,7 @@ public class JhwScm implements Firmware
          switch (code & ~MASK_BLOCKID)
          {
          case sub_init:             buf.append("sub_init");             break;
+         case sub_prebind:          buf.append("sub_prebind");          break;
          case sub_top:              buf.append("sub_top");              break;
          case sub_readv:            buf.append("sub_readv");            break;
          case sub_read:             buf.append("sub_read");             break;
