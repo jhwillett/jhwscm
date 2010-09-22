@@ -162,7 +162,7 @@ public class JhwScm implements Firmware
          tmp0 = value_fixint(reg.get(regArg0));
          {
             final String str = const_strs[tmp0];
-            final int    op  = const_ops[tmp0];
+            final int    op  = const_val[tmp0];
             prebind(str, op);
          }
          tmp1 = 1 + tmp0;
@@ -174,6 +174,20 @@ public class JhwScm implements Firmware
          }
          reg.set(regArg0, code(TYPE_FIXINT,tmp1));
          gosub(sub_prebind,blk_tail_call);
+         break;
+
+      case sub_const_symbol:
+         // Returns a symbol corresponding to the const_str at offset
+         // regArg0, with regArg0 expected to be a fixint.
+         //
+         raiseError(ERR_NOT_IMPL);
+         break;
+
+      case sub_const_val:
+         // Returns the const_val at offset regArg0, with regArg0
+         // expected to be a fixint.
+         // 
+         raiseError(ERR_NOT_IMPL);
          break;
 
       case sub_top:
@@ -2804,6 +2818,9 @@ public class JhwScm implements Firmware
 
    private static final int sub_map1             = TYPE_SUBP | A2 |  0x8000;
 
+   private static final int sub_const_symbol     = TYPE_SUBP | A1 |  0x9000;
+   private static final int sub_const_val        = TYPE_SUBP | A1 |  0x9100;
+
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
    private static final int blk_error            = TYPE_SUBP | A0 | 0x10003;
@@ -2820,7 +2837,7 @@ public class JhwScm implements Firmware
    //
    private static final int      constTableSize = 50;
    private static final String[] const_strs     = new String[constTableSize];
-   private static final int[]    const_ops      = new int[constTableSize];
+   private static final int[]    const_val      = new int[constTableSize];
    private static final int      numConsts;
    private static final int      const_add;
    private static final int      const_mul;
@@ -2849,95 +2866,95 @@ public class JhwScm implements Firmware
    {
       int i         = 0;
       const_add     = i;
-      const_ops[i]  = sub_add;
+      const_val[i]  = sub_add;
       const_strs[i] = "+";
       i++;
       const_mul     = i;
-      const_ops[i]  = sub_mul;
+      const_val[i]  = sub_mul;
       const_strs[i] = "*";
       i++;
       const_sub     = i;
-      const_ops[i]  = sub_sub;
+      const_val[i]  = sub_sub;
       const_strs[i] = "-";
       i++;
       const_lt_p    = i;
-      const_ops[i]  = sub_lt_p;
+      const_val[i]  = sub_lt_p;
       const_strs[i] = "<";
       i++;
       const_add0    = i;
-      const_ops[i]  = sub_add0;
+      const_val[i]  = sub_add0;
       const_strs[i] = "+0";
       i++;
       const_add1    = i;
-      const_ops[i]  = sub_add1;
+      const_val[i]  = sub_add1;
       const_strs[i] = "+1";
       i++;
       const_add3    = i;
-      const_ops[i]  = sub_add3;
+      const_val[i]  = sub_add3;
       const_strs[i] = "+3";
       i++;
       const_cons    = i;
-      const_ops[i]  = sub_cons;
+      const_val[i]  = sub_cons;
       const_strs[i] = "cons";
       i++;
       const_car     = i;
-      const_ops[i]  = sub_car;
+      const_val[i]  = sub_car;
       const_strs[i] = "car";
       i++;
       const_cdr     = i;
-      const_ops[i]  = sub_cdr;
+      const_val[i]  = sub_cdr;
       const_strs[i] = "cdr";
       i++;
       const_list    = i;
-      const_ops[i]  = sub_list;
+      const_val[i]  = sub_list;
       const_strs[i] = "list";
       i++;
       const_if      = i;
-      const_ops[i]  = sub_if;
+      const_val[i]  = sub_if;
       const_strs[i] = "if";
       i++;
       const_quote   = i;
-      const_ops[i]  = sub_quote;
+      const_val[i]  = sub_quote;
       const_strs[i] = "quote";
       i++;
       const_define  = i;
-      const_ops[i]  = sub_define;
+      const_val[i]  = sub_define;
       const_strs[i] = "define";
       i++;
       const_lambda  = i;
-      const_ops[i]  = sub_lambda;
+      const_val[i]  = sub_lambda;
       const_strs[i] = "lambda";
       i++;
       const_equal_p = i;
-      const_ops[i]  = sub_equal_p;
+      const_val[i]  = sub_equal_p;
       const_strs[i] = "equal?";
       i++;
       const_let     = i;
-      const_ops[i]  = sub_let;
+      const_val[i]  = sub_let;
       const_strs[i] = "let";
       i++;
       const_begin   = i;
-      const_ops[i]  = sub_begin;
+      const_val[i]  = sub_begin;
       const_strs[i] = "begin";
       i++;
       const_cond    = i;
-      const_ops[i]  = sub_cond;
+      const_val[i]  = sub_cond;
       const_strs[i] = "cond";
       i++;
       const_case    = i;
-      const_ops[i]  = sub_case;
+      const_val[i]  = sub_case;
       const_strs[i] = "case";
       i++;
       const_readv   = i;
-      const_ops[i]  = sub_readv;
+      const_val[i]  = sub_readv;
       const_strs[i] = "read";
       i++;
       const_printv  = i;
-      const_ops[i]  = sub_printv;
+      const_val[i]  = sub_printv;
       const_strs[i] = "display";
       i++;
       const_map1    = i;
-      const_ops[i]  = sub_map1;
+      const_val[i]  = sub_map1;
       const_strs[i] = "map1";
       i++;
       numConsts     = i;
@@ -3664,6 +3681,8 @@ public class JhwScm implements Firmware
          case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
          case sub_map1:             buf.append("sub_map1");             break;
+         case sub_const_symbol:     buf.append("sub_const_symbol");     break;
+         case sub_const_val:        buf.append("sub_const_val");        break;
          default:
             buf.append("sub_"); 
             hex(buf,v & ~MASK_BLOCKID,SHIFT_TYPE/4); 
