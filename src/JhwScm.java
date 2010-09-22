@@ -154,30 +154,26 @@ public class JhwScm implements Firmware
          // Expects regArg0 to be a fixint specifying an entry in the
          // const table.
          // 
-         prebind("+",      sub_add);
-         prebind("*",      sub_mul);
-         prebind("-",      sub_sub);
-         prebind("<",      sub_lt_p);
-         prebind("+0",     sub_add0);
-         prebind("+1",     sub_add1);
-         prebind("+3",     sub_add3);
-         prebind("cons",   sub_cons);
-         prebind("car",    sub_car);
-         prebind("cdr",    sub_cdr);
-         prebind("list",   sub_list);
-         prebind("if",     sub_if);
-         prebind("quote",  sub_quote);
-         prebind("define", sub_define);
-         prebind("lambda", sub_lambda);
-         prebind("equal?", sub_equal_p);
-         prebind("let",    sub_let);
-         prebind("begin",  sub_begin);
-         prebind("cond",   sub_cond);
-         prebind("case",   sub_case);
-         prebind("read",   sub_readv);
-         prebind("display",sub_printv);
-         prebind("map1",   sub_map1);
-         returnsub();
+         // Because of how the const table is implemented, we cheat
+         // slightly on the "no-Java" rule.
+         // 
+         // Return value is UNSPECIFIED.
+         // 
+         tmp0 = value_fixint(reg.get(regArg0));
+         {
+            final String str = const_strs[tmp0];
+            final int    op  = const_ops[tmp0];
+            prebind(str, op);
+         }
+         tmp1 = 1 + tmp0;
+         if ( tmp1 >= numConsts ) 
+         {
+            reg.set(regRetval,UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         reg.set(regArg0, code(TYPE_FIXINT,tmp1));
+         gosub(sub_prebind,blk_tail_call);
          break;
 
       case sub_top:
@@ -2819,8 +2815,8 @@ public class JhwScm implements Firmware
    // We let Java construct it for us at class-load time: but some
    // day, we may need a linker. ;)
    //
-   // Note, constantsTableSize is how big we alloc the arrays, but
-   // numConstants is the actual number of valid records.
+   // Note, constTableSize is how big we alloc the arrays in Java, but
+   // numConsts is the actual number of valid records.
    //
    private static final int      constTableSize = 50;
    private static final String[] const_strs     = new String[constTableSize];

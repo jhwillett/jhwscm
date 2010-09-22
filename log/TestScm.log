@@ -2,7 +2,7 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 fib:
-  numCycles:        168976
+  numCycles:        168998
   numCons:          186319
   iobuf:            0
     numInput:       123
@@ -16,8 +16,8 @@ fib:
     numPeek:        0
     numPop:         12
     numPush:        12
-  reg.numSet:       1321415
-  reg.numGet:       2997217
+  reg.numSet:       1321460
+  reg.numGet:       2997306
   reg.maxAddr:      31
   heap.numSet:      59584
   heap.numGet:      383184
@@ -30,13 +30,13 @@ fib:
   cacheTop.numSet:  564213
   cacheTop.numGet:  741293
   cacheTop.maxAddr: 6143
-  reg   ops:        4318632
+  reg   ops:        4318766
   cache ops:        1305506
   heap  ops:        442768
-  reg   ops/cell:   139310.70967741936
+  reg   ops/cell:   139315.03225806452
   cache ops/cell:   212.51929024906397
   heap  ops/cell:   72.07683542243204
-  ops   reg/cache:  3.3080139041873418
+  ops   reg/cache:  3.30811654638125
   ops   cache/heap: 2.948510280779099
   ALG:                       4
   LINE_SIZE:                 16
@@ -48,7 +48,7 @@ fib:
   cache hit/op:              0.9816674198959777
   cache write/miss:          0.15560105293945597
 global:
-  numCycles:        325279
+  numCycles:        337643
   numCons:          427739
   iobuf:            0
     numInput:       6434
@@ -62,8 +62,8 @@ global:
     numPeek:        0
     numPop:         1788
     numPush:        1788
-  reg.numSet:       4284830
-  reg.numGet:       7399028
+  reg.numSet:       4310120
+  reg.numGet:       7449046
   reg.maxAddr:      31
   heap.numSet:      3458240
   heap.numGet:      4090880
@@ -76,13 +76,13 @@ global:
   cacheTop.numSet:  4660695
   cacheTop.numGet:  1434094
   cacheTop.maxAddr: 6143
-  reg   ops:        11683858
+  reg   ops:        11759166
   cache ops:        6094789
   heap  ops:        7549120
-  reg   ops/cell:   376898.6451612903
+  reg   ops/cell:   379327.93548387097
   cache ops/cell:   992.1518801888328
   heap  ops/cell:   1228.8979326062185
-  ops   reg/cache:  1.9170241988689025
+  ops   reg/cache:  1.9293803280146367
   ops   cache/heap: 0.8073509230214913
   ALG:                       4
   LINE_SIZE:                 16
