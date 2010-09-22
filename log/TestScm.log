@@ -63,27 +63,27 @@ global:
     numPop:         1788
     numPush:        1788
   reg.numSet:       5468601
-  reg.numGet:       9830620
+  reg.numGet:       9830520
   reg.maxAddr:      31
-  heap.numSet:      3474512
-  heap.numGet:      4111984
+  heap.numSet:      3474416
+  heap.numGet:      4111104
   heap.maxAddr:     6143
-  cache.numHits:    7147562
-  cache.numMisses:  248007
-  cache.numFlush:   217157
-  cache.numDrop:    30850
-  cache.numLoad:    256999
+  cache.numHits:    7146897
+  cache.numMisses:  247952
+  cache.numFlush:   217151
+  cache.numDrop:    30801
+  cache.numLoad:    256944
   cacheTop.numSet:  5087020
-  cacheTop.numGet:  2317541
+  cacheTop.numGet:  2316821
   cacheTop.maxAddr: 6143
-  reg   ops:        15299221
-  cache ops:        7404561
-  heap  ops:        7586496
-  reg   ops/cell:   493523.2580645161
-  cache ops/cell:   1205.3656194041998
-  heap  ops/cell:   1234.9822562265995
-  ops   reg/cache:  2.0661887990388625
-  ops   cache/heap: 0.9760185730012907
+  reg   ops:        15299121
+  cache ops:        7403841
+  heap  ops:        7585520
+  reg   ops/cell:   493520.03225806454
+  cache ops/cell:   1205.2484128276087
+  heap  ops/cell:   1234.8233762005534
+  ops   reg/cache:  2.066376222828124
+  ops   cache/heap: 0.9760492359126336
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -91,8 +91,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9664654606021524
-  cache write/miss:          0.8756083497643211
+  cache hit/op:              0.9664696331189454
+  cache write/miss:          0.87577837645996
 numExpects: 748
   happy:    648
   unhappy:  100
