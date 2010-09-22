@@ -66,6 +66,7 @@ public class JhwScm implements Firmware
    private int javaDepth = 0; // debug logging only
    private int scmDepth  = 0; // debug logging only, icky b/c lasts over calls
 
+
    ////////////////////////////////////////////////////////////////////
    //
    // client control points
@@ -2799,6 +2800,140 @@ public class JhwScm implements Firmware
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
    private static final int blk_error            = TYPE_SUBP | A0 | 0x10003;
    private static final int blk_halt             = TYPE_SUBP | A0 | 0x10004;
+
+   // A few tables of named constants would really help with
+   // implementing a clean bootstrap.
+   //
+   // We let Java construct it for us at class-load time: but some
+   // day, we may need a linker. ;)
+   //
+   // Note, constantsTableSize is how big we alloc the arrays, but
+   // numConstants is the actual number of valid records.
+   //
+   private static final int      constTableSize = 50;
+   private static final String[] const_strs     = new String[constTableSize];
+   private static final int[]    const_ops      = new int[constTableSize];
+   private static final int      numConsts;
+   private static final int      const_add;
+   private static final int      const_mul;
+   private static final int      const_sub;
+   private static final int      const_lt_p;
+   private static final int      const_add0;
+   private static final int      const_add1;
+   private static final int      const_add3;
+   private static final int      const_cons;
+   private static final int      const_car;
+   private static final int      const_cdr;
+   private static final int      const_list;
+   private static final int      const_if;
+   private static final int      const_quote;
+   private static final int      const_define;
+   private static final int      const_lambda;
+   private static final int      const_equal_p;
+   private static final int      const_let;
+   private static final int      const_begin;
+   private static final int      const_cond;
+   private static final int      const_case;
+   private static final int      const_readv;
+   private static final int      const_printv;
+   private static final int      const_map1;
+   static 
+   {
+      int i         = 0;
+      const_add     = i;
+      const_ops[i]  = sub_add;
+      const_strs[i] = "+";
+      i++;
+      const_mul     = i;
+      const_ops[i]  = sub_mul;
+      const_strs[i] = "*";
+      i++;
+      const_sub     = i;
+      const_ops[i]  = sub_sub;
+      const_strs[i] = "-";
+      i++;
+      const_lt_p    = i;
+      const_ops[i]  = sub_lt_p;
+      const_strs[i] = "<";
+      i++;
+      const_add0    = i;
+      const_ops[i]  = sub_add0;
+      const_strs[i] = "+0";
+      i++;
+      const_add1    = i;
+      const_ops[i]  = sub_add1;
+      const_strs[i] = "+1";
+      i++;
+      const_add3    = i;
+      const_ops[i]  = sub_add3;
+      const_strs[i] = "+3";
+      i++;
+      const_cons    = i;
+      const_ops[i]  = sub_cons;
+      const_strs[i] = "cons";
+      i++;
+      const_car     = i;
+      const_ops[i]  = sub_car;
+      const_strs[i] = "car";
+      i++;
+      const_cdr     = i;
+      const_ops[i]  = sub_cdr;
+      const_strs[i] = "cdr";
+      i++;
+      const_list    = i;
+      const_ops[i]  = sub_list;
+      const_strs[i] = "list";
+      i++;
+      const_if      = i;
+      const_ops[i]  = sub_if;
+      const_strs[i] = "if";
+      i++;
+      const_quote   = i;
+      const_ops[i]  = sub_quote;
+      const_strs[i] = "quote";
+      i++;
+      const_define  = i;
+      const_ops[i]  = sub_define;
+      const_strs[i] = "define";
+      i++;
+      const_lambda  = i;
+      const_ops[i]  = sub_lambda;
+      const_strs[i] = "lambda";
+      i++;
+      const_equal_p = i;
+      const_ops[i]  = sub_equal_p;
+      const_strs[i] = "equal?";
+      i++;
+      const_let     = i;
+      const_ops[i]  = sub_let;
+      const_strs[i] = "let";
+      i++;
+      const_begin   = i;
+      const_ops[i]  = sub_begin;
+      const_strs[i] = "begin";
+      i++;
+      const_cond    = i;
+      const_ops[i]  = sub_cond;
+      const_strs[i] = "cond";
+      i++;
+      const_case    = i;
+      const_ops[i]  = sub_case;
+      const_strs[i] = "case";
+      i++;
+      const_readv   = i;
+      const_ops[i]  = sub_readv;
+      const_strs[i] = "read";
+      i++;
+      const_printv  = i;
+      const_ops[i]  = sub_printv;
+      const_strs[i] = "display";
+      i++;
+      const_map1    = i;
+      const_ops[i]  = sub_map1;
+      const_strs[i] = "map1";
+      i++;
+      numConsts     = i;
+   }
 
    ////////////////////////////////////////////////////////////////////
    //
