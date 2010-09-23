@@ -21,8 +21,6 @@ public class Machine
    private static final int    IO_STRESS_PERCENT = 13;
    private static final Random debugRand         = new Random(11031978);
 
-   private static final int numIoBufs = 2;
-
    public static class Stats
    {
       public final MemStats.Stats   heapStats     = new MemStats.Stats();
@@ -32,8 +30,8 @@ public class Machine
       public final IOBuffer.Stats[] ioStats;
       private Stats ()
       {
-         this.ioStats = new IOBuffer.Stats[numIoBufs];
-         for ( int i = 0; i < numIoBufs; ++i )
+         this.ioStats = new IOBuffer.Stats[8]; // TODO: won't be enough some day
+         for ( int i = 0; i < this.ioStats.length; ++i )
          {
             this.ioStats[i] = new IOBuffer.Stats();
          }
@@ -51,7 +49,9 @@ public class Machine
    public final Mem        heap;
    public final IOBuffer[] iobufs;
 
-   public Machine ( final boolean PROFILE, 
+   public Machine ( final int     ioBufCount,
+                    final int     ioBufSize,
+                    final boolean PROFILE, 
                     final boolean VERBOSE, 
                     final boolean DEBUG )
    {
@@ -108,9 +108,8 @@ public class Machine
       }
       this.heap = mem;
 
-      final int ioBufSize = 1024;
-      this.iobufs = new IOBuffer[numIoBufs];
-      for ( int i = 0; i < numIoBufs; ++i )
+      this.iobufs = new IOBuffer[ioBufCount];
+      for ( int i = 0; i < ioBufCount; ++i )
       {
          final IOBuffer.Stats glo;
          final IOBuffer.Stats loc;

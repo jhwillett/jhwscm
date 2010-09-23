@@ -16,6 +16,42 @@ fib:
     numPeek:        0
     numPop:         12
     numPush:        12
+  iobuf:            2
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            3
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            4
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            5
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            6
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            7
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
   reg.numSet:       1324082
   reg.numGet:       3002212
   reg.maxAddr:      31
@@ -62,6 +98,42 @@ global:
     numPeek:        0
     numPop:         1788
     numPush:        1788
+  iobuf:            2
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            3
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            4
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            5
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            6
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
+  iobuf:            7
+    numInput:       0
+    numOutput:      0
+    numPeek:        0
+    numPop:         0
+    numPush:        0
   reg.numSet:       5499308
   reg.numGet:       9870730
   reg.maxAddr:      31

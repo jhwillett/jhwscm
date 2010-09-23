@@ -45,7 +45,15 @@ public class TestScm extends Util
 
    private static Computer newScm ( final boolean do_rep )
    {
-      final Machine  mach = new Machine(PROFILE,false,DEBUG);
+      final Machine  mach = new Machine(2,1024,PROFILE,false,DEBUG);
+      final JhwScm   firm = new JhwScm(do_rep,PROFILE,VERBOSE,DEBUG);
+      final Computer comp = new Computer(mach,firm,PROFILE,VERBOSE,DEBUG);
+      return comp;
+   }
+
+   private static Computer tinyBuffers ( final boolean do_rep )
+   {
+      final Machine  mach = new Machine(1,1,PROFILE,false,DEBUG);
       final JhwScm   firm = new JhwScm(do_rep,PROFILE,VERBOSE,DEBUG);
       final Computer comp = new Computer(mach,firm,PROFILE,VERBOSE,DEBUG);
       return comp;
