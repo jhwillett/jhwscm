@@ -91,10 +91,13 @@ public class TestScm extends Util
             { expr + "\n",            expr },
             { "\t" + expr + "\t\r\n", expr },
          };
-         batch(tests,RE_IND);
-         batch(tests,RE_DEP);
-         batch(tests,REP_IND);
-         batch(tests,REP_DEP);
+         final Batch[] batches = { 
+            RE_IND,
+            RE_DEP,
+            REP_IND,
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       // second content: tweakier integer expressions are self-reading
@@ -110,10 +113,13 @@ public class TestScm extends Util
             { pair[0] + " ",       pair[1] },
             { " " + pair[0] + " ", pair[1] },
          };
-         batch(tests,RE_IND);
-         batch(tests,RE_DEP);
-         batch(tests,REP_IND);
-         batch(tests,REP_DEP);
+         final Batch[] batches = { 
+            RE_IND,
+            RE_DEP,
+            REP_IND,
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       // boolean literals are self-evaluating and self-printing
@@ -1047,6 +1053,14 @@ public class TestScm extends Util
             scm = newScm(type);
          }
          expect(expr,result,scm);
+      }
+   }
+
+   private static void metabatch ( final Object[][] tests, final Batch[] types )
+   {
+      for ( int i = 0; i < types.length; ++i )
+      {
+         batch(tests,types[i]);
       }
    }
 
