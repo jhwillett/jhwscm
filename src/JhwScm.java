@@ -2210,13 +2210,13 @@ public class JhwScm implements Firmware
          log("regArg1: ",pp(reg.get(regArg1)));
          tmp0 = value_fixint(reg.get(regArg0));
          log("tmp0:    ",tmp0);
-         if ( 0 > reg.get(regTmp1) )
+         if ( 0 > tmp0 )
          {
             log("negative");
             reg.set(regIO,code(TYPE_CHAR,'-'));
             portPush(regArg1,sub_print_fixint+0x1);
          }
-         else if ( 0 == reg.get(regTmp1) )
+         else if ( 0 == tmp0 )
          {
             log("zero");
             reg.set(regIO,code(TYPE_CHAR,'0'));
@@ -2224,14 +2224,14 @@ public class JhwScm implements Firmware
          }
          else
          {
-            log("posititive");
+            log("positive");
             reg.set(regArg2,NIL);
             gosub(sub_print_pos_fixint,blk_tail_call);
          }
          break;
       case sub_print_fixint+0x1:
-         log("negated");
          tmp0 = -value_fixint(reg.get(regArg0));
+         log("negated: ",tmp0);
          reg.set(regArg0, tmp0);
          reg.set(regArg2, NIL);
          gosub(sub_print_pos_fixint,blk_tail_call);
@@ -2246,11 +2246,12 @@ public class JhwScm implements Firmware
          //
          log("regArg0: ",pp(reg.get(regArg0)));
          log("regArg1: ",pp(reg.get(regArg1)));
-         log("regArg2: ",pp(reg.get(regArg2)));
+         logrec("regArg2: ",reg.get(regArg2));
          tmp0 = value_fixint(reg.get(regArg0));
          if ( 0 == tmp0 )
          {
             log("zero base case");
+            reg.set(regArg0,reg.get(regArg2));
             reg.set(regArg0,reg.get(regArg2));
             gosub(sub_print_chars,blk_tail_call);
             break;
@@ -2259,7 +2260,7 @@ public class JhwScm implements Firmware
          tmp2 = tmp0 / 10;
          log("tmp1:    ",tmp1);
          log("tmp2:    ",tmp2);
-         reg.set(regTmp0,code(TYPE_FIXINT,tmp1));
+         reg.set(regTmp0,code(TYPE_CHAR,'0'+tmp1));
          reg.set(regTmp1,cons(reg.get(regTmp0),reg.get(regArg2)));
          reg.set(regArg2,reg.get(regTmp1));
          reg.set(regArg0,code(TYPE_FIXINT,tmp2));
