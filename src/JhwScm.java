@@ -2757,6 +2757,32 @@ public class JhwScm implements Firmware
          returnsub();
          break;
 
+      case blk_block_on_read:
+         raiseError(ERR_NOT_IMPL);
+         break;
+
+      case blk_block_on_write: {
+         final int      port  = mach.reg.get(regBlockedPort);
+         final int      value = mach.reg.get(regIO);
+         final char     c     = (char)value(value);
+         final byte     b     = (byte)c;
+         final int      cont  = mach.reg.get(regContinuation);
+         log("port:  ",pp(port));
+         log("value: ",pp(value));
+         log("  c:   ",c);
+         log("  b:   ",b);
+         log("cont:  ",pp(cont));
+         final IOBuffer iobuf = mach.iobufs[value(port)];
+         log("iobuf: ",iobuf);
+         if ( iobuf.isFull() )
+         {
+            log("blocked");
+            return ERROR_BLOCKED;
+         }
+         iobuf.push((byte)value(value));
+         mach.reg.set(regPc,cont);
+         break; }
+
       case blk_error:
          return internal2external(reg.get(regError));
 
@@ -2915,9 +2941,9 @@ public class JhwScm implements Firmware
    private static final int regTmp5             =  25; // temporary
    private static final int regTmp6             =  26; // temporary
    private static final int regTmp7             =  27; // temporary
-   private static final int regTmp8             =  28; // temporary
 
-   private static final int regContinuation     =  29; // ???
+   private static final int regContinuation     =  28; // ???
+   private static final int regBlockedPort      =  29; // ???
    private static final int regIO               =  30; // port[Push|Peek]()
    private static final int regHeapTop          =  31; // alloc support: int
 
@@ -3235,7 +3261,8 @@ public class JhwScm implements Firmware
     * Will fail if the port is closed.
     *
     * Changes no registers except regContinuation, which is reserved
-    * for gosub(), portPush(), and portPeek().  
+    * for gosub(), portPush(), and portPeek(), and regBlockedPort,
+    * which is reserved for portPush(), and portPeek().
     *
     * Callers need not use the same discipline required by gosub():
     * the continuation can expect the same stack and the same
@@ -3243,6 +3270,9 @@ public class JhwScm implements Firmware
     */
    private void portPush ( final int regPort, final int continuationOp )
    {
+      log("  portPush(): regPort        ",pp(mach.reg.get(regPort)));
+      log("  portPush(): regIO          ",pp(mach.reg.get(regIO)));
+      log("  portPush(): continuationOp ",pp(continuationOp));
       final int tc = type(continuationOp);
       if ( TYPE_SUBP != tc && TYPE_SUBS != tc )
       {
@@ -3298,26 +3328,9 @@ public class JhwScm implements Firmware
          raiseError(ERR_INTERNAL);
          return;
       }
-      if ( iobuf.isFull() )
-      {
-         // TODO: suspend
-         log("  portPush(): full");
-         if ( false )
-         {
-            mach.reg.set(regContinuation,continuationOp);
-            mach.reg.set(regPc,blk_block_on_write);
-         }
-         else
-         {
-            raiseError(ERR_INTERNAL);
-         }
-         return;
-      }
-      log("  portPush(): value:  ",pp(value));
-      final int decode = value(value);
-      log("  portPush(): decode: ",decode);
-      iobuf.push((byte)decode);
-      mach.reg.set(regPc,continuationOp);
+      mach.reg.set(regContinuation, continuationOp);
+      mach.reg.set(regBlockedPort,  mach.reg.get(regPort));
+      mach.reg.set(regPc,           blk_block_on_write);
    }
 
    /**
@@ -3335,7 +3348,8 @@ public class JhwScm implements Firmware
     * Leaves the port unchanged.
     *
     * Changes no registers except regContinuation, which is reserved
-    * for gosub(), portPush(), and portPeek(), and regIO.  
+    * for gosub(), portPush(), and portPeek(), and regBlockedPort,
+    * which is reserved for portPush(), and portPeek().
     *
     * Callers need not use the same discipline required by gosub():
     * excepting regIO, the continuation can expect the same stack and

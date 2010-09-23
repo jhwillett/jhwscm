@@ -18,6 +18,7 @@ public interface Firmware
    public static final int ERROR_FAILURE_SEMANTIC = -4;
    public static final int ERROR_INTERNAL_ERROR   = -5;
    public static final int ERROR_UNIMPLEMENTED    = -6;
+   public static final int ERROR_BLOCKED          = -7;
 
 
    /**

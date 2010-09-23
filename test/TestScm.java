@@ -69,12 +69,23 @@ public class TestScm extends Util
       return newScm(REP_DEP);
    }
 
-   private static Computer newScm ( final Batch b )
+   private static Computer newScm ( final Batch batch )
    {
       numVMs++;
-      final Machine  mach = new Machine(PROFILE,false,DEBUG,b.sizeIn,b.sizeOut);
-      final JhwScm   firm = new JhwScm(b.do_rep,PROFILE,VERBOSE,DEBUG);
-      final Computer comp = new Computer(mach,firm,PROFILE,VERBOSE,DEBUG);
+      final Machine  mach = new Machine(PROFILE,
+                                        VERBOSE,
+                                        DEBUG,
+                                        batch.sizeIn,
+                                        batch.sizeOut);
+      final JhwScm   firm = new JhwScm(batch.do_rep,
+                                       PROFILE,
+                                       VERBOSE,
+                                       DEBUG);
+      final Computer comp = new Computer(mach,
+                                         firm,
+                                         PROFILE,
+                                         VERBOSE,
+                                         DEBUG);
       return comp;
    }
 
@@ -103,6 +114,7 @@ public class TestScm extends Util
             RE_DEP,
             REP_IND,
             REP_DEP,
+            //STRESS_OUT,
          };
          metabatch(tests,batches);
       }
