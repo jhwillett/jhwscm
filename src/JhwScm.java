@@ -123,6 +123,7 @@ public class JhwScm implements Firmware
       //
       int tmp0 = 0;
       int tmp1 = 0;
+      int tmp2 = 0;
 
       switch ( reg.get(regPc) )
       {
@@ -2205,55 +2206,51 @@ public class JhwScm implements Firmware
          //
          // Returns UNSPECIFIED.
          //
-         reg.set(regTmp1,  value_fixint(reg.get(regArg0)));
-         if ( reg.get(regTmp1) < 0 )
+         tmp0 = value_fixint(reg.get(regArg0));
+         if ( 0 > reg.get(regTmp1) )
          {
             reg.set(regIO,code(TYPE_CHAR,'-'));
             portPush(regArg1,sub_print_fixint+0x1);
          }
-         else if ( reg.get(regTmp1) == 0 )
+         else if ( 0 == reg.get(regTmp1) )
          {
             reg.set(regIO,code(TYPE_CHAR,'0'));
-            reg.set(regRetval,  UNSPECIFIED);
-            portPush(regArg1, blk_tail_call); // TODO: clever or stupid?
+            portPush(regArg1,blk_tail_call); // TODO: clever or stupid?
          }
          else
          {
+            reg.set(regArg2,NIL);
             gosub(sub_print_pos_fixint,blk_tail_call);
          }
          break;
       case sub_print_fixint+0x1:
-         reg.set(regArg0,  -reg.get(regTmp1));
+         tmp0 = -value_fixint(reg.get(regArg0));
+         reg.set(regArg0, tmp0);
+         reg.set(regArg2, NIL);
          gosub(sub_print_pos_fixint,blk_tail_call);
          break;
 
       case sub_print_pos_fixint:
-         // Prints the positive fixint at regArg0 to the ouput port at
-         // regArg1.
+         // Prints the nonnegative fixint at regArg0 to the ouput port
+         // at regArg1.  Expects an accumulator at regArg2, which
+         // should be NIL on top-level entry.
          //
          // Returns UNSPECIFIED.
          //
-         reg.set(regTmp1,  value_fixint(reg.get(regArg0)));
-         if ( reg.get(regTmp1) <= 0 )
+         tmp0 = value_fixint(reg.get(regArg0));
+         if ( 0 == tmp0 )
          {
-            raiseError(ERR_INTERNAL);
+            reg.set(regArg0,reg.get(regArg2));
+            gosub(sub_print_chars,blk_tail_call);
             break;
          }
-         int factor = 1000000000; // big enough up to 2**32, we have 2**28
-         while ( factor > 0 && 0 == reg.get(regTmp1)/factor )
-         {
-            factor /= 10;
-         }
-         while ( factor > 0 )
-         {
-            final int digit  = reg.get(regTmp1)/factor;
-            reg.set(regTmp1,   reg.get(regTmp1) - digit * factor);
-            factor          /= 10;
-            reg.set(regIO,code(TYPE_CHAR,'0'+digit));
-            portPush(regArg1);
-         }
-         reg.set(regRetval,  UNSPECIFIED);
-         returnsub();
+         tmp1 = tmp0 % 10;
+         tmp2 = tmp0 / 10;
+         reg.set(regTmp0,code(TYPE_FIXINT,tmp1));
+         reg.set(regTmp1,cons(reg.get(regTmp0),reg.get(regArg2)));
+         reg.set(regArg2,reg.get(regTmp1));
+         reg.set(regArg0,code(TYPE_FIXINT,tmp2));
+         gosub(sub_print_pos_fixint,blk_tail_call);
          break;
 
       case sub_print_list:
