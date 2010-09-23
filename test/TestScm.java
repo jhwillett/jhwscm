@@ -132,10 +132,13 @@ public class TestScm extends Util
             { " #f",  "#f" },
             { "#x",   LEXICAL },
          };
-         batch(tests,RE_IND);
-         batch(tests,RE_DEP);
-         batch(tests,REP_IND);
-         batch(tests,REP_DEP);
+         final Batch[] batches = { 
+            RE_IND,
+            RE_DEP,
+            REP_IND,
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       // variables are self-reading and self-printing, but unbound
@@ -146,15 +149,21 @@ public class TestScm extends Util
             { "a1",      "a1"      },
             { "a_0-b.c", "a_0-b.c" },
          };
-         batch(tests,RE_IND);
-         batch(tests,RE_DEP);
+         final Batch[] batches = { 
+            RE_IND,
+            RE_DEP,
+         };
+         metabatch(tests,batches);
       }      
       {
          final Object[][] tests = { 
             { "a",  SEMANTIC },
             { "a1", SEMANTIC },
          };
-         batch(tests,REP_IND);
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
       }  
 
       // some lexical, rather than semantic, error case expectations
@@ -172,13 +181,16 @@ public class TestScm extends Util
             { "((()())",          LEXICAL  },
             { "(())",             SEMANTIC },
          };
-         batch(tests,REP_IND);
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
       }  
 
-      expect("-",   "-",  scmNoEval());
-      expect("-asd", "-asd",  scmNoEval());
-      expect("-",   null);
-      expect("-as",SEMANTIC);
+      expect("-",    "-",    scmNoEval());
+      expect("-asd", "-asd", scmNoEval());
+      expect("-",    null);
+      expect("-as",  SEMANTIC);
       
       {
          final Object[][] tests = { 
@@ -189,7 +201,10 @@ public class TestScm extends Util
             { "((a b) c",          LEXICAL },
             { "((a b c)",          LEXICAL },
          };
-         batch(tests,REP_IND);
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
       }  
 
       {
@@ -217,20 +232,23 @@ public class TestScm extends Util
             { " ( () ())) ",  LEXICAL      },
             { "((()())",      LEXICAL      },
          };
-         batch(tests,RE_IND);
+         final Batch[] batches = { 
+            RE_IND,
+         };
+         metabatch(tests,batches);
       }  
 
       // improper list experssions: yay!
       expect("(1 . 2)",      "(1 . 2)",   scmNoEval());
       expect("(1 2 . 3)",    "(1 2 . 3)", scmNoEval());
-      expect("(1 . 2 3)", LEXICAL,  scmNoEval());
-      expect("( . 2 3)", LEXICAL,   scmNoEval());
-      expect("(1 . )", LEXICAL,   scmNoEval());
-      expect("(1 .)", LEXICAL,   scmNoEval());
-      expect("(1 . 2 3)",LEXICAL);
-      expect("( . 2 3)",LEXICAL);
-      expect("(1 . )",LEXICAL);
-      expect("(1 .)",LEXICAL);
+      expect("(1 . 2 3)",    LEXICAL,     scmNoEval());
+      expect("( . 2 3)",     LEXICAL,     scmNoEval());
+      expect("(1 . )",       LEXICAL,     scmNoEval());
+      expect("(1 .)",        LEXICAL,     scmNoEval());
+      expect("(1 . 2 3)",    LEXICAL);
+      expect("( . 2 3)",     LEXICAL);
+      expect("(1 . )",       LEXICAL);
+      expect("(1 .)",        LEXICAL);
 
       expect("(1 . ())",     "(1)",       scmNoEval());
       expect("(1 .())",      "(1)",       scmNoEval());
