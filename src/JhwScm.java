@@ -2757,9 +2757,28 @@ public class JhwScm implements Firmware
          returnsub();
          break;
 
-      case blk_block_on_read:
-         raiseError(ERR_NOT_IMPL);
-         break;
+      case blk_block_on_read: {
+         final int      port  = mach.reg.get(regBlockedPort);
+         final int      cont  = mach.reg.get(regContinuation);
+         log("port:  ",pp(port));
+         log("cont:  ",pp(cont));
+         final IOBuffer iobuf = mach.iobufs[value(port)];
+         log("iobuf: ",iobuf);
+         if ( iobuf.isEmpty() )
+         {
+            log("blocked");
+            return ERROR_BLOCKED;
+         }
+         final byte b     = iobuf.peek();
+         final char c     = (char)b;
+         final int  value = code(TYPE_CHAR,c);
+         log("value: ",pp(value));
+         log("  c:   ",c);
+         log("  b:   ",b);
+         log("cont:  ",pp(cont));
+         mach.reg.set(regIO,value);
+         mach.reg.set(regPc,cont);
+         break; }
 
       case blk_block_on_write: {
          final int      port  = mach.reg.get(regBlockedPort);
