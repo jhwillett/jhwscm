@@ -15,7 +15,7 @@ public class TestMachine extends Util
 
    private static Machine newMachine ()
    {
-      final Machine machine = new Machine(2,4,PROFILE,VERBOSE,DEBUG);
+      final Machine machine = new Machine(PROFILE,VERBOSE,DEBUG);
       return machine;
    }
 

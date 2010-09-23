@@ -27,13 +27,24 @@ public class Machine
       public final MemStats.Stats   regStats      = new MemStats.Stats();
       public final MemCached.Stats  cacheStats    = new MemCached.Stats();
       public final MemStats.Stats   cacheTopStats = new MemStats.Stats();
-      public final IOBuffer.Stats[] ioStats;
-      private Stats ()
+      public IOBuffer.Stats[]       ioStats       = null;
+
+      private void ensureIoStatsCapacity ( final int capacity )
       {
-         this.ioStats = new IOBuffer.Stats[8]; // TODO: won't be enough some day
-         for ( int i = 0; i < this.ioStats.length; ++i )
+         if ( null != ioStats && capacity <= ioStats.length ) return;
+         final IOBuffer.Stats[] newIoStats = new IOBuffer.Stats[capacity];
+         if ( null != ioStats )
          {
-            this.ioStats[i] = new IOBuffer.Stats();
+            for ( int i = 0; i < ioStats.length; ++i )
+            {
+               newIoStats[i] = ioStats[i];
+            }
+         }
+         ioStats = newIoStats;
+         for ( int i = ioStats.length - 1; i >= 0; --i )
+         {
+            if ( null != ioStats[i] ) break;
+            ioStats[i] = new IOBuffer.Stats();
          }
       }
    }
@@ -49,11 +60,10 @@ public class Machine
    public final Mem        heap;
    public final IOBuffer[] iobufs;
 
-   public Machine ( final int     ioBufCount,
-                    final int     ioBufSize,
-                    final boolean PROFILE, 
+   public Machine ( final boolean PROFILE, 
                     final boolean VERBOSE, 
-                    final boolean DEBUG )
+                    final boolean DEBUG,
+                    final int...  ioBufSizes )
    {
       this.PROFILE = PROFILE;
       this.VERBOSE = VERBOSE;
@@ -108,8 +118,13 @@ public class Machine
       }
       this.heap = mem;
 
-      this.iobufs = new IOBuffer[ioBufCount];
-      for ( int i = 0; i < ioBufCount; ++i )
+      if ( PROFILE )
+      {
+         global.ensureIoStatsCapacity(ioBufSizes.length);
+         local.ensureIoStatsCapacity(ioBufSizes.length);
+      }
+      this.iobufs = new IOBuffer[ioBufSizes.length];
+      for ( int i = 0; i < ioBufSizes.length; ++i )
       {
          final IOBuffer.Stats glo;
          final IOBuffer.Stats loc;
@@ -123,7 +138,7 @@ public class Machine
             glo = null;
             loc = null;
          }
-         this.iobufs[i] = new IOBuffer(ioBufSize,VERBOSE,DEBUG,glo,loc);
+         this.iobufs[i] = new IOBuffer(ioBufSizes[i],VERBOSE,DEBUG,glo,loc);
       }
    }
 

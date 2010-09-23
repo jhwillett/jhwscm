@@ -36,7 +36,7 @@ public class TestComputer extends Util
       log("TestComputer");
       depth++;
 
-      final Machine      mach = new Machine(1,1,false,false,false);
+      final Machine      mach = new Machine(false,false,false);
       final TestFirmware firm = new TestFirmware(50);
 
       assertEquals(0,firm.numBoot);
