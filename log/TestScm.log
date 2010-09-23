@@ -96,5 +96,5 @@ global:
 numExpects: 748
   happy:    648
   unhappy:  100
-numBatches: 50
+numBatches: 59
 make[1]: Leaving directory `/home/jwillett/jhwscm'

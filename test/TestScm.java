@@ -367,31 +367,40 @@ public class TestScm extends Util
       // Dipping my toe into basic edge cases around implied (eval)
       // and some simple arithmetic - more than testing math.
       //
-      expect("(())",SEMANTIC);
-      expect("(1)",SEMANTIC);
-      expect("(\"a\")",SEMANTIC);
-      expect("(#\\a)",SEMANTIC);
-      expect("(() 0)",SEMANTIC);
-      expect("(1 0)",SEMANTIC);
-      expect("(\"a\" 0)",SEMANTIC);
-      expect("(#\\a 0)",SEMANTIC);
-      expect("(+ 0 0)", "0");
-      expect("(+ 0 1)", "1");
-      expect("(+ 0 2)", "2");
-      expect("(+ 2 0)", "2");
-      expect("(+ 2 3)", "5");
-      expect("(+ 2 -3)","-1");
-      expect("(+ -2 -3)", "-5");
-      expect("(- 2  3)","-1");
-      expect("(- 2 -3)","5");
-      expect("(- -3 2)","-5");
-      expect("(+ 100 2)","102");
-      expect("(+ 100 -2)","98");
-      expect("(* 97 2)","194");
-      expect("(* -97 2)","-194");
-      expect("(* -97 -2)","194");
-      expect("(* 97 -2)","-194");
-      expect("(+ a b)",SEMANTIC);
+      {
+         final Object[][] tests = { 
+            { "(())",         SEMANTIC },
+            { "(1)",          SEMANTIC },
+            { "(\"a\")",      SEMANTIC },
+            { "(#\\a)",       SEMANTIC },
+            { "(() 0)",       SEMANTIC },
+            { "(1 0)",        SEMANTIC },
+            { "(\"a\" 0)",    SEMANTIC },
+            { "(#\\a 0)",     SEMANTIC },
+            { "(+ 0 0)",       "0"     },
+            { "(+ 0 1)",       "1"     },
+            { "(+ 0 2)",       "2"     },
+            { "(+ 2 0)",       "2"     },
+            { "(+ 2 3)",       "5"     },
+            { "(+ 2 -3)",     "-1"     },
+            { "(+ -2 -3)",     "-5"    },
+            { "(- 2  3)",     "-1"     },
+            { "(- 2 -3)",     "5"      },
+            { "(- -3 2)",     "-5"     },
+            { "(+ 100 2)",    "102"    },
+            { "(+ 100 -2)",   "98"     },
+            { "(* 97 2)",     "194"    },
+            { "(* -97 2)",    "-194"   },
+            { "(* -97 -2)",   "194"    },
+            { "(* 97 -2)",    "-194"   },
+            { "(+ a b)",      SEMANTIC },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
+
 
       if ( true )
       {
@@ -411,31 +420,55 @@ public class TestScm extends Util
          expect("(* 2 3 5)","30");
          expect("(*)","1");
       }
-      expect("(+0)",      "0");
-      expect("(+1 10)",   "10");
-      expect("(+3 3 5 7)","15");
-      expect("(+0 1)",SEMANTIC);
-      expect("(+1)",SEMANTIC);
-      expect("(+1 1 2)",SEMANTIC);
-      expect("(+3)",SEMANTIC);
-      expect("(+3 1 2)",SEMANTIC);
-      expect("(+3 1 2 3 4)",SEMANTIC);
+      {
+         final Object[][] tests = { 
+            { "(+0)",                         "0"      },
+            { "(+1 10)",                      "10"     },
+            { "(+3 3 5 7)",                   "15"     },
+            { "(+0 1)",                       SEMANTIC },
+            { "(+1)",                         SEMANTIC },
+            { "(+1 1 2)",                     SEMANTIC },
+            { "(+3)",                         SEMANTIC },
+            { "(+3 1 2)",                     SEMANTIC },
+            { "(+3 1 2 3 4)",                 SEMANTIC },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
 
       // simple special form
-      expect("(quote ())","()");
-      expect("(quote (1 2))","(1 2)");
-      expect("(quote (a b))","(a b)");
-      expect("(+ 1 (quote ()))",SEMANTIC);
-      expect("(quote 9)",                "9");
-      expect("(quote (quote 9))",        "(quote 9)");
-      expect("(quote (quote (quote 9)))","(quote (quote 9))");
+      {
+         final Object[][] tests = { 
+            { "(quote ())",                   "()"                },
+            { "(quote (1 2))",                "(1 2)"             },
+            { "(quote (a b))",                "(a b)"             },
+            { "(+ 1 (quote ()))",             SEMANTIC            },
+            { "(quote 9)",                    "9"                 },
+            { "(quote (quote 9))",            "(quote 9)"         },
+            { "(quote (quote (quote 9)))",    "(quote (quote 9))" },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
 
       // simple quote sugar
-      expect("'()","()");
-      expect("'(1 2)","(1 2)");
-      expect("'(a b)","(a b)");
-      expect("(+ 1 '())",SEMANTIC);
-      expect("'9",       "9");
+      {
+         final Object[][] tests = { 
+            { "'()",                          "()"     },
+            { "'(1 2)",                       "(1 2)"  },
+            { "'(a b)",                       "(a b)"  },
+            { "(+ 1 '())",                    SEMANTIC },
+            { "'9",                           "9"      },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
       if ( false )
       {
          // See the quote-quote-quote discussion in DIARY.txt.
@@ -446,18 +479,26 @@ public class TestScm extends Util
          expect(" ' ' ' 9 ","(quote (quote 9))");
       }
 
-      expect("(equal? 10  10)","#t");
-      expect("(equal? 11  10)","#f");
-      expect("(equal? 'a  'a)","#t");
-      expect("(equal? 'a  'b)","#f");
-      expect("(equal? 10  'b)","#f");
-      expect("(<       9  10)","#t");
-      expect("(<      10   9)","#f");
-      expect("(<      10  10)","#f");
-      expect("(<     -10   0)","#t");
-      expect("(<      -1  10)","#t");
-      expect("(<       0 -10)","#f");
-      expect("(< 10 'a)",SEMANTIC);
+      {
+         final Object[][] tests = { 
+            { "(equal? 10  10)",              "#t"     },
+            { "(equal? 11  10)",              "#f"     },
+            { "(equal? 'a  'a)",              "#t"     },
+            { "(equal? 'a  'b)",              "#f"     },
+            { "(equal? 10  'b)",              "#f"     },
+            { "(<       9  10)",              "#t"     },
+            { "(<      10   9)",              "#f"     },
+            { "(<      10  10)",              "#f"     },
+            { "(<     -10   0)",              "#t"     },
+            { "(<      -1  10)",              "#t"     },
+            { "(<       0 -10)",              "#f"     },
+            { "(< 10 'a)",                    SEMANTIC },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
 
       // simple conditionals: in Scheme, only #f is false
       // 
@@ -466,29 +507,45 @@ public class TestScm extends Util
       // TODO: when you do mutators, be sure to check that only one
       // alternative in an (if) is executed.
       //
-      expect("(if #f 2 5)","5");
-      expect("(if #t 2 5)","2");
-      expect("(if '() 2 5)","2"); 
-      expect("(if 0 2 5)","2");
-      expect("(if 0 (+ 2 1) 5)","3");
-      expect("(if 0 2 5)","2");
-      expect("(if #t (+ 2 1) (+ 4 5))","3");
-      expect("(if #f (+ 2 1) (+ 4 5))","9");
-      expect("(if (equal? 1 1) 123 321)","123");
-      expect("(if (equal? 2 1) 123 321)","321");
+      {
+         final Object[][] tests = { 
+            { "(if #f 2 5)",                  "5"      },
+            { "(if #t 2 5)",                  "2"      },
+            { "(if '() 2 5)",                 "2"      },
+            { "(if 0 2 5)",                   "2"      },
+            { "(if 0 (+ 2 1) 5)",             "3"      },
+            { "(if 0 2 5)",                   "2"      },
+            { "(if #t (+ 2 1) (+ 4 5))",      "3"      },
+            { "(if #f (+ 2 1) (+ 4 5))",      "9"      },
+            { "(if (equal? 1 1) 123 321)",    "123"    },
+            { "(if (equal? 2 1) 123 321)",    "321"    },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
 
       // cons, car, cdr, and list have a particular relationship
       //
-      expect("(cons 1 2)","(1 . 2)");
-      expect("(car (cons 1 2))","1");
-      expect("(cdr (cons 1 2))","2");
-      expect("(list)","()");
-      expect("(list 1 2)","(1 2)");
-      expect("(car 1)",SEMANTIC);
-      expect("(car '())",SEMANTIC);
-      expect("(cdr 1)",SEMANTIC);
-      expect("(cdr '())",SEMANTIC);
-      expect("(cons 1 '())","(1)");
+      {
+         final Object[][] tests = { 
+            { "(cons 1 2)",                   "(1 . 2)" },
+            { "(car (cons 1 2))",             "1"       },
+            { "(cdr (cons 1 2))",             "2"       },
+            { "(list)",                       "()"      },
+            { "(list 1 2)",                   "(1 2)"   },
+            { "(car 1)",                      SEMANTIC  },
+            { "(car '())",                    SEMANTIC  },
+            { "(cdr 1)",                      SEMANTIC  },
+            { "(cdr '())",                    SEMANTIC  },
+            { "(cons 1 '())",                 "(1)"     },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
 
       // OUCH! w/ no garbage collection, no proper tail recursion, and
       // a 512 cell heap, this goes OOM.  More than 4 KB to interpret
@@ -501,12 +558,20 @@ public class TestScm extends Util
       // "read-eval-display" loop doesn't have the same robust
       // tradition.  SICP uses (print)...
       //
-      expect("(display 5)","5");
-      expect("(display 5)2","52");
-      expect("(display (+ 3 4))(+ 1 2)","73");
-      expect("(display '(+ 3 4))(+ 1 2)","(+ 3 4)3");
-      expect("(read)5","5");
-      expect("(read)(+ 1 2)","(+ 1 2)");
+      {
+         final Object[][] tests = { 
+            { "(display 5)",                  "5"        },
+            { "(display 5)2",                 "52"       },
+            { "(display (+ 3 4))(+ 1 2)",     "73"       },
+            { "(display '(+ 3 4))(+ 1 2)",    "(+ 3 4)3" },
+            { "(read)5",                      "5"        },
+            { "(read)(+ 1 2)",                "(+ 1 2)"  },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
       
       // defining symbols
       {
@@ -531,18 +596,26 @@ public class TestScm extends Util
       }
 
       // defining functions
-      expect("(lambda)",SEMANTIC);
-      expect("(lambda ())",SEMANTIC);
-      expect("(lambda () 1)","???");
-      expect("((lambda () 1))","1");
-      expect("((lambda () 1) 10)",SEMANTIC);
-      expect("(lambda (a) 1)","???");
-      expect("((lambda (a) 1) 10)","1");
-      expect("((lambda (a) 1))",SEMANTIC);
-      expect("((lambda (a) 1) 10 20)",SEMANTIC);
-      expect("(lambda (a b) (* a b))",       "???");
-      expect("((lambda (a) (* 3 a)) 13)",    "39");
-      expect("((lambda (a b) (* a b)) 13 5)","65");
+      {
+         final Object[][] tests = { 
+            { "(lambda)",                     SEMANTIC },
+            { "(lambda ())",                  SEMANTIC },
+            { "(lambda () 1)",                "???"    },
+            { "((lambda () 1))",              "1"      },
+            { "((lambda () 1) 10)",           SEMANTIC },
+            { "(lambda (a) 1)",               "???"    },
+            { "((lambda (a) 1) 10)",          "1"      },
+            { "((lambda (a) 1))",             SEMANTIC },
+            { "((lambda (a) 1) 10 20)",       SEMANTIC },
+            { "(lambda (a b) (* a b))",       "???"    },
+            { "((lambda (a) (* 3 a)) 13)",    "39"     },
+            { "((lambda (a b) (* a b)) 13 5)","65"     },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
       {
          final Computer scm = scmFull();
          expect("(define (foo a b) (+ a b))","",  scm);
