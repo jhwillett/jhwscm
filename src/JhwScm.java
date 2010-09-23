@@ -2084,15 +2084,16 @@ public class JhwScm implements Firmware
          //
          store(regArg1);         // store port
          reg.set(regIO,code(TYPE_CHAR,'"'));
-         portPush(regArg1);
-         gosub(sub_print_chars,sub_print_string+0x1);
+         portPush(regArg1,sub_print_string+0x1);
          break;
       case sub_print_string+0x1:
+         gosub(sub_print_chars,sub_print_string+0x2);
+         break;
+      case sub_print_string+0x2:
          restore(regArg1);      // restore port
          reg.set(regIO,code(TYPE_CHAR,'"'));
-         portPush(regArg1);
          reg.set(regRetval, UNSPECIFIED);
-         returnsub();
+         portPush(regArg1, blk_tail_call);
          break;
 
       case sub_print_chars:
@@ -2120,7 +2121,9 @@ public class JhwScm implements Firmware
             break;
          }
          reg.set(regIO,reg.get(regTmp1));
-         portPush(regArg1);
+         portPush(regArg1,sub_print_chars+0x1);
+         break;
+      case sub_print_chars+0x1:
          reg.set(regArg0, reg.get(regTmp2));
          gosub(sub_print_chars,blk_tail_call);
          break;
@@ -2156,7 +2159,9 @@ public class JhwScm implements Firmware
          tmp0 = code(TYPE_CHAR,const_str[tmp0].charAt(tmp1));
          tmp1 = tmp1 + 1;
          reg.set(regIO,tmp0);
-         portPush(regArg1);
+         portPush(regArg1,sub_print_const+0x1);
+         break;
+      case sub_print_const+0x1:
          reg.set(regArg2, code(TYPE_FIXINT,tmp1));
          gosub(sub_print_const,blk_tail_call);
          break;
@@ -2189,9 +2194,8 @@ public class JhwScm implements Firmware
             break;
          default:
             reg.set(regIO,reg.get(regArg0));
-            portPush(regArg1);
             reg.set(regRetval, UNSPECIFIED);
-            returnsub();
+            portPush(regArg1, blk_tail_call);  // TODO: clever or stupid?
             break;
          }
          break;
@@ -2205,15 +2209,34 @@ public class JhwScm implements Firmware
          if ( reg.get(regTmp1) < 0 )
          {
             reg.set(regIO,code(TYPE_CHAR,'-'));
-            portPush(regArg1);
-            reg.set(regTmp1,  -reg.get(regTmp1));
+            portPush(regArg1,sub_print_fixint+0x1);
          }
-         if ( reg.get(regTmp1) == 0 )
+         else if ( reg.get(regTmp1) == 0 )
          {
             reg.set(regIO,code(TYPE_CHAR,'0'));
-            portPush(regArg1);
             reg.set(regRetval,  UNSPECIFIED);
-            returnsub();
+            portPush(regArg1, blk_tail_call); // TODO: clever or stupid?
+         }
+         else
+         {
+            gosub(sub_print_pos_fixint,blk_tail_call);
+         }
+         break;
+      case sub_print_fixint+0x1:
+         reg.set(regArg0,  -reg.get(regTmp1));
+         gosub(sub_print_pos_fixint,blk_tail_call);
+         break;
+
+      case sub_print_pos_fixint:
+         // Prints the positive fixint at regArg0 to the ouput port at
+         // regArg1.
+         //
+         // Returns UNSPECIFIED.
+         //
+         reg.set(regTmp1,  value_fixint(reg.get(regArg0)));
+         if ( reg.get(regTmp1) <= 0 )
+         {
+            raiseError(ERR_INTERNAL);
             break;
          }
          int factor = 1000000000; // big enough up to 2**32, we have 2**28
@@ -2241,15 +2264,16 @@ public class JhwScm implements Firmware
          reg.set(regArg0,  reg.get(regArg0));
          reg.set(regArg2,  TRUE);
          reg.set(regIO,code(TYPE_CHAR,'('));
-         portPush(regArg1);
-         gosub(sub_print_list_elems,sub_print_list+0x1);
+         portPush(regArg1,sub_print_list+0x1);
          break;
       case sub_print_list+0x1:
+         gosub(sub_print_list_elems,sub_print_list+0x2);
+         break;
+      case sub_print_list+0x2:
          restore(regArg1);      // restore port
          reg.set(regIO,code(TYPE_CHAR,')'));
-         portPush(regArg1);
          reg.set(regRetval,  UNSPECIFIED);
-         returnsub();
+         portPush(regArg1, blk_tail_call); // TODO: clever or stupid?
          break;
 
       case sub_print_list_elems:
@@ -2302,11 +2326,17 @@ public class JhwScm implements Firmware
          restore(regTmp0);
          reg.set(regArg0,  cdr(reg.get(regTmp0)));
          reg.set(regIO,code(TYPE_CHAR,' '));
-         portPush(regArg1);
+         portPush(regArg1, sub_print_list_elems+0x3);
+         break;
+      case sub_print_list_elems+0x3:
          reg.set(regIO,code(TYPE_CHAR,'.'));
-         portPush(regArg1);
+         portPush(regArg1, sub_print_list_elems+0x4);
+         break;
+      case sub_print_list_elems+0x4:
          reg.set(regIO,code(TYPE_CHAR,' '));
-         portPush(regArg1);
+         portPush(regArg1, sub_print_list_elems+0x5);
+         break;
+      case sub_print_list_elems+0x5:
          gosub(sub_print,blk_tail_call);
          break;
 
@@ -2869,8 +2899,8 @@ public class JhwScm implements Firmware
    private static final int regTmp6             =  26; // temporary
    private static final int regTmp7             =  27; // temporary
    private static final int regTmp8             =  28; // temporary
-   private static final int regTmp9             =  29; // temporary
 
+   private static final int regContinuation     =  29; // ???
    private static final int regIO               =  30; // port[Push|Peek]()
    private static final int regHeapTop          =  31; // alloc support: int
 
@@ -2927,11 +2957,13 @@ public class JhwScm implements Firmware
    private static final int sub_print            = TYPE_SUBP | A2 |  0x5010;
    private static final int sub_print_list       = TYPE_SUBP | A2 |  0x5100;
    private static final int sub_print_list_elems = TYPE_SUBP | A2 |  0x5200;
+   private static final int sub_print_rest_elems = TYPE_SUBP | A2 |  0x5210;
    private static final int sub_print_string     = TYPE_SUBP | A2 |  0x5300;
    private static final int sub_print_chars      = TYPE_SUBP | A2 |  0x5400;
    private static final int sub_print_const      = TYPE_SUBP | A3 |  0x5500;
    private static final int sub_print_char       = TYPE_SUBP | A2 |  0x5600;
    private static final int sub_print_fixint     = TYPE_SUBP | A2 |  0x5700;
+   private static final int sub_print_pos_fixint = TYPE_SUBP | A2 |  0x5710;
 
    private static final int sub_equal_p          = TYPE_SUBP | A2 |  0x6000;
    private static final int sub_zip              = TYPE_SUBP | A2 |  0x6100;
@@ -2969,8 +3001,10 @@ public class JhwScm implements Firmware
 
    private static final int blk_tail_call        = TYPE_SUBP | A0 | 0x10001;
    private static final int blk_tail_call_m_cons = TYPE_SUBP | A0 | 0x10002;
-   private static final int blk_error            = TYPE_SUBP | A0 | 0x10003;
-   private static final int blk_halt             = TYPE_SUBP | A0 | 0x10004;
+   private static final int blk_block_on_read    = TYPE_SUBP | A0 | 0x10003;
+   private static final int blk_block_on_write   = TYPE_SUBP | A0 | 0x10004;
+   private static final int blk_error            = TYPE_SUBP | A0 | 0x10005;
+   private static final int blk_halt             = TYPE_SUBP | A0 | 0x10006;
 
    // A few tables of named constants would really help with
    // implementing a clean bootstrap.
@@ -3183,13 +3217,33 @@ public class JhwScm implements Firmware
     * 
     * Will fail if the port is closed.
     *
-    * TODO: Changes no registers.  Callers need not use the same
-    * discipline required by gosub(): the continuation can expect the
-    * same stack and the same registers as were present on entry to
-    * portPush().
+    * Changes no registers except regContinuation, which is reserved
+    * for gosub(), portPush(), and portPeek().  
+    *
+    * Callers need not use the same discipline required by gosub():
+    * the continuation can expect the same stack and the same
+    * registers as were present on entry to portPush().
     */
-   private void portPush ( final int regPort )
+   private void portPush ( final int regPort, final int continuationOp )
    {
+      final int tc = type(continuationOp);
+      if ( TYPE_SUBP != tc && TYPE_SUBS != tc )
+      {
+         //log("    non-op: ",pp(continuationOp));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
+      if ( 0 == ( MASK_BLOCKID & continuationOp ) )
+      {
+         // I believe, but am not certain, that due to the demands
+         // of maintaining stack discipline, it is always invalid
+         // to return to a subroutine entrypoint.
+         //
+         // I could be wrong about this being an error.
+         //log("    full-sub: ",pp(continuationOp));
+         raiseError(ERR_INTERNAL);
+         return;
+      }
       final int port  = mach.reg.get(regPort);
       final int value = mach.reg.get(regIO);
       if ( DEBUG && TYPE_IOBUF != type(port) ) 
@@ -3231,14 +3285,15 @@ public class JhwScm implements Firmware
       {
          // TODO: suspend
          log("  portPush(): full");
-         raiseError(ERR_NOT_IMPL);
+         mach.reg.set(regContinuation,continuationOp);
+         mach.reg.set(regPc,blk_block_on_write);
          return;
       }
       log("  portPush(): value:  ",pp(value));
       final int decode = value(value);
       log("  portPush(): decode: ",decode);
       iobuf.push((byte)decode);
-      return;
+      mach.reg.set(regPc,continuationOp);
    }
 
    /**
@@ -3255,10 +3310,12 @@ public class JhwScm implements Firmware
     * 
     * Leaves the port unchanged.
     *
-    * TODO: Changes no registers other than regIO.  Callers need not
-    * use the same discipline required by gosub(): excepting regIO,
-    * the continuation can expect the same stack and the same
-    * registers as were present on entry to portPush().
+    * Changes no registers except regContinuation, which is reserved
+    * for gosub(), portPush(), and portPeek(), and regIO.  
+    *
+    * Callers need not use the same discipline required by gosub():
+    * excepting regIO, the continuation can expect the same stack and
+    * the same registers as were present on entry to portPush().
     */
    private void portPeek ( final int regPort )
    {
@@ -3475,6 +3532,8 @@ public class JhwScm implements Firmware
     * call: it is the caller's responsibility to store() any values
     * needed by the continuation, and to restore() those values in the
     * continuation.
+    *
+    * TODO: is it of benefit to exploit regContinuation here?
     */
    private void gosub ( final int nextOp, final int continuationOp )
    {
@@ -3727,6 +3786,8 @@ public class JhwScm implements Firmware
       case ERR_NOT_IMPL:         return "ERR_NOT_IMPL";
       case blk_tail_call:        return "blk_tail_call";
       case blk_tail_call_m_cons: return "blk_tail_call_m_cons";
+      case blk_block_on_read:    return "blk_block_on_read";
+      case blk_block_on_write:   return "blk_block_on_write";
       case blk_error:            return "blk_error";
       case blk_halt:             return "blk_halt";
       }
@@ -3771,11 +3832,13 @@ public class JhwScm implements Firmware
          case sub_print:            buf.append("sub_print");            break;
          case sub_print_list:       buf.append("sub_print_list");       break;
          case sub_print_list_elems: buf.append("sub_print_list_elems"); break;
+         case sub_print_rest_elems: buf.append("sub_print_rest_elems"); break;
          case sub_print_string:     buf.append("sub_print_string");     break;
          case sub_print_chars:      buf.append("sub_print_chars");      break;
          case sub_print_const:      buf.append("sub_print_const");      break;
          case sub_print_char:       buf.append("sub_print_char");       break;
          case sub_print_fixint:     buf.append("sub_print_fixint");     break;
+         case sub_print_pos_fixint: buf.append("sub_print_pos_fixint"); break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_let:              buf.append("sub_let");              break;
          case sub_begin:            buf.append("sub_begin");            break;
