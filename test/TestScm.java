@@ -17,21 +17,31 @@ public class TestScm extends Util
    private static final int LEXICAL  = Firmware.ERROR_FAILURE_LEXICAL;
    private static final int SEMANTIC = Firmware.ERROR_FAILURE_SEMANTIC;
 
-   private static class BatchType
+   private static class Batch
    {
       final boolean reuse;
       final boolean do_rep;
-      
-      BatchType ( final boolean reuse, final boolean do_rep )
+      final int     sizeIn;
+      final int     sizeOut;
+
+      Batch ( final boolean reuse, 
+              final boolean do_rep,
+              final int     sizeIn,
+              final int     sizeOut )
       {
-         this.reuse  = reuse;
-         this.do_rep = do_rep;
+         this.reuse   = reuse;
+         this.do_rep  = do_rep;
+         this.sizeIn  = sizeIn;
+         this.sizeOut = sizeOut;
       }
    }
-   private static final BatchType REP_DEPENDANT   = new BatchType(true, true);
-   private static final BatchType REP_INDEPENDANT = new BatchType(false,true);
-   private static final BatchType RE_DEPENDANT    = new BatchType(true, false);
-   private static final BatchType RE_INDEPENDANT  = new BatchType(false,false);
+   private static final Batch REP_DEP    = new Batch(true,  true,  1024, 1024);
+   private static final Batch REP_IND    = new Batch(false, true,  1024, 1024);
+   private static final Batch RE_DEP     = new Batch(true,  false, 1024, 1024);
+   private static final Batch RE_IND     = new Batch(false, false, 1024, 1024);
+   private static final Batch STRESS_IN  = new Batch(true,  true,     1, 1024);
+   private static final Batch STRESS_OUT = new Batch(true,  true,  1024,    1);
+   private static final Batch STRESS_IO  = new Batch(true,  true,     1,    1);
 
    private static boolean REPORT  = true;
    private static boolean PROFILE = true;
@@ -78,10 +88,10 @@ public class TestScm extends Util
             { expr + "\n",            expr },
             { "\t" + expr + "\t\r\n", expr },
          };
-         batch(tests,RE_INDEPENDANT);
-         batch(tests,RE_DEPENDANT);
-         batch(tests,REP_INDEPENDANT);
-         batch(tests,REP_DEPENDANT);
+         batch(tests,RE_IND);
+         batch(tests,RE_DEP);
+         batch(tests,REP_IND);
+         batch(tests,REP_DEP);
       }
 
       // second content: tweakier integer expressions are self-reading
@@ -97,10 +107,10 @@ public class TestScm extends Util
             { pair[0] + " ",       pair[1] },
             { " " + pair[0] + " ", pair[1] },
          };
-         batch(tests,RE_INDEPENDANT);
-         batch(tests,RE_DEPENDANT);
-         batch(tests,REP_INDEPENDANT);
-         batch(tests,REP_DEPENDANT);
+         batch(tests,RE_IND);
+         batch(tests,RE_DEP);
+         batch(tests,REP_IND);
+         batch(tests,REP_DEP);
       }
 
       // boolean literals are self-evaluating and self-printing
@@ -113,10 +123,10 @@ public class TestScm extends Util
             { " #f",  "#f" },
             { "#x",   LEXICAL },
          };
-         batch(tests,RE_INDEPENDANT);
-         batch(tests,RE_DEPENDANT);
-         batch(tests,REP_INDEPENDANT);
-         batch(tests,REP_DEPENDANT);
+         batch(tests,RE_IND);
+         batch(tests,RE_DEP);
+         batch(tests,REP_IND);
+         batch(tests,REP_DEP);
       }
 
       // variables are self-reading and self-printing, but unbound
@@ -127,15 +137,15 @@ public class TestScm extends Util
             { "a1",      "a1"      },
             { "a_0-b.c", "a_0-b.c" },
          };
-         batch(tests,RE_INDEPENDANT);
-         batch(tests,RE_DEPENDANT);
+         batch(tests,RE_IND);
+         batch(tests,RE_DEP);
       }      
       {
          final Object[][] tests = { 
             { "a",  SEMANTIC },
             { "a1", SEMANTIC },
          };
-         batch(tests,REP_INDEPENDANT);
+         batch(tests,REP_IND);
       }  
 
       // some lexical, rather than semantic, error case expectations
@@ -153,7 +163,7 @@ public class TestScm extends Util
             { "((()())",          LEXICAL  },
             { "(())",             SEMANTIC },
          };
-         batch(tests,REP_INDEPENDANT);
+         batch(tests,REP_IND);
       }  
 
       expect("-",   "-",  newScm(false));
@@ -170,7 +180,7 @@ public class TestScm extends Util
             { "((a b) c",          LEXICAL },
             { "((a b c)",          LEXICAL },
          };
-         batch(tests,REP_INDEPENDANT);
+         batch(tests,REP_IND);
       }  
 
       {
@@ -198,7 +208,7 @@ public class TestScm extends Util
             { " ( () ())) ",  LEXICAL      },
             { "((()())",      LEXICAL      },
          };
-         batch(tests,RE_INDEPENDANT);
+         batch(tests,RE_IND);
       }  
 
       // improper list experssions: yay!
@@ -1020,7 +1030,7 @@ public class TestScm extends Util
     *
     * Special case cancelled.
     */
-   private static void batch ( final Object[][] tests, final BatchType type )
+   private static void batch ( final Object[][] tests, final Batch type )
    {
       numBatches++;
       Computer scm = null;
