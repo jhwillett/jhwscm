@@ -2,8 +2,8 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 fib:
-  numCycles:        169363
-  numCons:          186545
+  numCycles:        169391
+  numCons:          186561
   iobuf:            0
     numInput:       123
     numOutput:      0
@@ -16,28 +16,28 @@ fib:
     numPeek:        0
     numPop:         12
     numPush:        12
-  reg.numSet:       1324118
-  reg.numGet:       3002308
+  reg.numSet:       1324262
+  reg.numGet:       3002596
   reg.maxAddr:      31
   heap.numSet:      57328
   heap.numGet:      386176
   heap.maxAddr:     6143
-  cache.numHits:    1466849
+  cache.numHits:    1466961
   cache.numMisses:  24120
   cache.numFlush:   3583
   cache.numDrop:    20537
   cache.numLoad:    24136
-  cacheTop.numSet:  564986
-  cacheTop.numGet:  925999
+  cacheTop.numSet:  565034
+  cacheTop.numGet:  926063
   cacheTop.maxAddr: 6143
-  reg   ops:        4326426
-  cache ops:        1490985
+  reg   ops:        4326858
+  cache ops:        1491097
   heap  ops:        443504
-  reg   ops/cell:   139562.12903225806
-  cache ops/cell:   242.71284388735145
+  reg   ops/cell:   139576.06451612903
+  cache ops/cell:   242.73107602148787
   heap  ops/cell:   72.19664658961419
-  ops   reg/cache:  2.9017233573778407
-  ops   cache/heap: 3.3618298820303765
+  ops   reg/cache:  2.9017951213100153
+  ops   cache/heap: 3.3620824163930876
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -45,11 +45,11 @@ fib:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9838226012747414
+  cache hit/op:              0.983823816412388
   cache write/miss:          0.14854892205638473
 global:
-  numCycles:        509193
-  numCons:          547243
+  numCycles:        510894
+  numCons:          548215
   iobuf:            0
     numInput:       6434
     numOutput:      0
@@ -62,28 +62,28 @@ global:
     numPeek:        0
     numPop:         1788
     numPush:        1788
-  reg.numSet:       5445558
-  reg.numGet:       9801357
+  reg.numSet:       5454306
+  reg.numGet:       9818853
   reg.maxAddr:      31
   heap.numSet:      3405408
   heap.numGet:      4042096
   heap.maxAddr:     6143
-  cache.numHits:    7062813
+  cache.numHits:    7069617
   cache.numMisses:  243815
   cache.numFlush:   212838
   cache.numDrop:    30977
   cache.numLoad:    252631
-  cacheTop.numSet:  5009023
-  cacheTop.numGet:  2306421
+  cacheTop.numSet:  5011939
+  cacheTop.numGet:  2310309
   cacheTop.maxAddr: 6143
-  reg   ops:        15246915
-  cache ops:        7315444
+  reg   ops:        15273159
+  cache ops:        7322248
   heap  ops:        7447504
-  reg   ops/cell:   491835.96774193546
-  cache ops/cell:   1190.8585381735309
+  reg   ops/cell:   492682.5483870968
+  cache ops/cell:   1191.966140322318
   heap  ops/cell:   1212.3561777633079
-  ops   reg/cache:  2.084209106104838
-  ops   cache/heap: 0.982267884649676
+  ops   reg/cache:  2.0858565566203167
+  ops   cache/heap: 0.9831814793251538
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -91,7 +91,7 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.966630982171256
+  cache hit/op:              0.9666620268021908
   cache write/miss:          0.8729487521276378
 numExpects:     748
   happy:        648

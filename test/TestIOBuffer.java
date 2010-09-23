@@ -20,7 +20,7 @@ public class TestIOBuffer extends Util
    {
       log("TestIOBuffer");
 
-      // TODO: overflow, underflow, peek(), isFull(), isEmpty(), etc.
+      // TODO: push(), peek(), pop()
 
       final int[][] tests = {
          { 1, 0, 0 },
@@ -46,10 +46,10 @@ public class TestIOBuffer extends Util
 
       for ( int i = 0; i < tests.length; ++i )
       {
-         final int[] test    = tests[i];
-         final int byteCount = test[0];
-         final int numOps    = test[1];
-         final int mutation  = test[2];
+         final int[] test      = tests[i];
+         final int   byteCount = test[0];
+         final int   numOps    = test[1];
+         final int   mutation  = test[2];
          depth++;
          test(byteCount,numOps,mutation);
          depth--;
@@ -190,17 +190,29 @@ public class TestIOBuffer extends Util
       log("mutation:  " + mutation);
 
       final IOBuffer iobuf = new IOBuffer(byteCount,VERBOSE,DEBUG,null,null);
+      assertEquals( true, iobuf.isEmpty());               // empty
+      assertEquals( 0, iobuf.output(new byte[1],0,1));    // empty
+      assertEquals( true, iobuf.isEmpty());               // empty
       for ( int i = 0; i < numOps; ++i )
       {
          final byte a = (byte)(i+mutation);
          iobuf.push(a);
       }
+      assertEquals( byteCount == numOps, iobuf.isFull()); // full
+      if ( byteCount == numOps )
+      {
+         assertEquals( 0, iobuf.input(new byte[1],0,1));  // full
+      }
+      assertEquals( byteCount == numOps, iobuf.isFull()); // full
       for ( int i = 0; i < numOps; ++i )
       {
          final byte a = (byte)(i+mutation);
          final byte b = iobuf.pop();
          assertEquals(a, b);
       }
+      assertEquals( true, iobuf.isEmpty());               // empty
+      assertEquals( 0, iobuf.output(new byte[1],0,1));    // empty
+      assertEquals( true, iobuf.isEmpty());               // empty
       depth--;
    }
 

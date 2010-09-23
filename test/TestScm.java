@@ -16,6 +16,7 @@ public class TestScm extends Util
 
    private static final int LEXICAL  = Firmware.ERROR_FAILURE_LEXICAL;
    private static final int SEMANTIC = Firmware.ERROR_FAILURE_SEMANTIC;
+   private static final int BLOCKED  = Firmware.ERROR_BLOCKED;
 
    private static class Batch
    {
@@ -74,7 +75,7 @@ public class TestScm extends Util
       numVMs++;
       final Machine  mach = new Machine(PROFILE,
                                         VERBOSE,
-                                        DEBUG,
+                                        true,
                                         batch.sizeIn,
                                         batch.sizeOut);
       final JhwScm   firm = new JhwScm(batch.do_rep,
@@ -116,6 +117,7 @@ public class TestScm extends Util
             REP_DEP,
             //STRESS_OUT,
          };
+         //VERBOSE = true;
          metabatch(tests,batches);
       }
 
@@ -1186,6 +1188,11 @@ public class TestScm extends Util
     */
    private static void batch ( final Object[][] tests, final Batch type )
    {
+      final boolean oldVerbose = VERBOSE;
+      if ( STRESS_IO == type || STRESS_IN == type || STRESS_OUT == type )
+      {
+         VERBOSE = true;
+      }
       numBatches++;
       Computer scm = null;
       for ( int i = 0; i < tests.length; ++i )
@@ -1199,6 +1206,7 @@ public class TestScm extends Util
          }
          expect(expr,result,scm);
       }
+      VERBOSE = oldVerbose;
    }
 
    private static void metabatch ( final Object[][] tests, final Batch[] types )
@@ -1259,7 +1267,9 @@ public class TestScm extends Util
       {
          scm = scmFull();
       }
-      final Machine machine = scm.machine;
+      final Machine  machine = scm.machine;
+      final IOBuffer bufIn   = machine.ioBuf(0);
+      final IOBuffer bufOut  = machine.ioBuf(1);
 
       {
          final byte[] input_buf = expr.toString().getBytes();
@@ -1267,8 +1277,7 @@ public class TestScm extends Util
          while ( input_off < input_buf.length )
          {
             final int input_len = input_buf.length - input_off;
-            final int code = 
-               machine.ioBuf(0).input(input_buf, input_off, input_len);
+            final int code = bufIn.input(input_buf, input_off, input_len);
             if ( 0 <= code )
             {
                input_off += code;
@@ -1285,48 +1294,38 @@ public class TestScm extends Util
       //
       // So we don't check dcode until after slurping output().
       //
-      final int dcode;
-      {
-         int code = 0;
-         while ( true )
-         {
-            code = scm.drive(debugRand.nextInt(100));
-            if ( Firmware.ERROR_INCOMPLETE != code )
-            {
-               break;
-            }
-         }
-         dcode = code;
-      }
-
       final StringBuilder out = new StringBuilder();
+      int dcode = Firmware.ERROR_INCOMPLETE;
+      do
       {
+         dcode = scm.drive(debugRand.nextInt(100));
+
          final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
          int output_off = 0;
          for ( int off = 0; true; )
          {
             final int output_len = output_buf.length - output_off;
-            final int code = 
-               machine.ioBuf(1).output(output_buf, output_off, output_len);
-            if ( -1 > code )
+            final int num = bufOut.output(output_buf, output_off, output_len);
+            if ( 0 > num )
             {
-               throw new RuntimeException("output() out of spec: " + code);
+               throw new RuntimeException("output() out of spec: " + num);
             }
-            if ( -1 == code )
+            if ( 0 == num )
             {
                break;
             }
-            for ( int i = output_off; i < output_off + code; ++i )
+            for ( int i = output_off; i < output_off + num; ++i )
             {
                out.append((char)output_buf[i]);
             }
-            output_off += code;
+            output_off += num;
             if ( output_off >= output_buf.length )
             {
                output_off = 0;
             }
          }
       }
+      while ( Firmware.ERROR_INCOMPLETE == dcode || !bufOut.isEmpty());
 
       assertEquals("drive failure on \"" + expr + "\":",
                    expected_dcode,

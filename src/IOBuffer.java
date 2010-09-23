@@ -176,6 +176,7 @@ public class IOBuffer
       if ( VERBOSE ) log("input(): " + off + "+" + len + " / " + buf.length);
       check(buf,off,len);
       final int max = DEBUG ? debugRand.nextInt(len+1) : len;
+      if ( VERBOSE ) log("input max:  " + max + " / " + len);
       for ( int i = 0; i < max; ++i )
       {
          if ( isFull() )
@@ -207,20 +208,12 @@ public class IOBuffer
       if ( VERBOSE ) log("output(): " + off + "+" + len + " / " + buf.length);
       check(buf,off,len);
       final int max = DEBUG ? debugRand.nextInt(len+1) : len;
+      if ( VERBOSE ) log("output max: " + max + " / " + len);
       for ( int i = 0; i < max; ++i )
       {
          if ( isEmpty() )
          {
-            if ( 0 == i )
-            {
-               if ( VERBOSE ) log("output(): empty and done");
-               return -1;
-            }
-            else
-            {
-               if ( VERBOSE ) log("output(): empty, but shifted: " + i);
-               return i;
-            }
+            return i;
          }
          final byte b = pop();
          buf[off++] = b;
