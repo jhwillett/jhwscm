@@ -71,7 +71,6 @@ public class TestScm extends Util
             { expr + "\n",            expr },
             { "\t" + expr + "\t\r\n", expr },
          };
-         VERBOSE = true;
          batch(tests,RE_INDEPENDANT);
          batch(tests,RE_DEPENDANT);
          batch(tests,REP_INDEPENDANT);
@@ -107,6 +106,7 @@ public class TestScm extends Util
             { " #f",  "#f" },
             { "#x",   LEXICAL },
          };
+         VERBOSE = true;
          batch(tests,RE_INDEPENDANT);
          batch(tests,RE_DEPENDANT);
          batch(tests,REP_INDEPENDANT);

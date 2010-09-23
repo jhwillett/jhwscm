@@ -2232,7 +2232,7 @@ public class JhwScm implements Firmware
       case sub_print_fixint+0x1:
          tmp0 = -value_fixint(reg.get(regArg0));
          log("negated: ",tmp0);
-         reg.set(regArg0, tmp0);
+         reg.set(regArg0, code(TYPE_FIXINT,tmp0));
          reg.set(regArg2, NIL);
          gosub(sub_print_pos_fixint,blk_tail_call);
          break;
@@ -2621,7 +2621,7 @@ public class JhwScm implements Firmware
             //
             reg.set(regTmp2,  car(reg.get(regTmp0))); // actual symbol
             reg.set(regTmp3,  cdr(reg.get(regTmp0))); // actual arg list
-            reg.set(regTmp0,  reg.get(regTmp2));      // regTmp0 good, regTmp2 free
+            reg.set(regTmp0,  reg.get(regTmp2)); // regTmp0 good, regTmp2 free
             logrec("proc symbol: ",reg.get(regTmp0));
             logrec("proc args:   ",reg.get(regTmp3));
             logrec("proc body:   ",reg.get(regTmp1));
@@ -3894,7 +3894,9 @@ public class JhwScm implements Firmware
          buf.append('?'); 
          buf.append(t>>SHIFT_TYPE); 
          buf.append('?'); 
-         if ( true ) throw new RuntimeException("WFT A");
+         if ( true ) throw new RuntimeException(
+            "WTF A: " + t + " " + v + " " + code
+            );
          break;
       }
       buf.append("|");
