@@ -2159,11 +2159,11 @@ public class JhwScm implements Firmware
          }
          tmp0 = code(TYPE_CHAR,const_str[tmp0].charAt(tmp1));
          tmp1 = tmp1 + 1;
+         reg.set(regArg2, code(TYPE_FIXINT,tmp1)); // string offset
          reg.set(regIO,tmp0);
          portPush(regArg1,sub_print_const+0x1);
          break;
       case sub_print_const+0x1:
-         reg.set(regArg2, code(TYPE_FIXINT,tmp1));
          gosub(sub_print_const,blk_tail_call);
          break;
 
@@ -2347,7 +2347,7 @@ public class JhwScm implements Firmware
          break;
       case sub_print_list_elems+0x4:
          reg.set(regIO,code(TYPE_CHAR,'.'));
-         portPush(regArg1, sub_print_list_elems+0x4);
+         portPush(regArg1, sub_print_list_elems+0x5);
          break;
       case sub_print_list_elems+0x5:
          reg.set(regIO,code(TYPE_CHAR,' '));
@@ -3302,8 +3302,15 @@ public class JhwScm implements Firmware
       {
          // TODO: suspend
          log("  portPush(): full");
-         mach.reg.set(regContinuation,continuationOp);
-         mach.reg.set(regPc,blk_block_on_write);
+         if ( false )
+         {
+            mach.reg.set(regContinuation,continuationOp);
+            mach.reg.set(regPc,blk_block_on_write);
+         }
+         else
+         {
+            raiseError(ERR_INTERNAL);
+         }
          return;
       }
       log("  portPush(): value:  ",pp(value));
