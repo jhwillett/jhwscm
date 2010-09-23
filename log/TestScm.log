@@ -48,8 +48,8 @@ fib:
   cache hit/op:              0.9838226012747414
   cache write/miss:          0.14854892205638473
 global:
-  numCycles:        510969
-  numCons:          551313
+  numCycles:        507405
+  numCons:          547243
   iobuf:            0
     numInput:       6434
     numOutput:      0
@@ -62,28 +62,28 @@ global:
     numPeek:        0
     numPop:         1788
     numPush:        1788
-  reg.numSet:       5499308
-  reg.numGet:       9870730
+  reg.numSet:       5440194
+  reg.numGet:       9787053
   reg.maxAddr:      31
-  heap.numSet:      3472592
-  heap.numGet:      4110496
+  heap.numSet:      3405408
+  heap.numGet:      4042096
   heap.maxAddr:     6143
-  cache.numHits:    7150740
-  cache.numMisses:  247914
-  cache.numFlush:   217037
-  cache.numDrop:    30877
-  cache.numLoad:    256906
-  cacheTop.numSet:  5088542
-  cacheTop.numGet:  2319104
+  cache.numHits:    7062813
+  cache.numMisses:  243815
+  cache.numFlush:   212838
+  cache.numDrop:    30977
+  cache.numLoad:    252631
+  cacheTop.numSet:  5009023
+  cacheTop.numGet:  2306421
   cacheTop.maxAddr: 6143
-  reg   ops:        15370038
-  cache ops:        7407646
-  heap  ops:        7583088
-  reg   ops/cell:   495807.67741935485
-  cache ops/cell:   1205.867817027511
-  heap  ops/cell:   1234.4274784307343
-  ops   reg/cache:  2.0748882978479264
-  ops   cache/heap: 0.9768640427224371
+  reg   ops:        15227247
+  cache ops:        7315444
+  heap  ops:        7447504
+  reg   ops/cell:   491201.51612903224
+  cache ops/cell:   1190.8585381735309
+  heap  ops/cell:   1212.3561777633079
+  ops   reg/cache:  2.0815205474883003
+  ops   cache/heap: 0.982267884649676
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -91,10 +91,14 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9664920132770096
-  cache write/miss:          0.8754527779794606
-numExpects: 748
-  happy:    648
-  unhappy:  100
-numBatches: 59
+  cache hit/op:              0.966630982171256
+  cache write/miss:          0.8729487521276378
+numExpects:     748
+  happy:        648
+  unhappy:      100
+numBatches:     65
+numMetaBatches: 31
+numVMs:         551
+numScmNoEvals:  13
+numScmFulls:    235
 make[1]: Leaving directory `/home/jwillett/jhwscm'

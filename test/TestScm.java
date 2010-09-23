@@ -48,23 +48,30 @@ public class TestScm extends Util
    private static boolean VERBOSE = false;
    private static boolean DEBUG   = true;
 
-   private static int numExpects        = 0;
+   private static int numVMs            = 0;
+   private static int numScmNoEvals     = 0;
+   private static int numScmFulls       = 0;
+   private static int numMetaBatches    = 0;
    private static int numBatches        = 0;
+   private static int numExpects        = 0;
    private static int numHappyExpects   = 0;
    private static int numUnhappyExpects = 0;
 
    private static Computer scmNoEval ()
    {
+      numScmNoEvals++;
       return newScm(RE_DEP);
    }
 
    private static Computer scmFull ()
    {
+      numScmFulls++;
       return newScm(REP_DEP);
    }
 
    private static Computer newScm ( final Batch b )
    {
+      numVMs++;
       final Machine  mach = new Machine(PROFILE,false,DEBUG,b.sizeIn,b.sizeOut);
       final JhwScm   firm = new JhwScm(b.do_rep,PROFILE,VERBOSE,DEBUG);
       final Computer comp = new Computer(mach,firm,PROFILE,VERBOSE,DEBUG);
@@ -575,13 +582,18 @@ public class TestScm extends Util
       
       // defining symbols
       {
-         final Computer scm = scmFull();
-         expect("(define a 100)","",   scm);
-         expect("a",             "100",scm);
-         expect("(define a 100)","",   scm);
-         expect("(define b   2)","",   scm);
-         expect("(+ a b)",       "102",scm);
-         expect("(+ a c)",SEMANTIC,            scm);
+         final Object[][] tests = { 
+            { "(define a 100)",           ""          },
+            { "a",                        "100"       },
+            { "(define a 100)",           ""          },
+            { "(define b   2)",           ""          },
+            { "(+ a b)",                  "102"       },
+            { "(+ a c)",                  SEMANTIC    },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       expect("(define a)",SEMANTIC);
 
@@ -589,10 +601,15 @@ public class TestScm extends Util
       expect("(define a 1)a(define a 2)a","12");
 
       {
-         final Computer scm = scmFull();
-         expect("(define foo +)","",  scm);
-         expect("(foo 13 18)",   "31",scm);
-         expect("(foo 13 '())",SEMANTIC,      scm);
+         final Object[][] tests = { 
+            { "(define foo +)",           ""          },
+            { "(foo 13 18)",              "31"        },
+            { "(foo 13 '())",             SEMANTIC    },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       // defining functions
@@ -617,58 +634,71 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
       {
-         final Computer scm = scmFull();
-         expect("(define (foo a b) (+ a b))","",  scm);
-         expect("(foo 13 18)",               "31",scm);
-         expect("(foo 13 '())",SEMANTIC,                  scm);
+         final Object[][] tests = { 
+            { "(define (foo a b) (+ a b))", ""          },
+            { "(foo 13 18)",                "31"        },
+            { "(foo 13 '())",               SEMANTIC    },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
+      // ambition: nontrivial user-defined recursive function
+      // 
+      // This one, Factorial, is good for playing w/ tail-recursion.
+      // The naive form is not tail recursive and consumes O(n) stack
+      // space - but the tail-recursive function is super simple.
+      //
+      // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
+      // but its tail-recursive twin runs just fine to vastly larger
+      // scale.
       {
-         // ambition: nontrivial user-defined recursive function
-         // 
-         // This one, Factorial, is good for playing w/ tail-recursion.
-         // The naive form is not tail recursive and consumes O(n) stack
-         // space - but the tail-recursive function is super simple.
-         //
-         // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
-         // but its tail-recursive twin runs just fine to vastly larger
-         // scale.
          final String fact = 
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
-         final Computer scm = scmFull();
-         expect(fact,        "",       scm);
-         expect("fact",      "???",    scm);
-         expect("(fact -1)", "1",      scm);
-         expect("(fact 0)",  "1",      scm);
-         expect("(fact 1)",  "1",      scm);
-         expect("(fact 2)",  "2",      scm);
-         expect("(fact 3)",  "6",      scm);
-         expect("(fact 4)",  "24",     scm);
-         expect("(fact 5)",  "120",    scm);
-         expect("(fact 6)",  "720",    scm);
-         expect("(fact 10)", "3628800",scm);
-         //report("fact simple:",scm);
+         final Object[][] tests = { 
+            { fact,                       ""          },
+            { "fact",                     "???"       },
+            { "(fact -1)",                "1"         },
+            { "(fact 0)",                 "1"         },
+            { "(fact 1)",                 "1"         },
+            { "(fact 2)",                 "2"         },
+            { "(fact 3)",                 "6"         },
+            { "(fact 4)",                 "24"        },
+            { "(fact 5)",                 "120"       },
+            { "(fact 6)",                 "720"       },
+            { "(fact 10)",                "3628800"   },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          final String help = 
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
          final String fact = 
             "(define (fact n) (help n 1))";
-         final Computer scm = scmFull();
-         expect(fact,        "",       scm);
-         expect(help,        "",       scm); // note, define help 2nd ;)
-         expect("fact",      "???",    scm);
-         expect("help",      "???",    scm);
-         expect("(fact -1)", "1",      scm);
-         expect("(fact 0)",  "1",      scm);
-         expect("(fact 1)",  "1",      scm);
-         expect("(fact 2)",  "2",      scm);
-         expect("(fact 3)",  "6",      scm);
-         expect("(fact 4)",  "24",     scm);
-         expect("(fact 5)",  "120",    scm);
-         expect("(fact 6)",  "720",    scm);
-         expect("(fact 10)", "3628800",scm);
-         //report("fact 2/ help:",scm);
+         final Object[][] tests = { 
+            { fact,                       ""          },
+            { help,                       ""          },// note, help 2nd ;)
+            { "fact",                     "???"       },
+            { "help",                     "???"       },
+            { "(fact -1)",                "1"         },
+            { "(fact 0)",                 "1"         },
+            { "(fact 1)",                 "1"         },
+            { "(fact 2)",                 "2"         },
+            { "(fact 3)",                 "6"         },
+            { "(fact 4)",                 "24"        },
+            { "(fact 5)",                 "120"       },
+            { "(fact 6)",                 "720"       },
+            { "(fact 10)",                "3628800"   },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       {
@@ -724,18 +754,26 @@ public class TestScm extends Util
       // Of course, you'd also want that test to be halting if fixints
       // ever started autopromoting to bigints... :)
       //
-      expect("268435455", "-1");
-      expect("268435456", "0");
-      expect("268435457", "1");
-      expect("(+ 268435455 0)", "-1");
-      expect("(+ 268435456 0)", "0");
-      expect("(+ 268435456 1)", "1");
-      expect("(+ 268435457 1)", "2");
-      expect("(+ 134217728 134217727)", "-1");
-      expect("(- 0 268435456)", "0");
-      expect("(- 0 268435455)", "1");
-      expect("(equal? 0 268435456)", "#t");
-      expect("(equal? 0 (* 100 268435456))", "#t");
+      {
+         final Object[][] tests = { 
+            { "268435455",                    "-1" },
+            { "268435456",                    "0"  },
+            { "268435457",                    "1"  },
+            { "(+ 268435455 0)",              "-1" },
+            { "(+ 268435456 0)",              "0"  },
+            { "(+ 268435456 1)",              "1"  },
+            { "(+ 268435457 1)",              "2"  },
+            { "(+ 134217728 134217727)",      "-1" },
+            { "(- 0 268435456)",              "0"  },
+            { "(- 0 268435455)",              "1"  },
+            { "(equal? 0 268435456)",         "#t" },
+            { "(equal? 0 (* 100 268435456))", "#t" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
+      }
 
       // let, local scopes:
       // 
@@ -1092,10 +1130,14 @@ public class TestScm extends Util
 
       reportGlobal();
 
-      log("numExpects: " + numExpects);
-      log("  happy:    " + numHappyExpects);
-      log("  unhappy:  " + numUnhappyExpects);
-      log("numBatches: " + numBatches);
+      log("numExpects:     " + numExpects);
+      log("  happy:        " + numHappyExpects);
+      log("  unhappy:      " + numUnhappyExpects);
+      log("numBatches:     " + numBatches);
+      log("numMetaBatches: " + numMetaBatches);
+      log("numVMs:         " + numVMs);
+      log("numScmNoEvals:  " + numScmNoEvals);
+      log("numScmFulls:    " + numScmFulls);
    }
 
    /**
@@ -1149,6 +1191,7 @@ public class TestScm extends Util
 
    private static void metabatch ( final Object[][] tests, final Batch[] types )
    {
+      numMetaBatches++;
       for ( int i = 0; i < types.length; ++i )
       {
          batch(tests,types[i]);
