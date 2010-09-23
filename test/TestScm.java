@@ -53,17 +53,20 @@ public class TestScm extends Util
    private static int numHappyExpects   = 0;
    private static int numUnhappyExpects = 0;
 
-   private static Computer newScm ( final boolean do_rep )
+   private static Computer scmNoEval ()
    {
-      return newScm(do_rep,1024,1024);
+      return newScm(RE_DEP);
    }
 
-   private static Computer newScm ( final boolean do_rep,
-                                    final int     sizeIn,
-                                    final int     sizeOut )
+   private static Computer scmFull ()
    {
-      final Machine  mach = new Machine(PROFILE,false,DEBUG,sizeIn,sizeOut);
-      final JhwScm   firm = new JhwScm(do_rep,PROFILE,VERBOSE,DEBUG);
+      return newScm(REP_DEP);
+   }
+
+   private static Computer newScm ( final Batch b )
+   {
+      final Machine  mach = new Machine(PROFILE,false,DEBUG,b.sizeIn,b.sizeOut);
+      final JhwScm   firm = new JhwScm(b.do_rep,PROFILE,VERBOSE,DEBUG);
       final Computer comp = new Computer(mach,firm,PROFILE,VERBOSE,DEBUG);
       return comp;
    }
@@ -166,8 +169,8 @@ public class TestScm extends Util
          batch(tests,REP_IND);
       }  
 
-      expect("-",   "-",  newScm(false));
-      expect("-asd", "-asd",  newScm(false));
+      expect("-",   "-",  scmNoEval());
+      expect("-asd", "-asd",  scmNoEval());
       expect("-",   null);
       expect("-as",SEMANTIC);
       
@@ -212,19 +215,19 @@ public class TestScm extends Util
       }  
 
       // improper list experssions: yay!
-      expect("(1 . 2)",      "(1 . 2)",   newScm(false));
-      expect("(1 2 . 3)",    "(1 2 . 3)", newScm(false));
-      expect("(1 . 2 3)", LEXICAL,  newScm(false));
-      expect("( . 2 3)", LEXICAL,   newScm(false));
-      expect("(1 . )", LEXICAL,   newScm(false));
-      expect("(1 .)", LEXICAL,   newScm(false));
+      expect("(1 . 2)",      "(1 . 2)",   scmNoEval());
+      expect("(1 2 . 3)",    "(1 2 . 3)", scmNoEval());
+      expect("(1 . 2 3)", LEXICAL,  scmNoEval());
+      expect("( . 2 3)", LEXICAL,   scmNoEval());
+      expect("(1 . )", LEXICAL,   scmNoEval());
+      expect("(1 .)", LEXICAL,   scmNoEval());
       expect("(1 . 2 3)",LEXICAL);
       expect("( . 2 3)",LEXICAL);
       expect("(1 . )",LEXICAL);
       expect("(1 .)",LEXICAL);
 
-      expect("(1 . ())",     "(1)",       newScm(false));
-      expect("(1 .())",      "(1)",       newScm(false));
+      expect("(1 . ())",     "(1)",       scmNoEval());
+      expect("(1 .())",      "(1)",       scmNoEval());
 
       // Guile does this, with nothing before the dot in a dotted list
       // but I do not quite understand why it works.
@@ -242,16 +245,16 @@ public class TestScm extends Util
       // Still, this demands I meditate on it to understand fully why
       // this is so.
       //
-      expect("( . 2 )",    "2",           newScm(false));
-      expect("( . 2 )",    "2",           newScm(true));
-      expect("( . () )",   "()",          newScm(false));
+      expect("( . 2 )",    "2",           scmNoEval());
+      expect("( . 2 )",    "2",           scmFull());
+      expect("( . () )",   "()",          scmNoEval());
       expect("( . 2 3 )",LEXICAL);
-      expect("(. abc )",   "abc",         newScm(false));
+      expect("(. abc )",   "abc",         scmNoEval());
 
       if ( false )
       {
          // Probably not until I handle floats!
-         expect("(1 .2)",       "(1 0.2)",   newScm(false));
+         expect("(1 .2)",       "(1 0.2)",   scmNoEval());
       }
 
       // character literals are self-evaluating - though some of them
@@ -483,7 +486,7 @@ public class TestScm extends Util
       
       // defining symbols
       {
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect("(define a 100)","",   scm);
          expect("a",             "100",scm);
          expect("(define a 100)","",   scm);
@@ -497,7 +500,7 @@ public class TestScm extends Util
       expect("(define a 1)a(define a 2)a","12");
 
       {
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect("(define foo +)","",  scm);
          expect("(foo 13 18)",   "31",scm);
          expect("(foo 13 '())",SEMANTIC,      scm);
@@ -517,7 +520,7 @@ public class TestScm extends Util
       expect("((lambda (a) (* 3 a)) 13)",    "39");
       expect("((lambda (a b) (* a b)) 13 5)","65");
       {
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect("(define (foo a b) (+ a b))","",  scm);
          expect("(foo 13 18)",               "31",scm);
          expect("(foo 13 '())",SEMANTIC,                  scm);
@@ -535,7 +538,7 @@ public class TestScm extends Util
          // scale.
          final String fact = 
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect(fact,        "",       scm);
          expect("fact",      "???",    scm);
          expect("(fact -1)", "1",      scm);
@@ -554,7 +557,7 @@ public class TestScm extends Util
             "(define (help n a) (if (< n 2) a (help (- n 1) (* n a))))";
          final String fact = 
             "(define (fact n) (help n 1))";
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect(fact,        "",       scm);
          expect(help,        "",       scm); // note, define help 2nd ;)
          expect("fact",      "???",    scm);
@@ -586,7 +589,7 @@ public class TestScm extends Util
          //
          final String fib = 
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect(fib,"",scm);
          expect("fib","???",scm);
          expect("(fib 0)","0",scm);
@@ -653,7 +656,7 @@ public class TestScm extends Util
          //
          // An overly simple early form of sub_let pushed frames onto
          // the env, but didn't pop them.
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect("(let ((a 10)) a)", "10", scm);
          expect("a",SEMANTIC,scm);
       }
@@ -677,7 +680,7 @@ public class TestScm extends Util
             "  (let ((help"                                                  +
             "        (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))))" +
             "    (help n 1)))";
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect(fact,       "",   scm);
          expect("fact",     "???",scm);
          expect("(fact -1)","1",  scm);
@@ -788,7 +791,7 @@ public class TestScm extends Util
       {
          // Are the nested-define defined symbols in scope of the
          // "real" body?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect("(define (a x) (define b 2) (+ x b))", "",    scm);
          expect("(a 10)",                              "12",  scm);
          expect("a",                                   "???", scm);
@@ -796,13 +799,13 @@ public class TestScm extends Util
       }
       {
          // Can we do more than one?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          expect("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
          expect("(f)","3",scm);
       }
       {
          // Can we do it for an inner helper function?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
@@ -820,7 +823,7 @@ public class TestScm extends Util
       }
       {
          // Do nested defines really act like (begin)?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String def = 
             "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
          expect(def,"",scm);
@@ -828,7 +831,7 @@ public class TestScm extends Util
       }
       {
          // Do nested defines really act like (begin) when we have args?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
          expect(def,"",scm);
@@ -837,7 +840,7 @@ public class TestScm extends Util
       }
       {
          // Are nested defines in one another's scope, in any order?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String F = 
             "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
          final String G = 
@@ -849,21 +852,21 @@ public class TestScm extends Util
       }
       {
          // What about defines in lambdas?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String def = 
             "((lambda (x) (define a 7) (+ x a)) 5)";
          expect(def,"12",scm);
       }
       {
          // What about closures?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String def = 
             "(((lambda (x) (lambda (y) (+ x y))) 10) 7)";
          expect(def,"17",scm);
       }
       {
          // What about closures?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String def = 
             "(define (f x) (lambda (y) (+ x y)))";
          expect(def,"",scm);
@@ -872,7 +875,7 @@ public class TestScm extends Util
       }
       {
          // What about closures?
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String def = 
             "(define (f x) (define (h y) (+ x y)) h)";
          expect(def,"",scm);
@@ -889,7 +892,7 @@ public class TestScm extends Util
 
       // check that map works w/ both builtins and user-defineds
       {
-         final Computer scm = newScm(true);
+         final Computer scm = scmFull();
          final String def = "(define (f x) (+ x 10))";
          expect("(map1 display '())",      "()");     
          expect("(map1 display '(1 2 3))", "123(  )");
@@ -1041,7 +1044,7 @@ public class TestScm extends Util
          final Object   result =         test[1];
          if ( !type.reuse || null == scm )
          {
-            scm = newScm(type.do_rep);
+            scm = newScm(type);
          }
          expect(expr,result,scm);
       }
@@ -1094,7 +1097,7 @@ public class TestScm extends Util
 
       if ( null == scm )
       {
-         scm = newScm(true);
+         scm = scmFull();
       }
       final Machine machine = scm.machine;
 
