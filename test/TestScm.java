@@ -97,7 +97,7 @@ public class TestScm extends Util
       // first content: simple integer expressions are self-evaluating
       // and self-printing.
       final String[] simpleInts = { 
-         "0", "1", "1234", "-1", "-4321", "10", "1001", 
+         "0", "1", "97", "1234", "-1", "-4321", "10", "1001", 
       };
       for ( final String expr : simpleInts )
       {
@@ -115,9 +115,8 @@ public class TestScm extends Util
             RE_DEP,
             REP_IND,
             REP_DEP,
-            //STRESS_OUT,
+            STRESS_OUT,
          };
-         //VERBOSE = true;
          metabatch(tests,batches);
       }
 
@@ -1191,7 +1190,7 @@ public class TestScm extends Util
       final boolean oldVerbose = VERBOSE;
       if ( STRESS_IO == type || STRESS_IN == type || STRESS_OUT == type )
       {
-         VERBOSE = true;
+         //VERBOSE = true;
       }
       numBatches++;
       Computer scm = null;
@@ -1298,7 +1297,7 @@ public class TestScm extends Util
       int dcode = Firmware.ERROR_INCOMPLETE;
       do
       {
-         dcode = scm.drive(debugRand.nextInt(100));
+         dcode = scm.drive(debugRand.nextInt(10));
 
          final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
          int output_off = 0;
@@ -1325,7 +1324,16 @@ public class TestScm extends Util
             }
          }
       }
-      while ( Firmware.ERROR_INCOMPLETE == dcode || !bufOut.isEmpty());
+      while ( Firmware.ERROR_INCOMPLETE == dcode ||
+              Firmware.ERROR_BLOCKED    == dcode || 
+              !bufOut.isEmpty() );
+
+      if ( VERBOSE )
+      {
+         log("dcode:            " + dcode);
+         log("bufIn.isEmpty():  " + bufIn.isEmpty());
+         log("bufOut.isEmpty(): " + bufOut.isEmpty());
+      }
 
       assertEquals("drive failure on \"" + expr + "\":",
                    expected_dcode,

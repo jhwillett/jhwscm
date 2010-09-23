@@ -2,8 +2,8 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 fib:
-  numCycles:        169391
-  numCons:          186561
+  numCycles:        169363
+  numCons:          186545
   iobuf:            0
     numInput:       123
     numOutput:      0
@@ -16,28 +16,28 @@ fib:
     numPeek:        0
     numPop:         12
     numPush:        12
-  reg.numSet:       1324262
-  reg.numGet:       3002596
+  reg.numSet:       1324118
+  reg.numGet:       3002308
   reg.maxAddr:      31
   heap.numSet:      57328
   heap.numGet:      386176
   heap.maxAddr:     6143
-  cache.numHits:    1466961
+  cache.numHits:    1466849
   cache.numMisses:  24120
   cache.numFlush:   3583
   cache.numDrop:    20537
   cache.numLoad:    24136
-  cacheTop.numSet:  565034
-  cacheTop.numGet:  926063
+  cacheTop.numSet:  564986
+  cacheTop.numGet:  925999
   cacheTop.maxAddr: 6143
-  reg   ops:        4326858
-  cache ops:        1491097
+  reg   ops:        4326426
+  cache ops:        1490985
   heap  ops:        443504
-  reg   ops/cell:   139576.06451612903
-  cache ops/cell:   242.73107602148787
+  reg   ops/cell:   139562.12903225806
+  cache ops/cell:   242.71284388735145
   heap  ops/cell:   72.19664658961419
-  ops   reg/cache:  2.9017951213100153
-  ops   cache/heap: 3.3620824163930876
+  ops   reg/cache:  2.9017233573778407
+  ops   cache/heap: 3.3618298820303765
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -45,45 +45,45 @@ fib:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.983823816412388
+  cache hit/op:              0.9838226012747414
   cache write/miss:          0.14854892205638473
 global:
-  numCycles:        510894
-  numCons:          548215
+  numCycles:        520146
+  numCons:          557133
   iobuf:            0
-    numInput:       6434
+    numInput:       6757
     numOutput:      0
-    numPeek:        17306
-    numPop:         6425
-    numPush:        6434
+    numPeek:        17929
+    numPop:         6748
+    numPush:        6757
   iobuf:            1
     numInput:       0
-    numOutput:      1788
+    numOutput:      1991
     numPeek:        0
-    numPop:         1788
-    numPush:        1788
-  reg.numSet:       5454306
-  reg.numGet:       9818853
+    numPop:         1991
+    numPush:        1991
+  reg.numSet:       5587728
+  reg.numGet:       10013909
   reg.maxAddr:      31
-  heap.numSet:      3405408
-  heap.numGet:      4042096
+  heap.numSet:      3549264
+  heap.numGet:      4192096
   heap.maxAddr:     6143
-  cache.numHits:    7069617
-  cache.numMisses:  243815
-  cache.numFlush:   212838
+  cache.numHits:    7261312
+  cache.numMisses:  252806
+  cache.numFlush:   221829
   cache.numDrop:    30977
-  cache.numLoad:    252631
-  cacheTop.numSet:  5011939
-  cacheTop.numGet:  2310309
+  cache.numLoad:    262006
+  cacheTop.numSet:  5185367
+  cacheTop.numGet:  2337951
   cacheTop.maxAddr: 6143
-  reg   ops:        15273159
-  cache ops:        7322248
-  heap  ops:        7447504
-  reg   ops/cell:   492682.5483870968
-  cache ops/cell:   1191.966140322318
-  heap  ops/cell:   1212.3561777633079
-  ops   reg/cache:  2.0858565566203167
-  ops   cache/heap: 0.9831814793251538
+  reg   ops:        15601637
+  cache ops:        7523318
+  heap  ops:        7741360
+  reg   ops/cell:   503278.6129032258
+  cache ops/cell:   1224.6977047045418
+  heap  ops/cell:   1260.19208855608
+  ops   reg/cache:  2.073770775075572
+  ops   cache/heap: 0.9718341480050017
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -91,14 +91,14 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9666620268021908
-  cache write/miss:          0.8729487521276378
-numExpects:     748
-  happy:        648
+  cache hit/op:              0.9663558650529577
+  cache write/miss:          0.8774673069468288
+numExpects:     832
+  happy:        732
   unhappy:      100
-numBatches:     65
-numMetaBatches: 31
-numVMs:         551
+numBatches:     77
+numMetaBatches: 32
+numVMs:         575
 numScmNoEvals:  13
 numScmFulls:    235
 make[1]: Leaving directory `/home/jwillett/jhwscm'

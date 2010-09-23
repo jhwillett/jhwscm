@@ -2769,6 +2769,7 @@ public class JhwScm implements Firmware
             log("blocked");
             return ERROR_BLOCKED;
          }
+         log("unblocked");
          final byte b     = iobuf.peek();
          final char c     = (char)b;
          final int  value = code(TYPE_CHAR,c);
@@ -2798,6 +2799,7 @@ public class JhwScm implements Firmware
             log("blocked");
             return ERROR_BLOCKED;
          }
+         log("unblocked");
          iobuf.push((byte)value(value));
          mach.reg.set(regPc,cont);
          break; }
