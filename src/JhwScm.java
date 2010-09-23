@@ -2206,24 +2206,31 @@ public class JhwScm implements Firmware
          //
          // Returns UNSPECIFIED.
          //
+         log("regArg0: ",pp(reg.get(regArg0)));
+         log("regArg1: ",pp(reg.get(regArg1)));
          tmp0 = value_fixint(reg.get(regArg0));
+         log("tmp0:    ",tmp0);
          if ( 0 > reg.get(regTmp1) )
          {
+            log("negative");
             reg.set(regIO,code(TYPE_CHAR,'-'));
             portPush(regArg1,sub_print_fixint+0x1);
          }
          else if ( 0 == reg.get(regTmp1) )
          {
+            log("zero");
             reg.set(regIO,code(TYPE_CHAR,'0'));
             portPush(regArg1,blk_tail_call); // TODO: clever or stupid?
          }
          else
          {
+            log("posititive");
             reg.set(regArg2,NIL);
             gosub(sub_print_pos_fixint,blk_tail_call);
          }
          break;
       case sub_print_fixint+0x1:
+         log("negated");
          tmp0 = -value_fixint(reg.get(regArg0));
          reg.set(regArg0, tmp0);
          reg.set(regArg2, NIL);
@@ -2237,15 +2244,21 @@ public class JhwScm implements Firmware
          //
          // Returns UNSPECIFIED.
          //
+         log("regArg0: ",pp(reg.get(regArg0)));
+         log("regArg1: ",pp(reg.get(regArg1)));
+         log("regArg2: ",pp(reg.get(regArg2)));
          tmp0 = value_fixint(reg.get(regArg0));
          if ( 0 == tmp0 )
          {
+            log("zero base case");
             reg.set(regArg0,reg.get(regArg2));
             gosub(sub_print_chars,blk_tail_call);
             break;
          }
          tmp1 = tmp0 % 10;
          tmp2 = tmp0 / 10;
+         log("tmp1:    ",tmp1);
+         log("tmp2:    ",tmp2);
          reg.set(regTmp0,code(TYPE_FIXINT,tmp1));
          reg.set(regTmp1,cons(reg.get(regTmp0),reg.get(regArg2)));
          reg.set(regArg2,reg.get(regTmp1));
@@ -2291,8 +2304,14 @@ public class JhwScm implements Firmware
          if ( FALSE == reg.get(regArg2) )
          {
             reg.set(regIO,code(TYPE_CHAR,' '));
-            portPush(regArg1);
+            portPush(regArg1,sub_print_list_elems+0x1);
          }
+         else
+         {
+            reg.set(regPc,sub_print_list_elems+0x1); // TODO: THE EVIL JUMP!
+         }
+         break;
+      case sub_print_list_elems+0x1:
          store(regArg0);
          store(regArg1);
          reg.set(regTmp0,  car(reg.get(regArg0)));
@@ -2302,38 +2321,38 @@ public class JhwScm implements Firmware
          {
             log("dotted list");
             reg.set(regArg0,  reg.get(regTmp0));
-            gosub(sub_print,sub_print_list_elems+0x2);
+            gosub(sub_print,sub_print_list_elems+0x3);
          }
          else
          {
             log("regular list so far");
             reg.set(regArg0,  reg.get(regTmp0));
-            gosub(sub_print,sub_print_list_elems+0x1);
+            gosub(sub_print,sub_print_list_elems+0x2);
          }
          break;
-      case sub_print_list_elems+0x1:
+      case sub_print_list_elems+0x2:
          restore(regArg1);
          restore(regTmp0);
          reg.set(regArg0,  cdr(reg.get(regTmp0)));
          reg.set(regArg2,  FALSE);
          gosub(sub_print_list_elems,blk_tail_call);
          break;
-      case sub_print_list_elems+0x2:
+      case sub_print_list_elems+0x3:
          restore(regArg1);
          restore(regTmp0);
          reg.set(regArg0,  cdr(reg.get(regTmp0)));
          reg.set(regIO,code(TYPE_CHAR,' '));
-         portPush(regArg1, sub_print_list_elems+0x3);
-         break;
-      case sub_print_list_elems+0x3:
-         reg.set(regIO,code(TYPE_CHAR,'.'));
          portPush(regArg1, sub_print_list_elems+0x4);
          break;
       case sub_print_list_elems+0x4:
-         reg.set(regIO,code(TYPE_CHAR,' '));
-         portPush(regArg1, sub_print_list_elems+0x5);
+         reg.set(regIO,code(TYPE_CHAR,'.'));
+         portPush(regArg1, sub_print_list_elems+0x4);
          break;
       case sub_print_list_elems+0x5:
+         reg.set(regIO,code(TYPE_CHAR,' '));
+         portPush(regArg1, sub_print_list_elems+0x6);
+         break;
+      case sub_print_list_elems+0x6:
          gosub(sub_print,blk_tail_call);
          break;
 
