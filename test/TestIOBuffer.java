@@ -58,7 +58,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().input(null,0,0);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( NullPointerException expected )
       {
@@ -67,7 +67,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(null,0,0);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( NullPointerException expected )
       {
@@ -76,7 +76,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().input(new byte[0],-1,0);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -84,7 +84,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().input(new byte[0],0,-1);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -92,7 +92,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().input(new byte[0],2,3);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -100,7 +100,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().input(new byte[0],3,2);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -108,7 +108,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(new byte[0],-1,0);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -116,7 +116,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(new byte[0],-1,0);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -124,7 +124,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(new byte[0],0,-1);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -132,7 +132,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(new byte[0],0,-1);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -140,7 +140,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(new byte[0],2,3);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -148,7 +148,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(new byte[0],3,2);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -156,7 +156,7 @@ public class TestIOBuffer extends Util
       try
       {
          newBuf().output(new byte[3],2,3);
-         throw new RuntimeException("out of spec");
+         fail("out of spec");
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -172,7 +172,7 @@ public class TestIOBuffer extends Util
          final int code = newBuf().output(new byte[5],2,3);
          if ( -1 != code && 0 != code )
          {
-            throw new RuntimeException("output() out of spec");
+            fail("output() out of spec");
          }
       }
 

@@ -1338,7 +1338,7 @@ public class TestScm extends Util
       {
          if ( !lastTime )
          {
-            throw new RuntimeException("lastTime arg irrelevant for one-shot");
+            fail("lastTime arg irrelevant for one-shot");
          }
          scm = newScm(REP_IND);
       }
@@ -1411,7 +1411,7 @@ public class TestScm extends Util
             }
             else
             {
-               throw new RuntimeException("input() out of spec: " + code);
+               fail("input() out of spec: " + code);
             }
          }
 
@@ -1430,7 +1430,7 @@ public class TestScm extends Util
             final int num = bufOut.output(output_buf, output_off, output_len);
             if ( 0 > num )
             {
-               throw new RuntimeException("output() out of spec: " + num);
+               fail("output() out of spec: " + num);
             }
             if ( 0 == num )
             {

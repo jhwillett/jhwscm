@@ -29,7 +29,7 @@ public class TestMachine extends Util
       try
       {
          mach.getIoBuf(-1);
-         throw new RuntimeException("Machine.getIoBuf() out of spec"); 
+         fail("Machine.getIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -37,7 +37,7 @@ public class TestMachine extends Util
       try
       {
          mach.getIoBuf(num);
-         throw new RuntimeException("Machine.getIoBuf() out of spec"); 
+         fail("Machine.getIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -45,7 +45,7 @@ public class TestMachine extends Util
       try
       {
          mach.getIoBuf(num+1);
-         throw new RuntimeException("Machine.getIoBuf() out of spec"); 
+         fail("Machine.getIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -53,7 +53,7 @@ public class TestMachine extends Util
       try
       {
          mach.closeIoBuf(-1);
-         throw new RuntimeException("Machine.closeIoBuf() out of spec"); 
+         fail("Machine.closeIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -61,7 +61,7 @@ public class TestMachine extends Util
       try
       {
          mach.closeIoBuf(num);
-         throw new RuntimeException("Machine.closeIoBuf() out of spec"); 
+         fail("Machine.closeIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -69,7 +69,7 @@ public class TestMachine extends Util
       try
       {
          mach.closeIoBuf(num+1);
-         throw new RuntimeException("Machine.closeIoBuf() out of spec"); 
+         fail("Machine.closeIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -80,7 +80,7 @@ public class TestMachine extends Util
          final IOBuffer buf = mach.getIoBuf(i);
          if ( null == buf )
          {
-            throw new RuntimeException("Machine.getIoBuf() out of spec"); 
+            fail("Machine.getIoBuf() out of spec"); 
          }
       }
       if ( 0 < num )
@@ -88,14 +88,14 @@ public class TestMachine extends Util
          mach.closeIoBuf(0);
          if ( null != mach.getIoBuf(0) )
          {
-            throw new RuntimeException("Machine.getIoBuf() out of spec"); 
+            fail("Machine.getIoBuf() out of spec"); 
          }
          mach.closeIoBuf(0);
          mach.closeIoBuf(0);
          mach.closeIoBuf(0);
          if ( null != mach.getIoBuf(0) )
          {
-            throw new RuntimeException("Machine.getIoBuf() out of spec"); 
+            fail("Machine.getIoBuf() out of spec"); 
          }
       }
    }

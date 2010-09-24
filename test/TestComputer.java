@@ -75,7 +75,7 @@ public class TestComputer extends Util
       try
       {
          comp.drive(-1);
-         throw new RuntimeException("bogus");
+         fail("bogus");
       }
       catch ( Throwable expected )
       {
