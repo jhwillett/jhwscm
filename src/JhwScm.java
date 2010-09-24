@@ -395,10 +395,14 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read+0x2);
          break;
       case sub_read+0x2:
+         // TODO: Now that portPush() and portPeek() are blocking
+         // calls, in many places we could just use regIO instead of
+         // some regTmpX.
+         //
          reg.set(regTmp0, reg.get(regIO));
          if ( EOF == reg.get(regTmp0) )
          {
-            reg.set(regRetval,  EOF);
+            reg.set(regRetval, EOF);
             returnsub();
             break;
          }
@@ -2797,7 +2801,7 @@ public class JhwScm implements Firmware
          {
             log("  portPeek(): closed");
             mach.reg.set(regIO, EOF);
-            mach.reg.set(regPc,cont);
+            mach.reg.set(regPc, cont);
             break;
          }
          if ( iobuf.isEmpty() )
