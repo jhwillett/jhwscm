@@ -67,6 +67,11 @@ public class Util
       System.out.println(obj);
    }
 
+   public static void fail ( final String msg )
+   {
+      throw new RuntimeException(msg);
+   }
+
    public static void assertEquals ( final Object a, final Object b )
    {
       assertEquals(null,a,b);
