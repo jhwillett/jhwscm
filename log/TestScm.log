@@ -1,104 +1,1168 @@
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
-fib:
-  numCycles:        170187
-  numCons:          186545
-  iobuf:            0
-    numInput:       123
-    numOutput:      0
-    numPeek:        391
-    numPop:         123
-    numPush:        123
-  iobuf:            1
-    numInput:       0
-    numOutput:      12
-    numPeek:        0
-    numPop:         12
-    numPush:        12
-  reg.numSet:       1325766
-  reg.numGet:       3006016
-  reg.maxAddr:      31
-  heap.numSet:      57328
-  heap.numGet:      386176
-  heap.maxAddr:     6143
-  cache.numHits:    1466849
-  cache.numMisses:  24120
-  cache.numFlush:   3583
-  cache.numDrop:    20537
-  cache.numLoad:    24136
-  cacheTop.numSet:  564986
-  cacheTop.numGet:  925999
-  cacheTop.maxAddr: 6143
-  reg   ops:        4331782
-  cache ops:        1490985
-  heap  ops:        443504
-  reg   ops/cell:   139734.90322580645
-  cache ops/cell:   242.71284388735145
-  heap  ops/cell:   72.19664658961419
-  ops   reg/cache:  2.9053156135038245
-  ops   cache/heap: 3.3618298820303765
-  ALG:                       4
-  LINE_SIZE:                 16
-  LINE_COUNT:                16
-  PROPERLY_TAIL_RECURSIVE:   true
-  CLEVER_TAIL_CALL_MOD_CONS: true
-  CLEVER_STACK_RECYCLING:    true
-  CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9838226012747414
-  cache write/miss:          0.14854892205638473
-global:
-  numCycles:        559250
-  numCons:          557069
-  iobuf:            0
-    numInput:       6757
-    numOutput:      0
-    numPeek:        17929
-    numPop:         6748
-    numPush:        6757
-  iobuf:            1
-    numInput:       0
-    numOutput:      1991
-    numPeek:        0
-    numPop:         1991
-    numPush:        1991
-  reg.numSet:       5665580
-  reg.numGet:       10189230
-  reg.maxAddr:      31
-  heap.numSet:      3549264
-  heap.numGet:      4192096
-  heap.maxAddr:     6143
-  cache.numHits:    7260864
-  cache.numMisses:  252806
-  cache.numFlush:   221829
-  cache.numDrop:    30977
-  cache.numLoad:    262006
-  cacheTop.numSet:  5185175
-  cacheTop.numGet:  2337695
-  cacheTop.maxAddr: 6143
-  reg   ops:        15854810
-  cache ops:        7522870
-  heap  ops:        7741360
-  reg   ops/cell:   511445.48387096776
-  cache ops/cell:   1224.624776167996
-  heap  ops/cell:   1260.19208855608
-  ops   reg/cache:  2.1075480501457555
-  ops   cache/heap: 0.9717762770365931
-  ALG:                       4
-  LINE_SIZE:                 16
-  LINE_COUNT:                16
-  PROPERLY_TAIL_RECURSIVE:   true
-  CLEVER_TAIL_CALL_MOD_CONS: true
-  CLEVER_STACK_RECYCLING:    true
-  CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9663538590329359
-  cache write/miss:          0.8774673069468288
-numExpects:     832
-  happy:        732
-  unhappy:      100
-numBatches:     77
-numMetaBatches: 32
-numVMs:         575
-numScmNoEvals:  13
-numScmFulls:    235
+boot: 
+input(): 0+1 / 1
+input max:  1 / 1
+input(): pushing byte 48
+input(): pushing char 0
+step: sub_init|0x0
+  stored:   sub_init|0x1
+output(): 0+1 / 1
+output max: 1 / 1
+  step: sub_prebind|0x0
+    stored:   fixint|0
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'+'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|0
+    stored:   fixint|0
+    stored:   cell|3067
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3067
+    restored: fixint|0
+output(): 0+5 / 5
+output max: 2 / 5
+  step: sub_prebind|0x0
+    stored:   fixint|1
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+output(): 0+3 / 3
+output max: 3 / 3
+      step: sub_const_chars|0x0
+        stored:   char|'*'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|1
+    stored:   fixint|1
+    stored:   cell|3063
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3063
+    restored: fixint|1
+  step: sub_prebind|0x0
+    stored:   fixint|2
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+output(): 0+7 / 7
+output max: 6 / 7
+      step: sub_const_chars|0x0
+        stored:   char|'-'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|2
+    stored:   fixint|2
+    stored:   cell|3059
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3059
+    restored: fixint|2
+  step: sub_prebind|0x0
+    stored:   fixint|3
+    stored:   sub_prebind|0x1
+output(): 0+5 / 5
+output max: 5 / 5
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'<'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+        restored: blk_tail_call_m_cons
+output(): 0+5 / 5
+output max: 5 / 5
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|3
+    stored:   fixint|3
+    stored:   cell|3055
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3055
+    restored: fixint|3
+  step: sub_prebind|0x0
+    stored:   fixint|4
+    stored:   sub_prebind|0x1
+output(): 0+8 / 8
+output max: 2 / 8
+output(): 0+10 / 10
+output max: 7 / 10
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'+'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'0'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+output(): 0+1 / 1
+output max: 0 / 1
+output(): shifted: 0
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|4
+    stored:   fixint|4
+    stored:   cell|3051
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3051
+    restored: fixint|4
+  step: sub_prebind|0x0
+    stored:   fixint|5
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'+'
+        stored:   blk_tail_call_m_cons
+output(): 0+7 / 7
+output max: 0 / 7
+output(): shifted: 0
+        step: sub_const_chars|0x0
+          stored:   char|'1'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|5
+    stored:   fixint|5
+    stored:   cell|3046
+    stored:   sub_prebind|0x2
+output(): 0+4 / 4
+output max: 3 / 4
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3046
+    restored: fixint|5
+  step: sub_prebind|0x0
+    stored:   fixint|6
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'+'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'3'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+output(): 0+9 / 9
+output max: 9 / 9
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|6
+    stored:   fixint|6
+    stored:   cell|3041
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3041
+    restored: fixint|6
+  step: sub_prebind|0x0
+    stored:   fixint|7
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+output(): 0+7 / 7
+output max: 7 / 7
+      step: sub_const_chars|0x0
+        stored:   char|'c'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'o'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'n'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'s'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+output(): 0+1 / 1
+output max: 0 / 1
+output(): shifted: 0
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|7
+    stored:   fixint|7
+    stored:   cell|3036
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+output(): 0+1 / 1
+output max: 1 / 1
+  step: sub_prebind|0x2
+    restored: cell|3036
+    restored: fixint|7
+  step: sub_prebind|0x0
+    stored:   fixint|8
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+output(): 0+9 / 9
+output max: 6 / 9
+      step: sub_const_chars|0x0
+        stored:   char|'c'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'a'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'r'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+output(): 0+9 / 9
+output max: 4 / 9
+output(): 0+2 / 2
+output max: 0 / 2
+output(): shifted: 0
+  step: sub_prebind|0x1
+    restored: fixint|8
+    stored:   fixint|8
+    stored:   cell|3031
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3031
+    restored: fixint|8
+  step: sub_prebind|0x0
+    stored:   fixint|9
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'c'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'d'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'r'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+            restored: blk_tail_call_m_cons
+output(): 0+2 / 2
+output max: 1 / 2
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|9
+    stored:   fixint|9
+    stored:   cell|3024
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3024
+    restored: fixint|9
+  step: sub_prebind|0x0
+    stored:   fixint|10
+    stored:   sub_prebind|0x1
+output(): 0+6 / 6
+output max: 6 / 6
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'l'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'i'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'s'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'t'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+              restored: blk_tail_call_m_cons
+output(): 0+8 / 8
+output max: 7 / 8
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+output(): 0+10 / 10
+output max: 1 / 10
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|10
+    stored:   fixint|10
+    stored:   cell|3018
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3018
+    restored: fixint|10
+  step: sub_prebind|0x0
+    stored:   fixint|11
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+output(): 0+5 / 5
+output max: 1 / 5
+      step: sub_const_chars|0x0
+        stored:   char|'i'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'f'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|11
+    stored:   fixint|11
+    stored:   cell|3012
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3012
+    restored: fixint|11
+output(): 0+5 / 5
+output max: 1 / 5
+  step: sub_prebind|0x0
+    stored:   fixint|12
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'q'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'u'
+          stored:   blk_tail_call_m_cons
+output(): 0+9 / 9
+output max: 4 / 9
+          step: sub_const_chars|0x0
+            stored:   char|'o'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'t'
+              stored:   blk_tail_call_m_cons
+output(): 0+8 / 8
+output max: 6 / 8
+              step: sub_const_chars|0x0
+                stored:   char|'e'
+                stored:   blk_tail_call_m_cons
+                step: sub_const_chars|0x0
+                restored: blk_tail_call_m_cons
+              step: blk_tail_call_m_cons
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|12
+    stored:   fixint|12
+    stored:   cell|3005
+    stored:   sub_prebind|0x2
+output(): 0+8 / 8
+output max: 5 / 8
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3005
+    restored: fixint|12
+  step: sub_prebind|0x0
+    stored:   fixint|13
+    stored:   sub_prebind|0x1
+output(): 0+5 / 5
+output max: 5 / 5
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'d'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'e'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'f'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'i'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+                stored:   char|'n'
+                stored:   blk_tail_call_m_cons
+output(): 0+8 / 8
+output max: 2 / 8
+                step: sub_const_chars|0x0
+                  stored:   char|'e'
+                  stored:   blk_tail_call_m_cons
+                  step: sub_const_chars|0x0
+                  restored: blk_tail_call_m_cons
+                step: blk_tail_call_m_cons
+                restored: blk_tail_call_m_cons
+              step: blk_tail_call_m_cons
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+output(): 0+3 / 3
+output max: 2 / 3
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|13
+    stored:   fixint|13
+    stored:   cell|3000
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|3000
+    restored: fixint|13
+  step: sub_prebind|0x0
+    stored:   fixint|14
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'l'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'a'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'m'
+            stored:   blk_tail_call_m_cons
+output(): 0+5 / 5
+output max: 2 / 5
+            step: sub_const_chars|0x0
+              stored:   char|'b'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+                stored:   char|'d'
+                stored:   blk_tail_call_m_cons
+                step: sub_const_chars|0x0
+                  stored:   char|'a'
+                  stored:   blk_tail_call_m_cons
+                  step: sub_const_chars|0x0
+                  restored: blk_tail_call_m_cons
+output(): 0+9 / 9
+output max: 1 / 9
+                step: blk_tail_call_m_cons
+                restored: blk_tail_call_m_cons
+output(): 0+7 / 7
+output max: 0 / 7
+output(): shifted: 0
+              step: blk_tail_call_m_cons
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|14
+    stored:   fixint|14
+    stored:   cell|2992
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2992
+    restored: fixint|14
+output(): 0+6 / 6
+output max: 1 / 6
+  step: sub_prebind|0x0
+    stored:   fixint|15
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'e'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'q'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'u'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'a'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+                stored:   char|'l'
+                stored:   blk_tail_call_m_cons
+                step: sub_const_chars|0x0
+                  stored:   char|'?'
+                  stored:   blk_tail_call_m_cons
+                  step: sub_const_chars|0x0
+                  restored: blk_tail_call_m_cons
+output(): 0+3 / 3
+output max: 3 / 3
+                step: blk_tail_call_m_cons
+                restored: blk_tail_call_m_cons
+              step: blk_tail_call_m_cons
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+output(): 0+7 / 7
+output max: 5 / 7
+  step: sub_prebind|0x1
+    restored: fixint|15
+    stored:   fixint|15
+    stored:   cell|2983
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2983
+    restored: fixint|15
+  step: sub_prebind|0x0
+    stored:   fixint|16
+    stored:   sub_prebind|0x1
+output(): 0+2 / 2
+output max: 2 / 2
+output(): 0+5 / 5
+output max: 3 / 5
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'l'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'e'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'t'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+output(): 0+7 / 7
+output max: 5 / 7
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|16
+    stored:   fixint|16
+    stored:   cell|2974
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2974
+    restored: fixint|16
+  step: sub_prebind|0x0
+    stored:   fixint|17
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'b'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'e'
+          stored:   blk_tail_call_m_cons
+output(): 0+2 / 2
+output max: 2 / 2
+          step: sub_const_chars|0x0
+            stored:   char|'g'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'i'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+                stored:   char|'n'
+                stored:   blk_tail_call_m_cons
+                step: sub_const_chars|0x0
+                restored: blk_tail_call_m_cons
+              step: blk_tail_call_m_cons
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+output(): 0+4 / 4
+output max: 2 / 4
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|17
+    stored:   fixint|17
+    stored:   cell|2965
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2965
+    restored: fixint|17
+output(): 0+9 / 9
+output max: 1 / 9
+  step: sub_prebind|0x0
+    stored:   fixint|18
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'c'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'o'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'n'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'d'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+output(): 0+6 / 6
+output max: 4 / 6
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|18
+    stored:   fixint|18
+    stored:   cell|2959
+    stored:   sub_prebind|0x2
+output(): 0+8 / 8
+output max: 0 / 8
+output(): shifted: 0
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2959
+    restored: fixint|18
+  step: sub_prebind|0x0
+    stored:   fixint|19
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'c'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'a'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'s'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'e'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+              restored: blk_tail_call_m_cons
+output(): 0+10 / 10
+output max: 8 / 10
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+output(): 0+9 / 9
+output max: 4 / 9
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|19
+    stored:   fixint|19
+    stored:   cell|2951
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2951
+    restored: fixint|19
+  step: sub_prebind|0x0
+    stored:   fixint|20
+    stored:   sub_prebind|0x1
+output(): 0+8 / 8
+output max: 1 / 8
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+output(): 0+1 / 1
+output max: 1 / 1
+      step: sub_const_chars|0x0
+        stored:   char|'r'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'e'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'a'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'d'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+output(): 0+10 / 10
+output max: 0 / 10
+output(): shifted: 0
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|20
+    stored:   fixint|20
+    stored:   cell|2944
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2944
+    restored: fixint|20
+  step: sub_prebind|0x0
+    stored:   fixint|21
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'d'
+        stored:   blk_tail_call_m_cons
+output(): 0+3 / 3
+output max: 0 / 3
+output(): shifted: 0
+        step: sub_const_chars|0x0
+          stored:   char|'i'
+          stored:   blk_tail_call_m_cons
+          step: sub_const_chars|0x0
+            stored:   char|'s'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'p'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+                stored:   char|'l'
+                stored:   blk_tail_call_m_cons
+                step: sub_const_chars|0x0
+                  stored:   char|'a'
+                  stored:   blk_tail_call_m_cons
+                  step: sub_const_chars|0x0
+                    stored:   char|'y'
+                    stored:   blk_tail_call_m_cons
+                    step: sub_const_chars|0x0
+                    restored: blk_tail_call_m_cons
+                  step: blk_tail_call_m_cons
+                  restored: blk_tail_call_m_cons
+                step: blk_tail_call_m_cons
+                restored: blk_tail_call_m_cons
+output(): 0+1 / 1
+output max: 1 / 1
+              step: blk_tail_call_m_cons
+              restored: blk_tail_call_m_cons
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|21
+    stored:   fixint|21
+    stored:   cell|2937
+    stored:   sub_prebind|0x2
+output(): 0+4 / 4
+output max: 3 / 4
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+  step: sub_prebind|0x2
+    restored: cell|2937
+    restored: fixint|21
+  step: sub_prebind|0x0
+    stored:   fixint|22
+    stored:   sub_prebind|0x1
+    step: sub_const_symbol|0x0
+      stored:   IS_SYMBOL
+      stored:   blk_tail_call_m_cons
+      step: sub_const_chars|0x0
+        stored:   char|'m'
+        stored:   blk_tail_call_m_cons
+        step: sub_const_chars|0x0
+          stored:   char|'a'
+          stored:   blk_tail_call_m_cons
+output(): 0+6 / 6
+output max: 2 / 6
+          step: sub_const_chars|0x0
+            stored:   char|'p'
+            stored:   blk_tail_call_m_cons
+            step: sub_const_chars|0x0
+              stored:   char|'1'
+              stored:   blk_tail_call_m_cons
+              step: sub_const_chars|0x0
+              restored: blk_tail_call_m_cons
+output(): 0+8 / 8
+output max: 1 / 8
+            step: blk_tail_call_m_cons
+            restored: blk_tail_call_m_cons
+          step: blk_tail_call_m_cons
+          restored: blk_tail_call_m_cons
+        step: blk_tail_call_m_cons
+        restored: blk_tail_call_m_cons
+      step: blk_tail_call_m_cons
+      restored: blk_tail_call_m_cons
+output(): 0+8 / 8
+output max: 4 / 8
+    step: blk_tail_call_m_cons
+    restored: sub_prebind|0x1
+  step: sub_prebind|0x1
+    restored: fixint|22
+    stored:   fixint|22
+    stored:   cell|2930
+    stored:   sub_prebind|0x2
+    step: sub_const_val|0x0
+    restored: sub_prebind|0x2
+output(): 0+8 / 8
+output max: 4 / 8
+  step: sub_prebind|0x2
+    restored: cell|2930
+    restored: fixint|22
+  step: sub_prebind|0x0
+  restored: sub_init|0x1
+output(): 0+4 / 4
+output max: 2 / 4
+step: sub_init|0x1
+  stored:   blk_halt
+  step: sub_top|0x0
+    stored:   sub_top|0x1
+output(): 0+4 / 4
+output max: 2 / 4
+output(): 0+6 / 6
+output max: 2 / 6
+    step: sub_readv|0x0
+      default arg: NIL
+    step: sub_read|0x0
+      stored:   iobuf|0
+      stored:   sub_read|0x1
+      step: sub_read_burn_space|0x0
+          portPeek(): regPort        iobuf|0
+          portPeek(): regIO          UNSPECIFIED
+          portPeek(): continuationOp sub_read_burn_space|0x1
+      step: blk_block_on_read
+        port:  iobuf|0
+        cont:  sub_read_burn_space|0x1
+        iobuf: IOBuffer@1d58aae
+        unblocked
+        value: char|'0'
+          c:   0
+          b:   48
+        cont:  sub_read_burn_space|0x1
+      step: sub_read_burn_space|0x1
+      restored: sub_read|0x1
+    step: sub_read|0x1
+      restored: iobuf|0
+        portPeek(): regPort        iobuf|0
+        portPeek(): regIO          char|'0'
+        portPeek(): continuationOp sub_read|0x2
+output(): 0+4 / 4
+output max: 3 / 4
+output(): 0+4 / 4
+output max: 0 / 4
+output(): shifted: 0
+    step: blk_block_on_read
+      port:  iobuf|0
+      cont:  sub_read|0x2
+      iobuf: IOBuffer@1d58aae
+      unblocked
+      value: char|'0'
+        c:   0
+        b:   48
+      cont:  sub_read|0x2
+    step: sub_read|0x2
+    step: sub_read_atom|0x0
+        portPeek(): regPort        iobuf|0
+        portPeek(): regIO          char|'0'
+        portPeek(): continuationOp sub_read_atom|0x1
+    step: blk_block_on_read
+      port:  iobuf|0
+      cont:  sub_read_atom|0x1
+      iobuf: IOBuffer@1d58aae
+      unblocked
+      value: char|'0'
+        c:   0
+        b:   48
+      cont:  sub_read_atom|0x1
+    step: sub_read_atom|0x1
+      non-negated number
+    step: sub_read_num|0x0
+    step: sub_read_num_loop|0x0
+        portPeek(): regPort        iobuf|0
+        portPeek(): regIO          char|'0'
+        portPeek(): continuationOp sub_read_num_loop|0x1
+    step: blk_block_on_read
+      port:  iobuf|0
+      cont:  sub_read_num_loop|0x1
+      iobuf: IOBuffer@1d58aae
+      unblocked
+      value: char|'0'
+        c:   0
+        b:   48
+      cont:  sub_read_num_loop|0x1
+output(): 0+3 / 3
+output max: 2 / 3
+    step: sub_read_num_loop|0x1
+      first char: 0
+      old accum:  0
+      new accum:  0
+        portPop(): popping
+    step: sub_read_num_loop|0x0
+        portPeek(): regPort        iobuf|0
+        portPeek(): regIO          char|'0'
+        portPeek(): continuationOp sub_read_num_loop|0x1
+    step: blk_block_on_read
+      port:  iobuf|0
+      cont:  sub_read_num_loop|0x1
+      iobuf: IOBuffer@1d58aae
+      blocked
+    step: sub_read_num_loop|0x1
+      eof: returning fixint|0
+    restored: sub_top|0x1
+  step: sub_top|0x1
+    stored:   sub_top|0x3
+    step: sub_print|0x0
+      printing: fixint|0
+    step: sub_print_fixint|0x0
+      regArg0: fixint|0
+      regArg1: iobuf|1
+      tmp0:    0
+      zero
+        portPush(): regPort        iobuf|1
+        portPush(): regIO          char|'0'
+        portPush(): continuationOp blk_tail_call
+        portPush(): iobuf: IOBuffer@83cc67
+    step: blk_block_on_write
+      port:  iobuf|1
+      value: char|'0'
+        c:   0
+        b:   48
+      cont:  blk_tail_call
+      iobuf: IOBuffer@83cc67
+      unblocked
+output(): 0+6 / 6
+output max: 1 / 6
+output(): popped byte 48
+output(): popped char 0
+output(): shifted: 1
+output(): 1+5 / 6
+output max: 3 / 5
+    step: blk_tail_call
+    restored: sub_top|0x3
+output(): 0+5 / 5
+output max: 0 / 5
+output(): shifted: 0
+  step: sub_top|0x3
+  step: sub_top|0x0
+    stored:   sub_top|0x1
+    step: sub_readv|0x0
+      default arg: NIL
+    step: sub_read|0x0
+      stored:   iobuf|0
+      stored:   sub_read|0x1
+      step: sub_read_burn_space|0x0
+          portPeek(): regPort        iobuf|0
+          portPeek(): regIO          char|'0'
+          portPeek(): continuationOp sub_read_burn_space|0x1
+      step: blk_block_on_read
+        port:  iobuf|0
+        cont:  sub_read_burn_space|0x1
+        iobuf: null
+          portPeek(): closed
+      step: sub_read_burn_space|0x1
+      restored: sub_read|0x1
+output(): 0+5 / 5
+output max: 2 / 5
+    step: sub_read|0x1
+      restored: iobuf|0
+        portPeek(): regPort        iobuf|0
+        portPeek(): regIO          EOF
+        portPeek(): continuationOp sub_read|0x2
+    step: blk_block_on_read
+      port:  iobuf|0
+      cont:  sub_read|0x2
+      iobuf: null
+        portPeek(): closed
+    step: sub_read|0x2
+    restored: sub_top|0x1
+  step: sub_top|0x1
+  restored: blk_halt
+output(): 0+7 / 7
+output max: 2 / 7
+step: blk_halt
+  stored:   blk_halt
+output(): 0+6 / 6
+output max: 5 / 6
+dcode:            0
+bufIn.isEmpty():  true
+bufOut.isEmpty(): true
 make[1]: Leaving directory `/home/jwillett/jhwscm'

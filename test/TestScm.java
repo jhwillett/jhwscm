@@ -97,25 +97,29 @@ public class TestScm extends Util
       // first content: simple integer expressions are self-evaluating
       // and self-printing.
       final String[] simpleInts = { 
-         "0", "1", "97", "1234", "-1", "-4321", "10", "1001", 
+         "0", /*"1", "97", "1234", "-1", "-4321", "10", "1001", */
       };
       for ( final String expr : simpleInts )
       {
          final Object[][] tests = { 
             { expr,                   expr },
+            /*
             { " " + expr,             expr },
             { expr + " ",             expr },
             { " " + expr + " ",       expr },
             { "\n" + expr,            expr },
             { expr + "\n",            expr },
             { "\t" + expr + "\t\r\n", expr },
+            */
          };
          final Batch[] batches = { 
             RE_IND,
+            /*
             RE_DEP,
             REP_IND,
             REP_DEP,
             STRESS_OUT,
+            */
          };
          metabatch(tests,batches);
       }
@@ -1286,7 +1290,6 @@ public class TestScm extends Util
                throw new RuntimeException("input() out of spec: " + code);
             }
          }
-         
       }
 
       // I/O are contracted to never fail, provided their args are
@@ -1298,6 +1301,11 @@ public class TestScm extends Util
       int dcode = Firmware.ERROR_INCOMPLETE;
       do
       {
+         if ( bufIn.isEmpty() )
+         {
+            machine.closeIoBuf(0);
+         }
+
          dcode = scm.drive(debugRand.nextInt(10));
 
          final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
@@ -1327,6 +1335,7 @@ public class TestScm extends Util
       }
       while ( Firmware.ERROR_INCOMPLETE == dcode ||
               Firmware.ERROR_BLOCKED    == dcode || 
+              !bufIn.isEmpty()                   ||
               !bufOut.isEmpty() );
 
       if ( VERBOSE )
