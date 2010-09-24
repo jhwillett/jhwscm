@@ -1188,9 +1188,9 @@ public class TestScm extends Util
    private static void batch ( final Object[][] tests, final Batch type )
    {
       final boolean oldVerbose = VERBOSE;
-      if ( STRESS_IO == type || STRESS_IN == type || STRESS_OUT == type )
+      if ( STRESS_IO == type || STRESS_IN == type/* || STRESS_OUT == type*/ )
       {
-         //VERBOSE = true;
+         VERBOSE = true;
       }
       numBatches++;
       Computer scm = null;

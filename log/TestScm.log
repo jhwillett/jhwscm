@@ -2,7 +2,7 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 fib:
-  numCycles:        169363
+  numCycles:        170187
   numCons:          186545
   iobuf:            0
     numInput:       123
@@ -16,8 +16,8 @@ fib:
     numPeek:        0
     numPop:         12
     numPush:        12
-  reg.numSet:       1324118
-  reg.numGet:       3002308
+  reg.numSet:       1325766
+  reg.numGet:       3006016
   reg.maxAddr:      31
   heap.numSet:      57328
   heap.numGet:      386176
@@ -30,13 +30,13 @@ fib:
   cacheTop.numSet:  564986
   cacheTop.numGet:  925999
   cacheTop.maxAddr: 6143
-  reg   ops:        4326426
+  reg   ops:        4331782
   cache ops:        1490985
   heap  ops:        443504
-  reg   ops/cell:   139562.12903225806
+  reg   ops/cell:   139734.90322580645
   cache ops/cell:   242.71284388735145
   heap  ops/cell:   72.19664658961419
-  ops   reg/cache:  2.9017233573778407
+  ops   reg/cache:  2.9053156135038245
   ops   cache/heap: 3.3618298820303765
   ALG:                       4
   LINE_SIZE:                 16
@@ -48,8 +48,8 @@ fib:
   cache hit/op:              0.9838226012747414
   cache write/miss:          0.14854892205638473
 global:
-  numCycles:        520146
-  numCons:          557133
+  numCycles:        559250
+  numCons:          557069
   iobuf:            0
     numInput:       6757
     numOutput:      0
@@ -62,28 +62,28 @@ global:
     numPeek:        0
     numPop:         1991
     numPush:        1991
-  reg.numSet:       5587728
-  reg.numGet:       10013909
+  reg.numSet:       5665580
+  reg.numGet:       10189230
   reg.maxAddr:      31
   heap.numSet:      3549264
   heap.numGet:      4192096
   heap.maxAddr:     6143
-  cache.numHits:    7261312
+  cache.numHits:    7260864
   cache.numMisses:  252806
   cache.numFlush:   221829
   cache.numDrop:    30977
   cache.numLoad:    262006
-  cacheTop.numSet:  5185367
-  cacheTop.numGet:  2337951
+  cacheTop.numSet:  5185175
+  cacheTop.numGet:  2337695
   cacheTop.maxAddr: 6143
-  reg   ops:        15601637
-  cache ops:        7523318
+  reg   ops:        15854810
+  cache ops:        7522870
   heap  ops:        7741360
-  reg   ops/cell:   503278.6129032258
-  cache ops/cell:   1224.6977047045418
+  reg   ops/cell:   511445.48387096776
+  cache ops/cell:   1224.624776167996
   heap  ops/cell:   1260.19208855608
-  ops   reg/cache:  2.073770775075572
-  ops   cache/heap: 0.9718341480050017
+  ops   reg/cache:  2.1075480501457555
+  ops   cache/heap: 0.9717762770365931
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -91,7 +91,7 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9663558650529577
+  cache hit/op:              0.9663538590329359
   cache write/miss:          0.8774673069468288
 numExpects:     832
   happy:        732
