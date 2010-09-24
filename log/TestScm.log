@@ -1,89 +1,43 @@
 make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
-fib:
-  numCycles:        170187
-  numCons:          186545
-  iobuf:            0
-    numInput:       123
-    numOutput:      0
-    numPeek:        391
-    numPop:         123
-    numPush:        123
-  iobuf:            1
-    numInput:       0
-    numOutput:      12
-    numPeek:        0
-    numPop:         12
-    numPush:        12
-  reg.numSet:       1325766
-  reg.numGet:       3006016
-  reg.maxAddr:      31
-  heap.numSet:      57328
-  heap.numGet:      386176
-  heap.maxAddr:     6143
-  cache.numHits:    1466849
-  cache.numMisses:  24120
-  cache.numFlush:   3583
-  cache.numDrop:    20537
-  cache.numLoad:    24136
-  cacheTop.numSet:  564986
-  cacheTop.numGet:  925999
-  cacheTop.maxAddr: 6143
-  reg   ops:        4331782
-  cache ops:        1490985
-  heap  ops:        443504
-  reg   ops/cell:   139734.90322580645
-  cache ops/cell:   242.71284388735145
-  heap  ops/cell:   72.19664658961419
-  ops   reg/cache:  2.9053156135038245
-  ops   cache/heap: 3.3618298820303765
-  ALG:                       4
-  LINE_SIZE:                 16
-  LINE_COUNT:                16
-  PROPERLY_TAIL_RECURSIVE:   true
-  CLEVER_TAIL_CALL_MOD_CONS: true
-  CLEVER_STACK_RECYCLING:    true
-  CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9838226012747414
-  cache write/miss:          0.14854892205638473
 global:
-  numCycles:        559250
-  numCons:          557069
+  numCycles:        559251
+  numCons:          557140
   iobuf:            0
-    numInput:       6757
+    numInput:       6750
     numOutput:      0
-    numPeek:        17929
-    numPop:         6748
-    numPush:        6757
+    numPeek:        17907
+    numPop:         6741
+    numPush:        6750
   iobuf:            1
     numInput:       0
-    numOutput:      1991
+    numOutput:      1990
     numPeek:        0
-    numPop:         1991
-    numPush:        1991
-  reg.numSet:       5665580
-  reg.numGet:       10189230
+    numPop:         1990
+    numPush:        1990
+  reg.numSet:       5660353
+  reg.numGet:       10186446
   reg.maxAddr:      31
-  heap.numSet:      3549264
-  heap.numGet:      4192096
+  heap.numSet:      3537280
+  heap.numGet:      4181392
   heap.maxAddr:     6143
-  cache.numHits:    7260864
-  cache.numMisses:  252806
-  cache.numFlush:   221829
-  cache.numDrop:    30977
-  cache.numLoad:    262006
-  cacheTop.numSet:  5185175
-  cacheTop.numGet:  2337695
+  cache.numHits:    7251161
+  cache.numMisses:  252169
+  cache.numFlush:   221080
+  cache.numDrop:    31089
+  cache.numLoad:    261337
+  cacheTop.numSet:  5173123
+  cacheTop.numGet:  2339375
   cacheTop.maxAddr: 6143
-  reg   ops:        15854810
-  cache ops:        7522870
-  heap  ops:        7741360
-  reg   ops/cell:   511445.48387096776
-  cache ops/cell:   1224.624776167996
-  heap  ops/cell:   1260.19208855608
-  ops   reg/cache:  2.1075480501457555
-  ops   cache/heap: 0.9717762770365931
+  reg   ops:        15846799
+  cache ops:        7512498
+  heap  ops:        7718672
+  reg   ops/cell:   511187.06451612903
+  cache ops/cell:   1222.9363503174345
+  heap  ops/cell:   1256.4987790981604
+  ops   reg/cache:  2.1093914434319982
+  ops   cache/heap: 0.9732889284581596
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -91,14 +45,14 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9663538590329359
-  cache write/miss:          0.8774673069468288
-numExpects:     832
-  happy:        732
+  cache hit/op:              0.9663923884461966
+  cache write/miss:          0.8767136325242199
+numExpects:     831
+  happy:        731
   unhappy:      100
-numBatches:     77
-numMetaBatches: 32
-numVMs:         575
-numScmNoEvals:  13
-numScmFulls:    235
+numBatches:     105
+numMetaBatches: 46
+numScms:        573
+numScmNoEvals:  126
+numScmFulls:    447
 make[1]: Leaving directory `/home/jwillett/jhwscm'

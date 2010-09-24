@@ -44,12 +44,14 @@ public class TestScm extends Util
    private static final Batch STRESS_OUT = new Batch(true,  true,  1024,    1);
    private static final Batch STRESS_IO  = new Batch(true,  true,     1,    1);
 
+   private static final boolean NO_EVAL  = false; // TODO: convert these
+
    private static boolean REPORT  = true;
    private static boolean PROFILE = true;
    private static boolean VERBOSE = false;
    private static boolean DEBUG   = true;
 
-   private static int numVMs            = 0;
+   private static int numScms           = 0;
    private static int numScmNoEvals     = 0;
    private static int numScmFulls       = 0;
    private static int numMetaBatches    = 0;
@@ -58,21 +60,17 @@ public class TestScm extends Util
    private static int numHappyExpects   = 0;
    private static int numUnhappyExpects = 0;
 
-   private static Computer scmNoEval ()
-   {
-      numScmNoEvals++;
-      return newScm(RE_DEP);
-   }
-
-   private static Computer scmFull ()
-   {
-      numScmFulls++;
-      return newScm(REP_DEP);
-   }
-
    private static Computer newScm ( final Batch batch )
    {
-      numVMs++;
+      numScms++;
+      if ( batch.do_rep )
+      {
+         numScmFulls++;
+      }
+      else
+      {
+         numScmNoEvals++;
+      }
       final Machine  mach = new Machine(PROFILE,
                                         VERBOSE,
                                         true,
@@ -207,8 +205,8 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }  
 
-      expect("-",    "-",    scmNoEval());
-      expect("-asd", "-asd", scmNoEval());
+      expect("-",    "-",    NO_EVAL);
+      expect("-asd", "-asd", NO_EVAL);
       expect("-",    null);
       expect("-as",  SEMANTIC);
       
@@ -259,19 +257,19 @@ public class TestScm extends Util
       }  
 
       // improper list experssions: yay!
-      expect("(1 . 2)",      "(1 . 2)",   scmNoEval());
-      expect("(1 2 . 3)",    "(1 2 . 3)", scmNoEval());
-      expect("(1 . 2 3)",    LEXICAL,     scmNoEval());
-      expect("( . 2 3)",     LEXICAL,     scmNoEval());
-      expect("(1 . )",       LEXICAL,     scmNoEval());
-      expect("(1 .)",        LEXICAL,     scmNoEval());
+      expect("(1 . 2)",      "(1 . 2)",   NO_EVAL);
+      expect("(1 2 . 3)",    "(1 2 . 3)", NO_EVAL);
+      expect("(1 . 2 3)",    LEXICAL,     NO_EVAL);
+      expect("( . 2 3)",     LEXICAL,     NO_EVAL);
+      expect("(1 . )",       LEXICAL,     NO_EVAL);
+      expect("(1 .)",        LEXICAL,     NO_EVAL);
       expect("(1 . 2 3)",    LEXICAL);
       expect("( . 2 3)",     LEXICAL);
       expect("(1 . )",       LEXICAL);
       expect("(1 .)",        LEXICAL);
 
-      expect("(1 . ())",     "(1)",       scmNoEval());
-      expect("(1 .())",      "(1)",       scmNoEval());
+      expect("(1 . ())",     "(1)",       NO_EVAL);
+      expect("(1 .())",      "(1)",       NO_EVAL);
 
       // Guile does this, with nothing before the dot in a dotted list
       // but I do not quite understand why it works.
@@ -289,16 +287,15 @@ public class TestScm extends Util
       // Still, this demands I meditate on it to understand fully why
       // this is so.
       //
-      expect("( . 2 )",    "2",           scmNoEval());
-      expect("( . 2 )",    "2",           scmFull());
-      expect("( . () )",   "()",          scmNoEval());
-      expect("( . 2 3 )",LEXICAL);
-      expect("(. abc )",   "abc",         scmNoEval());
+      expect("( . 2 )",    "2",           NO_EVAL);
+      expect("( . () )",   "()",          NO_EVAL);
+      expect("( . 2 3 )",  LEXICAL,       NO_EVAL);
+      expect("(. abc )",   "abc",         NO_EVAL);
 
       if ( false )
       {
          // Probably not until I handle floats!
-         expect("(1 .2)",       "(1 0.2)",   scmNoEval());
+         expect("(1 .2)",       "(1 0.2)",   NO_EVAL);
       }
 
       // character literals are self-evaluating - though some of them
@@ -727,18 +724,6 @@ public class TestScm extends Util
          // Later, there exists a good memoized dynamic programming
          // version which would be good for comparison.
          //
-         final String fib = 
-            "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
-         final Computer scm = scmFull();
-         expect(fib,"",scm);
-         expect("fib","???",scm);
-         expect("(fib 0)","0",scm);
-         expect("(fib 1)","1",scm);
-         expect("(fib 2)","1",scm);
-         expect("(fib 3)","2",scm);
-         expect("(fib 4)","3",scm);
-         expect("(fib 5)","5",scm);
-         
          // Before gc, (fib 6) would OOM at heapSize 32 kcells, (fib
          // 10) at 128 kcells.
          //
@@ -748,14 +733,27 @@ public class TestScm extends Util
          // 400 kwordss, but it burned through 34 mcells on the way
          // there!
          //
-         expect("(fib 6)","8",scm);     // OOM at 32 kcells
-         expect("(fib 10)","55",scm);   // OOM at 128 kcells
-         if ( false )
-         {
-            // Takes like a minute...
-            expect("(fib 20)","6765",scm); // OOM at 256 kcells, unknown
-         }
-         report("fib:",scm);
+         final String fib = 
+            "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
+         final Object[][] tests = { 
+            { fib,        ""     },
+            { "fib",      "???"  },
+            { "(fib 0)",  "0"    },
+            { "(fib 1)",  "1"    },
+            { "(fib 2)",  "1"    },
+            { "(fib 3)",  "2"    },
+            { "(fib 4)",  "3"    },
+            { "(fib 5)",  "5"    },
+            { "(fib 6)",  "8"    },     // OOM at 32 kcells
+            { "(fib 10)", "55"   },   // OOM at 128 kcells
+         };
+         final Object[][] bad_tests = { 
+            { "(fib 20)", "6765" },    // OOM at at least 256 kcells
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       // min, max, bounds, 2s-complement nature of fixints
@@ -804,9 +802,14 @@ public class TestScm extends Util
          //
          // An overly simple early form of sub_let pushed frames onto
          // the env, but didn't pop them.
-         final Computer scm = scmFull();
-         expect("(let ((a 10)) a)", "10", scm);
-         expect("a",SEMANTIC,scm);
+         final Object[][] tests = {
+            { "(let ((a 10)) a)", "10"     },
+            { "a",                SEMANTIC },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       // nested lexical scopes:
@@ -828,25 +831,25 @@ public class TestScm extends Util
             "  (let ((help"                                                  +
             "        (lambda (n a) (if (< n 2) a (help (- n 1) (* n a))))))" +
             "    (help n 1)))";
-         final Computer scm = scmFull();
-         expect(fact,       "",   scm);
-         expect("fact",     "???",scm);
-         expect("(fact -1)","1",  scm);
-         expect("(fact 0)", "1",  scm);
-         expect("(fact 1)", "1",  scm);
-         if ( true )
-         {
-            expect("(fact 2)",SEMANTIC); // HAHAHHAHHAHAHA
-         }
-         else
-         {
-            // TODO: save it for letrec*
-            expect("(fact 2)", "2",  scm); // HAHAHHAHHAHAHA
-            expect("(fact 3)", "6",  scm);
-            expect("(fact 4)", "24", scm);
-            expect("(fact 5)", "120",scm);
-            expect("(fact 6)", "720",scm);
-         }
+         final Object[][] tests = { 
+            { fact,        "",      },
+            { "fact",      "???",   },
+            { "(fact -1)", "1",     },
+            { "(fact 0)",  "1",     },
+            { "(fact 1)",  "1",     },
+            { "(fact 2)",  SEMANTIC },  // HA HA HA: works b/c no recurse
+         };
+         final Object[][] tests_bad = { // TODO: save it for letrec* 
+            { "(fact 2)",  "2",     },
+            { "(fact 3)",  "6",     },
+            { "(fact 4)",  "24",    },
+            { "(fact 5)",  "120",   },
+            { "(fact 6)",  "720",   },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       // control special form: (begin)
@@ -939,96 +942,138 @@ public class TestScm extends Util
       {
          // Are the nested-define defined symbols in scope of the
          // "real" body?
-         final Computer scm = scmFull();
-         expect("(define (a x) (define b 2) (+ x b))", "",    scm);
-         expect("(a 10)",                              "12",  scm);
-         expect("a",                                   "???", scm);
-         expect("b",SEMANTIC,                                         scm);
+         final Object[][] tests = { 
+            { "(define (a x) (define b 2) (+ x b))", ""       },
+            { "(a 10)",                              "12"     },
+            { "a",                                   "???"    },
+            { "b",                                   SEMANTIC },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // Can we do more than one?
-         final Computer scm = scmFull();
-         expect("(define (f) (define a 1) (define b 2) (+ a b))","",scm);
-         expect("(f)","3",scm);
+         final Object[][] tests = { 
+            { "(define (f) (define a 1) (define b 2) (+ a b))", ""  },
+            { "(f)",                                            "3" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // Can we do it for an inner helper function?
-         final Computer scm = scmFull();
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
             "  (help n 1))";
-         expect(fact,       "",   scm);
-         expect("fact",     "???",scm);
-         expect("(fact -1)","1",  scm);
-         expect("(fact 0)", "1",  scm);
-         expect("(fact 1)", "1",  scm);
-         expect("(fact 2)", "2",  scm);
-         expect("(fact 3)", "6",  scm);
-         expect("(fact 4)", "24", scm);
-         expect("(fact 5)", "120",scm);
-         expect("(fact 6)", "720",scm);
+         final Object[][] tests = { 
+            { fact,        ""    },
+            { "fact",      "???" },
+            { "(fact -1)", "1"   },
+            { "(fact 0)",  "1"   },
+            { "(fact 1)",  "1"   },
+            { "(fact 2)",  "2"   },
+            { "(fact 3)",  "6"   },
+            { "(fact 4)",  "24"  },
+            { "(fact 5)",  "120" },
+            { "(fact 6)",  "720" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // Do nested defines really act like (begin)?
-         final Computer scm = scmFull();
          final String def = 
             "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
-         expect(def,"",scm);
-         expect("(f)","83",scm);
+         final Object[][] tests = { 
+            { def,   ""   },
+            { "(f)", "83" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // Do nested defines really act like (begin) when we have args?
-         final Computer scm = scmFull();
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
-         expect(def,"",scm);
-         expect("(f 4)","85",scm);
-         expect("(f 3)","84",scm);
+         final Object[][] tests = { 
+            { def,     ""   },
+            { "(f 4)", "85" },
+            { "(f 3)", "84" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // Are nested defines in one another's scope, in any order?
-         final Computer scm = scmFull();
          final String F = 
             "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
          final String G = 
             "(define (G b) (define (g x) (+ a x)) (define a 1) (g b))";
-         expect(F,"",scm);
-         expect("(F 4)","5",scm);
-         expect(G,"",scm);
-         expect("(G 4)","5",scm);
+         final Object[][] tests = { 
+            { F,       ""  },
+            { "(F 4)", "5" },
+            { G,       ""  },
+            { "(G 4)", "5" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // What about defines in lambdas?
-         final Computer scm = scmFull();
-         final String def = 
-            "((lambda (x) (define a 7) (+ x a)) 5)";
-         expect(def,"12",scm);
+         final Object[][] tests = { 
+            { "((lambda (x) (define a 7) (+ x a)) 5)", "12" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // What about closures?
-         final Computer scm = scmFull();
-         final String def = 
-            "(((lambda (x) (lambda (y) (+ x y))) 10) 7)";
-         expect(def,"17",scm);
+         final Object[][] tests = { 
+            { "(((lambda (x) (lambda (y) (+ x y))) 10) 7)", "17" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // What about closures?
-         final Computer scm = scmFull();
-         final String def = 
-            "(define (f x) (lambda (y) (+ x y)))";
-         expect(def,"",scm);
-         expect("(f 10)","???",scm);
-         expect("((f 10) 7)","17",scm);
+         final Object[][] tests = { 
+            { "(define (f x) (lambda (y) (+ x y)))", ""    },
+            { "(f 10)",                              "???" },
+            { "((f 10) 7)",                          "17"  },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       {
          // What about closures?
-         final Computer scm = scmFull();
-         final String def = 
-            "(define (f x) (define (h y) (+ x y)) h)";
-         expect(def,"",scm);
-         expect("(f 10)","???",scm);
-         expect("((f 10) 7)","17",scm);
+         final Object[][] tests = { 
+            { "(define (f x) (define (h y) (+ x y)) h)", ""    },
+            { "(f 10)",                                  "???" },
+            { "((f 10) 7)",                              "17"  },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
 
       {
@@ -1040,8 +1085,6 @@ public class TestScm extends Util
 
       // check that map works w/ both builtins and user-defineds
       {
-         final Computer scm = scmFull();
-         final String def = "(define (f x) (+ x 10))";
          expect("(map1 display '())",      "()");     
          expect("(map1 display '(1 2 3))", "123(  )");
 
@@ -1066,11 +1109,17 @@ public class TestScm extends Util
          //
          // Update: I have merged VOID and UNDEFINED into UNSPECIFIED.
 
-         expect(def,                      "",           scm);
-         expect("f",                      "???",        scm);
-         expect("(f 13)",                 "23",         scm);
-         expect("(map1 f '())",            "()",         scm);
-         expect("(map1 f '(1 2 3))",       "(11 12 13)", scm);
+         final Object[][] tests = { 
+            { "(define (f x) (+ x 10))", ""           },
+            { "f",                       "???"        },
+            { "(f 13)",                  "23"         },
+            { "(map1 f '())",            "()"         },
+            { "(map1 f '(1 2 3))",       "(11 12 13)" },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
       }
       
       // TODO: user-level variadics
@@ -1148,7 +1197,7 @@ public class TestScm extends Util
       log("  unhappy:      " + numUnhappyExpects);
       log("numBatches:     " + numBatches);
       log("numMetaBatches: " + numMetaBatches);
-      log("numVMs:         " + numVMs);
+      log("numScms:        " + numScms);
       log("numScmNoEvals:  " + numScmNoEvals);
       log("numScmFulls:    " + numScmFulls);
    }
@@ -1196,14 +1245,15 @@ public class TestScm extends Util
       Computer scm = null;
       for ( int i = 0; i < tests.length; ++i )
       {
-         final Object[] test   =         tests[i];
-         final String   expr   = (String)test[0];
-         final Object   result =         test[1];
+         final Object[] test     =         tests[i];
+         final String   expr     = (String)test[0];
+         final Object   result   =         test[1];
+         final boolean  lastTime = (i == tests.length);
          if ( !type.reuse || null == scm )
          {
             scm = newScm(type);
          }
-         expect(expr,result,scm);
+         expect(expr,result,scm,lastTime);
       }
       VERBOSE = oldVerbose;
    }
@@ -1229,7 +1279,7 @@ public class TestScm extends Util
     */
    private static void expect ( final String expr, final Object result )
    {
-      expect(expr,result,null);
+      expect(expr,result,null,true);
    }
 
    /**
@@ -1242,9 +1292,30 @@ public class TestScm extends Util
     * If result is an Integer, we expect driving to fail with an error
     * equal to result.
     */
-   private static void expect ( final String expr,
-                                final Object result,
-                                Computer     scm )
+   private static void expect ( final String  expr, 
+                                final Object  result,
+                                final boolean do_rep )
+   {
+      final Object[][] tests = { 
+         { expr, result },
+      };
+      batch(tests,do_rep ? REP_IND : RE_IND);
+   }
+
+   /**
+    * If result is null, we expect driving to succeed but are
+    * indifferent to the output.
+    *
+    * If result is a String, we expect driving to succeed and the
+    * output to match result.
+    *
+    * If result is an Integer, we expect driving to fail with an error
+    * equal to result.
+    */
+   private static void expect ( final String   expr,
+                                final Object   result,
+                                final Computer scmArg,
+                                final boolean  lastTime )
    {
       numExpects++;
       final int    expected_dcode;
@@ -1262,10 +1333,20 @@ public class TestScm extends Util
          expected_output = null;
       }
 
-      if ( null == scm )
+      final Computer scm;
+      if ( null == scmArg )
       {
-         scm = scmFull();
+         if ( !lastTime )
+         {
+            throw new RuntimeException("lastTime arg irrelevant for one-shot");
+         }
+         scm = newScm(REP_IND);
       }
+      else
+      {
+         scm = scmArg;
+      }
+
       final Machine  machine = scm.machine;
       final IOBuffer bufIn   = machine.getIoBuf(0);
       final IOBuffer bufOut  = machine.getIoBuf(1);
