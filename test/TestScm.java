@@ -1267,8 +1267,8 @@ public class TestScm extends Util
          scm = scmFull();
       }
       final Machine  machine = scm.machine;
-      final IOBuffer bufIn   = machine.ioBuf(0);
-      final IOBuffer bufOut  = machine.ioBuf(1);
+      final IOBuffer bufIn   = machine.getIoBuf(0);
+      final IOBuffer bufOut  = machine.getIoBuf(1);
 
       {
          final byte[] input_buf = expr.toString().getBytes();
@@ -1286,6 +1286,7 @@ public class TestScm extends Util
                throw new RuntimeException("input() out of spec: " + code);
             }
          }
+         
       }
 
       // I/O are contracted to never fail, provided their args are

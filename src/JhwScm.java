@@ -2804,10 +2804,21 @@ public class JhwScm implements Firmware
          {
             log("blocked");
             // TODO: this should really be ERROR_BLOCKED!!!!!!!!!
-            mach.reg.set(regIO, EOF);
-            mach.reg.set(regPc,cont);
-            break;
-            //return ERROR_BLOCKED;
+            //
+            // But we need the outside world to give our input buffer
+            // a close() signal, so we can recognize EOF, before we
+            // can do this.
+            //
+            if ( false )
+            {
+               return ERROR_BLOCKED;
+            }
+            else
+            {
+               mach.reg.set(regIO, EOF);
+               mach.reg.set(regPc,cont);
+               break;
+            }
          }
          log("unblocked");
          final byte b     = iobuf.peek();

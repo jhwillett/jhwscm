@@ -28,24 +28,24 @@ public class TestMachine extends Util
       final int num = mach.numIoBufs();
       try
       {
-         mach.ioBuf(-1);
-         throw new RuntimeException("Machine.ioBuf() out of spec"); 
+         mach.getIoBuf(-1);
+         throw new RuntimeException("Machine.getIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
       }
       try
       {
-         mach.ioBuf(num);
-         throw new RuntimeException("Machine.ioBuf() out of spec"); 
+         mach.getIoBuf(num);
+         throw new RuntimeException("Machine.getIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
       }
       try
       {
-         mach.ioBuf(num+1);
-         throw new RuntimeException("Machine.ioBuf() out of spec"); 
+         mach.getIoBuf(num+1);
+         throw new RuntimeException("Machine.getIoBuf() out of spec"); 
       }
       catch ( IndexOutOfBoundsException expected )
       {
@@ -77,25 +77,25 @@ public class TestMachine extends Util
 
       for ( int i = 0; i < num; ++i )
       {
-         final IOBuffer buf = mach.ioBuf(i);
+         final IOBuffer buf = mach.getIoBuf(i);
          if ( null == buf )
          {
-            throw new RuntimeException("Machine.ioBuf() out of spec"); 
+            throw new RuntimeException("Machine.getIoBuf() out of spec"); 
          }
       }
       if ( 0 < num )
       {
          mach.closeIoBuf(0);
-         if ( null != mach.ioBuf(0) )
+         if ( null != mach.getIoBuf(0) )
          {
-            throw new RuntimeException("Machine.ioBuf() out of spec"); 
+            throw new RuntimeException("Machine.getIoBuf() out of spec"); 
          }
          mach.closeIoBuf(0);
          mach.closeIoBuf(0);
          mach.closeIoBuf(0);
-         if ( null != mach.ioBuf(0) )
+         if ( null != mach.getIoBuf(0) )
          {
-            throw new RuntimeException("Machine.ioBuf() out of spec"); 
+            throw new RuntimeException("Machine.getIoBuf() out of spec"); 
          }
       }
    }

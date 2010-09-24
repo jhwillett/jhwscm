@@ -164,7 +164,7 @@ public class Machine
     * @returns null if the buffer at ioBufId has been close()d, else
     * the IOBuffer at ioBufId.
     */
-   public IOBuffer ioBuf ( final int ioBufId )
+   public IOBuffer getIoBuf ( final int ioBufId )
    {
       if ( ioBufId < 0 || ioBufId >= iobufs.length )
       {
