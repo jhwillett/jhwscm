@@ -1415,7 +1415,7 @@ public class TestScm extends Util
             }
          }
 
-         if ( false && bufIn.isEmpty() )
+         if ( lastTime && bufIn.isEmpty() )
          {
             machine.closeIoBuf(0);
          }
@@ -1451,7 +1451,7 @@ public class TestScm extends Util
               Firmware.ERROR_BLOCKED    == dcode || 
               // !bufIn.isEmpty()                   ||
               !bufOut.isEmpty() );
-
+      
       if ( VERBOSE )
       {
          log("dcode:            " + dcode);
