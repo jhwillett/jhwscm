@@ -97,29 +97,25 @@ public class TestScm extends Util
       // first content: simple integer expressions are self-evaluating
       // and self-printing.
       final String[] simpleInts = { 
-         "0", /*"1", "97", "1234", "-1", "-4321", "10", "1001", */
+         "0", "1", "97", "1234", "-1", "-4321", "10", "1001",
       };
       for ( final String expr : simpleInts )
       {
          final Object[][] tests = { 
             { expr,                   expr },
-            /*
             { " " + expr,             expr },
             { expr + " ",             expr },
             { " " + expr + " ",       expr },
             { "\n" + expr,            expr },
             { expr + "\n",            expr },
             { "\t" + expr + "\t\r\n", expr },
-            */
          };
          final Batch[] batches = { 
             RE_IND,
-            /*
             RE_DEP,
             REP_IND,
             REP_DEP,
             STRESS_OUT,
-            */
          };
          metabatch(tests,batches);
       }
@@ -1274,9 +1270,28 @@ public class TestScm extends Util
       final IOBuffer bufIn   = machine.getIoBuf(0);
       final IOBuffer bufOut  = machine.getIoBuf(1);
 
+      // This is the Master Control Program: we just keep feeding it
+      // input, driving cycles, and picking up output in any order
+      // until finished.
+      //
+      // This particlar MCP is a bit more complcated than strictly
+      // necessary in that it attempts to stress the system in many
+      // ways.
+      //
+      // Provided the arguments we give input(), drive(), and output()
+      // are valid, both I/O and processing are contracted to never
+      // fail in any hard ways.  We should be able to reorder those
+      // calls however we please and expect the same eventual result,
+      // with the only variable effect being how many and in what
+      // order we see ERROR_INCOMPLETE and ERROR_BLOCKED out of
+      // drive().
+      //
+      final byte[]        input_buf  = expr.toString().getBytes();
+      int                 input_off  = 0;
+      final StringBuilder out        = new StringBuilder();
+      int dcode                      = Firmware.ERROR_INCOMPLETE;
+      do
       {
-         final byte[] input_buf = expr.toString().getBytes();
-         int input_off = 0;
          while ( input_off < input_buf.length )
          {
             final int input_len = input_buf.length - input_off;
@@ -1290,18 +1305,8 @@ public class TestScm extends Util
                throw new RuntimeException("input() out of spec: " + code);
             }
          }
-      }
 
-      // I/O are contracted to never fail, provided their args are
-      // valid, regardless of how crazy drive() gets.
-      //
-      // So we don't check dcode until after slurping output().
-      //
-      final StringBuilder out = new StringBuilder();
-      int dcode = Firmware.ERROR_INCOMPLETE;
-      do
-      {
-         if ( bufIn.isEmpty() )
+         if ( false && bufIn.isEmpty() )
          {
             machine.closeIoBuf(0);
          }
@@ -1335,7 +1340,7 @@ public class TestScm extends Util
       }
       while ( Firmware.ERROR_INCOMPLETE == dcode ||
               Firmware.ERROR_BLOCKED    == dcode || 
-              !bufIn.isEmpty()                   ||
+              // !bufIn.isEmpty()                   ||
               !bufOut.isEmpty() );
 
       if ( VERBOSE )
