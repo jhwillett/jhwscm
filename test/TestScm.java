@@ -50,26 +50,28 @@ public class TestScm extends Util
    // The overall system is supposed to be idempotent about getting
    // input(), drive(), and output() impuses of any sizes and in any order.
    //
-   // INPUT, DRIVE, OUTPUT, and DRIVE_CYCLES are expression of various
-   // orderings on those operations, from which by selecting uniform
-   // distribution over i in DRIVE_CYCLES[i], I can have fine control
-   // over the distribution of the orderings by how I initialize
-   // DRIVE_CYCLES.
+   // INPUT, CLOSE, DRIVE, OUTPUT, and DRIVE_CYCLES are expression of
+   // various orderings on those operations, from which by selecting
+   // uniform distribution over i in DRIVE_CYCLES[i], I can have fine
+   // control over the distribution of the orderings by how I
+   // initialize DRIVE_CYCLES.
    //
    private static final int     INPUT  = 1;
-   private static final int     DRIVE  = 2;
-   private static final int     OUTPUT = 3;
+   private static final int     CLOSE  = 2;
+   private static final int     DRIVE  = 3;
+   private static final int     OUTPUT = 4;
    private static final int[][] CYCLES = {
-      {                        },
-      { INPUT                  },
-      { DRIVE                  },
-      { OUTPUT                 },
-      { INPUT,  DRIVE,  OUTPUT },
-      { INPUT,  OUTPUT, DRIVE  },
-      { DRIVE,  INPUT,  OUTPUT },
-      { DRIVE,  OUTPUT, INPUT  },
-      { OUTPUT, DRIVE,  INPUT  },
-      { OUTPUT, INPUT,  DRIVE  },
+      {                                },
+      { INPUT                          },
+      { CLOSE                          },
+      { DRIVE                          },
+      { OUTPUT                         },
+      { INPUT,  CLOSE,  DRIVE,  OUTPUT },
+      { INPUT,  OUTPUT, DRIVE,  CLOSE  },
+      { DRIVE,  INPUT,  OUTPUT         },
+      { CLOSE,  DRIVE,  OUTPUT, INPUT  },
+      { OUTPUT, DRIVE,  INPUT,  CLOSE  },
+      { OUTPUT, INPUT,  DRIVE          },
    };
 
    private static boolean REPORT  = true;
@@ -1441,16 +1443,16 @@ public class TestScm extends Util
             {
                fail("broken test code");
             }
-            final int code = bufIn.input(input_buf, input_off, input_len);
-            if ( 0 <= code && code <= input_len )
+            final int num = bufIn.input(input_buf, input_off, input_len);
+            if ( 0 <= num && num <= input_len )
             {
-               input_off += code;
+               input_off += num;
             }
             else
             {
-               fail("input() out of spec: " + code);
+               fail("input() out of spec: " + num);
             }
-            if ( bufIn.isClosed() && 0 != code )
+            if ( bufIn.isClosed() && 0 != num )
             {
                fail("broken test code");
             }
@@ -1475,7 +1477,6 @@ public class TestScm extends Util
          }
 
          dcode = scm.drive(debugRand.nextInt(10)+1);
-
          if ( scm.local.numCycles > 1024 * 1024 )
          {
             fail("numCycles exceeds arbitrary prior expectation: " +
@@ -1483,27 +1484,15 @@ public class TestScm extends Util
          }
 
          final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
-         int output_off = 0;
-         for ( int off = 0; true; )
          {
-            final int output_len = output_buf.length - output_off;
-            final int num = bufOut.output(output_buf, output_off, output_len);
-            if ( 0 > num )
+            final int num = bufOut.output(output_buf, 0, output_buf.length);
+            if ( 0 > num || output_buf.length < num )
             {
                fail("output() out of spec: " + num);
             }
-            if ( 0 == num )
-            {
-               break;
-            }
-            for ( int i = output_off; i < output_off + num; ++i )
+            for ( int i = 0; i < num; ++i )
             {
                out.append((char)output_buf[i]);
-            }
-            output_off += num;
-            if ( output_off >= output_buf.length )
-            {
-               output_off = 0;
             }
          }
 
