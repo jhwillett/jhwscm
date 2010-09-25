@@ -50,50 +50,11 @@ public class TestMachine extends Util
       catch ( IndexOutOfBoundsException expected )
       {
       }
-      try
-      {
-         mach.closeIoBuf(-1);
-         fail("Machine.closeIoBuf() out of spec"); 
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         mach.closeIoBuf(num);
-         fail("Machine.closeIoBuf() out of spec"); 
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         mach.closeIoBuf(num+1);
-         fail("Machine.closeIoBuf() out of spec"); 
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
 
       for ( int i = 0; i < num; ++i )
       {
          final IOBuffer buf = mach.getIoBuf(i);
          if ( null == buf )
-         {
-            fail("Machine.getIoBuf() out of spec"); 
-         }
-      }
-      if ( 0 < num )
-      {
-         mach.closeIoBuf(0);
-         if ( null != mach.getIoBuf(0) )
-         {
-            fail("Machine.getIoBuf() out of spec"); 
-         }
-         mach.closeIoBuf(0);
-         mach.closeIoBuf(0);
-         mach.closeIoBuf(0);
-         if ( null != mach.getIoBuf(0) )
          {
             fail("Machine.getIoBuf() out of spec"); 
          }

@@ -1394,6 +1394,12 @@ public class TestScm extends Util
       // also close out the input puffer after we detect isEmpty()
       // following completion of our input sequence.
       //
+      // UPDATE: I'm axing Machine.closeIoBuf(), and going with a
+      // special, out-of-band bit on IOBuffer, isClosed() which is
+      // mutated by close() and open().  By analogy w/ POSIX, an
+      // fcntl().
+      //
+      // The entire preceeding conversation can go in the diary.
       //
       final byte[]        input_buf  = expr.toString().getBytes();
       int                 input_off  = 0;
@@ -1413,11 +1419,6 @@ public class TestScm extends Util
             {
                fail("input() out of spec: " + code);
             }
-         }
-
-         if ( lastTime && bufIn.isEmpty() )
-         {
-            machine.closeIoBuf(0);
          }
 
          dcode = scm.drive(debugRand.nextInt(10));

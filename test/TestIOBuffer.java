@@ -6,10 +6,14 @@
  * All rights reserved.
  */
 
+import java.util.Random;
+
 public class TestIOBuffer extends Util
 {
    private static boolean VERBOSE = false;
    private static boolean DEBUG   = true;
+
+   private static final Random debugRand = new Random(1234);
 
    private static IOBuffer newBuf ()
    {
@@ -176,6 +180,23 @@ public class TestIOBuffer extends Util
          }
       }
 
+      {
+         final IOBuffer buf = newBuf();
+         assertEquals(false,buf.isClosed());
+         buf.open();
+         assertEquals(false,buf.isClosed());
+         buf.open();
+         buf.open();
+         assertEquals(false,buf.isClosed());
+         buf.close();
+         assertEquals(true,buf.isClosed());
+         buf.close();
+         buf.close();
+         assertEquals(true,buf.isClosed());
+         buf.open();
+         assertEquals(false,buf.isClosed());
+      }
+
       log("success");
    }
 
@@ -189,6 +210,10 @@ public class TestIOBuffer extends Util
       log("numOps:    " + numOps);
       log("mutation:  " + mutation);
 
+      // open() and close() have no effect on the buffer's
+      // buffer-nature or communication-line nature, but for good
+      // measure we scatter some calls here at random.
+
       final IOBuffer iobuf = new IOBuffer(byteCount,VERBOSE,DEBUG,null,null);
       assertEquals( true, iobuf.isEmpty());               // empty
       assertEquals( 0, iobuf.output(new byte[1],0,1));    // empty
@@ -197,6 +222,15 @@ public class TestIOBuffer extends Util
       {
          final byte a = (byte)(i+mutation);
          iobuf.push(a);
+         final int rand = debugRand.nextInt(100);
+         if ( rand < 9 )
+         {
+            iobuf.close();
+         }
+         else if ( rand < 19 )
+         {
+            iobuf.open();
+         }
       }
       assertEquals( byteCount == numOps, iobuf.isFull()); // full
       if ( byteCount == numOps )
@@ -209,6 +243,15 @@ public class TestIOBuffer extends Util
          final byte a = (byte)(i+mutation);
          final byte b = iobuf.pop();
          assertEquals(a, b);
+         final int rand = debugRand.nextInt(100);
+         if ( rand < 9 )
+         {
+            iobuf.close();
+         }
+         else if ( rand < 19 )
+         {
+            iobuf.open();
+         }
       }
       assertEquals( true, iobuf.isEmpty());               // empty
       assertEquals( 0, iobuf.output(new byte[1],0,1));    // empty

@@ -36,10 +36,14 @@ public class IOBuffer
    public final boolean DEBUG;
 
    private final byte[] buf;
-   private int          start = 0;
-   private int          end   = 0;
-   private int          len   = 0;
+   private int          start  = 0;
+   private int          end    = 0;
+   private int          len    = 0;
+   private boolean      closed = false;
 
+   /**
+    * IOBuffer starts in an open state.
+    */
    public IOBuffer ( final int     byteCount,
                      final boolean VERBOSE, 
                      final boolean DEBUG,
@@ -71,6 +75,31 @@ public class IOBuffer
    public boolean isFull ()
    {
       return start == end && ( 0 != len );
+   }
+
+   /**
+    * close(), open() and isClosed() are only advisory: the bit shared
+    * by them is more of an out-of-band communication between a
+    * producer and a consumer than a change in the fundamental state
+    * or meaning of the buffer.
+    *
+    * I/O can still proceed on a closed IOBuffer without error.
+    *
+    * @returns true if the buffer is closed, false otherwise
+    */
+   public boolean isClosed ()
+   {
+      return closed;
+   }
+
+   public void close ()
+   {
+      closed = true;
+   }
+
+   public void open ()
+   {
+      closed = false;
    }
 
    /**

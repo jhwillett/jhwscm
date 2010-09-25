@@ -161,8 +161,7 @@ public class Machine
    /**
     * @throws IndexOutOfBoundsException if n < 0 or n >= numIoBufs()
     *
-    * @returns null if the buffer at ioBufId has been close()d, else
-    * the IOBuffer at ioBufId.
+    * @returns the buffer at ioBufId
     */
    public IOBuffer getIoBuf ( final int ioBufId )
    {
@@ -172,21 +171,6 @@ public class Machine
          throw new IndexOutOfBoundsException(msg);
       }
       return iobufs[ioBufId];
-   }
-
-   /**
-    * Closes the buffer at ioBufId.
-    *
-    * @throws IndexOutOfBoundsException if n < 0 or n >= numIoBufs()
-    */
-   public void closeIoBuf ( final int ioBufId )
-   {
-      if ( ioBufId < 0 || ioBufId >= iobufs.length )
-      {
-         final String msg = "ioBufId " + ioBufId + " / " + iobufs.length;
-         throw new IndexOutOfBoundsException(msg);
-      }
-      iobufs[ioBufId] = null;
    }
 
    ////////////////////////////////////////////////////////////////////
