@@ -50,11 +50,11 @@ public class TestScm extends Util
    // The overall system is supposed to be idempotent about getting
    // input(), drive(), and output() impuses of any sizes and in any order.
    //
-   // INPUT, CLOSE, DRIVE, OUTPUT, and DRIVE_CYCLES are expression of
+   // INPUT, CLOSE, DRIVE, OUTPUT, and CYCLES are expression of
    // various orderings on those operations, from which by selecting
-   // uniform distribution over i in DRIVE_CYCLES[i], I can have fine
+   // uniform distribution over i in CYCLES[i], I can have fine
    // control over the distribution of the orderings by how I
-   // initialize DRIVE_CYCLES.
+   // initialize CYCLES.
    //
    private static final int     INPUT  = 1;
    private static final int     CLOSE  = 2;
@@ -1435,64 +1435,71 @@ public class TestScm extends Util
       int                 dcode      = Firmware.ERROR_INCOMPLETE;
       bufIn.open();
       bufOut.open();
-      do
+      while ( true )
       {
-         final int input_len = input_buf.length - input_off;
+         final int[] cycle = CYCLES[debugRand.nextInt(CYCLES.length)];
+         for ( int op : cycle )
          {
-            if ( bufIn.isClosed() && input_off != input_buf.length )
+            switch ( op )
             {
-               fail("broken test code");
-            }
-            final int num = bufIn.input(input_buf, input_off, input_len);
-            if ( 0 <= num && num <= input_len )
-            {
-               input_off += num;
-            }
-            else
-            {
-               fail("input() out of spec: " + num);
-            }
-            if ( bufIn.isClosed() && 0 != num )
-            {
-               fail("broken test code");
-            }
-         }
-
-         if ( !bufIn.isClosed()             && 
-              input_off >= input_buf.length && 
-              debugRand.nextInt(100) < 101 )
-         {
-            if ( VERBOSE )
-            {
-               log("THIS CLOSE");
-               log("  input_off:        " + input_off);
-               log("  input_len:        " + input_len);
-               log("  input_buf.length: " + input_buf.length);
-            }
-            if ( input_off != input_buf.length )
-            {
-               fail("broken test code");
-            }
-            bufIn.close();
-         }
-
-         dcode = scm.drive(debugRand.nextInt(10)+1);
-         if ( scm.local.numCycles > 1024 * 1024 )
-         {
-            fail("numCycles exceeds arbitrary prior expectation: " +
-                 scm.local.numCycles);
-         }
-
-         final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
-         {
-            final int num = bufOut.output(output_buf, 0, output_buf.length);
-            if ( 0 > num || output_buf.length < num )
-            {
-               fail("output() out of spec: " + num);
-            }
-            for ( int i = 0; i < num; ++i )
-            {
-               out.append((char)output_buf[i]);
+            case INPUT: {
+               final int input_len = input_buf.length - input_off;
+               if ( bufIn.isClosed() && input_off != input_buf.length )
+               {
+                  fail("broken test code");
+               }
+               final int num = bufIn.input(input_buf, input_off, input_len);
+               if ( 0 <= num && num <= input_len )
+               {
+                  input_off += num;
+               }
+               else
+               {
+                  fail("input() out of spec: " + num);
+               }
+               if ( bufIn.isClosed() && 0 != num )
+               {
+                  fail("broken test code");
+               }
+               break; }
+            case CLOSE: {
+               if ( !bufIn.isClosed() && input_off >= input_buf.length )
+               {
+                  if ( VERBOSE )
+                  {
+                     log("THIS CLOSE");
+                     log("  input_off:        " + input_off);
+                     log("  input_buf.length: " + input_buf.length);
+                  }
+                  if ( input_off != input_buf.length )
+                  {
+                     fail("broken test code");
+                  }
+                  bufIn.close();
+               }
+               break; }
+            case DRIVE: {
+               dcode = scm.drive(debugRand.nextInt(10)+1);
+               if ( scm.local.numCycles > 1024 * 1024 )
+               {
+                  fail("numCycles exceeds arbitrary prior expectation: " +
+                       scm.local.numCycles);
+               }
+               break; }
+            case OUTPUT: {
+               final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
+               final int num = bufOut.output(output_buf, 0, output_buf.length);
+               if ( 0 > num || output_buf.length < num )
+               {
+                  fail("output() out of spec: " + num);
+               }
+               for ( int i = 0; i < num; ++i )
+               {
+                  out.append((char)output_buf[i]);
+               }
+               break; }
+            default:
+               fail("unrecognized test operation: " + op);
             }
          }
 
@@ -1515,7 +1522,6 @@ public class TestScm extends Util
             break;
          }
       }
-      while ( true );
       
       if ( VERBOSE )
       {
