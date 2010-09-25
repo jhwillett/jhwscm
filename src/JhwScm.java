@@ -2797,32 +2797,17 @@ public class JhwScm implements Firmware
          log("cont:  ",pp(cont));
          final IOBuffer iobuf = mach.iobufs[value(port)];
          log("iobuf: ",iobuf);
-         if ( null == iobuf )
-         {
-            log("  portPeek(): closed");
-            mach.reg.set(regIO, EOF);
-            mach.reg.set(regPc, cont);
-            break;
-         }
          if ( iobuf.isEmpty() )
          {
-            log("blocked");
-            // TODO: this should really be ERROR_BLOCKED!!!!!!!!!
-            //
-            // But we need the outside world to give our input buffer
-            // a close() signal, so we can recognize EOF, before we
-            // can do this.
-            //
-            if ( false )
+            if ( iobuf.isClosed() )
             {
-               return ERROR_BLOCKED;
-            }
-            else
-            {
+               log("closed");
                mach.reg.set(regIO, EOF);
                mach.reg.set(regPc,cont);
                break;
             }
+            log("blocked");
+            return ERROR_BLOCKED;
          }
          log("unblocked");
          final byte b     = iobuf.peek();
@@ -3390,12 +3375,6 @@ public class JhwScm implements Firmware
       }
       final IOBuffer iobuf = iobufs[value(port)];
       log("  portPush(): iobuf: ",iobuf);
-      if ( null == iobuf )
-      {
-         log("  portPush(): closed");
-         raiseError(ERR_INTERNAL);
-         return;
-      }
       mach.reg.set(regContinuation, continuationOp);
       mach.reg.set(regBlockedPort,  mach.reg.get(regPort));
       mach.reg.set(regPc,           blk_block_on_write);
@@ -3501,23 +3480,8 @@ public class JhwScm implements Firmware
          return;
       }
       final IOBuffer iobuf = iobufs[value(port)];
-      //
-      // TODO: for now, an iobuf is EOF if empty, but later when we
-      // add close() it'll be EOF when null, and an empty buffer
-      // means we need to suspend processing.
-      //
-      // So we check for both conditions here.  Later on, it'll be
-      // the isEmpty() clause which changes, not the null clause.
-      //
-      if ( null == iobuf )
-      {
-         log("  portPop(): closed");
-         raiseError(ERR_INTERNAL);
-         return;
-      }
       if ( iobuf.isEmpty() )
       {
-         // TODO: suspend
          log("  portPop(): empty");
          raiseError(ERR_INTERNAL);
          return;

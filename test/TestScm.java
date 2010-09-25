@@ -46,6 +46,32 @@ public class TestScm extends Util
 
    private static final boolean NO_EVAL  = false; // TODO: convert these
 
+
+   // The overall system is supposed to be idempotent about getting
+   // input(), drive(), and output() impuses of any sizes and in any order.
+   //
+   // INPUT, DRIVE, OUTPUT, and DRIVE_CYCLES are expression of various
+   // orderings on those operations, from which by selecting uniform
+   // distribution over i in DRIVE_CYCLES[i], I can have fine control
+   // over the distribution of the orderings by how I initialize
+   // DRIVE_CYCLES.
+   //
+   private static final int     INPUT  = 1;
+   private static final int     DRIVE  = 2;
+   private static final int     OUTPUT = 3;
+   private static final int[][] CYCLES = {
+      {                        },
+      { INPUT                  },
+      { DRIVE                  },
+      { OUTPUT                 },
+      { INPUT,  DRIVE,  OUTPUT },
+      { INPUT,  OUTPUT, DRIVE  },
+      { DRIVE,  INPUT,  OUTPUT },
+      { DRIVE,  OUTPUT, INPUT  },
+      { OUTPUT, DRIVE,  INPUT  },
+      { OUTPUT, INPUT,  DRIVE  },
+   };
+
    private static boolean REPORT  = true;
    private static boolean PROFILE = true;
    private static boolean VERBOSE = false;
@@ -1239,7 +1265,7 @@ public class TestScm extends Util
       final boolean oldVerbose = VERBOSE;
       if ( STRESS_IO == type || STRESS_IN == type/* || STRESS_OUT == type*/ )
       {
-         VERBOSE = true;
+         //VERBOSE = true;
       }
       numBatches++;
       Computer scm = null;
@@ -1406,13 +1432,17 @@ public class TestScm extends Util
       final StringBuilder out        = new StringBuilder();
       int                 dcode      = Firmware.ERROR_INCOMPLETE;
       bufIn.open();
+      bufOut.open();
       do
       {
-         while ( input_off < input_buf.length )
+         final int input_len = input_buf.length - input_off;
          {
-            final int input_len = input_buf.length - input_off;
+            if ( bufIn.isClosed() && input_off != input_buf.length )
+            {
+               fail("broken test code");
+            }
             final int code = bufIn.input(input_buf, input_off, input_len);
-            if ( 0 <= code )
+            if ( 0 <= code && code <= input_len )
             {
                input_off += code;
             }
@@ -1420,14 +1450,37 @@ public class TestScm extends Util
             {
                fail("input() out of spec: " + code);
             }
+            if ( bufIn.isClosed() && 0 != code )
+            {
+               fail("broken test code");
+            }
          }
 
-         if ( input_off >= input_buf.length && debugRand.nextInt(100) < 80 )
+         if ( !bufIn.isClosed()             && 
+              input_off >= input_buf.length && 
+              debugRand.nextInt(100) < 101 )
          {
+            if ( VERBOSE )
+            {
+               log("THIS CLOSE");
+               log("  input_off:        " + input_off);
+               log("  input_len:        " + input_len);
+               log("  input_buf.length: " + input_buf.length);
+            }
+            if ( input_off != input_buf.length )
+            {
+               fail("broken test code");
+            }
             bufIn.close();
          }
 
-         dcode = scm.drive(debugRand.nextInt(10));
+         dcode = scm.drive(debugRand.nextInt(10)+1);
+
+         if ( scm.local.numCycles > 1024 * 1024 )
+         {
+            fail("numCycles exceeds arbitrary prior expectation: " +
+                 scm.local.numCycles);
+         }
 
          final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
          int output_off = 0;
@@ -1453,17 +1506,36 @@ public class TestScm extends Util
                output_off = 0;
             }
          }
+
+         if ( Firmware.ERROR_COMPLETE == dcode )
+         {
+            if ( bufIn.isClosed() &&
+                 bufIn.isEmpty()  &&
+                 bufOut.isEmpty() )
+            {
+               break;
+            }
+         }
+         else if ( Firmware.ERROR_INCOMPLETE == dcode ||
+                   Firmware.ERROR_BLOCKED    == dcode )
+         {
+            continue;
+         }
+         else
+         {
+            break;
+         }
       }
-      while ( Firmware.ERROR_INCOMPLETE == dcode ||
-              Firmware.ERROR_BLOCKED    == dcode || 
-              // !bufIn.isEmpty()                   ||
-              !bufOut.isEmpty() );
+      while ( true );
       
       if ( VERBOSE )
       {
-         log("dcode:            " + dcode);
-         log("bufIn.isEmpty():  " + bufIn.isEmpty());
-         log("bufOut.isEmpty(): " + bufOut.isEmpty());
+         log("FINISHING OUT:");
+         log("  dcode:             " + dcode);
+         log("  bufIn.isEmpty():   " + bufIn.isEmpty());
+         log("  bufIn.isClosed():  " + bufIn.isClosed());
+         log("  bufOut.isEmpty():  " + bufOut.isEmpty());
+         log("  bufOut.isClosed(): " + bufOut.isClosed());
       }
 
       assertEquals("drive failure on \"" + expr + "\":",
@@ -1550,7 +1622,8 @@ public class TestScm extends Util
       log("  reg   ops/cell:   " + (1.0 * regOps / ms.regStats.maxAddr));
       if ( Machine.USE_CACHED_MEM ) 
       {
-         log("  cache ops/cell:   " + (1.0 * cacheOps / ms.cacheTopStats.maxAddr));
+         log("  cache ops/cell:   " + 
+             (1.0 * cacheOps / ms.cacheTopStats.maxAddr));
       }
       log("  heap  ops/cell:   " + (1.0 * heapOps / ms.heapStats.maxAddr));
 

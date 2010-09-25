@@ -52,6 +52,7 @@ public class Computer
     */
    public int drive ( final int numSteps )
    {
+      if ( VERBOSE ) log("drive(): numSteps " + numSteps);
       if ( numSteps < 0 )
       {
          throw new IllegalArgumentException("neg numSteps: " + numSteps);
@@ -63,9 +64,17 @@ public class Computer
          final int code = firmware.step(machine);
          if ( Firmware.ERROR_INCOMPLETE != code )
          {
+            if ( VERBOSE ) log("drive(): firmware end: " + code);
             return code;
          }
       }
-      return Firmware.ERROR_INCOMPLETE;
+      final int code = Firmware.ERROR_INCOMPLETE;
+      if ( VERBOSE ) log("drive(): jiffy end: " + code);
+      return code;
+   }
+
+   private static void log ( final Object obj )
+   {
+      System.out.println(obj);
    }
 }

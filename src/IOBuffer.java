@@ -94,11 +94,13 @@ public class IOBuffer
 
    public void close ()
    {
+      if ( VERBOSE ) log("close()");
       closed = true;
    }
 
    public void open ()
    {
+      if ( VERBOSE ) log("open()");
       closed = false;
    }
 
