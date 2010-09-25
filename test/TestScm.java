@@ -1405,6 +1405,7 @@ public class TestScm extends Util
       int                 input_off  = 0;
       final StringBuilder out        = new StringBuilder();
       int                 dcode      = Firmware.ERROR_INCOMPLETE;
+      bufIn.open();
       do
       {
          while ( input_off < input_buf.length )
@@ -1419,6 +1420,11 @@ public class TestScm extends Util
             {
                fail("input() out of spec: " + code);
             }
+         }
+
+         if ( input_off >= input_buf.length && debugRand.nextInt(100) < 80 )
+         {
+            bufIn.close();
          }
 
          dcode = scm.drive(debugRand.nextInt(10));

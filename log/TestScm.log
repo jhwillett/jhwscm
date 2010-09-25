@@ -2,8 +2,8 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 global:
-  numCycles:        559251
-  numCons:          557140
+  numCycles:        559281
+  numCons:          557152
   iobuf:            0
     numInput:       6750
     numOutput:      0
@@ -16,28 +16,28 @@ global:
     numPeek:        0
     numPop:         1990
     numPush:        1990
-  reg.numSet:       5660353
-  reg.numGet:       10186446
+  reg.numSet:       5660485
+  reg.numGet:       10186701
   reg.maxAddr:      31
   heap.numSet:      3537280
   heap.numGet:      4181392
   heap.maxAddr:     6143
-  cache.numHits:    7251161
+  cache.numHits:    7251245
   cache.numMisses:  252169
   cache.numFlush:   221080
   cache.numDrop:    31089
   cache.numLoad:    261337
-  cacheTop.numSet:  5173123
-  cacheTop.numGet:  2339375
+  cacheTop.numSet:  5173159
+  cacheTop.numGet:  2339423
   cacheTop.maxAddr: 6143
-  reg   ops:        15846799
-  cache ops:        7512498
+  reg   ops:        15847186
+  cache ops:        7512582
   heap  ops:        7718672
-  reg   ops/cell:   511187.06451612903
-  cache ops/cell:   1222.9363503174345
+  reg   ops/cell:   511199.5483870968
+  cache ops/cell:   1222.9500244180367
   heap  ops/cell:   1256.4987790981604
-  ops   reg/cache:  2.1093914434319982
-  ops   cache/heap: 0.9732889284581596
+  ops   reg/cache:  2.1094193713958798
+  ops   cache/heap: 0.9732998111592254
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -45,7 +45,7 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9663923884461966
+  cache hit/op:              0.9663927646801842
   cache write/miss:          0.8767136325242199
 numExpects:     831
   happy:        731
