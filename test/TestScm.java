@@ -1448,7 +1448,24 @@ public class TestScm extends Util
                {
                   fail("broken test code");
                }
-               final int num = bufIn.input(input_buf, input_off, input_len);
+               final int num;
+               {
+                  final byte[] buf = input_buf;
+                  int          off = input_off;
+                  final int    len = input_len;
+                  final int    max = DEBUG ? debugRand.nextInt(len+1) : len;
+                  int i = 0;
+                  for ( i = 0; i < max; ++i )
+                  {
+                     if ( bufIn.isFull() )
+                     {
+                        break;
+                     }
+                     final byte b = buf[off++];
+                     bufIn.push(b);
+                  }
+                  num = i;
+               }
                if ( 0 <= num && num <= input_len )
                {
                   input_off += num;
