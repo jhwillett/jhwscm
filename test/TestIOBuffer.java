@@ -22,7 +22,7 @@ public class TestIOBuffer extends Util
 
    public static void main ( final String[] argv )
    {
-      log("TestIOBuffer");
+      //log("TestIOBuffer");
 
       // TODO: push(), peek(), pop()
 
@@ -76,18 +76,18 @@ public class TestIOBuffer extends Util
          assertEquals(false,buf.isClosed());
       }
 
-      log("success");
+      //log("success");
    }
 
    public static void test ( final int byteCount,
                              final int numOps,
                              final int mutation )
    {
-      log("test:");
+      //log("test:");
       depth++;
-      log("byteCount: " + byteCount);
-      log("numOps:    " + numOps);
-      log("mutation:  " + mutation);
+      //log("byteCount: " + byteCount);
+      //log("numOps:    " + numOps);
+      //log("mutation:  " + mutation);
 
       // open() and close() have no effect on the buffer's
       // buffer-nature or communication-line nature, but for good

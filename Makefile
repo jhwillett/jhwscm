@@ -78,20 +78,33 @@ COBERTURA_HOME       := external/cobertura-1.9.4.1
 COBERTURA_JAR        := $(COBERTURA_HOME)/cobertura.jar
 COBERTURA_INSTRUMENT := $(COBERTURA_HOME)/cobertura-instrument.sh
 COBERTURA_REPORT     := $(COBERTURA_HOME)/cobertura-report.sh
+
+COBERTURA_RUN := java
+COBERTURA_RUN += -cp $(COBERTURA_JAR):$(DESTDIR)/cobertura:$(DESTDIR)/classes:$(DESTDIR)/test
+COBERTURA_RUN += -Dnet.sourceforge.cobertura.datafile=$(DESTDIR)/cobertura.ser
+
 .PHONY: cobertura
-cobertura: $(DESTDIR)/cobertura-instrument.ok
-	java -cp $(COBERTURA_JAR):$(DESTDIR)/cobertura TestIOBuffer
+cobertura: $(DESTDIR)/cobertura.ok
+$(DESTDIR)/cobertura.ok: Makefile
+$(DESTDIR)/cobertura.ok: $(DESTDIR)/cobertura-instrument.ok
+$(DESTDIR)/cobertura.ok: $(DESTDIR)/build-test.ok
+$(DESTDIR)/cobertura.ok:
+	$(COBERTURA_RUN) TestUtil
+	$(COBERTURA_RUN) TestIOBuffer
+	$(COBERTURA_RUN) TestMem
+	$(COBERTURA_RUN) TestMachine
+	$(COBERTURA_RUN) TestComputer
+	touch $@
+$(DESTDIR)/cobertura-instrument.ok: Makefile
 $(DESTDIR)/cobertura-instrument.ok: deps 
 $(DESTDIR)/cobertura-instrument.ok: $(DESTDIR)/build-src.ok
-$(DESTDIR)/cobertura-instrument.ok: Makefile
 $(DESTDIR)/cobertura-instrument.ok:
 	rm -rf $(DESTDIR)/cobertura $(DESTDIR)/cobertura.ser
 	mkdir -p $(DESTDIR)/cobertura
-	$(COBERTURA_INSTRUMENT) --destination $(DESTDIR)/cobertura --datafile $(DESTDIR)/cobertura.ser $(CLASSES)
+	$(COBERTURA_INSTRUMENT) --destination $(DESTDIR)/cobertura --datafile $(DESTDIR)/cobertura.ser $(DESTDIR)/classes
+	touch $@
 
 .PHONY: report
-report: $(DESTDIR)/cobertura-instrument.ok 
-report: Makefile
-report: $(DESTDIR)/build-src.ok
+report: $(DESTDIR)/cobertura.ok
 report:
-	$(COBERTURA_REPORT) --format html --datafile $(DESTDIR)/cobertura.ser --destination $(DESTDIR)/report src/
+	$(COBERTURA_REPORT) --format html --datafile $(DESTDIR)/cobertura.ser --destination $(DESTDIR)/report --source src/

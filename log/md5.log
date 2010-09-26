@@ -1,4 +1,4 @@
-c2de6a97dc864c3c9c27211441f6379c  Makefile
+a965fdc1e2c4f34efbd9d83df1546c76  Makefile
 66de9009d12a0ae8b866c3607dd7f875  deps.mk
 972e2520ebdb30b8ffdf8b4252d06172  src/Computer.java
 566da965cbe0271ffca8ac015e69785f  src/Firmware.java
@@ -12,7 +12,7 @@ bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 cdd37894c1087c57a123ca0d590c7e74  test/TestComputer.java
-61388659369d493282ff7b62275a7bb0  test/TestIOBuffer.java
+34503fc60f6b1be469400cc74a6f62c4  test/TestIOBuffer.java
 049ade2fb183370f605163ea94acb355  test/TestMachine.java
 d48446013e8bc2f017807083c42c433b  test/TestMem.java
 0d23c45f1826f18bf0b768dbd4bebfbd  test/TestScm.java
