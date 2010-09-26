@@ -1429,10 +1429,11 @@ public class TestScm extends Util
       //
       // The entire preceeding conversation can go in the diary.
       //
-      final byte[]        input_buf  = expr.toString().getBytes();
+      final byte[]        input_buf  = expr.getBytes();
       int                 input_off  = 0;
       final StringBuilder out        = new StringBuilder();
       int                 dcode      = Firmware.ERROR_INCOMPLETE;
+      final int           MAX_CYCLES = 1024 * 1024;
       bufIn.open();
       bufOut.open();
       while ( true )
@@ -1440,43 +1441,18 @@ public class TestScm extends Util
          final int[] cycle = CYCLES[debugRand.nextInt(CYCLES.length)];
          for ( int op : cycle )
          {
+            final int jiffy = debugRand.nextInt(10);
             switch ( op )
             {
             case INPUT: {
-               final int input_len = input_buf.length - input_off;
-               if ( bufIn.isClosed() && input_off != input_buf.length )
+               while( input_off < input_buf.length && !bufIn.isFull() )
                {
-                  fail("broken test code");
-               }
-               final int num;
-               {
-                  final byte[] buf = input_buf;
-                  final int    len = input_len;
-                  final int    max = DEBUG ? debugRand.nextInt(len+1) : len;
-                  int          off = input_off;
-                  int          i   = 0;
-                  for ( i = 0; i < max; ++i )
+                  if ( bufIn.isFull() )
                   {
-                     if ( bufIn.isFull() )
-                     {
-                        break;
-                     }
-                     final byte b = buf[off++];
-                     bufIn.push(b);
+                     break;
                   }
-                  num = i;
-               }
-               if ( 0 <= num && num <= input_len )
-               {
-                  input_off += num;
-               }
-               else
-               {
-                  fail("input() out of spec: " + num);
-               }
-               if ( bufIn.isClosed() && 0 != num )
-               {
-                  fail("broken test code");
+                  final byte b = input_buf[input_off++];
+                  bufIn.push(b);
                }
                break; }
             case CLOSE: {
@@ -1496,25 +1472,19 @@ public class TestScm extends Util
                }
                break; }
             case DRIVE: {
-               dcode = scm.drive(debugRand.nextInt(10)+1);
-               if ( scm.local.numCycles > 1024 * 1024 )
+               dcode = scm.drive(jiffy);
+               if ( scm.local.numCycles > MAX_CYCLES )
                {
                   fail("numCycles exceeds arbitrary prior expectation: " +
                        scm.local.numCycles);
                }
                break; }
             case OUTPUT: {
+               int num = jiffy;
+               for ( ; num > 0 && !bufOut.isEmpty(); --num )
                {
-                  int num = debugRand.nextInt(10);
-                  for ( ; num > 0 && !bufOut.isEmpty(); --num )
-                  {
-                     if ( bufOut.isEmpty() )
-                     {
-                        break;
-                     }
-                     final byte b = bufOut.pop();
-                     out.append((char)b);
-                  }
+                  final byte b = bufOut.pop();
+                  out.append((char)b);
                }
                break; }
             default:

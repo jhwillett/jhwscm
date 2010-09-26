@@ -14,6 +14,6 @@ cdd37894c1087c57a123ca0d590c7e74  test/TestComputer.java
 61388659369d493282ff7b62275a7bb0  test/TestIOBuffer.java
 049ade2fb183370f605163ea94acb355  test/TestMachine.java
 d48446013e8bc2f017807083c42c433b  test/TestMem.java
-60fc64a69acaf17db9c7ba47f7addb60  test/TestScm.java
+2b0a52fb838e8774209f6f2357a538ab  test/TestScm.java
 284afb8136984e30c4193f69f67b5680  test/TestUtil.java
 ff001567e73c45e7554d7937480cb61a  test/Util.java
