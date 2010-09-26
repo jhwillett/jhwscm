@@ -3,8 +3,14 @@
 
 SHELL     := bash
 
+.PHONY: default
+default: test
+
 DESTDIR   ?= build
 LOGDIR    ?= log
+
+include deps.mk
+
 SRC       += $(wildcard src/*.java)
 
 # Maintaining TESTS explicitly so I can control ordering.
@@ -18,16 +24,10 @@ TESTS     += test/TestScm.java
 
 TEST_SRC  := $(wildcard test/*.java)
 
-#LIBS                 += junit-4.8.2.jar
-HOME-junit-4.8.2.jar := http://github.com/downloads/KentBeck/junit
-MD5-junit-4.8.2.jar  := 8a498c3d820db50cc7255d8c46c1ebd1
-
-DEPS := $(LIBS:%=$(DESTDIR)/%)
-
 .PHONY: test $(TESTS:test/%.java=test-%)
 test: $(TESTS:test/%.java=test-%)
 $(TESTS:test/%.java=test-%): test-%: $(LOGDIR)/%.log
-$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile
+$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile deps.mk
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(LOGDIR)/md5.log
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build.ok
 $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
@@ -38,7 +38,7 @@ $(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
 	@echo "uptime: `uptime`"
 	@mv $@.tmp $@
 
-$(LOGDIR)/md5.log: Makefile $(SRC) $(TEST_SRC) $(DEPS)
+$(LOGDIR)/md5.log: Makefile deps.mk $(SRC) $(TEST_SRC) $(DEPS)
 	@mkdir -p $(dir $@)
 	@cat /dev/null > $@.tmp
 	md5sum $^ > $@.tmp
@@ -64,14 +64,3 @@ $(DESTDIR)/build.ok:
 .PHONY: clean
 clean:
 	rm -rf $(DESTDIR)
-
-.PHONY: getdeps
-getdeps: $(DEPS)
-$(DEPS): $(DESTDIR)/%: 
-	mkdir -p $(dir $@)
-	curl $(HOME-$*)/$* --location --output $@.tmp
-	md5sum $@.tmp | cut -f 1 -d ' ' > $@.md5.actual
-	echo $(MD5-$*) > $@.md5.expect
-	diff $@.md5.expect $@.md5.actual
-	mv $@.tmp $@
-
