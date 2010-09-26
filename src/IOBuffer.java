@@ -22,8 +22,6 @@ public class IOBuffer
 
    public static class Stats
    {
-      public int numInput  = 0;
-      public int numOutput = 0;
       public int numPeek   = 0;
       public int numPop    = 0;
       public int numPush   = 0;
@@ -190,86 +188,6 @@ public class IOBuffer
       end += 1;
       end %= buf.length;
       len += 1;
-   }
-
-   /**
-    * Transfers up to len bytes from in[off..len-1] to buffer.
-    *
-    * @throws NullPointerException if buf is null
-    *
-    * @throws IndexOutOfBoundsException off or len are negative, or
-    * off+len are larger than buf.length.
-    *
-    * @returns the number of bytes transferred from buf[off..n-1]
-    */
-   public int input ( final byte[] buf, int off, final int len ) 
-   {
-      if ( VERBOSE ) log("input(): " + off + "+" + len + " / " + buf.length);
-      check(buf,off,len);
-      final int max = DEBUG ? debugRand.nextInt(len+1) : len;
-      if ( VERBOSE ) log("input max:  " + max + " / " + len);
-      for ( int i = 0; i < max; ++i )
-      {
-         if ( isFull() )
-         {
-            return i;
-         }
-         final byte b = buf[off++];
-         if ( VERBOSE ) log("input(): pushing byte " + b);
-         if ( VERBOSE ) log("input(): pushing char " + (char)b);
-         push(b);
-         if ( null != local )  local.numInput++;
-         if ( null != global ) global.numInput++;
-      }
-      return max;
-   }
-
-   /**
-    * Transfers up to len bytes from the buffer to buf[off..len-1].
-    *
-    * @throws NullPointerException if buf is null
-    *
-    * @throws IndexOutOfBoundsException off or len are negative, or
-    * off+len are larger than buf.length.
-    *
-    * @returns the number of bytes transferred into buf[off..n-1]
-    */
-   public int output ( final byte[] buf, int off, final int len ) 
-   {
-      if ( VERBOSE ) log("output(): " + off + "+" + len + " / " + buf.length);
-      check(buf,off,len);
-      final int max = DEBUG ? debugRand.nextInt(len+1) : len;
-      if ( VERBOSE ) log("output max: " + max + " / " + len);
-      for ( int i = 0; i < max; ++i )
-      {
-         if ( isEmpty() )
-         {
-            return i;
-         }
-         final byte b = pop();
-         buf[off++] = b;
-         if ( VERBOSE ) log("output(): popped byte " + b);
-         if ( VERBOSE ) log("output(): popped char " + (char)b);
-         if ( null != local )  local.numOutput++;
-         if ( null != global ) global.numOutput++;
-      }
-      if ( VERBOSE ) log("output(): shifted: " + max);
-      return max;
-   }
-
-   private static void check ( final byte[] buf, int off, final int len )
-   {
-      if ( null == buf )
-      {
-         throw new NullPointerException("null buf");
-      }
-      if ( 0 <= off && 0 <= len && buf.length >= (off+len) )
-      {
-         return;
-      }
-      final String stats = 
-         "off " + off + " len " + len + " total " + buf.length;
-      throw new IndexOutOfBoundsException(stats);
    }
 
    private static void log ( final Object obj )

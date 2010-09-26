@@ -1612,8 +1612,6 @@ public class TestScm extends Util
          {
             log("  iobuf:            " + i);
             final IOBuffer.Stats stats = is[i];
-            log("    numInput:       " + stats.numInput);
-            log("    numOutput:      " + stats.numOutput);
             log("    numPeek:        " + stats.numPeek);
             log("    numPop:         " + stats.numPop);
             log("    numPush:        " + stats.numPush);

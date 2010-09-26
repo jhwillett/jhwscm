@@ -5,14 +5,10 @@ global:
   numCycles:        559983
   numCons:          557320
   iobuf:            0
-    numInput:       0
-    numOutput:      0
     numPeek:        17907
     numPop:         6741
     numPush:        6750
   iobuf:            1
-    numInput:       0
-    numOutput:      0
     numPeek:        0
     numPop:         1990
     numPush:        1990

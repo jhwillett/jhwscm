@@ -59,127 +59,6 @@ public class TestIOBuffer extends Util
          depth--;
       }
 
-      try
-      {
-         newBuf().input(null,0,0);
-         fail("out of spec");
-      }
-      catch ( NullPointerException expected )
-      {
-      }
-
-      try
-      {
-         newBuf().output(null,0,0);
-         fail("out of spec");
-      }
-      catch ( NullPointerException expected )
-      {
-      }
-
-      try
-      {
-         newBuf().input(new byte[0],-1,0);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().input(new byte[0],0,-1);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().input(new byte[0],2,3);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().input(new byte[0],3,2);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().output(new byte[0],-1,0);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().output(new byte[0],-1,0);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().output(new byte[0],0,-1);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().output(new byte[0],0,-1);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().output(new byte[0],2,3);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().output(new byte[0],3,2);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-      try
-      {
-         newBuf().output(new byte[3],2,3);
-         fail("out of spec");
-      }
-      catch ( IndexOutOfBoundsException expected )
-      {
-      }
-
-      assertEquals(0,               newBuf().input(new byte[0],0,0));
-      assertEquals(0,               newBuf().input(new byte[0],0,0));
-      assertEquals(0,               newBuf().input(new byte[0],0,0));
-      assertEquals(0,               newBuf().input(new byte[1],1,0));
-      assertEquals(0,               newBuf().output(new byte[0],0,0));
-      
-      {
-         final int code = newBuf().output(new byte[5],2,3);
-         if ( -1 != code && 0 != code )
-         {
-            fail("output() out of spec");
-         }
-      }
-
       {
          final IOBuffer buf = newBuf();
          assertEquals(false,buf.isClosed());
@@ -216,8 +95,6 @@ public class TestIOBuffer extends Util
 
       final IOBuffer iobuf = new IOBuffer(byteCount,VERBOSE,DEBUG,null,null);
       assertEquals( true, iobuf.isEmpty());               // empty
-      assertEquals( 0, iobuf.output(new byte[1],0,1));    // empty
-      assertEquals( true, iobuf.isEmpty());               // empty
       for ( int i = 0; i < numOps; ++i )
       {
          final byte a = (byte)(i+mutation);
@@ -231,11 +108,6 @@ public class TestIOBuffer extends Util
          {
             iobuf.open();
          }
-      }
-      assertEquals( byteCount == numOps, iobuf.isFull()); // full
-      if ( byteCount == numOps )
-      {
-         assertEquals( 0, iobuf.input(new byte[1],0,1));  // full
       }
       assertEquals( byteCount == numOps, iobuf.isFull()); // full
       for ( int i = 0; i < numOps; ++i )
@@ -253,8 +125,6 @@ public class TestIOBuffer extends Util
             iobuf.open();
          }
       }
-      assertEquals( true, iobuf.isEmpty());               // empty
-      assertEquals( 0, iobuf.output(new byte[1],0,1));    // empty
       assertEquals( true, iobuf.isEmpty());               // empty
       depth--;
    }
