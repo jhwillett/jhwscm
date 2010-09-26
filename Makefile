@@ -94,6 +94,9 @@ $(DESTDIR)/cobertura.ok:
 	$(COBERTURA_RUN) TestMem
 	$(COBERTURA_RUN) TestMachine
 	$(COBERTURA_RUN) TestComputer
+	$(COBERTURA_REPORT) --format html --datafile $(DESTDIR)/cobertura.ser --destination $(DESTDIR)/report-base --source src/
+	$(COBERTURA_RUN) TestScm
+	$(COBERTURA_REPORT) --format html --datafile $(DESTDIR)/cobertura.ser --destination $(DESTDIR)/report-full --source src/
 	touch $@
 $(DESTDIR)/cobertura-instrument.ok: Makefile
 $(DESTDIR)/cobertura-instrument.ok: deps 
@@ -103,8 +106,3 @@ $(DESTDIR)/cobertura-instrument.ok:
 	mkdir -p $(DESTDIR)/cobertura
 	$(COBERTURA_INSTRUMENT) --destination $(DESTDIR)/cobertura --datafile $(DESTDIR)/cobertura.ser $(DESTDIR)/classes
 	touch $@
-
-.PHONY: report
-report: $(DESTDIR)/cobertura.ok
-report:
-	$(COBERTURA_REPORT) --format html --datafile $(DESTDIR)/cobertura.ser --destination $(DESTDIR)/report --source src/
