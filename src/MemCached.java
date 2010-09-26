@@ -147,6 +147,10 @@ public class MemCached implements Mem
                       final Stats global, 
                       final Stats local )
    {
+      if ( null == mem )
+      {
+         throw new NullPointerException("null mem");
+      }
       if ( lineSize <= 0 )
       {
          throw new IllegalArgumentException("nonpos lineSize " + lineSize);

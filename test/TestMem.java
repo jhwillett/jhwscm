@@ -17,8 +17,87 @@ public class TestMem extends Util
       log("TestMem:");
       depth++;
 
-      final MemStats.Stats stats1    = new MemStats.Stats();
-      final MemStats.Stats stats2    = new MemStats.Stats();
+      try
+      {
+         new MemSimple(-1);
+         fail("MemSimple out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+
+      try
+      {
+         new MemPaged(0,0);
+         fail("MemPaged out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+      try
+      {
+         new MemPaged(0,1);
+         fail("MemPaged out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+      try
+      {
+         new MemPaged(1,-1);
+         fail("MemPaged out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+
+      try
+      {
+         new MemCached(null,0,0);
+         fail("MemCached out of spec");
+      }
+      catch ( NullPointerException expected )
+      {
+      }
+
+      try
+      {
+         new MemCached(new MemSimple(1024),0,0);
+         fail("MemCached out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+
+      try
+      {
+         new MemCached(new MemSimple(1024),1,0);
+         fail("MemCached out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+
+      try
+      {
+         new MemCached(new MemSimple(1024),0,1);
+         fail("MemCached out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+
+      try
+      {
+         new MemCached(new MemSimple(1024),13,1);
+         fail("MemCached out of spec");
+      }
+      catch ( IllegalArgumentException expected )
+      {
+      }
+
+      final MemStats.Stats stats1 = new MemStats.Stats();
+      final MemStats.Stats stats2 = new MemStats.Stats();
 
       test(new MemSimple(0));
       test(new MemSimple(1));

@@ -1,4 +1,4 @@
-a965fdc1e2c4f34efbd9d83df1546c76  Makefile
+b57d2fdebc87cddd169693bb935422ae  Makefile
 66de9009d12a0ae8b866c3607dd7f875  deps.mk
 972e2520ebdb30b8ffdf8b4252d06172  src/Computer.java
 566da965cbe0271ffca8ac015e69785f  src/Firmware.java
@@ -6,15 +6,15 @@ a965fdc1e2c4f34efbd9d83df1546c76  Makefile
 18c589bbbe7f7b882eb35c66a1a0b673  src/JhwScm.java
 40273b61fc99fe81d17135f199732fb4  src/Machine.java
 250eaada9663cced79e89fea991d1600  src/Mem.java
-d7efa735cc9f6095c6139ae73f91691a  src/MemCached.java
+bcc9b0011a76f434bf3dd0f0fe9058bf  src/MemCached.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  src/MemPaged.java
 bb86a624d34e0475efc9e3f80f24eeaf  src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  src/MemStats.java
 49860a9823a769e0757d1f6050fdcf37  src/SegFault.java
 cdd37894c1087c57a123ca0d590c7e74  test/TestComputer.java
-34503fc60f6b1be469400cc74a6f62c4  test/TestIOBuffer.java
+8202ad504de9687c7c2ce0014305b849  test/TestIOBuffer.java
 049ade2fb183370f605163ea94acb355  test/TestMachine.java
-d48446013e8bc2f017807083c42c433b  test/TestMem.java
+9cdf53f134fd9b86fb60e1fb87252267  test/TestMem.java
 0d23c45f1826f18bf0b768dbd4bebfbd  test/TestScm.java
 284afb8136984e30c4193f69f67b5680  test/TestUtil.java
 ff001567e73c45e7554d7937480cb61a  test/Util.java

@@ -17,14 +17,15 @@ public class TestIOBuffer extends Util
 
    private static IOBuffer newBuf ()
    {
-      return new IOBuffer(64,VERBOSE,DEBUG,null,null);
+      final IOBuffer.Stats stats  = new IOBuffer.Stats();
+      final IOBuffer.Stats global = debugRand.nextBoolean() ? stats : null;
+      final IOBuffer.Stats local  = debugRand.nextBoolean() ? stats : null;
+      return new IOBuffer(64,VERBOSE,DEBUG,global,local);
    }
 
    public static void main ( final String[] argv )
    {
       //log("TestIOBuffer");
-
-      // TODO: push(), peek(), pop()
 
       final int[][] tests = {
          { 1, 0, 0 },
@@ -76,7 +77,33 @@ public class TestIOBuffer extends Util
          assertEquals(false,buf.isClosed());
       }
 
-      //log("success");
+      final IOBuffer buf = newBuf();
+      try
+      {
+         buf.peek();
+         throw new RuntimeException("out of spec");
+      }
+      catch ( SegFault expected )
+      {
+      }
+      try
+      {
+         buf.pop();
+         throw new RuntimeException("out of spec");
+      }
+      catch ( SegFault expected )
+      {
+      }
+      try
+      {
+         while ( true ) 
+         {
+            buf.push((byte)7);
+         }
+      }
+      catch ( SegFault expected )
+      {
+      }
    }
 
    public static void test ( final int byteCount,
