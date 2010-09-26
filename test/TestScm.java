@@ -1429,7 +1429,6 @@ public class TestScm extends Util
       //
       // The entire preceeding conversation can go in the diary.
       //
-      final byte[]        input_buf  = expr.getBytes();
       int                 input_off  = 0;
       final StringBuilder out        = new StringBuilder();
       int                 dcode      = Firmware.ERROR_INCOMPLETE;
@@ -1445,26 +1444,30 @@ public class TestScm extends Util
             switch ( op )
             {
             case INPUT: {
-               while( input_off < input_buf.length && !bufIn.isFull() )
+               for ( int num = jiffy;
+                     num > 0 && input_off < expr.length() && !bufIn.isFull(); 
+                     num--, input_off++
+                  )
                {
                   if ( bufIn.isFull() )
                   {
                      break;
                   }
-                  final byte b = input_buf[input_off++];
+                  final char c = expr.charAt(input_off);
+                  final byte b = (byte)c;
                   bufIn.push(b);
                }
                break; }
             case CLOSE: {
-               if ( !bufIn.isClosed() && input_off >= input_buf.length )
+               if ( !bufIn.isClosed() && input_off >= expr.length() )
                {
                   if ( VERBOSE )
                   {
                      log("THIS CLOSE");
-                     log("  input_off:        " + input_off);
-                     log("  input_buf.length: " + input_buf.length);
+                     log("  input_off:     " + input_off);
+                     log("  expr.length(): " + expr.length());
                   }
-                  if ( input_off != input_buf.length )
+                  if ( input_off != expr.length() )
                   {
                      fail("broken test code");
                   }
@@ -1480,8 +1483,7 @@ public class TestScm extends Util
                }
                break; }
             case OUTPUT: {
-               int num = jiffy;
-               for ( ; num > 0 && !bufOut.isEmpty(); --num )
+               for ( int num = jiffy; num > 0 && !bufOut.isEmpty(); --num )
                {
                   final byte b = bufOut.pop();
                   out.append((char)b);
