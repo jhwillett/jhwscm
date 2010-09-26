@@ -1,5 +1,5 @@
-8171557e5267b87780499376ccb8efac  Makefile
-95a93c629cb39bb74f015a14ca090153  deps.mk
+51591a9d4211687ed7d0875cbbd50326  Makefile
+66de9009d12a0ae8b866c3607dd7f875  deps.mk
 972e2520ebdb30b8ffdf8b4252d06172  src/Computer.java
 566da965cbe0271ffca8ac015e69785f  src/Firmware.java
 744cbf0be7c2b9cac9abf7f2b207eda7  src/IOBuffer.java

@@ -5,32 +5,38 @@ TBZS  := $(filter %.tar.bz2,$(FILES))
 TGZS  := $(filter %.tar.gz,$(FILES))
 ZIPS  := $(filter %.zip,$(FILES))
 
-.PHONY: getdeps $(FILES:%=getdep-%)
-getdeps: $(FILES:%=getdep-%)
-$(FILES:%=getdep-%): getdep-%: $(DESTDIR)/%.crack.ok
+EXTDIR := external
+
+.PHONY: clean-deps
+clean-deps:
+	rm -rf $(EXTERNAL)
+
+.PHONY: deps $(FILES:%=dep-%)
+deps: $(FILES:%=dep-%)
+$(FILES:%=dep-%): dep-%: $(EXTDIR)/%.crack.ok
 
 # download the files
-$(FILES:%=$(DESTDIR)/%): $(DESTDIR)/%: 
+$(FILES:%=$(EXTDIR)/%): $(EXTDIR)/%: 
 	mkdir -p $(dir $@)
 	curl `cat deps/$*.url` --location --output $@.tmp
 	mv $@.tmp $@
 
 # confirm file signatures
-$(FILES:%=$(DESTDIR)/%.md5.ok): $(DESTDIR)/%.md5.ok: $(DESTDIR)/%
+$(FILES:%=$(EXTDIR)/%.md5.ok): $(EXTDIR)/%.md5.ok: $(EXTDIR)/%
 	mkdir -p $(dir $@)
 	md5sum $< | cut -f 1 -d ' ' > $@.md5.actual
 	diff -wB deps/$(notdir $<).md5 $@.md5.actual
 	touch $@
 
 # open the files, varies by file type
-$(JARS:%=$(DESTDIR)/%.crack.ok): $(DESTDIR)/%.crack.ok: $(DESTDIR)/%.md5.ok
+$(JARS:%=$(EXTDIR)/%.crack.ok): $(EXTDIR)/%.crack.ok: $(EXTDIR)/%.md5.ok
 	touch $@
-$(TBZS:%=$(DESTDIR)/%.crack.ok): $(DESTDIR)/%.crack.ok: $(DESTDIR)/%.md5.ok
-	cd $(DESTDIR) && tar xvfj $*
+$(TBZS:%=$(EXTDIR)/%.crack.ok): $(EXTDIR)/%.crack.ok: $(EXTDIR)/%.md5.ok
+	cd $(EXTDIR) && tar xvfj $*
 	touch $@
-$(TGZS:%=$(DESTDIR)/%.crack.ok): $(DESTDIR)/%.crack.ok: $(DESTDIR)/%.md5.ok
-	cd $(DESTDIR) && tar xvfz $*
+$(TGZS:%=$(EXTDIR)/%.crack.ok): $(EXTDIR)/%.crack.ok: $(EXTDIR)/%.md5.ok
+	cd $(EXTDIR) && tar xvfz $*
 	touch $@
-$(ZIPS:%=$(DESTDIR)/%.crack.ok): $(DESTDIR)/%.crack.ok: $(DESTDIR)/%.md5.ok
-	cd $(DESTDIR) && unzip $*
+$(ZIPS:%=$(EXTDIR)/%.crack.ok): $(EXTDIR)/%.crack.ok: $(EXTDIR)/%.md5.ok
+	cd $(EXTDIR) && unzip $*
 	touch $@
