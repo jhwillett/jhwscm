@@ -1451,10 +1451,10 @@ public class TestScm extends Util
                final int num;
                {
                   final byte[] buf = input_buf;
-                  int          off = input_off;
                   final int    len = input_len;
                   final int    max = DEBUG ? debugRand.nextInt(len+1) : len;
-                  int i = 0;
+                  int          off = input_off;
+                  int          i   = 0;
                   for ( i = 0; i < max; ++i )
                   {
                      if ( bufIn.isFull() )
@@ -1505,7 +1505,24 @@ public class TestScm extends Util
                break; }
             case OUTPUT: {
                final byte[] output_buf = new byte[1+debugRand.nextInt(10)];
-               final int num = bufOut.output(output_buf, 0, output_buf.length);
+               final int num;
+               {
+                  final byte[] buf = output_buf;
+                  final int    len = output_buf.length;
+                  final int    max = DEBUG ? debugRand.nextInt(len+1) : len;
+                  int          off = 0;
+                  int            i = 0;
+                  for ( i = 0; i < max; ++i )
+                  {
+                     if ( bufOut.isEmpty() )
+                     {
+                        break;
+                     }
+                     final byte b = bufOut.pop();
+                     buf[off++] = b;
+                  }
+                  num = i;
+               }
                if ( 0 > num || output_buf.length < num )
                {
                   fail("output() out of spec: " + num);
