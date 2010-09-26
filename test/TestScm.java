@@ -1378,69 +1378,38 @@ public class TestScm extends Util
       final Machine  machine = scm.machine;
       final IOBuffer bufIn   = machine.getIoBuf(0);
       final IOBuffer bufOut  = machine.getIoBuf(1);
+      bufIn.open();
+      bufOut.open();
 
-      // This is the Master Control Program: we just keep feeding it
-      // input, driving cycles, and picking up output in any order
-      // until finished.
-      //
-      // This particlar MCP is a bit more complcated than strictly
-      // necessary in that it attempts to stress the system in many
-      // ways.
-      //
-      // Provided the arguments we give input(), drive(), and output()
-      // are valid, both I/O and processing are contracted to never
-      // fail in any hard ways.  We should be able to reorder those
-      // calls however we please and expect the same eventual result,
-      // with the only variable effect being how many and in what
-      // order we see ERROR_INCOMPLETE and ERROR_BLOCKED out of
-      // drive().
-      //
-      // NOTE: Where I'm going with this... if I make the firmware
-      // just idle in ERROR_BLOCKED...
-      //
-      // 1. Our incomplete-syntax tests will never halt.
-      //
-      // 2. Codepaths using EOF will lose test coverage.
-      //
-      // There is some interesting possibility of just running until
-      // both input and ouput are empty and the machine is
-      // blocked - but these concerns need to be addressed.
-      //
-      // We still need closeIoBuf() on the outside and EOF on the
-      // inside.  EOF is still deeply meaningful down in the Scheme
-      // and also down the road, when we think of these buffers as
-      // POSIX file streams - even though presently, when we are
-      // thinking of these buffers as an I/O bus, closeIoBuf() does
-      // not make sense.
-      //
-      // So I think we want this loop to be more cognizant about how the
-      // current scm is still going to be used: if we're recycling it,
-      // we should not closeIoBuf() and should halt the loop on "bufs
-      // empty and firmware blocked".
-      //
-      // But if we're at the end of a recycled scm object, we should
-      // also close out the input puffer after we detect isEmpty()
-      // following completion of our input sequence.
-      //
-      // UPDATE: I'm axing Machine.closeIoBuf(), and going with a
-      // special, out-of-band bit on IOBuffer, isClosed() which is
-      // mutated by close() and open().  By analogy w/ POSIX, an
-      // fcntl().
-      //
-      // The entire preceeding conversation can go in the diary.
-      //
       int                 input_off  = 0;
       final StringBuilder out        = new StringBuilder();
       int                 dcode      = Firmware.ERROR_INCOMPLETE;
       final int           MAX_CYCLES = 1024 * 1024;
-      bufIn.open();
-      bufOut.open();
+
       while ( true )
       {
+         if ( Firmware.ERROR_COMPLETE == dcode )
+         {
+            if ( bufIn.isClosed() &&
+                 bufIn.isEmpty()  &&
+                 bufOut.isEmpty() )
+            {
+               break;
+            }
+         }
+         else
+         {
+            if ( Firmware.ERROR_INCOMPLETE != dcode &&
+                 Firmware.ERROR_BLOCKED    != dcode )
+            {
+               break;
+            }
+         }
+
          final int[] cycle = CYCLES[debugRand.nextInt(CYCLES.length)];
          for ( int op : cycle )
          {
-            final int jiffy = debugRand.nextInt(10);
+            final int jiffy = debugRand.nextInt(100);
             switch ( op )
             {
             case INPUT: {
@@ -1492,25 +1461,6 @@ public class TestScm extends Util
             default:
                fail("unrecognized test operation: " + op);
             }
-         }
-
-         if ( Firmware.ERROR_COMPLETE == dcode )
-         {
-            if ( bufIn.isClosed() &&
-                 bufIn.isEmpty()  &&
-                 bufOut.isEmpty() )
-            {
-               break;
-            }
-         }
-         else if ( Firmware.ERROR_INCOMPLETE == dcode ||
-                   Firmware.ERROR_BLOCKED    == dcode )
-         {
-            continue;
-         }
-         else
-         {
-            break;
          }
       }
       
