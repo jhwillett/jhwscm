@@ -142,6 +142,8 @@ public class TestScm extends Util
             REP_IND,
             REP_DEP,
             STRESS_OUT,
+            STRESS_IN,
+            STRESS_IO,
          };
          metabatch(tests,batches);
       }
@@ -164,6 +166,9 @@ public class TestScm extends Util
             RE_DEP,
             REP_IND,
             REP_DEP,
+            STRESS_OUT,
+            STRESS_IN,
+            STRESS_IO,
          };
          metabatch(tests,batches);
       }
@@ -183,6 +188,9 @@ public class TestScm extends Util
             RE_DEP,
             REP_IND,
             REP_DEP,
+            STRESS_OUT,
+            STRESS_IN,
+            STRESS_IO,
          };
          metabatch(tests,batches);
       }
@@ -1265,7 +1273,7 @@ public class TestScm extends Util
    private static void batch ( final Object[][] tests, final Batch type )
    {
       final boolean oldVerbose = VERBOSE;
-      if ( STRESS_IO == type || STRESS_IN == type/* || STRESS_OUT == type*/ )
+      if ( STRESS_IO == type || STRESS_IN == type || STRESS_OUT == type )
       {
          //VERBOSE = true;
       }

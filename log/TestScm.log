@@ -2,38 +2,38 @@ make[1]: Entering directory `/home/jwillett/jhwscm'
 test:   TestScm
 host:   little-man
 global:
-  numCycles:        562904
-  numCons:          558356
+  numCycles:        582645
+  numCons:          570788
   iobuf:            0
-    numPeek:        17907
-    numPop:         6741
-    numPush:        6750
+    numPeek:        19157
+    numPop:         7411
+    numPush:        7420
   iobuf:            1
     numPeek:        0
-    numPop:         1983
-    numPush:        1990
-  reg.numSet:       5673729
-  reg.numGet:       10215099
+    numPop:         2379
+    numPush:        2386
+  reg.numSet:       5857871
+  reg.numGet:       10507559
   reg.maxAddr:      31
-  heap.numSet:      3537280
-  heap.numGet:      4181392
+  heap.numSet:      3705296
+  heap.numGet:      4356576
   heap.maxAddr:     6143
-  cache.numHits:    7259673
-  cache.numMisses:  252169
-  cache.numFlush:   221080
+  cache.numHits:    7497312
+  cache.numMisses:  262670
+  cache.numFlush:   231581
   cache.numDrop:    31089
-  cache.numLoad:    261337
-  cacheTop.numSet:  5176771
-  cacheTop.numGet:  2344239
+  cache.numLoad:    272286
+  cacheTop.numSet:  5385096
+  cacheTop.numGet:  2384502
   cacheTop.maxAddr: 6143
-  reg   ops:        15888828
-  cache ops:        7521010
-  heap  ops:        7718672
-  reg   ops/cell:   512542.8387096774
-  cache ops/cell:   1224.3219925118021
-  heap  ops/cell:   1256.4987790981604
-  ops   reg/cache:  2.1125923247010707
-  ops   cache/heap: 0.9743917088328148
+  reg   ops:        16365430
+  cache ops:        7769598
+  heap  ops:        8061872
+  reg   ops/cell:   527917.0967741936
+  cache ops/cell:   1264.7888653752238
+  heap  ops/cell:   1312.3672472733192
+  ops   reg/cache:  2.1063419239965824
+  ops   cache/heap: 0.963746137373553
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -41,14 +41,14 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9664304707154384
-  cache write/miss:          0.8767136325242199
-numExpects:     831
-  happy:        731
-  unhappy:      100
-numBatches:     105
+  cache hit/op:              0.9661506946794465
+  cache write/miss:          0.8816423649446073
+numExpects:     997
+  happy:        894
+  unhappy:      103
+numBatches:     133
 numMetaBatches: 46
-numScms:        573
+numScms:        601
 numScmNoEvals:  126
-numScmFulls:    447
+numScmFulls:    475
 make[1]: Leaving directory `/home/jwillett/jhwscm'
