@@ -1482,6 +1482,13 @@ public class TestScm extends Util
          log("  bufOut.isClosed(): " + bufOut.isClosed());
       }
 
+      // We clear(), so that if an error (possibly expected) did
+      // arise above, we can continue to use this same Computer in 
+      // subsequent tests.
+      //
+      // TODO: is this legit?
+      //scm.clear();
+
       assertEquals("drive failure on \"" + expr + "\":",
                    expected_dcode,
                    dcode);

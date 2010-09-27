@@ -100,6 +100,21 @@ public class JhwScm implements Firmware
    }
 
    /**
+    * Resets to top level loop, clearing any error state or current
+    * computation, but preserving any established environment.
+    */
+   public void clear ( final Machine mach )
+   {
+      if ( DEBUG ) javaDepth = 0;
+      log("clear: ");
+      if ( DEBUG ) javaDepth = 1;
+      final Mem reg = mach.reg;
+      reg.set(regError, NIL);
+      reg.set(regStack, NIL);
+      reg.set(regPc,    sub_top);
+   }
+
+   /**
     * Drives a single step of computation.  
     * 
     * @returns ERROR_COMPLETE, ERROR_INCOMPLETE, or one of the

@@ -20,13 +20,18 @@ public interface Firmware
    public static final int ERROR_UNIMPLEMENTED    = -6;
    public static final int ERROR_BLOCKED          = -7;
 
-
    /**
     * Called before step(), not allowed to fail.  
     *
     * The firmware should initialize the Machine to a base state.
     */
    public void boot ( final Machine mach );
+
+   /**
+    * Resets to top level loop, clearing any error state or current
+    * computation, but preserving any progress made good.
+    */
+   public void clear ( final Machine mach );
 
    /**
     * Drives a single step of computation.  

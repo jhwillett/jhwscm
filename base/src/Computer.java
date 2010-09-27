@@ -40,6 +40,15 @@ public class Computer
    }
 
    /**
+    * Resets to top level loop, clearing any error state or current
+    * computation, but preserving any progress made good.
+    */
+   public void clear ()
+   {
+      firmware.clear(machine);
+   }
+
+   /**
     * Drives all pending computation to completion.
     *
     * @param numSteps the number of VM steps to execute

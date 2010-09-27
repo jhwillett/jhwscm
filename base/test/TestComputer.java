@@ -10,9 +10,10 @@ public class TestComputer extends Util
 {
    private static class TestFirmware implements Firmware
    {
-      int maxStep = 0;
-      int numBoot = 0;
-      int numStep = 0;
+      final int maxStep;
+      int numBoot  = 0;
+      int numClear = 0;
+      int numStep  = 0;
 
       public TestFirmware ( final int maxStep )
       {
@@ -22,6 +23,11 @@ public class TestComputer extends Util
       public void boot ( final Machine mach )
       {
          numBoot++;
+      }
+
+      public void clear ( final Machine mach )
+      {
+         numClear++;
       }
 
       public int step ( final Machine mach )
