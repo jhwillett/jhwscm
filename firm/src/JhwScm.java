@@ -111,7 +111,7 @@ public class JhwScm implements Firmware
       final Mem reg = mach.reg;
       reg.set(regError, NIL);
       reg.set(regStack, NIL);
-      //reg.set(regPc,    sub_top);
+      reg.set(regEnv,   reg.get(regTopEnv));
       gosub(sub_top, blk_halt);
    }
 
@@ -155,13 +155,12 @@ public class JhwScm implements Firmware
          reg.set(regError,     NIL);
          reg.set(regFreeCells, NIL);
          reg.set(regHeapTop,   code(TYPE_FIXINT,0));
-         reg.set(regIn,        code(TYPE_IOBUF,0));
-         reg.set(regOut,       code(TYPE_IOBUF,1));
          reg.set(regEnv,       cons(NIL,NIL));
          reg.set(regArg0,      code(TYPE_FIXINT,primitives_start));
          gosub(sub_prebind, sub_init+0x1);
          break;
       case sub_init+0x1:
+         reg.set(regTopEnv,    reg.get(regEnv));
          gosub(sub_top, blk_halt);
          break;
          
@@ -280,21 +279,21 @@ public class JhwScm implements Firmware
          // The top-level loop: read-eval-print if DO_EVAL, read-print
          // otherwise.
          //
-         // Reads the next expr the port at regIn.  If DO_EVAL,
+         // Reads the next expr the port at code(TYPE_IOBUF,0).  If DO_EVAL,
          // evaluates the expression in the global environment.
-         // Prints the result in the port at regOut.
+         // Prints the result in the port at code(TYPE_IOBUF,1).
          //
          // Returns UNSPECIFIED after processing everything on the
          // input port.
          // 
          // (define (sub_top)
-         //   (let ((expr (sub_read regIn)))
+         //   (let ((expr (sub_read code(TYPE_IOBUF,0))))
          //     (if (= EOF expr)
          //         UNSPECIFIED
          //         (begin
          //           (if DO_EVAL
-         //               (sub_print (sub_eval expr (global_env)) regOut)
-         //               (sub_print expr                         regOut))
+         //               (sub_print (sub_eval expr (global_env)) code(TYPE_IOBUF,1))
+         //               (sub_print expr                         code(TYPE_IOBUF,1)))
          //           (sub_top)))))
          //
          reg.set(regArg0,NIL);
@@ -316,13 +315,13 @@ public class JhwScm implements Firmware
          else
          {
             reg.set(regArg0, reg.get(regRetval));
-            reg.set(regArg1, reg.get(regOut));
+            reg.set(regArg1, code(TYPE_IOBUF,1));
             gosub(sub_print,sub_top+0x3);
          }
          break;
       case sub_top+0x2:
          reg.set(regArg0, reg.get(regRetval));
-         reg.set(regArg1, reg.get(regOut));
+         reg.set(regArg1, code(TYPE_IOBUF,1));
          gosub(sub_print,sub_top+0x3);
          break;
       case sub_top+0x3:
@@ -334,7 +333,7 @@ public class JhwScm implements Firmware
          // results in regRetval.
          //
          // Is variadic, 0 or 1 argument: if the first arg is present,
-         // it is expected to be an input port.  Otherwise regIn is
+         // it is expected to be an input port.  Otherwise code(TYPE_IOBUF,0) is
          // used.
          //
          // Top-level entry point for the parser.
@@ -353,16 +352,16 @@ public class JhwScm implements Firmware
          //   representation is incomplete and therefore not
          //   parsable, an error is signalled.
          //
-         // (define (sub_readv)      (sub_read regIn))
+         // (define (sub_readv)      (sub_read code(TYPE_IOBUF,0)))
          // (define (sub_readv port) (sub_read port))
          //
          // TODO: get more ports, and test that this mess works with
-         // non-regIn input ports!
+         // non-code(TYPE_IOBUF,0) input ports!
          //
          if ( NIL == reg.get(regArg0) )
          {
             log("default arg: ",pp(reg.get(regArg0)));
-            reg.set(regArg0, reg.get(regIn));
+            reg.set(regArg0, code(TYPE_IOBUF,0));
          }
          else if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
@@ -1995,13 +1994,13 @@ public class JhwScm implements Firmware
          //
          // Is variadic, 1 or 2 arguments: if the second arg is
          // present, is expected to be an output port.  Otherwise,
-         // regIn is used.
+         // code(TYPE_IOBUF,0) is used.
          //
-         // (define (sub_printv val)      (sub_print val regIn))
+         // (define (sub_printv val)      (sub_print val code(TYPE_IOBUF,0)))
          // (define (sub_printv val port) (sub_print val port))
          //
          // TODO: get more ports, and test that this mess works with
-         // other than regOut!
+         // other than code(TYPE_IOBUF,1)!
          //
          if ( NIL == reg.get(regArg0) )
          {
@@ -2014,8 +2013,8 @@ public class JhwScm implements Firmware
          reg.set(regArg0, reg.get(regTmp0));
          if ( NIL == reg.get(regTmp1) )
          {
-            log("defaulting to regOut");
-            reg.set(regArg1, reg.get(regOut));
+            log("defaulting to code(TYPE_IOBUF,1)");
+            reg.set(regArg1, code(TYPE_IOBUF,1));
          }
          else if ( TYPE_CELL != type(reg.get(regTmp1)) )
          {
@@ -2999,10 +2998,10 @@ public class JhwScm implements Firmware
    private static final int regErrorPc          =   4; // regPc at err
    private static final int regErrorStack       =   5; // regStack at err
 
-   private static final int regEnv              =   6; // list of env frames
+   private static final int regTopEnv           =   6; // list of env frames
+   private static final int regEnv              =   7; // list of env frames
 
-   private static final int regIn               =   7; // input port
-   private static final int regOut              =   8; // output port
+   private static final int regUNUSED           =   8;
 
    private static final int regRetval           =   9; // return value
 

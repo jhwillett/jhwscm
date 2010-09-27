@@ -454,7 +454,6 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
 
-
       if ( true )
       {
          // TODO: note, for now + and * are binary only: this will
@@ -629,22 +628,21 @@ public class TestScm extends Util
       // defining symbols
       {
          final Object[][] tests = { 
-            { "(define a 100)",           ""          },
-            { "a",                        "100"       },
-            { "(define a 100)",           ""          },
-            { "(define b   2)",           ""          },
-            { "(+ a b)",                  "102"       },
-            { "(+ a c)",                  SEMANTIC    },
+            { "(define a)",                 SEMANTIC    },
+            { "(define a 100)",             ""          },
+            { "a",                          "100"       },
+            { "(define a 100)",             ""          },
+            { "(define b   2)",             ""          },
+            { "(+ a b)",                    "102"       },
+            { "(+ a c)",                    SEMANTIC    },
+            { "(+ a b)",                    "102"       },
+            { "(define a 1)a(define a 2)a", "12"        }, // redefining
          };
          final Batch[] batches = { 
             REP_DEP,
          };
          metabatch(tests,batches);
       }
-      expect("(define a)",SEMANTIC);
-
-      // redefining symbols
-      expect("(define a 1)a(define a 2)a","12");
 
       {
          final Object[][] tests = { 
@@ -706,7 +704,8 @@ public class TestScm extends Util
          final Object[][] tests = { 
             { fact,                       ""          },
             { "fact",                     "???"       },
-            { "(fact -1)",                "1"         },
+            { "(fact)",                   SEMANTIC    },
+            { "(fact 1 1)",               SEMANTIC    },
             { "(fact 0)",                 "1"         },
             { "(fact 1)",                 "1"         },
             { "(fact 2)",                 "2"         },
@@ -824,25 +823,30 @@ public class TestScm extends Util
 
       // let, local scopes:
       // 
-      expect("(let ())",SEMANTIC);
-      expect("(let () 32)","32");
-      expect("(let()32)","32");
-      expect("(let ((a 10)) (+ a 32))","42");
-      expect("(let ((a 10) (b 32)) (+ a b))","42");
-      expect("(let ((a 10) (b 32)) (+ a c))",SEMANTIC);
-      expect("(let ((a 10) (b a)) b)",SEMANTIC);
-      expect("(let ((a 10) (b (+ a 1))) b)",SEMANTIC);
-      if ( true )
       {
+         final Object[][] tests = {
+            { "(let ())",                       SEMANTIC },
+            { "(let () 32)",                    "32" },
+            { "(let()32)",                      "32" },
+            { "(let ((a 10)) (+ a 32))",        "42" },
+            { "(let ((a 10) (b 32)) (+ a b))",  "42" },
+            { "(let ((a 10) (b 32)) (+ a c))",  SEMANTIC },
+            { "(let ((a 10) (b a)) b)",         SEMANTIC },
+            { "(let ((a 10) (b (+ a 1))) b)",   SEMANTIC },
+
          // Heh, guard that those names stay buried.  
          //
          // An overly simple early form of sub_let pushed frames onto
          // the env, but didn't pop them.
-         final Object[][] tests = {
+
             { "(let ((a 10)) a)", "10"     },
             { "a",                SEMANTIC },
          };
          final Batch[] batches = { 
+            // note: making this DEP revealed a bug once where 
+	    // a failure inside a previous (let) left the current
+            // environment set to the inner environment, changing the
+            // meaning of subsequent expressions.
             REP_DEP,
          };
          metabatch(tests,batches);
