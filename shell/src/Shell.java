@@ -42,15 +42,14 @@ public class Shell
       bufIn.open();
       bufOut.open();
 
+      int dcode = Firmware.ERROR_COMPLETE;
       while ( true )
       {
-         int dcode = Firmware.ERROR_INCOMPLETE;
-         do
-         {
-            dcode = computer.drive(1024);
-         }
-         while ( Firmware.ERROR_INCOMPLETE == dcode );
-
+	if ( Firmware.ERROR_COMPLETE == dcode )
+ 	{
+	  System.out.print("prompt> ");
+ 	}
+  
          while ( !bufIn.isFull() && System.in.available() > 0 )
          {
             final int b = System.in.read();
@@ -63,6 +62,12 @@ public class Shell
                bufIn.push((byte)b);
             }
          }
+
+	 do
+         {
+            dcode = computer.drive(1024);
+         }
+         while ( Firmware.ERROR_INCOMPLETE == dcode );
 
          while ( !bufOut.isEmpty() )
          {
