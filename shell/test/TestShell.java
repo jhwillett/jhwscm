@@ -10,6 +10,5 @@ public class TestShell extends Util
 {
    public static void main ( final String[] argv )
    {
-      Shell.main(argv);
    }
 }

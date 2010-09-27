@@ -68,6 +68,11 @@ rawtest-firm:
 rawtest-shell:
 	java -cp $(CPT-shell) TestShell
 
+.PHONY: run
+run: $(DESTDIR)/build-shell.ok
+run:
+	java -cp $(CPT-shell) Shell
+
 .PHONY: test $(MODULES:%=test-%)
 test: $(MODULES:%=test-%)
 $(MODULES:%=test-%): test-%: $(DESTDIR)/test-%.ok
