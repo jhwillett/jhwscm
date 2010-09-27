@@ -111,7 +111,8 @@ public class JhwScm implements Firmware
       final Mem reg = mach.reg;
       reg.set(regError, NIL);
       reg.set(regStack, NIL);
-      reg.set(regPc,    sub_top);
+      //reg.set(regPc,    sub_top);
+      gosub(sub_top, blk_halt);
    }
 
    /**

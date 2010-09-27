@@ -1487,7 +1487,7 @@ public class TestScm extends Util
       // subsequent tests.
       //
       // TODO: is this legit?
-      //scm.clear();
+      scm.clear();
 
       assertEquals("drive failure on \"" + expr + "\":",
                    expected_dcode,
