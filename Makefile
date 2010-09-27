@@ -15,6 +15,72 @@ clean:
 
 include deps.mk
 
+MODULES += base
+MODULES += firm
+
+SRC-base := $(wildcard base/src/*.java)
+TST-base := $(wildcard base/test/*.java)
+CPS-base := 
+CPT-base := -cp $(DESTDIR)/base/classes:$(DESTDIR)/base/test
+
+SRC-firm := $(wildcard firm/src/*.java)
+TST-firm := $(wildcard firm/test/*.java)
+CPS-firm := -cp $(DESTDIR)/base/classes
+CPT-firm := $(CPT-base):$(DESTDIR)/firm/classes:$(DESTDIR)/firm/test
+
+.PHONY: build $(MODULES:%=build-%)
+build: $(MODULES:%=build-%)
+$(MODULES:%=build-%): build-%: $(DESTDIR)/build-%.ok
+$(MODULES:%=$(DESTDIR)/build-%.ok): $(DESTDIR)/build-%.ok:
+	@echo "pattern: $*"
+	@echo "SRC:     $(SRC-$*)"
+	@echo "TST:     $(TST-$*)"
+	@echo "CPS:     $(CPS-$*)"
+	@echo "CPT:     $(CPT-$*)"
+	mkdir -p $(DESTDIR)/$*/classes
+	javac $(CPS-$*) -d $(DESTDIR)/$*/classes $(SRC-$*)
+	mkdir -p  $(DESTDIR)/$*/test
+	javac $(CPT-$*) -d $(DESTDIR)/$*/test    $(TST-$*)
+	touch $@
+
+.PHONY: rawtest $(MODULES:%=rawtest-%)
+rawtest: $(MODULES:%=rawtest-%)
+$(MODULES:%=rawtest-%): rawtest=%: $(DESTDIR)/build-%.ok
+rawtest-base:
+	java $(CPT-base) TestUtil
+	java $(CPT-base) TestMem
+	java $(CPT-base) TestIOBuffer
+	java $(CPT-base) TestMachine
+	java $(CPT-base) TestComputer
+rawtest-firm:
+	java $(CPT-firm) TestScm
+
+.PHONY: test $(MODULES:%=test-%)
+test: $(MODULES:%=test-%)
+$(MODULES:%=test-%): test-%: $(DESTDIR)/test-%.ok
+$(MODULES:%=$(DESTDIR)/test-%.ok): $(DESTDIR)/test-%.ok: $(DESTDIR)/build-%.ok
+$(DESTDIR)/test-base.ok:
+	java $(CPT-base) TestUtil     2>&1 | tee $(LOGDIR)/TestUtil.log
+	java $(CPT-base) TestMem      2>&1 | tee $(LOGDIR)/TestMem.log
+	java $(CPT-base) TestIOBuffer 2>&1 | tee $(LOGDIR)/TestIOBuffer.log
+	java $(CPT-base) TestMachine  2>&1 | tee $(LOGDIR)/TestMachine.log
+	java $(CPT-base) TestComputer 2>&1 | tee $(LOGDIR)/TestComputer.log
+	touch $@
+$(DESTDIR)/test-firm.ok: 
+	java $(CPT-firm) TestScm      2>&1 | tee $(LOGDIR)/TestScm.log
+	touch $@
+
+test: $(LOGDIR)/md5.log
+$(LOGDIR)/md5.log: Makefile deps.mk
+$(LOGDIR)/md5.log: $(SRC-base) $(TST-base)
+$(LOGDIR)/md5.log: $(SRC-firm) $(TST-firm)
+$(LOGDIR)/md5.log:
+	@mkdir -p $(dir $@)
+	@cat /dev/null > $@.tmp
+	md5sum $^ > $@.tmp
+	@mv $@.tmp $@
+
+
 SRC       += $(wildcard src/*.java)
 
 # Maintaining TESTS explicitly so I can control ordering.
@@ -30,49 +96,26 @@ TEST_SRC  := $(wildcard test/*.java)
 
 CLASSES   := $(SRC:src/%.java=%)
 
-.PHONY: test $(TESTS:test/%.java=test-%)
-test: $(TESTS:test/%.java=test-%)
-$(TESTS:test/%.java=test-%): test-%: $(LOGDIR)/%.log
-$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile deps.mk
-$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(LOGDIR)/md5.log
-$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build-test.ok
-$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
-	@mkdir -p $(dir $@)
-	@cat /dev/null > $@.tmp
-	@time bash -c "set -o pipefail ;$(MAKE) rawtest-$* 2>&1 | tee -a $@.tmp"
-	@echo "date:   `date`"
-	@echo "uptime: `uptime`"
-	@mv $@.tmp $@
+#.PHONY: test $(TESTS:test/%.java=test-%)
+#test: $(TESTS:test/%.java=test-%)
+#$(TESTS:test/%.java=test-%): test-%: $(LOGDIR)/%.log
+#$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: Makefile deps.mk
+#$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(LOGDIR)/md5.log
+#$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log: $(DESTDIR)/build-test.ok
+#$(TESTS:test/%.java=$(LOGDIR)/%.log): $(LOGDIR)/%.log:
+#	@mkdir -p $(dir $@)
+#	@cat /dev/null > $@.tmp
+#	@time bash -c "set -o pipefail ;$(MAKE) rawtest-$* 2>&1 | tee -a $@.tmp"
+#	@echo "date:   `date`"
+#	@echo "uptime: `uptime`"
+#	@mv $@.tmp $@
 
-$(LOGDIR)/md5.log: Makefile deps.mk $(SRC) $(TEST_SRC)
-	@mkdir -p $(dir $@)
-	@cat /dev/null > $@.tmp
-	md5sum $^ > $@.tmp
-	@mv $@.tmp $@
-
-.PHONY: rawtest $(TESTS:test/%.java=rawtest-%)
-rawtest: $(TESTS:test/%.java=rawtest-%)
-$(TESTS:test/%.java=rawtest-%): rawtest-%:
-	@echo "test:   $*"
-	@echo "host:   `hostname`"
-	@java -cp $(DESTDIR)/classes:$(DESTDIR)/test $*
-
-.PHONY: build-src
-build-src: $(DESTDIR)/build-src.ok
-$(DESTDIR)/build-src.ok: $(SRC)
-$(DESTDIR)/build-src.ok:
-	mkdir -p $(dir $@)/classes
-	time javac -d $(DESTDIR)/classes $(SRC)
-	touch $@
-
-.PHONY: build-test
-build-test: $(DESTDIR)/build-test.ok
-$(DESTDIR)/build-test.ok: $(DESTDIR)/build-src.ok
-$(DESTDIR)/build-test.ok: $(TEST_SRC)
-$(DESTDIR)/build-test.ok:
-	mkdir -p $(dir $@)/test
-	time javac -cp $(DESTDIR)/classes -d $(DESTDIR)/test $(TEST_SRC)
-	touch $@
+#.PHONY: rawtest $(TESTS:test/%.java=rawtest-%)
+#rawtest: $(TESTS:test/%.java=rawtest-%)
+#$(TESTS:test/%.java=rawtest-%): rawtest-%:
+#	@echo "test:   $*"
+#	@echo "host:   `hostname`"
+#	@java -cp $(DESTDIR)/classes:$(DESTDIR)/test $*
 
 COBERTURA_HOME       := external/cobertura-1.9.4.1
 COBERTURA_JAR        := $(COBERTURA_HOME)/cobertura.jar
