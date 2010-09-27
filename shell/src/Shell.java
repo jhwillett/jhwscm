@@ -42,10 +42,12 @@ public class Shell
       bufIn.open();
       bufOut.open();
 
+      final boolean interactive = true;
+
       int dcode = Firmware.ERROR_COMPLETE;
       while ( true )
       {
-	if ( Firmware.ERROR_COMPLETE == dcode )
+	if ( interactive && Firmware.ERROR_COMPLETE == dcode )
  	{
 	  System.out.print("prompt> ");
  	}
@@ -88,7 +90,15 @@ public class Shell
          else
          {
             System.err.println("ERROR: " + dcode);
-            System.exit(dcode);
+            if ( interactive )
+            {
+               computer.clear();
+               continue; 
+            } 
+            else
+            {
+               System.exit(dcode);
+            }
          }
       }
    }

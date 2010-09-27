@@ -1,10 +1,50 @@
-Exception in thread "main" java.lang.RuntimeException: detonate on ERR_INTERNAL
-	at JhwScm.raiseError(JhwScm.java:3747)
-	at JhwScm.cons(JhwScm.java:3266)
-	at JhwScm.store(JhwScm.java:3529)
-	at JhwScm.gosub(JhwScm.java:3669)
-	at JhwScm.step(JhwScm.java:300)
-	at Computer.drive(Computer.java:73)
-	at TestScm.expect(TestScm.java:1456)
-	at TestScm.expect(TestScm.java:1318)
-	at TestScm.main(TestScm.java:121)
+global:
+  numCycles:        582645
+  numCons:          571785
+  iobuf:            0
+    numPeek:        19157
+    numPop:         7411
+    numPush:        7420
+  iobuf:            1
+    numPeek:        0
+    numPop:         2379
+    numPush:        2386
+  reg.numSet:       5863853
+  reg.numGet:       10513541
+  reg.maxAddr:      31
+  heap.numSet:      3703632
+  heap.numGet:      4356000
+  heap.maxAddr:     6143
+  cache.numHits:    7500339
+  cache.numMisses:  262634
+  cache.numFlush:   231477
+  cache.numDrop:    31157
+  cache.numLoad:    272250
+  cacheTop.numSet:  5387090
+  cacheTop.numGet:  2385499
+  cacheTop.maxAddr: 6143
+  reg   ops:        16377394
+  cache ops:        7772589
+  heap  ops:        8059632
+  reg   ops/cell:   528303.0322580645
+  cache ops/cell:   1265.2757610288133
+  heap  ops/cell:   1312.0026045905909
+  ops   reg/cache:  2.1070706298763513
+  ops   cache/heap: 0.9643850984759602
+  ALG:                       4
+  LINE_SIZE:                 16
+  LINE_COUNT:                16
+  PROPERLY_TAIL_RECURSIVE:   true
+  CLEVER_TAIL_CALL_MOD_CONS: true
+  CLEVER_STACK_RECYCLING:    true
+  CLEVER_STACK_RECYCLING:    true
+  cache hit/op:              0.9661683738948983
+  cache write/miss:          0.8813672258732685
+numExpects:     997
+  happy:        894
+  unhappy:      103
+numBatches:     133
+numMetaBatches: 46
+numScms:        601
+numScmNoEvals:  126
+numScmFulls:    475
