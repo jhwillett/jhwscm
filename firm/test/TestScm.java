@@ -976,28 +976,25 @@ public class TestScm extends Util
 
       // variadic (lambda) and (define), inner defines, etc.
       // 
-      expect("(lambda () (+ 1 2) 7)","???");
-      expect("((lambda () (+ 1 2) 7))","7");
-      expect("((lambda () (display (+ 1 2)) 7))","37");
       {
+         final Object[][] tests = { 
+	 { "(lambda () (+ 1 2) 7)", "???" },
+	{ "((lambda () (+ 1 2) 7))", "7" },
+	{ "((lambda () (display (+ 1 2)) 7))", "37" },
+
          // Are the nested-define defined symbols in scope of the
          // "real" body?
-         final Object[][] tests = { 
+	//
             { "(define (a x) (define b 2) (+ x b))", ""       },
             { "(a 10)",                              "12"     },
             { "a",                                   "???"    },
             { "b",                                   SEMANTIC },
-         };
-         final Batch[] batches = { 
-            REP_DEP,
-         };
-         metabatch(tests,batches);
-      }
-      {
+
          // Can we do more than one?
-         final Object[][] tests = { 
+	//
             { "(define (f) (define a 1) (define b 2) (+ a b))", ""  },
             { "(f)",                                            "3" },
+
          };
          final Batch[] batches = { 
             REP_DEP,
@@ -1041,7 +1038,8 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
       {
-         // Do nested defines really act like (begin) when we have args?
+         // Do nested defines really act like (begin) when we have args? 
+         //
          final String def = 
             "(define (f b) (define a 1) (display 8) (+ a b))";
          final Object[][] tests = { 
@@ -1056,14 +1054,16 @@ public class TestScm extends Util
       }
       {
          // Are nested defines in one another's scope, in any order?
-         final String F = 
-            "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))";
-         final String G = 
-            "(define (G b) (define (g x) (+ a x)) (define a 1) (g b))";
+         //
          final Object[][] tests = { 
-            { F,       ""  },
+            { 
+		"(define (F b) (define a 1) (define (g x) (+ a x)) (g b))",
+		""  
+	},
+	{
+                "(define (G b) (define (g x) (+ a x)) (define a 1) (g b))",
+	       ""  },
             { "(F 4)", "5" },
-            { G,       ""  },
             { "(G 4)", "5" },
          };
          final Batch[] batches = { 
