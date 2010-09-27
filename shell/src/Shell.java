@@ -44,6 +44,10 @@ public class Shell
 
       final boolean interactive = true;
 
+// Surprise: our engine gives both a LEX and a SEM error on the input 123ab.
+//
+// Guile says this is an unbound variable, and is happy w/ (define 123ab 100).
+
       int dcode = Firmware.ERROR_COMPLETE;
       while ( true )
       {
