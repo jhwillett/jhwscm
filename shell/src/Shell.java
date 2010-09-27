@@ -44,17 +44,13 @@ public class Shell
 
       final boolean interactive = true;
 
-// Surprise: our engine gives both a LEX and a SEM error on the input 123ab.
-//
-// Guile says this is an unbound variable, and is happy w/ (define 123ab 100).
-
       int dcode = Firmware.ERROR_COMPLETE;
       while ( true )
       {
-	if ( interactive && Firmware.ERROR_COMPLETE == dcode )
- 	{
-	  System.out.print("prompt> ");
- 	}
+         if ( interactive && Firmware.ERROR_COMPLETE == dcode )
+         {
+            System.out.print("prompt> ");
+         }
   
          while ( !bufIn.isFull() && System.in.available() > 0 )
          {
@@ -69,7 +65,7 @@ public class Shell
             }
          }
 
-	 do
+         do
          {
             dcode = computer.drive(1024);
          }

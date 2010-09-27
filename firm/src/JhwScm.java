@@ -279,21 +279,23 @@ public class JhwScm implements Firmware
          // The top-level loop: read-eval-print if DO_EVAL, read-print
          // otherwise.
          //
-         // Reads the next expr the port at code(TYPE_IOBUF,0).  If DO_EVAL,
-         // evaluates the expression in the global environment.
+         // Reads the next expr the port at code(TYPE_IOBUF,0).  If
+         // DO_EVAL, evaluates the expression in the global
+         // environment.  
+         //
          // Prints the result in the port at code(TYPE_IOBUF,1).
          //
          // Returns UNSPECIFIED after processing everything on the
          // input port.
          // 
          // (define (sub_top)
-         //   (let ((expr (sub_read code(TYPE_IOBUF,0))))
+         //   (let ((expr (sub_read TYPE_IOBUF|0)))
          //     (if (= EOF expr)
          //         UNSPECIFIED
          //         (begin
          //           (if DO_EVAL
-         //               (sub_print (sub_eval expr (global_env)) code(TYPE_IOBUF,1))
-         //               (sub_print expr                         code(TYPE_IOBUF,1)))
+         //               (sub_print (sub_eval expr (global_env)) TYPE_IOBUF|1)
+         //               (sub_print expr                         TYPE_IOBUF|1))
          //           (sub_top)))))
          //
          reg.set(regArg0,NIL);
@@ -333,8 +335,8 @@ public class JhwScm implements Firmware
          // results in regRetval.
          //
          // Is variadic, 0 or 1 argument: if the first arg is present,
-         // it is expected to be an input port.  Otherwise code(TYPE_IOBUF,0) is
-         // used.
+         // it is expected to be an input port.  Otherwise
+         // code(TYPE_IOBUF,0) is used.
          //
          // Top-level entry point for the parser.
          //
@@ -352,7 +354,7 @@ public class JhwScm implements Firmware
          //   representation is incomplete and therefore not
          //   parsable, an error is signalled.
          //
-         // (define (sub_readv)      (sub_read code(TYPE_IOBUF,0)))
+         // (define (sub_readv)      (sub_read TYPE_IOBUF|0))
          // (define (sub_readv port) (sub_read port))
          //
          // TODO: get more ports, and test that this mess works with
@@ -1996,7 +1998,7 @@ public class JhwScm implements Firmware
          // present, is expected to be an output port.  Otherwise,
          // code(TYPE_IOBUF,0) is used.
          //
-         // (define (sub_printv val)      (sub_print val code(TYPE_IOBUF,0)))
+         // (define (sub_printv val)      (sub_print val TYPE_IOBUF|0))
          // (define (sub_printv val port) (sub_print val port))
          //
          // TODO: get more ports, and test that this mess works with

@@ -202,6 +202,15 @@ public class TestScm extends Util
             { "a",       "a"       },
             { "a1",      "a1"      },
             { "a_0-b.c", "a_0-b.c" },
+
+            // Surprise: our engine gives both a LEX and a SEM error
+            // on the input 123ab.
+            //
+            // Guile says this is an unbound variable, and is happy w/
+            // (define 123ab 100).
+
+            //{ "1a",      "1a"      },
+            //{ "123ab",   "123ab"   },
          };
          final Batch[] batches = { 
             RE_IND,
@@ -358,11 +367,11 @@ public class TestScm extends Util
          // lexer really has to look forward a long way to decide if
          // it's valid.  Ditto for failure modes.
          /*
-         { "#\\space",  "#\\space"   },
-         { "#\\SPACE",  "#\\space"   },
-         { "#\\newline","#\\newline" },
-         { "#\\NeWlInE","#\\newline" },
-          */
+           { "#\\space",  "#\\space"   },
+           { "#\\SPACE",  "#\\space"   },
+           { "#\\newline","#\\newline" },
+           { "#\\NeWlInE","#\\newline" },
+         */
       };
       for ( final String[] pair : tweakyChars )
       {
@@ -637,6 +646,8 @@ public class TestScm extends Util
             { "(+ a c)",                    SEMANTIC    },
             { "(+ a b)",                    "102"       },
             { "(define a 1)a(define a 2)a", "12"        }, // redefining
+            //{ "(define 1a 117)",            ""          },
+            //{ "1a",                         "117"       },
          };
          final Batch[] batches = { 
             REP_DEP,
@@ -834,17 +845,17 @@ public class TestScm extends Util
             { "(let ((a 10) (b a)) b)",         SEMANTIC },
             { "(let ((a 10) (b (+ a 1))) b)",   SEMANTIC },
 
-         // Heh, guard that those names stay buried.  
-         //
-         // An overly simple early form of sub_let pushed frames onto
-         // the env, but didn't pop them.
+            // Heh, guard that those names stay buried.  
+            //
+            // An overly simple early form of sub_let pushed frames onto
+            // the env, but didn't pop them.
 
             { "(let ((a 10)) a)", "10"     },
             { "a",                SEMANTIC },
          };
          final Batch[] batches = { 
             // note: making this DEP revealed a bug once where 
-	    // a failure inside a previous (let) left the current
+            // a failure inside a previous (let) left the current
             // environment set to the inner environment, changing the
             // meaning of subsequent expressions.
             REP_DEP,
@@ -978,20 +989,20 @@ public class TestScm extends Util
       // 
       {
          final Object[][] tests = { 
-	 { "(lambda () (+ 1 2) 7)", "???" },
-	{ "((lambda () (+ 1 2) 7))", "7" },
-	{ "((lambda () (display (+ 1 2)) 7))", "37" },
+            { "(lambda () (+ 1 2) 7)", "???" },
+            { "((lambda () (+ 1 2) 7))", "7" },
+            { "((lambda () (display (+ 1 2)) 7))", "37" },
 
-         // Are the nested-define defined symbols in scope of the
-         // "real" body?
-	//
+            // Are the nested-define defined symbols in scope of the
+            // "real" body?
+            //
             { "(define (a x) (define b 2) (+ x b))", ""       },
             { "(a 10)",                              "12"     },
             { "a",                                   "???"    },
             { "b",                                   SEMANTIC },
 
-         // Can we do more than one?
-	//
+            // Can we do more than one?
+            //
             { "(define (f) (define a 1) (define b 2) (+ a b))", ""  },
             { "(f)",                                            "3" },
 
@@ -1026,10 +1037,11 @@ public class TestScm extends Util
       }
       {
          // Do nested defines really act like (begin)?
-         final String def = 
-            "(define (f) (define a 1) (display 8) (define b 2) (+ a b))";
          final Object[][] tests = { 
-            { def,   ""   },
+            { 
+               "(define (f) (define a 1) (display 8) (define b 2) (+ a b))",
+               ""
+            },
             { "(f)", "83" },
          };
          final Batch[] batches = { 
@@ -1040,10 +1052,11 @@ public class TestScm extends Util
       {
          // Do nested defines really act like (begin) when we have args? 
          //
-         final String def = 
-            "(define (f b) (define a 1) (display 8) (+ a b))";
          final Object[][] tests = { 
-            { def,     ""   },
+            { 
+               "(define (f b) (define a 1) (display 8) (+ a b))",
+               ""
+            },
             { "(f 4)", "85" },
             { "(f 3)", "84" },
          };
@@ -1057,12 +1070,13 @@ public class TestScm extends Util
          //
          final Object[][] tests = { 
             { 
-		"(define (F b) (define a 1) (define (g x) (+ a x)) (g b))",
-		""  
-	},
-	{
-                "(define (G b) (define (g x) (+ a x)) (define a 1) (g b))",
-	       ""  },
+               "(define (F b) (define a 1) (define (g x) (+ a x)) (g b))",
+               ""  
+            },
+            {
+               "(define (G b) (define (g x) (+ a x)) (define a 1) (g b))",
+               ""  
+            },
             { "(F 4)", "5" },
             { "(G 4)", "5" },
          };
