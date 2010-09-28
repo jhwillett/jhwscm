@@ -756,7 +756,8 @@ public class JhwScm implements Firmware
          // top-level entry.
          //
          // (define (sub_interp_atom all rest accum)
-         //     (if rest
+         //     (if (null? rest)
+         //         (if accum accum (make-symbol all))
          //         (let ((head (car rest))
          //               (tail (car rest))) 
          //           (case head
@@ -772,8 +773,28 @@ public class JhwScm implements Firmware
          //                 (else
          //                  (make-symbol all))))
          //             (else (make-symbol all))))
-         //         (if accum accum (make-symbol all))))
          //
+
+         YO;
+
+         // Responsibility for make-symbol should be up in
+         // sub_read_atom_new.  This method will be a lot simpler if
+         // it simply tries to interpret a number, and returns NIL if
+         // the char sequence is not a number.
+         
+         if ( NIL == reg.get(regArg1) )
+         {
+            if ( NIL != reg.get(regArg2) )
+            {
+               reg.set(regRetval,reg.get(regArg2));
+               returnsub();
+            }
+            else
+            {
+               reg.set(regRetval,reg.get(regArg2));
+            }
+            break;
+         }
          raiseError(ERR_NOT_IMPL);
          break;
 
