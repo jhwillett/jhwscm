@@ -397,6 +397,9 @@ public class JhwScm implements Firmware
          //              (( EOF ) EOF)
          //              (( #\) ) (err_lexical))
          //              (( #\( ) (sub_read_list port))
+         //              (( #\' ) (list 'quote (sub_read port)))
+         //              (( #\" ) (sub_read_string port))
+         //              (( #\# ) (sub_read_octo_tok port))
          //              (else    (sub_read_atom port))))))
          //
          if ( TYPE_IOBUF != type(reg.get(regArg0)) )
@@ -432,16 +435,51 @@ public class JhwScm implements Firmware
          switch (value(reg.get(regTmp0)))
          {
          case ')':
-            log("mismatch close paren");
             raiseError(ERR_LEXICAL);
             break;
          case '(':
             gosub(sub_read_list,blk_tail_call);
             break;
+         case '\'':
+            portPop(regArg0);
+            gosub(sub_read,sub_read+0x3);
+            break;
+         case '"':
+            log("string literal");
+            gosub(sub_read_string,blk_tail_call);
+            break;
+         case '#':
+            log("octothorpe special");
+            gosub(sub_read_octo_tok,blk_tail_call);
+            break;
          default:
             gosub(sub_read_atom,blk_tail_call);
             break;
          }
+         break;
+      case sub_read+0x3:
+         // after single quote
+         //
+         // TODO: Think about this one, by putting sub_quote here
+         // instead of the symbol 'quote there are some funny
+         // consequences: like for instance it kind of implies that
+         // sub_quote needs to be self-evaluating (if not all
+         // sub_foo).
+         //
+         // Note: by leveraging sub_quote in this way, putting the
+         // literal value sub_quote at the head of a constructed
+         // expression which is en route to sub_eval, we force the
+         // hand on other design decisions about the direct
+         // (eval)ability and (apply)ability of sub_foo in general.
+         //
+         // We do the same in sub_define with sub_lambda, so
+         // clearly I'm getting comfortable with this decision.
+         // It's a syntax rewrite, nothing more, and sub_read can
+         // stay simple and let the rest of the system handle it.
+         //
+         reg.set(regTmp0,    cons(reg.get(regRetval),NIL));
+         reg.set(regRetval,  cons(sub_quote,reg.get(regTmp0)));
+         returnsub();
          break;
 
       case sub_read_list:
@@ -589,9 +627,6 @@ public class JhwScm implements Firmware
          // (define (sub_read_atom port)
          //   (let ((c (port_peek port)))
          //     (case c
-         //       (( #\' ) (err_not_impl))
-         //       (( #\" ) (sub_read_string port))
-         //       (( #\# ) (sub_read_octo_tok port))
          //       (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
          //        (sub_read_num port))
          //       (( #\- ) (begin 
@@ -616,19 +651,6 @@ public class JhwScm implements Firmware
          }
          switch (value(reg.get(regTmp0)))
          {
-         case '\'':
-            log("quote (not belong here in sub_read_atom?)");
-            portPop(regArg0);
-            gosub(sub_read,sub_read_atom+0x4);
-            break;
-         case '"':
-            log("string literal");
-            gosub(sub_read_string,blk_tail_call);
-            break;
-         case '#':
-            log("octothorpe special");
-            gosub(sub_read_octo_tok,blk_tail_call);
-            break;
          case '0': case '1': case '2': case '3': case '4':
          case '5': case '6': case '7': case '8': case '9':
             log("non-negated number");
@@ -663,30 +685,6 @@ public class JhwScm implements Firmware
          restore(regTmp0);
          reg.set(regTmp1,    car(reg.get(regTmp0)));
          reg.set(regRetval,  cons(IS_SYMBOL,reg.get(regTmp1)));
-         returnsub();
-         break;
-      case sub_read_atom+0x4:
-         // after single quote
-         //
-         // TODO: Think about this one, by putting sub_quote here
-         // instead of the symbol 'quote there are some funny
-         // consequences: like for instance it kind of implies that
-         // sub_quote needs to be self-evaluating (if not all
-         // sub_foo).
-         //
-         // Note: by leveraging sub_quote in this way, putting the
-         // literal value sub_quote at the head of a constructed
-         // expression which is en route to sub_eval, we force the
-         // hand on other design decisions about the direct
-         // (eval)ability and (apply)ability of sub_foo in general.
-         //
-         // We do the same in sub_define with sub_lambda, so
-         // clearly I'm getting comfortable with this decision.
-         // It's a syntax rewrite, nothing more, and sub_read can
-         // stay simple and let the rest of the system handle it.
-         //
-         reg.set(regTmp0,    cons(reg.get(regRetval),NIL));
-         reg.set(regRetval,  cons(sub_quote,reg.get(regTmp0)));
          returnsub();
          break;
       case sub_read_atom+0x5:

@@ -1,6 +1,50 @@
-Exception in thread "main" java.lang.RuntimeException: drive failure on "(let ((a 10) (b a)) b)": expected -4 got 0
-	at Util.assertEquals(Util.java:97)
-	at TestScm.expect(TestScm.java:1496)
-	at TestScm.batch(TestScm.java:1296)
-	at TestScm.metabatch(TestScm.java:1306)
-	at TestScm.main(TestScm.java:852)
+global:
+  numCycles:        576834
+  numCons:          566079
+  iobuf:            0
+    numPeek:        18950
+    numPop:         7415
+    numPush:        7424
+  iobuf:            1
+    numPeek:        0
+    numPop:         2372
+    numPush:        2378
+  reg.numSet:       5780610
+  reg.numGet:       10391086
+  reg.maxAddr:      31
+  heap.numSet:      3612080
+  heap.numGet:      4264240
+  heap.maxAddr:     6143
+  cache.numHits:    7379088
+  cache.numMisses:  257139
+  cache.numFlush:   225755
+  cache.numDrop:    31384
+  cache.numLoad:    266515
+  cacheTop.numSet:  5278177
+  cacheTop.numGet:  2367426
+  cacheTop.maxAddr: 6143
+  reg   ops:        16171696
+  cache ops:        7645603
+  heap  ops:        7876320
+  reg   ops/cell:   521667.6129032258
+  cache ops/cell:   1244.6041022301806
+  heap  ops/cell:   1282.1618101904608
+  ops   reg/cache:  2.115162924363193
+  ops   cache/heap: 0.9707075131533508
+  ALG:                       4
+  LINE_SIZE:                 16
+  LINE_COUNT:                16
+  PROPERLY_TAIL_RECURSIVE:   true
+  CLEVER_TAIL_CALL_MOD_CONS: true
+  CLEVER_STACK_RECYCLING:    true
+  CLEVER_STACK_RECYCLING:    true
+  cache hit/op:              0.9663264331979654
+  cache write/miss:          0.8779492803503164
+numExpects:     996
+  happy:        891
+  unhappy:      105
+numBatches:     131
+numMetaBatches: 45
+numScms:        586
+numScmNoEvals:  125
+numScmFulls:    461
