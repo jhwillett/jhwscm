@@ -721,9 +721,39 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_atom_new:
+         // Reads the next atomic expr from the port at regArg0,
+         // returning the result in regRetval.
+         // 
+         // On entry, expects the next char from the port to be the
+         // initial character of an atomic expression.
+         // 
+         // On exit, precisely the atomic expression will have been
+         // consumed from the port.
+         //
          // (define (sub_read_atom port)
          //   (let ((chars (sub_read_symbol_body port)))
          //     (sub_interp_atom chars chars 0)))
+         //
+         gosub(sub_read_symbol_body,sub_read_atom_new+0x1);
+         break;
+      case sub_read_atom_new+0x1:
+         reg.set(regArg0, reg.get(regRetval));
+         reg.set(regArg1, reg.get(regRetval));
+         reg.set(regArg2, code(TYPE_FIXINT,0));
+         gosub(sub_read_symbol_body,blk_tail_call);
+         break;
+
+      case sub_interp_atom:
+         // Interprets the list of characters in regArg0 as either a
+         // symbol or a number.
+         // 
+         // A recursive helper really: on top-level call regArg1
+         // should equal regArg0, but on recursions regArg1 takes on a
+         // series of sub-lists of regArg0.
+         // 
+         // A numeric accumulator is expected in regArg2, which
+         // represents the-numeric-value-read-so-far.  Should be 0 on
+         // top-level entry.
          //
          // (define (sub_interp_atom all rest accum)
          //     (if rest
@@ -744,10 +774,6 @@ public class JhwScm implements Firmware
          //             (else (make-symbol all))))
          //         (if accum accum (make-symbol all))))
          //
-         raiseError(ERR_NOT_IMPL);
-         break;
-
-      case sub_interp_atom:
          raiseError(ERR_NOT_IMPL);
          break;
 
