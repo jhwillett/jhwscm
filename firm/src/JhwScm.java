@@ -453,7 +453,14 @@ public class JhwScm implements Firmware
             gosub(sub_read_octo_tok,blk_tail_call);
             break;
          default:
-            gosub(sub_read_atom,blk_tail_call);
+            if ( true )
+            {
+               gosub(sub_read_atom,blk_tail_call);
+            }
+            else
+            {
+               gosub(sub_read_atom_new,blk_tail_call);
+            }
             break;
          }
          break;
@@ -637,7 +644,9 @@ public class JhwScm implements Firmware
          //                     (- (sub_read_num port)))
          //                    (else 
          //                     (prepend #\- 
-         //                       (sub_read_symbol_body port))))))))))
+         //                       (sub_read_symbol_body port))))))
+         //       (else 
+         //        (sub_read_symbol port)))))
          //
          portPeek(regArg0,sub_read_atom+0x1);
          break;
@@ -709,6 +718,37 @@ public class JhwScm implements Firmware
             reg.set(regArg1, code(TYPE_CHAR,'-'));
             gosub(sub_read_symbol,blk_tail_call);
          }
+         break;
+
+      case sub_read_atom_new:
+         // (define (sub_read_atom port)
+         //   (let ((chars (sub_read_symbol_body port)))
+         //     (sub_interp_atom chars chars 0)))
+         //
+         // (define (sub_interp_atom all rest accum)
+         //     (if rest
+         //         (let ((head (car rest))
+         //               (tail (car rest))) 
+         //           (case head
+         //             (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
+         //              (sub_interp_atom all tail (+ head (* 10 accum))))
+         //             (( #\- )
+         //              (cond 
+         //                 ((null? tail)
+         //                  (make-symbol all))
+         //                 ((eq? all rest)
+         //                  (let ((recur (sub_interp_atom rest tail accum)))
+         //                    (if (number? recur) (- recur) recur)))
+         //                 (else
+         //                  (make-symbol all))))
+         //             (else (make-symbol all))))
+         //         (if accum accum (make-symbol all))))
+         //
+         raiseError(ERR_NOT_IMPL);
+         break;
+
+      case sub_interp_atom:
+         raiseError(ERR_NOT_IMPL);
          break;
 
       case sub_read_num:
@@ -3054,6 +3094,8 @@ public class JhwScm implements Firmware
    private static final int sub_read_list        = TYPE_SUBP | A1 |  0x2100;
    private static final int sub_read_list_open   = TYPE_SUBP | A1 |  0x2110;
    private static final int sub_read_atom        = TYPE_SUBP | A1 |  0x2200;
+   private static final int sub_read_atom_new    = TYPE_SUBP | A1 |  0x2210;
+   private static final int sub_interp_atom      = TYPE_SUBP | A3 |  0x2220;
    private static final int sub_read_num         = TYPE_SUBP | A1 |  0x2300;
    private static final int sub_read_num_loop    = TYPE_SUBP | A2 |  0x2310;
    private static final int sub_read_octo_tok    = TYPE_SUBP | A1 |  0x2400;
@@ -3893,6 +3935,8 @@ public class JhwScm implements Firmware
          case sub_read_list:        buf.append("sub_read_list");        break;
          case sub_read_list_open:   buf.append("sub_read_list_open");   break;
          case sub_read_atom:        buf.append("sub_read_atom");        break;
+         case sub_read_atom_new:    buf.append("sub_read_atom_new");    break;
+         case sub_interp_atom:      buf.append("sub_interp_atom");      break;
          case sub_read_num:         buf.append("sub_read_num");         break;
          case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;
          case sub_read_octo_tok:    buf.append("sub_read_octo_tok");    break;
