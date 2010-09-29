@@ -41,16 +41,16 @@
     (if (equal? '- first)
         (if (null? rest)
             (cons 'symbol chars)
-            (sub_interp_atom_negated rest))
-        (sub_interp_atom_nonnegated chars))))
+            (sub_interp_atom_neg rest))
+        (sub_interp_atom_nneg chars))))
 
-(define (sub_interp_atom_negated chars)
+(define (sub_interp_atom_neg chars)
   (let ((num (sub_interp_number chars 0)))
     (if num
         (- num)
         (cons 'symbol (cons '- chars)))))
 
-(define (sub_interp_atom_nonnegated chars)
+(define (sub_interp_atom_nneg chars)
   (let ((num (sub_interp_number chars 0)))
     (if num
         num
