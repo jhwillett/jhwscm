@@ -16,9 +16,9 @@
            result
            (if (equal? expect result) 'ok 'bad))))
 
-(test car '(1 2) 1)
-(test cdr '(1 2) '(2))
-(print)
+;;(test car '(1 2) 1)
+;;(test cdr '(1 2) '(2))
+;;(print)
 
 (define (manytest func list)
   (if (null? list)
@@ -32,33 +32,38 @@
         
 (define trials '((1 1) (1 2) (a a) (a b)))
 
-(manytest (lambda (x) x) trials)
-(print)
+;;(manytest (lambda (x) x) trials)
+;;(print)
 
 (define (sub_interp_atom chars)
   (let ((first (car chars))
         (rest  (cdr chars)))
-    (if (eq? '- first)
-        (if (null? rest) 
+    (if (equal? '- first)
+        (if (null? rest)
             (cons 'symbol chars)
-            (let ((num (sub_interp_number rest 0)))
-              (if (null? num) 
-                  (cons 'symbol chars)
-                  (- num))))
-        (let ((num (sub_interp_number chars 0)))
-          (if (null? num) 
-              (cons 'symbol chars)
-              num)))))
+            (sub_interp_atom_negated rest))
+        (sub_interp_atom_nonnegated chars))))
+
+(define (sub_interp_atom_negated chars)
+  (let ((num (sub_interp_number chars 0)))
+    (if num
+        (- num)
+        (cons 'symbol (cons '- chars)))))
+
+(define (sub_interp_atom_nonnegated chars)
+  (let ((num (sub_interp_number chars 0)))
+    (if num
+        num
+        (cons 'symbol chars))))
 
 (define (sub_interp_number chars accum)
   (if (null? chars)
       accum
-      (let ((head (car chars))
-            (tail (cdr chars))) 
+      (let ((head (car chars)))
         (case head
           (( 0 1 2 3 4 5 6 7 8 9 ) 
-           (sub_interp_number tail (+ head (* 10 accum))))
-          (else '())))))
+           (sub_interp_number (cdr chars) (+ head (* 10 accum))))
+          (else #f)))))
 
 (define number_trials '(
                       (( a )        ())
