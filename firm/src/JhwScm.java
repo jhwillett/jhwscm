@@ -721,88 +721,66 @@ public class JhwScm implements Firmware
          break;
 
       case sub_read_atom_new:
-         // Reads the next atomic expr from the port at regArg0,
-         // returning the result in regRetval.
-         // 
-         // On entry, expects the next char from the port to be the
-         // initial character of an atomic expression.
-         // 
-         // On exit, precisely the atomic expression will have been
-         // consumed from the port.
+         // Reads the next atomic expr (number or symbol) from the
+         // port at regArg0, returning the result in regRetval.
          //
-         // (define (sub_read_atom port)
-         //   (let ((chars (sub_read_symbol_body port)))
+         //   (define (sub_read_atom_new port)
+         //     (sub_interp_atom (sub_read_symbol_body)))
+         //
+         // TODO: when this works, figure out the proper name for
+         // sub_read_symbol_body.  Maybe sub_scan_unquoted_token or
+         // something.
+         //
+         raiseError(ERR_NOT_IMPL);
+         break;
+
+      case sub_interp_atom:
+         //
+         //   (define (sub_interp_atom chars)
+         //     (let ((first (car chars))
+         //           (rest  (cdr chars)))
+         //       (if (equal? '- first)
+         //           (if (null? rest)
+         //               (cons 'symbol chars)
+         //               (sub_interp_atom_neg rest))
+         //           (sub_interp_atom_nneg chars))))
+         //
+         raiseError(ERR_NOT_IMPL);
+         break;
+
+      case sub_interp_atom_neg:
+         //
+         //   (define (sub_interp_atom_neg chars)
          //     (let ((num (sub_interp_number chars 0)))
-         //       (if num num (make-symbol chars)))))
+         //       (if num
+         //           (- num)
+         //           (cons 'symbol (cons '- chars)))))
+         //   
+         raiseError(ERR_NOT_IMPL);
+         break;
+
+      case sub_interp_atom_nneg:
          //
-         gosub(sub_read_symbol_body,sub_read_atom_new+0x1);
-         break;
-      case sub_read_atom_new+0x1:
-         store(regRetval);                // store chars
-         reg.set(regArg0, reg.get(regRetval));
-         reg.set(regArg1, reg.get(regRetval));
-         reg.set(regArg2, code(TYPE_FIXINT,0));
-         gosub(sub_interp_number,sub_read_atom_new+0x2);
-         break;
-      case sub_read_atom_new+0x2:
-         restore(regTmp0);                // restore chars
-         if ( NIL != reg.get(regRetval) )
-         {
-            returnsub();
-            break;
-         }
-         reg.set(regRetval, cons(IS_SYMBOL, reg.get(regTmp0)));
-         returnsub();
+         //   (define (sub_interp_atom_nneg chars)
+         //     (let ((num (sub_interp_number chars 0)))
+         //       (if num
+         //           num
+         //           (cons 'symbol chars))))
+         //
+         raiseError(ERR_NOT_IMPL);
          break;
 
       case sub_interp_number:
-         // Attempts to interpret the list of characters in regArg0 as
-         // either a number.
-         // 
-         // Expects a recursion accumulator in regArg1, which should
-         // be 0 for top-level calls.
-         // 
-         // Returns a number (only TYPE_FIXINT for now) if the
-         // characters form a numeric expression, NIL otherwise.
          //
-         // (define (sub_interp_number all rest accum)
-         //     (if (null? rest)
+         //   (define (sub_interp_number chars accum)
+         //     (if (null? chars)
          //         accum
-         //         (let ((head (car rest))
-         //               (tail (car rest))) 
+         //         (let ((head (car chars)))
          //           (case head
-         //             (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
-         //              (sub_interp_number all tail (+ head (* 10 accum))))
-         //             (( #\- )
-         //              (cond 
-         //                 ((null? tail)
-         //                  '())
-         //                 ((eq? all rest)
-         //                  (let ((recur (sub_interp_number rest rest accum)))
-         //                    (if (number? recur) (- recur) (cons #\- recur))))
-         //                 (else
-         //                  '())))))))
-         //             (else (make-symbol all))))
+         //             (( 0 1 2 3 4 5 6 7 8 9 ) 
+         //              (sub_interp_number (cdr chars) (+ head (* 10 accum))))
+         //             (else #f)))))
          //
-
-         // DONE-ish: Responsibility for make-symbol should be up in
-         // sub_read_atom_new.  This method will be a lot simpler if
-         // it simply tries to interpret a number, and returns NIL if
-         // the char sequence is not a number.
-         
-         if ( NIL == reg.get(regArg1) )
-         {
-            if ( NIL != reg.get(regArg2) )
-            {
-               reg.set(regRetval,reg.get(regArg2));
-               returnsub();
-            }
-            else
-            {
-               reg.set(regRetval,reg.get(regArg2));
-            }
-            break;
-         }
          raiseError(ERR_NOT_IMPL);
          break;
 
@@ -3150,7 +3128,10 @@ public class JhwScm implements Firmware
    private static final int sub_read_list_open   = TYPE_SUBP | A1 |  0x2110;
    private static final int sub_read_atom        = TYPE_SUBP | A1 |  0x2200;
    private static final int sub_read_atom_new    = TYPE_SUBP | A1 |  0x2210;
-   private static final int sub_interp_number    = TYPE_SUBP | A3 |  0x2220;
+   private static final int sub_interp_atom      = TYPE_SUBP | A1 |  0x2220;
+   private static final int sub_interp_atom_neg  = TYPE_SUBP | A1 |  0x2230;
+   private static final int sub_interp_atom_nneg = TYPE_SUBP | A1 |  0x2240;
+   private static final int sub_interp_number    = TYPE_SUBP | A3 |  0x2250;
    private static final int sub_read_num         = TYPE_SUBP | A1 |  0x2300;
    private static final int sub_read_num_loop    = TYPE_SUBP | A2 |  0x2310;
    private static final int sub_read_octo_tok    = TYPE_SUBP | A1 |  0x2400;
@@ -3991,6 +3972,7 @@ public class JhwScm implements Firmware
          case sub_read_list_open:   buf.append("sub_read_list_open");   break;
          case sub_read_atom:        buf.append("sub_read_atom");        break;
          case sub_read_atom_new:    buf.append("sub_read_atom_new");    break;
+         case sub_interp_atom:      buf.append("sub_interp_atom");      break;
          case sub_interp_number:    buf.append("sub_interp_number");    break;
          case sub_read_num:         buf.append("sub_read_num");         break;
          case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;
