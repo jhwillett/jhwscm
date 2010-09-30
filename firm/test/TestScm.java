@@ -1211,26 +1211,22 @@ public class TestScm extends Util
       if ( true )
       {
          final Object[][] tests = { 
-            /*
             { "lambda-syntax",                                null    },
             { "(lambda-syntax () 1)",                         "???"   },
             { "((lambda-syntax () 1))",                       "1"     },
             { "((lambda-syntax (a) 1) 100)",                  "1"     },
             { "((lambda-syntax (a) 1) asdfasfd)",             "1"     },
-            */
             { "(define syn (lambda-syntax (a) 1))",           ""      },
-            /*
             { "syn",                                          "???"   },
             { "(syn)",                                        SEMANTIC },
             { "(syn 1 2)",                                    SEMANTIC },
             { "(syn 1)",                                      "1"      },
             { "(syn 2)",                                      "1"      },
             { "(syn 'a)",                                     "1"     },
-            */
             { "(syn asaf)",                                   "1"     },
-            /*
             { "(syn (+ 19 (cons x y)))",                      "1"     },
             { "(syn asaf)",                                   "1"     },
+            /*
             { "(define syn (lambda-syntax (a) (+ 1 2)))",     ""      },
             { "syn",                                          "???"   },
             { "(syn asaf)",                                   "1"     },
