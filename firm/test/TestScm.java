@@ -1208,25 +1208,63 @@ public class TestScm extends Util
       }
 
       // check lambda-syntax
-      if ( false )
+      if ( true )
       {
          final Object[][] tests = { 
-            { "lambda-syntax",                               null       },
-            { "(lambda-syntax () 1)",                        "????????" },
-            { "((lambda-syntax () 1))",                      "1"        },
-            { "((lambda-syntax (a) 1) 100)",                 "1"        },
-            { "((lambda-syntax (a) 1) asdfasfd)",            "1"        },
-            { "(define syn (lambda-syntax (a) 1)",           "????????" },
-            { "syn",                                         "??????"   },
-            { "(syn asaf)",                                  "1"        },
-            { "(define syn (lambda-syntax (a) (+ 1 2))",     "????????" },
-            { "(syn asaf)",                                  "1"        },
-            { "(define syn (lambda-syntax (a) (display a))", "????????" },
-            { "(syn asaf)",                                  "asaf"     },
+            /*
+            { "lambda-syntax",                                null    },
+            { "(lambda-syntax () 1)",                         "???"   },
+            { "((lambda-syntax () 1))",                       "1"     },
+            { "((lambda-syntax (a) 1) 100)",                  "1"     },
+            { "((lambda-syntax (a) 1) asdfasfd)",             "1"     },
+            */
+            { "(define syn (lambda-syntax (a) 1))",           ""      },
+            /*
+            { "syn",                                          "???"   },
+            { "(syn)",                                        SEMANTIC },
+            { "(syn 1 2)",                                    SEMANTIC },
+            { "(syn 1)",                                      "1"      },
+            { "(syn 2)",                                      "1"      },
+            { "(syn 'a)",                                     "1"     },
+            */
+            { "(syn asaf)",                                   "1"     },
+            /*
+            { "(syn (+ 19 (cons x y)))",                      "1"     },
+            { "(syn asaf)",                                   "1"     },
+            { "(define syn (lambda-syntax (a) (+ 1 2)))",     ""      },
+            { "syn",                                          "???"   },
+            { "(syn asaf)",                                   "1"     },
+            { "(define syn (lambda-syntax (a) (display a)))", ""      },
+            { "syn",                                          "???"   },
+            { "(syn asaf)",                                   "asaf"  },
+            { "(syn (+ 1 '()))",                              "(+ 1 '())" },
+            */
          };
          final Batch[] batches = { 
             REP_DEP,
          };
+         //VERBOSE = true;
+         metabatch(tests,batches);
+      }
+
+      // check apply
+      if ( false )
+      {
+         final Object[][] tests = { 
+            { "(define (f) 0)",                     ""        },
+            { "(apply f)",                          "0"       },
+            { "(apply (lambda (x) (* 3 x)) 5)",     "15"      },
+            { "(apply (lambda (x y) (* x y)) 5 7)", "35"      },
+            { "(apply '())",                        SEMANTIC  },
+            { "(apply '(a b))",                     SEMANTIC  },
+            { "(apply f 1)",                        SEMANTIC  },
+            { "(apply 2)",                          SEMANTIC  },
+            { "(apply (lambda (x y) (* x y)))",     SEMANTIC  },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         VERBOSE = true;
          metabatch(tests,batches);
       }
 

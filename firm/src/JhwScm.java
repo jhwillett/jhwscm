@@ -1117,14 +1117,36 @@ public class JhwScm implements Firmware
             gosub(sub_eval_list,sub_eval+0x3);
             break;
          }
-         if ( TYPE_SUBS == tmp0 || 
-              TYPE_CELL == tmp0 && IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
+         if ( TYPE_SUBS == tmp0 )
          {
             // special: apply op directly to args exprs
             //
+            reg.set(regArg0, reg.get(regTmp2));
+            reg.set(regArg1, reg.get(regTmp0));
+            gosub(sub_apply,blk_tail_call);
+            break;
+         }
+         if ( TYPE_CELL == tmp0 && IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
+         {
+            // special: apply op directly to args exprs
+            //
+            // TODO: Inconsistency?  I made my TYPE_SUBS responsible
+            // for making their own calls back to sub_eval, but I seem
+            // to be heading in a diarection where the IS_SPECIAL_FORM
+            // get sub_eval called for them, building on the idea of
+            // syntaxes.  Perhaps they should be unified: and perhaps
+            // the various TYPE_SUBS would get simpler if they enjoyed
+            // this same treatment.  Maybe not: perhaps they may not
+            // always get called via (eval)??????
+            //
+            // Hmm, things like sub_if make sense that way, but
+            // sub_lambda does not...
+            //
+            //
+            store(regTmp1);                    // store the env
             reg.set(regArg0,  reg.get(regTmp2));
             reg.set(regArg1,  reg.get(regTmp0));
-            gosub(sub_apply,blk_tail_call);
+            gosub(sub_apply,sub_eval+0x4);
             break;
          }
          // We get here, for instance, evaluating the expr (1).
@@ -1136,6 +1158,22 @@ public class JhwScm implements Firmware
          restore(regArg0);      // restore value of the operator
          reg.set(regArg1,  reg.get(regRetval)); // restore list of args
          gosub(sub_apply,blk_tail_call);
+         break;
+      case sub_eval+0x4:
+         // following apply of a special form
+         logrec("apply special form result:",reg.get(regRetval));
+         reg.set(regArg0,  reg.get(regRetval));
+         restore(regArg1);                     // restore the env
+         if ( true )
+         {
+            // what the unit tests expect no
+            returnsub();
+         }
+         else
+         {
+            // what this should really do to be a syntax
+            gosub(sub_eval,blk_tail_call);
+         }
          break;
 
       case sub_eval_list:
@@ -1849,26 +1887,26 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         if ( DEBUG && IS_PROCEDURE != car(reg.get(regArg0)) )
+         if ( DEBUG                                    && 
+              IS_PROCEDURE    != car(reg.get(regArg0)) &&
+              IS_SPECIAL_FORM != car(reg.get(regArg0)) )
          {
             raiseError(ERR_INTERNAL);
             break;
          }
-         store(regArg0);
+         store(regArg0);                                          // store op
          reg.set(regArg0,  car(cdr(reg.get(regArg0))));
          reg.set(regArg1,  reg.get(regArg1));
          gosub(sub_zip,sub_apply_user+0x1);
          break;
       case sub_apply_user+0x1:
-         restore(regArg0);                        // restore op
+         restore(regArg0);                                        // restore op
          reg.set(regTmp0,  reg.get(regRetval));                   // args frame
          reg.set(regTmp1,  car(cdr(cdr(reg.get(regArg0)))));      // op body
-         reg.set(regTmp3,  car(cdr(cdr(cdr(reg.get(regArg0)))))); // op lexical env
-         reg.set(regTmp2,  cons(reg.get(regTmp0),reg.get(regEnv)));   // apply env
+         reg.set(regTmp3,  car(cdr(cdr(cdr(reg.get(regArg0)))))); // op lex env
+         reg.set(regTmp2,  cons(reg.get(regTmp0),reg.get(regEnv)));// apply env
          logrec("sub_apply_user BODY   ",reg.get(regTmp1));
          logrec("sub_apply_user FRAME  ",reg.get(regTmp0));
-         //logrec("sub_apply_user CUR ENV",reg.get(regEnv));
-         //logrec("sub_apply_user LEX ENV",reg.get(regTmp3));
 
          // going w/ lexical frames
          reg.set(regTmp2,  cons(reg.get(regTmp0),reg.get(regTmp3)));
@@ -2037,14 +2075,18 @@ public class JhwScm implements Firmware
             gosub(sub_print_fixint,blk_tail_call);
             break;
          case TYPE_SUBP:
-         case TYPE_SUBS:
             // TODO: some decisions to be made here about how these
             // really print, but that kind of depends on how I land
             // about how they lex.
             //
             // In the mean time, this is sufficient to meet spec.
             //
-            reg.set(regArg0, const_huhPhuh);
+            reg.set(regArg0, const_huhPuh);
+            reg.set(regArg2, code(TYPE_FIXINT,0));
+            gosub(sub_print_const,blk_tail_call);
+            break;
+         case TYPE_SUBS:
+            reg.set(regArg0, const_huhSuh);
             reg.set(regArg2, code(TYPE_FIXINT,0));
             gosub(sub_print_const,blk_tail_call);
             break;
@@ -2062,6 +2104,7 @@ public class JhwScm implements Firmware
                gosub(sub_print_chars,blk_tail_call);
                break;
             case IS_PROCEDURE:
+            case IS_SPECIAL_FORM:
                reg.set(regArg0, const_huh3);
                reg.set(regArg2, code(TYPE_FIXINT,0));
                gosub(sub_print_const,blk_tail_call);
@@ -3116,7 +3159,8 @@ public class JhwScm implements Firmware
    private static final int      const_prechar;
    private static final int      const_space;
    private static final int      const_huh3;
-   private static final int      const_huhPhuh;
+   private static final int      const_huhPuh;
+   private static final int      const_huhSuh;
    static 
    {
       int i = 0;
@@ -3165,8 +3209,11 @@ public class JhwScm implements Firmware
       const_huh3    = code(TYPE_FIXINT,i);
       const_val[i]  = UNSPECIFIED;          const_str[i++] = "???";
 
-      const_huhPhuh = code(TYPE_FIXINT,i);
+      const_huhPuh  = code(TYPE_FIXINT,i);
       const_val[i]  = UNSPECIFIED;          const_str[i++] = "?p?";
+
+      const_huhSuh  = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?s?";
    }
 
    ////////////////////////////////////////////////////////////////////

@@ -16,5 +16,5 @@ f718547d19030e77dadde08a08ce0ef2  base/test/TestComputer.java
 c854b5d0c0b488234f14973660b4e074  base/test/TestMem.java
 284afb8136984e30c4193f69f67b5680  base/test/TestUtil.java
 ff001567e73c45e7554d7937480cb61a  base/test/Util.java
-ee354fa0be8794f3fe53e5276afc7d03  firm/src/JhwScm.java
-8592dfc33d2177448db76c3f37d3dc33  firm/test/TestScm.java
+ac256e252ba59ec9eaac6bf42a4b6162  firm/src/JhwScm.java
+497062f8297894c44d888963f5343ee7  firm/test/TestScm.java
