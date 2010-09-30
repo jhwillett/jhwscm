@@ -453,14 +453,7 @@ public class JhwScm implements Firmware
             gosub(sub_read_octo_tok,blk_tail_call);
             break;
          default:
-            if ( false )
-            {
-               gosub(sub_read_atom,blk_tail_call);
-            }
-            else
-            {
-               gosub(sub_read_atom_new,blk_tail_call);
-            }
+            gosub(sub_read_atom_new,blk_tail_call);
             break;
          }
          break;
@@ -621,108 +614,15 @@ public class JhwScm implements Firmware
          raiseError(ERR_LEXICAL);
          break;
 
-      case sub_read_atom:
-         // Reads the next atomic expr from the port at regArg0,
-         // returning the result in regRetval.
-         // 
+      case sub_read_atom_new:
+         // Reads the next atomic expr (number or symbol) from the
+         // port at regArg0, returning the result in regRetval.
+         //
          // On entry, expects the next char from the port to be the
          // initial character of an atomic expression.
          // 
          // On exit, precisely the atomic expression will have been
          // consumed from the port.
-         //
-         // (define (sub_read_atom port)
-         //   (let ((c (port_peek port)))
-         //     (case c
-         //       (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 ) 
-         //        (sub_read_num port))
-         //       (( #\- ) (begin 
-         //                (port_pop port)
-         //                (let ((c (port_peek port)))
-         //                  (case c
-         //                    (( #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 )
-         //                     (- (sub_read_num port)))
-         //                    (else 
-         //                     (prepend #\- 
-         //                       (sub_read_symbol_body port))))))
-         //       (else 
-         //        (sub_read_symbol port)))))
-         //
-         portPeek(regArg0,sub_read_atom+0x1);
-         break;
-      case sub_read_atom+0x1:
-         reg.set(regTmp0, reg.get(regIO));
-         if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
-         {
-            log("non-char in input: ",pp(reg.get(regTmp0)));
-            raiseError(ERR_INTERNAL);
-            break;
-         }
-         switch (value(reg.get(regTmp0)))
-         {
-         case '0': case '1': case '2': case '3': case '4':
-         case '5': case '6': case '7': case '8': case '9':
-            log("non-negated number");
-            gosub(sub_read_num,blk_tail_call);
-            break;
-         case '-':
-            // The minus sign is special.  We need to look ahead
-            // *again* before we can decide whether it is part of a
-            // symbol or part of a number.
-            portPop(regArg0);
-            portPeek(regArg0,sub_read_atom+0x5);
-            break;
-         default:
-            log("symbol");
-            reg.set(regArg1, NIL);
-            gosub(sub_read_symbol,blk_tail_call);
-            break;
-         }
-         break;
-      case sub_read_atom+0x2:
-         if ( TYPE_FIXINT != type(reg.get(regRetval)) )
-         {
-            raiseError(ERR_INTERNAL);
-            break;
-         }
-         log("negating: ",pp(reg.get(regRetval)));
-         reg.set(regRetval,  code(TYPE_FIXINT,-value(reg.get(regRetval))));
-         log("  to:       ",pp(reg.get(regRetval)));
-         returnsub();
-         break;
-      case sub_read_atom+0x3:
-         restore(regTmp0);
-         reg.set(regTmp1,    car(reg.get(regTmp0)));
-         reg.set(regRetval,  cons(IS_SYMBOL,reg.get(regTmp1)));
-         returnsub();
-         break;
-      case sub_read_atom+0x5:
-         reg.set(regTmp2, reg.get(regIO));
-         if ( TYPE_CHAR == type(reg.get(regTmp2)) && 
-              '0' <= value(reg.get(regTmp2))      && 
-              '9' >= value(reg.get(regTmp2))       )
-         {
-            log("minus-starting-number");
-            gosub(sub_read_num,sub_read_atom+0x2);
-         }
-         else if ( EOF == reg.get(regTmp2) )
-         {
-            log("lonliest minus in the world");
-            reg.set(regTmp0,    cons(code(TYPE_CHAR,'-'),NIL));
-            reg.set(regRetval,  cons(IS_SYMBOL,reg.get(regTmp0)));
-            returnsub();
-         }
-         else
-         {
-            log("minus-starting-symbol");
-            reg.set(regArg1, code(TYPE_CHAR,'-'));
-            gosub(sub_read_symbol,blk_tail_call);
-         }
-         break;
-
-      case sub_read_atom_new:
-         // Reads the next atomic expr (number or symbol) from the
-         // port at regArg0, returning the result in regRetval.
          //
          //   (define (sub_read_atom_new port)
          //     (sub_interp_atom (sub_read_symbol_body)))
@@ -4058,7 +3958,6 @@ public class JhwScm implements Firmware
          case sub_read:             buf.append("sub_read");             break;
          case sub_read_list:        buf.append("sub_read_list");        break;
          case sub_read_list_open:   buf.append("sub_read_list_open");   break;
-         case sub_read_atom:        buf.append("sub_read_atom");        break;
          case sub_read_atom_new:    buf.append("sub_read_atom_new");    break;
          case sub_interp_atom:      buf.append("sub_interp_atom");      break;
          case sub_interp_number:    buf.append("sub_interp_number");    break;
