@@ -453,7 +453,7 @@ public class JhwScm implements Firmware
             gosub(sub_read_octo_tok,blk_tail_call);
             break;
          default:
-            gosub(sub_read_atom_new,blk_tail_call);
+            gosub(sub_read_atom,blk_tail_call);
             break;
          }
          break;
@@ -614,7 +614,7 @@ public class JhwScm implements Firmware
          raiseError(ERR_LEXICAL);
          break;
 
-      case sub_read_atom_new:
+      case sub_read_atom:
          // Reads the next atomic expr (number or symbol) from the
          // port at regArg0, returning the result in regRetval.
          //
@@ -624,16 +624,16 @@ public class JhwScm implements Firmware
          // On exit, precisely the atomic expression will have been
          // consumed from the port.
          //
-         //   (define (sub_read_atom_new port)
+         //   (define (sub_read_atom port)
          //     (sub_interp_atom (sub_read_symbol_body)))
          //
          // TODO: when this works, figure out the proper name for
          // sub_read_symbol_body.  Maybe sub_scan_unquoted_token or
          // something.
          //
-         gosub(sub_read_symbol_body,sub_read_atom_new+0x1);
+         gosub(sub_read_symbol_body,sub_read_atom+0x1);
          break;
-      case sub_read_atom_new+0x1:
+      case sub_read_atom+0x1:
          reg.set(regArg0,reg.get(regRetval));
          gosub(sub_interp_atom,blk_tail_call);
          break;
@@ -768,77 +768,6 @@ public class JhwScm implements Firmware
          default:
             reg.set(regRetval,FALSE);
             returnsub();
-            break;
-         }
-         break;
-
-      case sub_read_num:
-         // Parses the next number from the port at regArg0.
-         //
-         reg.set(regArg1,  code(TYPE_FIXINT,0));
-         gosub(sub_read_num_loop,blk_tail_call);
-         break;
-
-      case sub_read_num_loop:
-         // Parses the next number from regArg0, expecting the
-         // accumulated value-so-far as a TYPE_FIXINT in regArg1.
-         //
-         // A helper for sub_read_num, but still a sub_ in its own
-         // right.
-         //
-         portPeek(regArg0, sub_read_num_loop+0x1);
-         break;
-      case sub_read_num_loop+0x1:
-         reg.set(regTmp1, reg.get(regIO));
-         if ( EOF == reg.get(regTmp1) )
-         {
-            log("eof: returning ",pp(reg.get(regArg1)));
-            reg.set(regRetval,  reg.get(regArg1));
-            returnsub();
-            break;
-         }
-         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
-         {
-            log("non-char in input: ",pp(reg.get(regTmp1)));
-            raiseError(ERR_INTERNAL);
-            break;
-         }
-         reg.set(regTmp2,  reg.get(regArg1));
-         if ( TYPE_FIXINT != type(reg.get(regTmp2)) )
-         {
-            log("non-fixint in arg: ",pp(reg.get(regTmp2)));
-            raiseError(ERR_LEXICAL);
-            break;
-         }
-         switch (value(reg.get(regTmp1)))
-         {
-         case ' ':
-         case '\t':
-         case '\r':
-         case '\n':
-         case '(':
-         case ')':
-            // terminator
-            reg.set(regRetval,  reg.get(regArg1));
-            returnsub();
-            break;
-         default:
-            if ( value(reg.get(regTmp1)) < '0' || 
-                 value(reg.get(regTmp1)) > '9' )
-            {
-               log("non-digit in input: ",pp(reg.get(regTmp1)));
-               raiseError(ERR_LEXICAL);
-               break;
-            }
-            tmp0  = 10 * value(reg.get(regTmp2));
-            tmp0 += value(reg.get(regTmp1));
-            tmp0 -= '0';
-            log("first char: ",(char)value(reg.get(regTmp1)));
-            log("old accum:  ",value(reg.get(regTmp2)));
-            log("new accum:  ",tmp0);
-            portPop(regArg0);
-            reg.set(regArg1,  code(TYPE_FIXINT,tmp0));
-            gosub(sub_read_num_loop,blk_tail_call);
             break;
          }
          break;
@@ -3112,21 +3041,24 @@ public class JhwScm implements Firmware
 
    private static final int sub_readv            = TYPE_SUBP | AX |  0x2000;
    private static final int sub_read             = TYPE_SUBP | AX |  0x2010;
+
    private static final int sub_read_list        = TYPE_SUBP | A1 |  0x2100;
    private static final int sub_read_list_open   = TYPE_SUBP | A1 |  0x2110;
+
    private static final int sub_read_atom        = TYPE_SUBP | A1 |  0x2200;
-   private static final int sub_read_atom_new    = TYPE_SUBP | A1 |  0x2210;
-   private static final int sub_interp_atom      = TYPE_SUBP | A1 |  0x2220;
-   private static final int sub_interp_atom_neg  = TYPE_SUBP | A1 |  0x2230;
-   private static final int sub_interp_atom_nneg = TYPE_SUBP | A1 |  0x2240;
-   private static final int sub_interp_number    = TYPE_SUBP | A3 |  0x2250;
-   private static final int sub_read_num         = TYPE_SUBP | A1 |  0x2300;
-   private static final int sub_read_num_loop    = TYPE_SUBP | A2 |  0x2310;
+   private static final int sub_interp_atom      = TYPE_SUBP | A1 |  0x2210;
+   private static final int sub_interp_atom_neg  = TYPE_SUBP | A1 |  0x2220;
+   private static final int sub_interp_atom_nneg = TYPE_SUBP | A1 |  0x2230;
+   private static final int sub_interp_number    = TYPE_SUBP | A3 |  0x2240;
+
    private static final int sub_read_octo_tok    = TYPE_SUBP | A1 |  0x2400;
+
+   // TODO: review these four for simplification
    private static final int sub_read_symbol      = TYPE_SUBP | A1 |  0x2500;
    private static final int sub_read_string      = TYPE_SUBP | A1 |  0x2600;
    private static final int sub_read_symbol_body = TYPE_SUBP | A1 |  0x2700;
    private static final int sub_read_string_body = TYPE_SUBP | A1 |  0x2800;
+
    private static final int sub_read_burn_space  = TYPE_SUBP | A1 |  0x2900;
 
    private static final int sub_eval             = TYPE_SUBS | A2 |  0x3000;
@@ -3958,11 +3890,11 @@ public class JhwScm implements Firmware
          case sub_read:             buf.append("sub_read");             break;
          case sub_read_list:        buf.append("sub_read_list");        break;
          case sub_read_list_open:   buf.append("sub_read_list_open");   break;
-         case sub_read_atom_new:    buf.append("sub_read_atom_new");    break;
+         case sub_read_atom:        buf.append("sub_read_atom");        break;
          case sub_interp_atom:      buf.append("sub_interp_atom");      break;
+         case sub_interp_atom_neg:  buf.append("sub_interp_atom_neg");  break;
+         case sub_interp_atom_nneg: buf.append("sub_interp_atom_nneg"); break;
          case sub_interp_number:    buf.append("sub_interp_number");    break;
-         case sub_read_num:         buf.append("sub_read_num");         break;
-         case sub_read_num_loop:    buf.append("sub_read_num_loop");    break;
          case sub_read_octo_tok:    buf.append("sub_read_octo_tok");    break;
          case sub_read_symbol:      buf.append("sub_read_symbol");      break;
          case sub_read_string:      buf.append("sub_read_string");      break;
