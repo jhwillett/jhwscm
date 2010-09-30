@@ -108,3 +108,13 @@
 
 (manytest sub_interp_atom atom_trials)
 (print)
+
+;; Surprise: turns out R5RS, in the syntax section, suggests that '.',
+;; '+', and '-' might not be valid first characters in identifiers.
+;;
+;; I could leverage the crap out of that to simplify lexing
+;; numbers-vs-identifiers, but this an option left open by R5RS, not a
+;; hard requirement - and in fact both Guile and Scsh accept at least
+;; '-' in initial position in symbols.
+;;
+;; So I buckle down and deal with it.

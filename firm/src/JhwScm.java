@@ -731,7 +731,11 @@ public class JhwScm implements Firmware
          // sub_read_symbol_body.  Maybe sub_scan_unquoted_token or
          // something.
          //
-         raiseError(ERR_NOT_IMPL);
+         gosub(sub_read_symbol_body,sub_read_atom_new+0x1);
+         break;
+      case sub_read_atom_new+0x1:
+         reg.set(regArg0,reg.get(regRetval));
+         gosub(sub_interp_atom,blk_tail_call);
          break;
 
       case sub_interp_atom:
@@ -745,7 +749,25 @@ public class JhwScm implements Firmware
          //               (sub_interp_atom_neg rest))
          //           (sub_interp_atom_nneg chars))))
          //
-         raiseError(ERR_NOT_IMPL);
+         reg.set(regTmp0, car(reg.get(regArg0)));
+         reg.set(regTmp1, cdr(reg.get(regArg0)));
+         if ( code(TYPE_CHAR,'-') == reg.get(regTmp0) )
+         {
+            if ( NIL == reg.get(regTmp1) )
+            {
+               reg.set(regRetval, cons(IS_SYMBOL,reg.get(regArg0)));
+               returnsub();
+            }
+            else
+            {
+               reg.set(regArg0, reg.get(regTmp1));
+               gosub(sub_interp_atom_neg,blk_tail_call);
+            }
+         }
+         else
+         {
+            gosub(sub_interp_atom_nneg,blk_tail_call);
+         }
          break;
 
       case sub_interp_atom_neg:
@@ -756,7 +778,23 @@ public class JhwScm implements Firmware
          //           (- num)
          //           (cons 'symbol (cons '- chars)))))
          //   
-         raiseError(ERR_NOT_IMPL);
+         store(regArg0);               // store chars
+         reg.set(regArg1,code(TYPE_FIXINT,0));
+         gosub(sub_interp_number,sub_interp_atom_neg+0x1);
+         break;
+      case sub_interp_atom_neg+0x01:
+         restore(regArg0);             // restore chars
+         if ( FALSE != reg.get(regRetval) )
+         {
+            reg.set(regRetval,code(TYPE_FIXINT,
+                                   -value_fixint(reg.get(regRetval))));
+         }
+         else
+         {
+            reg.set(regTmp0,  cons(code(TYPE_CHAR,'-'),reg.get(regArg0)));
+            reg.set(regRetval,cons(IS_SYMBOL,reg.get(regTmp0)));
+         }
+         returnsub();
          break;
 
       case sub_interp_atom_nneg:
@@ -767,7 +805,21 @@ public class JhwScm implements Firmware
          //           num
          //           (cons 'symbol chars))))
          //
-         raiseError(ERR_NOT_IMPL);
+         store(regArg0);               // store chars
+         reg.set(regArg1,code(TYPE_FIXINT,0));
+         gosub(sub_interp_number,sub_interp_atom_nneg+0x1);
+         break;
+      case sub_interp_atom_nneg+0x01:
+         restore(regArg0);             // restore chars
+         if ( FALSE != reg.get(regRetval) )
+         {
+            // cool, just re-return it
+         }
+         else
+         {
+            reg.set(regRetval,cons(IS_SYMBOL,reg.get(regArg0)));
+         }
+         returnsub();
          break;
 
       case sub_interp_number:
@@ -781,7 +833,43 @@ public class JhwScm implements Firmware
          //              (sub_interp_number (cdr chars) (+ head (* 10 accum))))
          //             (else #f)))))
          //
-         raiseError(ERR_NOT_IMPL);
+         if ( TYPE_FIXINT != type(reg.get(regArg1)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval,reg.get(regArg1));
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0,car(reg.get(regArg0)));
+         if ( TYPE_CHAR != type(reg.get(regTmp0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         switch ( value(reg.get(regTmp0)) )
+         {
+         case '0': case '1': case '2': case '3': case '4':
+         case '5': case '6': case '7': case '8': case '9':
+            reg.set(regArg0,cdr(reg.get(regArg0)));
+            reg.set(regArg1,code(TYPE_FIXINT,
+                                 (value(reg.get(regTmp0)) - '0') + 
+                                 10 * value_fixint(reg.get(regArg1))));
+            gosub(sub_interp_number,blk_tail_call);
+            break;
+         default:
+            reg.set(regRetval,FALSE);
+            returnsub();
+            break;
+         }
          break;
 
       case sub_read_num:
