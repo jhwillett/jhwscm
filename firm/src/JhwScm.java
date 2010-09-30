@@ -625,13 +625,9 @@ public class JhwScm implements Firmware
          // consumed from the port.
          //
          //   (define (sub_read_atom port)
-         //     (sub_interp_atom (sub_read_symbol_body)))
+         //     (sub_interp_atom (sub_read_datum_body)))
          //
-         // TODO: when this works, figure out the proper name for
-         // sub_read_symbol_body.  Maybe sub_scan_unquoted_token or
-         // something.
-         //
-         gosub(sub_read_symbol_body,sub_read_atom+0x1);
+         gosub(sub_read_datum_body,sub_read_atom+0x1);
          break;
       case sub_read_atom+0x1:
          reg.set(regArg0,reg.get(regRetval));
@@ -844,51 +840,17 @@ public class JhwScm implements Firmware
          // TODO: so far, we only handle the 1-char sequences...
          break;
 
-      case sub_read_symbol:
-         // Parses the next symbol from regArg0.
+      case sub_read_datum_body:
+         // Scans the body of the next datum from regArg0.  Returns a
+         // list of characters read in regRetval.
          //
-         // Expects that the next character in the input is known
-         // to be the first character of a symbol.
+         // The next datum would be a contiguous set of characters
+         // excluding whitespace and parens e.g. something which might
+         // be a symbol or a number, but not a string literal.
          //
-         // regArg1 is expected to be a 'prepend' character.  If
-         // non-NIL, regArg1 is prepended to the symbol.
-         //
-         if ( NIL == reg.get(regArg1) )
-         {
-            reg.set(regTmp0,IS_SYMBOL);
-            store(regTmp0);
-            gosub(sub_read_symbol_body,blk_tail_call_m_cons);
-         }
-         else
-         {
-            store(regArg1);
-            gosub(sub_read_symbol_body,sub_read_symbol+0x1);
-         }
+         portPeek(regArg0,sub_read_datum_body+0x1);
          break;
-      case sub_read_symbol+0x1: // TODO: blk_tail_call_m_cons_m_cons ???
-         restore(regArg1); // restore prepend character
-         reg.set(regTmp0,   cons(reg.get(regArg1), reg.get(regRetval)));
-         reg.set(regTmp1,   cons(IS_SYMBOL,        reg.get(regTmp0)));
-         reg.set(regRetval, reg.get(regTmp1));
-         returnsub();
-         break;
-
-      case sub_read_symbol_body:
-         // Parses the next symbol from regArg0.
-         //
-         // A helper for sub_read_symbol, but still a sub_ in its
-         // own right.
-         //
-         // Returns a list of characters.
-         //
-         // All the characters in the symbol will have been
-         // consumed from the input, and the next character in the
-         // input will be the character immediately following the
-         // end of the symbol.
-         //
-         portPeek(regArg0,sub_read_symbol_body+0x1);
-         break;
-      case sub_read_symbol_body+0x1:
+      case sub_read_datum_body+0x1:
          reg.set(regTmp1, reg.get(regIO));
          if ( EOF == reg.get(regTmp1) )
          {
@@ -918,7 +880,7 @@ public class JhwScm implements Firmware
          default:
             portPop(regArg0);
             store(regTmp1);
-            gosub(sub_read_symbol_body,blk_tail_call_m_cons);
+            gosub(sub_read_datum_body,blk_tail_call_m_cons);
             break;
          }
          break;
@@ -3053,10 +3015,9 @@ public class JhwScm implements Firmware
 
    private static final int sub_read_octo_tok    = TYPE_SUBP | A1 |  0x2400;
 
-   // TODO: review these four for simplification
-   private static final int sub_read_symbol      = TYPE_SUBP | A1 |  0x2500;
-   private static final int sub_read_string      = TYPE_SUBP | A1 |  0x2600;
-   private static final int sub_read_symbol_body = TYPE_SUBP | A1 |  0x2700;
+   private static final int sub_read_datum_body  = TYPE_SUBP | A1 |  0x2600;
+
+   private static final int sub_read_string      = TYPE_SUBP | A1 |  0x2700;
    private static final int sub_read_string_body = TYPE_SUBP | A1 |  0x2800;
 
    private static final int sub_read_burn_space  = TYPE_SUBP | A1 |  0x2900;
@@ -3896,9 +3857,8 @@ public class JhwScm implements Firmware
          case sub_interp_atom_nneg: buf.append("sub_interp_atom_nneg"); break;
          case sub_interp_number:    buf.append("sub_interp_number");    break;
          case sub_read_octo_tok:    buf.append("sub_read_octo_tok");    break;
-         case sub_read_symbol:      buf.append("sub_read_symbol");      break;
+         case sub_read_datum_body:  buf.append("sub_read_datum_body");  break;
          case sub_read_string:      buf.append("sub_read_string");      break;
-         case sub_read_symbol_body: buf.append("sub_read_symbol_body"); break;
          case sub_read_string_body: buf.append("sub_read_string_body"); break;
          case sub_read_burn_space:  buf.append("sub_read_burn_space");  break;
          case sub_eval:             buf.append("sub_eval");             break;
