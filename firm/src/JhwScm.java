@@ -2720,6 +2720,17 @@ public class JhwScm implements Firmware
          returnsub();
          break;
 
+      case sub_lamsyn:
+         // Precisely as sub_lambda, but produces a closure tagged
+         // with IS_SPECIAL_FORM instead of with IS_PROCEDURE.
+         //
+         gosub(sub_lambda,sub_lamsyn+0x01);
+         break;
+      case sub_lamsyn+0x1:
+         setcar(reg.get(regRetval), IS_SPECIAL_FORM);
+         returnsub();
+         break;
+
       case blk_tail_call:
          // Just returns whatever retval left behind by the
          // subroutine which continued to here.
@@ -3070,6 +3081,7 @@ public class JhwScm implements Firmware
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
+   private static final int sub_lamsyn           = TYPE_SUBS | AX |  0x7910;
 
    private static final int sub_map1             = TYPE_SUBP | A2 |  0x8000;
 
@@ -3124,6 +3136,7 @@ public class JhwScm implements Firmware
       const_val[i] = sub_quote;   const_str[i++] = "quote";
       const_val[i] = sub_define;  const_str[i++] = "define";
       const_val[i] = sub_lambda;  const_str[i++] = "lambda";
+      const_val[i] = sub_lamsyn;  const_str[i++] = "lambda-syntax";
       const_val[i] = sub_equal_p; const_str[i++] = "equal?";
       const_val[i] = sub_let;     const_str[i++] = "let";
       const_val[i] = sub_begin;   const_str[i++] = "begin";
@@ -3903,6 +3916,7 @@ public class JhwScm implements Firmware
          case sub_quote:            buf.append("sub_quote");            break;
          case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
+         case sub_lamsyn:           buf.append("sub_lamsyn");           break;
          case sub_map1:             buf.append("sub_map1");             break;
          case sub_const_symbol:     buf.append("sub_const_symbol");     break;
          case sub_const_chars:      buf.append("sub_const_chars");      break;

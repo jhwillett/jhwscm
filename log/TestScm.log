@@ -1,6 +1,6 @@
 global:
-  numCycles:        586533
-  numCons:          576890
+  numCycles:        617245
+  numCons:          610180
   iobuf:            0
     numPeek:        17519
     numPop:         7497
@@ -9,28 +9,28 @@ global:
     numPeek:        0
     numPop:         2390
     numPush:        2397
-  reg.numSet:       5856160
-  reg.numGet:       10538701
+  reg.numSet:       6081252
+  reg.numGet:       11009987
   reg.maxAddr:      31
-  heap.numSet:      3636016
-  heap.numGet:      4268656
+  heap.numSet:      3663600
+  heap.numGet:      4336272
   heap.maxAddr:     6143
-  cache.numHits:    7475090
-  cache.numMisses:  257367
-  cache.numFlush:   227251
-  cache.numDrop:    30116
-  cache.numLoad:    266791
-  cacheTop.numSet:  5328315
-  cacheTop.numGet:  2413566
+  cache.numHits:    7696733
+  cache.numMisses:  261593
+  cache.numFlush:   228975
+  cache.numDrop:    32618
+  cache.numLoad:    271017
+  cacheTop.numSet:  5427596
+  cacheTop.numGet:  2540154
   cacheTop.maxAddr: 6143
-  reg   ops:        16394861
-  cache ops:        7741881
-  heap  ops:        7904672
-  reg   ops/cell:   528866.4838709678
-  cache ops/cell:   1260.2769005371968
-  heap  ops/cell:   1286.7771447175646
-  ops   reg/cache:  2.1176844490376436
-  ops   cache/heap: 0.9794057236024467
+  reg   ops:        17091239
+  cache ops:        7967750
+  heap  ops:        7999872
+  reg   ops/cell:   551330.2903225806
+  cache ops/cell:   1297.0454175484292
+  heap  ops/cell:   1302.2744587335178
+  ops   reg/cache:  2.145052116344012
+  ops   cache/heap: 0.9959846857549721
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -38,8 +38,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.966716012775758
-  cache write/miss:          0.8829842209762713
+  cache hit/op:              0.9671296451037568
+  cache write/miss:          0.8753101191545646
 numExpects:     1005
   happy:        898
   unhappy:      107

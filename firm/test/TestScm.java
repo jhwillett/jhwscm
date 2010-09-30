@@ -1207,6 +1207,29 @@ public class TestScm extends Util
          expect("(let ((x 1) (a 10) (x 2) (b 20)) 1)",SEMANTIC);
       }
 
+      // check lambda-syntax
+      if ( false )
+      {
+         final Object[][] tests = { 
+            { "lambda-syntax",                               null       },
+            { "(lambda-syntax () 1)",                        "????????" },
+            { "((lambda-syntax () 1))",                      "1"        },
+            { "((lambda-syntax (a) 1) 100)",                 "1"        },
+            { "((lambda-syntax (a) 1) asdfasfd)",            "1"        },
+            { "(define syn (lambda-syntax (a) 1)",           "????????" },
+            { "syn",                                         "??????"   },
+            { "(syn asaf)",                                  "1"        },
+            { "(define syn (lambda-syntax (a) (+ 1 2))",     "????????" },
+            { "(syn asaf)",                                  "1"        },
+            { "(define syn (lambda-syntax (a) (display a))", "????????" },
+            { "(syn asaf)",                                  "asaf"     },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
+      }
+
       // Here's an interesting thing:
       //
       // Guile:
