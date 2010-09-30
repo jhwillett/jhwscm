@@ -202,21 +202,13 @@ public class TestScm extends Util
             { "a",       "a"       },
             { "a1",      "a1"      },
             { "a_0-b.c", "a_0-b.c" },
-         };
-         final Object[][] digit_start_symboltests = { 
-            // Surprise: our engine gives both a LEX and a SEM error
-            // on the input 123ab.
-            //
-            // Guile says this is an unbound variable, and is happy w/
-            // (define 123ab 100).
-            //
             { "1a",      "1a"      },
             { "123ab",   "123ab"   },
+            { "-123ab",  "-123ab"   },
          };
          final Batch[] batches = { 
             RE_IND,
          };
-         //VERBOSE = true;
          metabatch(tests,batches);
       }      
       {
@@ -647,16 +639,19 @@ public class TestScm extends Util
             { "(+ a c)",                    SEMANTIC    },
             { "(+ a b)",                    "102"       },
             { "(define a 1)a(define a 2)a", "12"        }, // redefining
-         };
-         final Object[][] digit_start_symboltests = { 
+
             // Surprise: our engine gives both a LEX and a SEM error
             // on the input 123ab.
             //
             // Guile says this is an unbound variable, and is happy w/
             // (define 123ab 100).
             //
-            { "(define 1a 117)",            ""          },
+            { "(define 1a  117)",           ""          },
             { "1a",                         "117"       },
+            { "(define -9j 201)",           ""          },
+            { "-9j",                        "201"       },
+            { "(define 1   117)",           SEMANTIC    },
+            { "(define -91 117)",           SEMANTIC    },
          };
          final Batch[] batches = { 
             REP_DEP,

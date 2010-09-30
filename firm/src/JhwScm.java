@@ -453,7 +453,7 @@ public class JhwScm implements Firmware
             gosub(sub_read_octo_tok,blk_tail_call);
             break;
          default:
-            if ( true )
+            if ( false )
             {
                gosub(sub_read_atom,blk_tail_call);
             }
