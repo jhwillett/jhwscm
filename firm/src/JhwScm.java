@@ -457,17 +457,14 @@ public class JhwScm implements Firmware
       case sub_read+0x3:
          // after single quote
          //
-         // TODO: Think about this one, by putting sub_quote here
-         // instead of the symbol 'quote there are some funny
-         // consequences: like for instance it kind of implies that
-         // sub_quote needs to be self-evaluating (if not all
-         // sub_foo).
-         //
          // Note: by leveraging sub_quote in this way, putting the
          // literal value sub_quote at the head of a constructed
          // expression which is en route to sub_eval, we force the
          // hand on other design decisions about the direct
          // (eval)ability and (apply)ability of sub_foo in general.
+         //
+         // For instance, it implies sub_quote must be
+         // self-evaluating, if not all sub_foo.
          //
          // We do the same in sub_define with sub_lambda, so
          // clearly I'm getting comfortable with this decision.
@@ -1119,7 +1116,7 @@ public class JhwScm implements Firmware
             //
             // TODO: Inconsistency?  I made my TYPE_SUBS responsible
             // for making their own calls back to sub_eval, but I seem
-            // to be heading in a diarection where the IS_SPECIAL_FORM
+            // to be heading in a direction where the IS_SPECIAL_FORM
             // get sub_eval called for them, building on the idea of
             // syntaxes.  Perhaps they should be unified: and perhaps
             // the various TYPE_SUBS would get simpler if they enjoyed
@@ -1711,7 +1708,7 @@ public class JhwScm implements Firmware
          // of the elements in the proper list in reg.get(regArg1),
          // else FALSE.
          //
-         // Only works w/ lables as per sub_case: fixints,
+         // Only works w/ labels as per sub_case: fixints,
          // booleans, and characer literals.  Nothing else will
          // match.
          logrec("key:   ",reg.get(regArg0));
@@ -1733,7 +1730,7 @@ public class JhwScm implements Firmware
          {
             // TODO: Check type?  We would not want them to both be
             // interned strings, or would we...?
-            reg.set(regRetval,   TRUE);
+            reg.set(regRetval, TRUE);
             returnsub();
             break;
          }
@@ -2097,8 +2094,8 @@ public class JhwScm implements Firmware
             break;
          case TYPE_SUBP:
             // TODO: some decisions to be made here about how these
-            // really print, but that kind of depends on how I land
-            // about how they lex.
+            // really print, but making those calls depends on how I
+            // land about how they lex.
             //
             // In the mean time, this is sufficient to meet spec.
             //
@@ -2352,8 +2349,8 @@ public class JhwScm implements Firmware
          break;
 
       case sub_print_list_elems:
-         // Prints the elements in the list (NIL or a cell) in regArg0
-         // to the ouput port in regArg1 with a space between each.
+         // Prints the elements in the list in regArg0 to the ouput
+         // port in regArg1 with a space between each.
          //
          // Furthermore, regArg2 should be TRUE if regArg0 is the
          // first item in the list, FALSE otherwise.
@@ -2362,7 +2359,7 @@ public class JhwScm implements Firmware
          //
          if ( NIL == reg.get(regArg0) )
          {
-            reg.set(regRetval,  UNSPECIFIED);
+            reg.set(regRetval, UNSPECIFIED);
             returnsub();
             break;
          }
@@ -2373,7 +2370,10 @@ public class JhwScm implements Firmware
          }
          else
          {
-            reg.set(regPc,sub_print_list_elems+0x1); // TODO: THE EVIL JUMP!
+            // TODO: The evil jump rears it's ugly head!  Wipe it out
+            // before the entire town is destroyed!
+            //
+            reg.set(regPc,sub_print_list_elems+0x1);
          }
          break;
       case sub_print_list_elems+0x1:
@@ -3242,9 +3242,9 @@ public class JhwScm implements Firmware
    ////////////////////////////////////////////////////////////////////
 
    /**
-    * TODO: This is a blocking call in that the mutator program may be
-    * suspended to perform garbage collection or in event of
-    * out-of-memory.
+    * TODO: This ought to be a blocking call in that the mutator
+    * program may be suspended to perform garbage collection or in
+    * event of out-of-memory.
     * 
     * @returns NIL in event of error (in which case an error is
     * raised), else a newly allocated and initialize cons cell.
@@ -3650,8 +3650,30 @@ public class JhwScm implements Firmware
     * needed by the continuation, and to restore() those values in the
     * continuation.
     *
-    * TODO: is it of benefit to exploit regContinuation here?  Would
-    * that not impose some stack manips on regPush() and regPeek()?
+    * Musing: Would it be of benefit to exploit regContinuation here,
+    * and avoid doing a stack op sometimes?  It is unclear what
+    * percentage of gosubs() are leaves in the dynamic process tree:
+    * if every subroutine were a leaf or an inner node with outdegree
+    * 2, we'd expect to see 1/2 of our gosub() calls being a leaf.
+    * But with rampant tail recursion, it seems more likely that a
+    * much smaller percentage are.
+    *
+    * Plus, I worry that sharing regContinuation between
+    * gosub()/returnsub() and portPush()/portPeek() might impose stack
+    * manips on those i/o methods - and I am pretty keen on their
+    * present stacklessness and minimal registerness hygiene.  
+    *
+    * Still, I may be wrong about that or we could consider dedicating
+    * another register to use like regContinuation, but for gosub()
+    * only.
+    *
+    * TODO: measure the ratio of gosub() calls which are leaves in the
+    * call tree.
+    *
+    * TODO: contemplate whether regContinuation could be shared with
+    * i/o without complicating portPush()/portPeek() - or whether the
+    * relative frequencies of i/o to gosub() and the ratio of
+    * leaf-gosub() to inner-gosub() merit it.
     */
    private void gosub ( final int nextOp, final int continuationOp )
    {
