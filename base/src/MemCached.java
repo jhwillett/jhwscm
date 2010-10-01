@@ -8,8 +8,6 @@
  * All rights reserved.
  */
 
-import java.util.Random; // TODO: roll your own LCG: or just bag ALG_RAND?
-
 public class MemCached implements Mem
 {
    private static final int     ALG_NONE    = 0;
@@ -18,8 +16,8 @@ public class MemCached implements Mem
    private static final int     ALG_INC     = 3;
    private static final int     ALG_CLOCK   = 4;
 
-   public static final boolean TRACK_DIRTY = true;
-   public static final int     ALG         = ALG_CLOCK;
+   public  static final boolean TRACK_DIRTY = true;
+   public  static final int     ALG         = ALG_RAND;
 
    // Wow: ALG_RAND and ALG_INC are surprisingly effective.
    //
@@ -112,6 +110,14 @@ public class MemCached implements Mem
    // FIFO, Second-Chance, and Clock sections take that knowledge as
    // read - my bad for skimming and assuming.
 
+   // Since I'm thinking about this layer as hardware, I want to keep
+   // it as simple as possible.
+   //
+   // Therefore, ALG_RAND does not attempt any robustness with regards
+   // to using any PRNG software.  Instead, we just accumulate cheap
+   // shoddy entropy deterministically based on how we are acessed.
+   // This technique has nothing to recommend it except dumbness.
+
    private final Mem       mem;
    private final int       lineSize;
    private final int       lineCount;
@@ -122,8 +128,8 @@ public class MemCached implements Mem
    private final Stats     global;
    private final Stats     local;
 
-   private final Random    rand;
-   private       int       next = 0;
+   private       int       entropy = 0;
+   private       int       next    = 0;
 
    public static class Stats
    {
@@ -183,11 +189,7 @@ public class MemCached implements Mem
       }
       if ( ALG == ALG_RAND )
       {
-         rand = new Random(12051973);
-      }
-      else
-      {
-         rand = null;
+         entropy ^= 0x12051973;
       }
       if ( ALG == ALG_CLOCK )
       {
@@ -227,6 +229,12 @@ public class MemCached implements Mem
          mem.set(addr,value);
          return;
       }
+      if ( ALG == ALG_RAND )
+      {
+         entropy ^= addr;
+         entropy ^= value;
+         entropy ^= 0x13041941;
+      }
       final int root = addr / lineSize;
       final int off  = addr % lineSize;
       final int line = getRoot(root);
@@ -242,6 +250,11 @@ public class MemCached implements Mem
       if ( ALG_NONE == ALG )
       {
          return mem.get(addr);
+      }
+      if ( ALG == ALG_RAND )
+      {
+         entropy ^= addr;
+         entropy ^= 0x10021943;
       }
       final int root  = addr / lineSize;
       final int off   = addr % lineSize;
@@ -279,7 +292,8 @@ public class MemCached implements Mem
             line = 0;
             break;
          case ALG_RAND:
-            line = rand.nextInt(lineCount);
+            line     = (0x7FFFFFFF & entropy) % lineCount;
+            entropy += 97;
             break;
          case ALG_INC:
             line  = next;

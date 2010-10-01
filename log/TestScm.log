@@ -1,6 +1,6 @@
 global:
   numCycles:        655552
-  numCons:          647519
+  numCons:          646593
   iobuf:            0
     numPeek:        19328
     numPop:         8226
@@ -9,37 +9,37 @@ global:
     numPeek:        0
     numPop:         2436
     numPush:        2439
-  reg.numSet:       6381270
-  reg.numGet:       11622451
+  reg.numSet:       6374788
+  reg.numGet:       11615969
   reg.maxAddr:      31
-  heap.numSet:      3708464
-  heap.numGet:      4411776
+  heap.numSet:      3788384
+  heap.numGet:      4559120
   heap.maxAddr:     6143
-  cache.numHits:    7990802
-  cache.numMisses:  266232
-  cache.numFlush:   231779
-  cache.numDrop:    34453
-  cache.numLoad:    275736
-  cacheTop.numSet:  5569093
-  cacheTop.numGet:  2697445
+  cache.numHits:    7978815
+  cache.numMisses:  275441
+  cache.numFlush:   236774
+  cache.numDrop:    38667
+  cache.numLoad:    284945
+  cacheTop.numSet:  5567241
+  cacheTop.numGet:  2696519
   cacheTop.maxAddr: 6143
-  reg   ops:        18003721
-  cache ops:        8266538
-  heap  ops:        8120240
-  reg   ops/cell:   580765.1935483871
-  cache ops/cell:   1345.6841933908513
-  heap  ops/cell:   1321.8687937489826
-  ops   reg/cache:  2.177903373818641
-  ops   cache/heap: 1.018016462567609
-  ALG:                       4
+  reg   ops:        17990757
+  cache ops:        8263760
+  heap  ops:        8347504
+  reg   ops/cell:   580347.0
+  cache ops/cell:   1345.2319713495035
+  heap  ops/cell:   1358.8643985023605
+  ops   reg/cache:  2.1770667347551234
+  ops   cache/heap: 0.9899677795901625
+  ALG:                       2
   LINE_SIZE:                 16
   LINE_COUNT:                16
   PROPERLY_TAIL_RECURSIVE:   true
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9677569451694156
-  cache write/miss:          0.8705903122089005
+  cache hit/op:              0.9666304267761988
+  cache write/miss:          0.8596178491945643
 numExpects:     1046
   happy:        926
   unhappy:      120
