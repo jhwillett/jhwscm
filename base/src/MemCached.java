@@ -17,7 +17,7 @@ public class MemCached implements Mem
    private static final int     ALG_CLOCK   = 4;
 
    public  static final boolean TRACK_DIRTY = true;
-   public  static final int     ALG         = ALG_RAND;
+   public  static final int     ALG         = ALG_CLOCK;
 
    // Wow: ALG_RAND and ALG_INC are surprisingly effective.
    //
