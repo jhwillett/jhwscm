@@ -556,11 +556,6 @@ public class TestScm extends Util
 
       // simple conditionals: in Scheme, only #f is false
       // 
-      // TODO: test w/ side effects that short-cut semantics work.
-      //
-      // TODO: when you do mutators, be sure to check that only one
-      // alternative in an (if) is executed.
-      //
       {
          final Object[][] tests = { 
             { "(if #f 2 5)",                  "5"      },
@@ -575,7 +570,9 @@ public class TestScm extends Util
             { "(if (equal? 2 1) 123 321)",    "321"    },
 
             // (if) is a special form, and should demonstrably not
-            // evaluate both clauses.
+            // evaluate both clauses.  We don't have mutators, but we
+            // can demonstrate nonevaluation with an erroneous
+            // subexpression.
             //
             { "(+ 2 '())",                    SEMANTIC },
             { "(if #f (+ 2 '()) (+ 4 5))",    "9"      },
@@ -1174,6 +1171,7 @@ public class TestScm extends Util
          // with subs-that-return-nothing.
          //
          // Update: I have merged VOID and UNDEFINED into UNSPECIFIED.
+         // Boo-ya!
 
          final Object[][] tests = { 
             { "(define (f x) (+ x 10))", ""           },
@@ -1584,8 +1582,10 @@ public class TestScm extends Util
       // arise above, we can continue to use this same Computer in 
       // subsequent tests.
       //
-      // TODO: is this legit?
-      scm.clear();
+      if ( Firmware.ERROR_COMPLETE != dcode )
+      {
+         scm.clear();
+      }
 
       assertEquals("drive failure on \"" + expr + "\":",
                    expected_dcode,
