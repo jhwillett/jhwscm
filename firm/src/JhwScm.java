@@ -113,6 +113,7 @@ public class JhwScm implements Firmware
       reg.set(regStack, NIL);
       reg.set(regEnv,   reg.get(regTopEnv));
       gosub(sub_top, blk_halt);
+      if ( DEBUG ) scmDepth = 1; // 1 b/c sub_top called from sub_init
    }
 
    /**
@@ -1761,7 +1762,6 @@ public class JhwScm implements Firmware
          //
          logrec("sub_apply op:  ",reg.get(regArg0));
          logrec("sub_apply args:",reg.get(regArg1));
-
          switch (type(reg.get(regArg0)))
          {
          case TYPE_SUBP:
@@ -1778,12 +1778,12 @@ public class JhwScm implements Firmware
                gosub(sub_apply_user,blk_tail_call);
                break;
             default:
-               raiseError(ERR_INTERNAL);
+               raiseError(ERR_SEMANTIC);
                break;
             }
             break;
          default:
-            raiseError(ERR_INTERNAL);
+            raiseError(ERR_SEMANTIC);
             break;
          }
          break;
@@ -1893,16 +1893,24 @@ public class JhwScm implements Firmware
          //
          //   '(IS_PROCEDURE arg-list body lexical-env)
          //
-         if ( DEBUG && TYPE_CELL != type(reg.get(regArg0)) )
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
-            raiseError(ERR_INTERNAL);
+            log("bogus proc not cell");
+            raiseError(ERR_SEMANTIC);
             break;
          }
-         if ( DEBUG                                    && 
-              IS_PROCEDURE    != car(reg.get(regArg0)) &&
+         if ( IS_PROCEDURE    != car(reg.get(regArg0)) &&
               IS_SPECIAL_FORM != car(reg.get(regArg0)) )
          {
-            raiseError(ERR_INTERNAL);
+            log("bogus proc not procedure or special");
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( NIL       != reg.get(regArg1) &&
+              TYPE_CELL != type(reg.get(regArg1)) )
+         {
+            log("bogus arg list");
+            raiseError(ERR_SEMANTIC);
             break;
          }
          if ( IS_SPECIAL_FORM == car(reg.get(regArg0)) )
@@ -3219,6 +3227,7 @@ public class JhwScm implements Firmware
       const_val[i] = sub_readv;   const_str[i++] = "read";
       const_val[i] = sub_printv;  const_str[i++] = "display";
       const_val[i] = sub_map1;    const_str[i++] = "map1";
+      const_val[i] = sub_apply;   const_str[i++] = "apply";
       primitives_end = i;
 
       const_true    = code(TYPE_FIXINT,i);

@@ -1260,23 +1260,26 @@ public class TestScm extends Util
       }
 
       // check apply
-      if ( false )
       {
          final Object[][] tests = { 
-            { "(define (f) 0)",                     ""        },
-            { "(apply f)",                          "0"       },
-            { "(apply (lambda (x) (* 3 x)) 5)",     "15"      },
-            { "(apply (lambda (x y) (* x y)) 5 7)", "35"      },
-            { "(apply '())",                        SEMANTIC  },
-            { "(apply '(a b))",                     SEMANTIC  },
-            { "(apply f 1)",                        SEMANTIC  },
-            { "(apply 2)",                          SEMANTIC  },
-            { "(apply (lambda (x y) (* x y)))",     SEMANTIC  },
+            { "(define (f) 0)",                        ""        },
+            { "(f)",                                   "0"       },
+            { "f",                                     "???"     },
+            { "(apply f)",                             SEMANTIC  },
+            { "(apply 1 2)",                           SEMANTIC  },
+            { "(apply f 2)",                           SEMANTIC  },
+            { "(apply f '())",                         "0"       },
+            { "(apply (lambda (x) (* 3 x)) '(5))",     "15"      },
+            { "(apply (lambda (x y) (* x y)) '(5 7))", "35"      },
+            { "(apply '() '())",                       SEMANTIC  },
+            { "(apply '(a b) '())",                    SEMANTIC  },
+            { "(apply f 1)",                           SEMANTIC  },
+            { "(apply 2)",                             SEMANTIC  },
+            { "(apply (lambda (x y) (* x y)))",        SEMANTIC  },
          };
          final Batch[] batches = { 
             REP_DEP,
          };
-         VERBOSE = true;
          metabatch(tests,batches);
       }
 
