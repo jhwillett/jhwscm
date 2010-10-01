@@ -1155,8 +1155,12 @@ public class JhwScm implements Firmware
          restore(regArg1);                     // restore the env
          if ( true )
          {
+            // See lambda-syntax trials in TestScm.java.
+            //
             // what the unit tests expect: ??? sub_apply ended up
             // evaluating it via sub_begin?!?
+            //
+            // TODO: wtf does apply evaluate the stuff?
             returnsub();
          }
          else
