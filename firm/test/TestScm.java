@@ -573,6 +573,14 @@ public class TestScm extends Util
             { "(if #f (+ 2 1) (+ 4 5))",      "9"      },
             { "(if (equal? 1 1) 123 321)",    "123"    },
             { "(if (equal? 2 1) 123 321)",    "321"    },
+
+            // (if) is a special form, and should demonstrably not
+            // evaluate both clauses.
+            //
+            { "(+ 2 '())",                    SEMANTIC },
+            { "(if #f (+ 2 '()) (+ 4 5))",    "9"      },
+            { "(if #t (+ 4 5) (+ 2 '()))",    "9"      },
+            
          };
          final Batch[] batches = { 
             REP_IND,
@@ -1211,29 +1219,36 @@ public class TestScm extends Util
       if ( true )
       {
          final Object[][] tests = { 
-            { "lambda-syntax",                                null    },
-            { "(lambda-syntax () 1)",                         "???"   },
-            { "((lambda-syntax () 1))",                       "1"     },
-            { "((lambda-syntax (a) 1) 100)",                  "1"     },
-            { "((lambda-syntax (a) 1) asdfasfd)",             "1"     },
-            { "(define syn (lambda-syntax (a) 1))",           ""      },
-            { "syn",                                          "???"   },
-            { "(syn)",                                        SEMANTIC },
-            { "(syn 1 2)",                                    SEMANTIC },
-            { "(syn 1)",                                      "1"      },
-            { "(syn 2)",                                      "1"      },
-            { "(syn 'a)",                                     "1"     },
-            { "(syn asaf)",                                   "1"     },
-            { "(syn (+ 19 (cons x y)))",                      "1"     },
-            { "(syn asaf)",                                   "1"     },
-            /*
-            { "(define syn (lambda-syntax (a) (+ 1 2)))",     ""      },
-            { "syn",                                          "???"   },
-            { "(syn asaf)",                                   "1"     },
-            { "(define syn (lambda-syntax (a) (display a)))", ""      },
-            { "syn",                                          "???"   },
-            { "(syn asaf)",                                   "asaf"  },
-            { "(syn (+ 1 '()))",                              "(+ 1 '())" },
+            { "lambda-syntax",                                null       },
+            { "(lambda-syntax () 1)",                         "???"      },
+            { "((lambda-syntax () 1))",                       "1"        },
+            { "((lambda-syntax (a) 1) 100)",                  "1"        },
+            { "((lambda-syntax (a) 1) asdfasfd)",             "1"        },
+            { "(define syn (lambda-syntax (a) 1))",           ""         },
+            { "syn",                                          "???"      },
+            { "(syn)",                                        SEMANTIC   },
+            { "(syn 1 2)",                                    SEMANTIC   },
+            { "(syn 1)",                                      "1"        },
+            { "(syn 2)",                                      "1"        },
+            { "(syn 'a)",                                     "1"        },
+            { "(syn asaf)",                                   "1"        },
+            { "(syn (+ 19 (cons x y)))",                      "1"        },
+            { "(syn asaf)",                                   "1"        },
+            { "(define syn (lambda        (a) (+ 1 2)))",     ""         },
+            { "(syn asaf)",                                   SEMANTIC   },
+            { "(define syn (lambda-syntax (a) (+ 1 2)))",     ""         },
+            { "(syn asaf)",                                   "3"        },
+            { "(define syn (lambda-syntax (a) (display a)))", ""         },
+            { "(syn asaf)",                                   "asaf"     },
+            { "(syn (+ 1 ()))",                               "(+ 1 ())" },
+
+            // Can I make my own (if), including special formedness?
+            //
+            { "(define myif (lambda-syntax (a b c) (if a b c)))", ""       },
+            { "(+ 2 '())",                                        SEMANTIC },
+            /* TODO
+            { "(myif #f (+ 2 '()) (+ 4 5))",                      "9"      },
+            { "(myif #t (+ 4 5) (+ 2 '()))",                      "9"      },
             */
          };
          final Batch[] batches = { 
@@ -1241,6 +1256,7 @@ public class TestScm extends Util
          };
          //VERBOSE = true;
          metabatch(tests,batches);
+         VERBOSE = false;
       }
 
       // check apply

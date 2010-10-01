@@ -1143,6 +1143,11 @@ public class JhwScm implements Firmware
             // sub_lambda does not...
             //
             //
+            logrec("SP regArg0:",reg.get(regArg0));
+            //logrec("SP regArg1:",reg.get(regArg1));
+            logrec("SP regTmp0:",reg.get(regTmp0));
+            //logrec("SP regTmp1:",reg.get(regTmp1));
+            logrec("SP regTmp2:",reg.get(regTmp2));
             store(regTmp1);                    // store the env
             reg.set(regArg0,  reg.get(regTmp2));
             reg.set(regArg1,  reg.get(regTmp0));
@@ -1166,7 +1171,8 @@ public class JhwScm implements Firmware
          restore(regArg1);                     // restore the env
          if ( true )
          {
-            // what the unit tests expect no
+            // what the unit tests expect: ??? sub_apply ended up
+            // evaluating it via sub_begin?!?
             returnsub();
          }
          else
@@ -1753,6 +1759,9 @@ public class JhwScm implements Firmware
          // Applies the op in reg.get(regArg0) to the args in
          // reg.get(regArg1), and return the results.
          //
+         logrec("sub_apply op:  ",reg.get(regArg0));
+         logrec("sub_apply args:",reg.get(regArg1));
+
          switch (type(reg.get(regArg0)))
          {
          case TYPE_SUBP:
@@ -1763,6 +1772,8 @@ public class JhwScm implements Firmware
             switch (car(reg.get(regArg0)))
             {
             case IS_PROCEDURE:
+               gosub(sub_apply_user,blk_tail_call);
+               break;
             case IS_SPECIAL_FORM:
                gosub(sub_apply_user,blk_tail_call);
                break;
@@ -1894,6 +1905,11 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
+         if ( IS_SPECIAL_FORM == car(reg.get(regArg0)) )
+         {
+            logrec("sub_apply_user: op   ",reg.get(regArg0));
+            logrec("sub_apply_user: args ",reg.get(regArg1));
+         }
          store(regArg0);                                          // store op
          reg.set(regArg0,  car(cdr(reg.get(regArg0))));
          reg.set(regArg1,  reg.get(regArg1));
@@ -1908,12 +1924,23 @@ public class JhwScm implements Firmware
          logrec("sub_apply_user BODY   ",reg.get(regTmp1));
          logrec("sub_apply_user FRAME  ",reg.get(regTmp0));
 
+         if ( IS_SPECIAL_FORM == car(reg.get(regArg0)) )
+         {
+            // TODO: I'm still a bit confused about what is going on
+            // in these cases.
+            logrec("sub_apply_user: op   ",reg.get(regArg0));
+            logrec("sub_apply_user: frame",reg.get(regRetval));
+            logrec("sub_apply_user: begin",reg.get(regTmp1));
+            //raiseError(ERR_NOT_IMPL);
+            //break;
+         }
+
          // going w/ lexical frames
          reg.set(regTmp2,  cons(reg.get(regTmp0),reg.get(regTmp3)));
 
-         logrec("sub_apply_user ENV    ",reg.get(regTmp2));
          reg.set(regArg0,  reg.get(regTmp1));
          reg.set(regArg1,  reg.get(regTmp2));
+
          //
          // At first glance, this env manip feels like it should be
          // the job of sub_eval. After all, sub_eval gets an
@@ -2289,7 +2316,7 @@ public class JhwScm implements Firmware
          //
          log("regArg0: ",pp(reg.get(regArg0)));
          log("regArg1: ",pp(reg.get(regArg1)));
-         logrec("regArg2: ",reg.get(regArg2));
+         logrec("regArg2:",reg.get(regArg2));
          tmp0 = value_fixint(reg.get(regArg0));
          if ( 0 == tmp0 )
          {
@@ -2760,6 +2787,7 @@ public class JhwScm implements Firmware
          reg.set(regRetval,  cons(reg.get(regTmp1),reg.get(regRetval)));
          reg.set(regRetval,  cons(reg.get(regTmp0),reg.get(regRetval)));
          reg.set(regRetval,  cons(IS_PROCEDURE,reg.get(regRetval)));
+         logrec("sub_lambda returning:",reg.get(regRetval));
          returnsub();
          break;
 
@@ -2770,7 +2798,9 @@ public class JhwScm implements Firmware
          gosub(sub_lambda,sub_lamsyn+0x01);
          break;
       case sub_lamsyn+0x1:
-         setcar(reg.get(regRetval), IS_SPECIAL_FORM);
+         reg.set(regTmp0,   cdr(reg.get(regRetval)));
+         reg.set(regRetval, cons(IS_SPECIAL_FORM, reg.get(regTmp0)));
+         logrec("sub_lamsyn returning:",reg.get(regRetval));
          returnsub();
          break;
 
@@ -3846,9 +3876,11 @@ public class JhwScm implements Firmware
             break;
          case IS_PROCEDURE:
          case IS_SPECIAL_FORM:
+            // only show arg & body: env may cycle
             log(tag,pp(first));
             tag += " ";
-            logrec(tag,car(cdr(c))); // just show the arg list, env might cycle
+            logrec(tag,car(cdr(c)));
+            logrec(tag,car(cdr(cdr(c))));
             break;
          default:
             log(tag,pp(c));
