@@ -124,7 +124,7 @@ public class JhwScm implements Firmware
     */
    public int step ( final Machine mach )
    {
-      this.mach = mach; // TODO: hacky non-state member should be param
+      this.mach = mach;
 
       final Mem reg = mach.reg;
 
@@ -192,13 +192,10 @@ public class JhwScm implements Firmware
       case sub_prebind+0x2:
          restore(regTmp0);   // restore symbol
          restore(regArg0);   // restore const id INEFFICIENT
-         {
-            // TODO: get rid of vars!
-            final int bind  = cons(reg.get(regTmp0),reg.get(regRetval));
-            final int frame = car(reg.get(regEnv));
-            final int newfr = cons(bind,frame);
-            setcar(reg.get(regEnv),newfr);
-         }
+         reg.set(regTmp1, cons(reg.get(regTmp0),reg.get(regRetval))); 
+         reg.set(regTmp2, car(reg.get(regEnv))); 
+         reg.set(regTmp3, cons(reg.get(regTmp1),reg.get(regTmp2))); 
+         setcar(reg.get(regEnv),reg.get(regTmp3));
          tmp0 = value_fixint(reg.get(regArg0));
          tmp1 = tmp0 + 1;
          reg.set(regArg0,code(TYPE_FIXINT,tmp1));
