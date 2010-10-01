@@ -416,24 +416,23 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read+0x2);
          break;
       case sub_read+0x2:
-         // TODO: Now that portPush() and portPeek() are blocking
-         // calls, in many places we could just use regIO instead of
-         // some regTmpX.
+         // Now that portPush() and portPeek() are blocking calls, in
+         // many continuations after eiter I/O op we can just use
+         // regIO directly instead of the regTmpX that we used to use.
          //
-         reg.set(regTmp0, reg.get(regIO));
-         if ( EOF == reg.get(regTmp0) )
+         if ( EOF == reg.get(regIO) )
          {
             reg.set(regRetval, EOF);
             returnsub();
             break;
          }
-         if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp0)) )
+         if ( DEBUG && TYPE_CHAR != type(reg.get(regIO)) )
          {
-            log("non-char in input: ",pp(reg.get(regTmp0)));
+            log("non-char in input: ",pp(reg.get(regIO)));
             raiseError(ERR_INTERNAL);
             break;
          }
-         switch (value(reg.get(regTmp0)))
+         switch (value(reg.get(regIO)))
          {
          case ')':
             raiseError(ERR_LEXICAL);
@@ -504,8 +503,7 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_list+0x1);
          break;
       case sub_read_list+0x1:
-         reg.set(regTmp0, reg.get(regIO));
-         if ( code(TYPE_CHAR,'(') != reg.get(regTmp0) )
+         if ( code(TYPE_CHAR,'(') != reg.get(regIO) )
          {
             raiseError(ERR_LEXICAL);
             break;
@@ -561,14 +559,13 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_list_open+0x2);
          break;
       case sub_read_list_open+0x2:    
-         reg.set(regTmp0, reg.get(regIO));
-         if ( EOF == reg.get(regTmp0) )
+         if ( EOF == reg.get(regIO) )
          {
             log("eof in list expr");
             raiseError(ERR_LEXICAL);
             break;
          }
-         if ( code(TYPE_CHAR,')') == reg.get(regTmp0) )
+         if ( code(TYPE_CHAR,')') == reg.get(regIO) )
          {
             log("matching close-paren");
             portPop(regArg0);
@@ -775,8 +772,7 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_octo_tok+0x1);
          break;
       case sub_read_octo_tok+0x1:
-         reg.set(regTmp0, reg.get(regIO));
-         if ( reg.get(regTmp0) != code(TYPE_CHAR,'#') )
+         if ( reg.get(regIO) != code(TYPE_CHAR,'#') )
          {
             raiseError(ERR_INTERNAL);
             break;
@@ -785,58 +781,56 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_octo_tok+0x2);
          break;
       case sub_read_octo_tok+0x2:
-         reg.set(regTmp1, reg.get(regIO));
-         if ( EOF == reg.get(regTmp1) )
+         if ( EOF == reg.get(regIO) )
          {
             log("eof after octothorpe");
             raiseError(ERR_LEXICAL);
             break;
          }
-         if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp1)) )
+         if ( DEBUG && TYPE_CHAR != type(reg.get(regIO)) )
          {
-            log("non-char in input: ",pp(reg.get(regTmp1)));
+            log("non-char in input: ",pp(reg.get(regIO)));
             raiseError(ERR_INTERNAL);
             break;
          }
          portPop(regArg0);
-         switch (value(reg.get(regTmp1)))
+         switch (value(reg.get(regIO)))
          {
          case 't':
             log("true");
-            reg.set(regRetval,  TRUE);
+            reg.set(regRetval, TRUE);
             returnsub();
             break;
          case 'f':
             log("false");
-            reg.set(regRetval,  FALSE);
+            reg.set(regRetval, FALSE);
             returnsub();
             break;
          case '\\':
             portPeek(regArg0,sub_read_octo_tok+0x3);
             break;
          default:
-            log("unexpected after octothorpe: ",pp(reg.get(regTmp1)));
+            log("unexpected after octothorpe: ",pp(reg.get(regIO)));
             raiseError(ERR_LEXICAL);
             break;
          }
          break;
       case sub_read_octo_tok+0x3:
-         reg.set(regTmp2, reg.get(regIO));
-         if ( EOF == reg.get(regTmp2) )
+         if ( EOF == reg.get(regIO) )
          {
             log("eof after octothorpe slash");
             raiseError(ERR_LEXICAL);
             break;
          }
-         if ( DEBUG && TYPE_CHAR != type(reg.get(regTmp2)) )
+         if ( DEBUG && TYPE_CHAR != type(reg.get(regIO)) )
          {
-            log("non-char in input: ",pp(reg.get(regTmp2)));
+            log("non-char in input: ",pp(reg.get(regIO)));
             raiseError(ERR_INTERNAL);
             break;
          }
-         log("character literal: ",pp(reg.get(regTmp2)));
+         log("character literal: ",pp(reg.get(regIO)));
          portPop(regArg0);
-         reg.set(regRetval,  reg.get(regTmp2));
+         reg.set(regRetval, reg.get(regIO));
          returnsub();
          // TODO: so far, we only handle the 1-char sequences...
          break;
@@ -852,21 +846,20 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_datum_body+0x1);
          break;
       case sub_read_datum_body+0x1:
-         reg.set(regTmp1, reg.get(regIO));
-         if ( EOF == reg.get(regTmp1) )
+         if ( EOF == reg.get(regIO) )
          {
             log("eof: returning");
             reg.set(regRetval, NIL);
             returnsub();
             break;
          }
-         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
+         if ( TYPE_CHAR != type(reg.get(regIO)) )
          {
-            log("non-char in input: ",pp(reg.get(regTmp1)));
+            log("non-char in input: ",pp(reg.get(regIO)));
             raiseError(ERR_INTERNAL);
             break;
          }
-         switch (value(reg.get(regTmp1)))
+         switch (value(reg.get(regIO)))
          {
          case ' ':
          case '\t':
@@ -875,12 +868,12 @@ public class JhwScm implements Firmware
          case '(':
          case ')':
          case '"':
-            reg.set(regRetval,  NIL);
+            reg.set(regRetval, NIL);
             returnsub();
             break;
          default:
             portPop(regArg0);
-            store(regTmp1);
+            store(regIO);
             gosub(sub_read_datum_body,blk_tail_call_m_cons);
             break;
          }
@@ -895,10 +888,9 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_string+0x1);
          break;
       case sub_read_string+0x1:
-         reg.set(regTmp0, reg.get(regIO));
-         if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
+         if ( code(TYPE_CHAR,'"') != reg.get(regIO) )
          {
-            log("non-\" leading string literal: ",pp(reg.get(regTmp0)));
+            log("non-\" leading string literal: ",pp(reg.get(regIO)));
             raiseError(ERR_LEXICAL);
             break;
          }
@@ -911,8 +903,7 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_string+0x3);
          break;
       case sub_read_string+0x3:
-         reg.set(regTmp0, reg.get(regIO));
-         if ( code(TYPE_CHAR,'"') != reg.get(regTmp0) )
+         if ( code(TYPE_CHAR,'"') != reg.get(regIO) )
          {
             raiseError(ERR_LEXICAL);
             break;
@@ -941,20 +932,19 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_string_body+0x1);
          break;
       case sub_read_string_body+0x1:
-         reg.set(regTmp1, reg.get(regIO));
-         if ( EOF == reg.get(regTmp1) )
+         if ( EOF == reg.get(regIO) )
          {
             log("eof in string literal");
             raiseError(ERR_LEXICAL);
             break;
          }
-         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
+         if ( TYPE_CHAR != type(reg.get(regIO)) )
          {
-            log("non-char in input: ",pp(reg.get(regTmp1)));
+            log("non-char in input: ",pp(reg.get(regIO)));
             raiseError(ERR_INTERNAL);
             break;
          }
-         switch (value(reg.get(regTmp1)))
+         switch (value(reg.get(regIO)))
          {
          case '"':
             reg.set(regRetval,  NIL);
@@ -962,7 +952,7 @@ public class JhwScm implements Firmware
             break;
          default:
             portPop(regArg0);
-            store(regTmp1);
+            store(regIO);
             gosub(sub_read_string_body,blk_tail_call_m_cons);
             break;
          }
@@ -976,14 +966,13 @@ public class JhwScm implements Firmware
          portPeek(regArg0,sub_read_burn_space+0x1);
          break;
       case sub_read_burn_space+0x1:
-         reg.set(regTmp0, reg.get(regIO));
-         if ( EOF == reg.get(regTmp0) )
+         if ( EOF == reg.get(regIO) )
          {
             reg.set(regRetval, UNSPECIFIED);
             returnsub();
             break;
          }
-         switch (value(reg.get(regTmp0)))
+         switch (value(reg.get(regIO)))
          {
          case ' ':
          case '\t':
@@ -1456,7 +1445,7 @@ public class JhwScm implements Firmware
          restore(regTmp0);         // restore locals
          reg.set(regTmp4,  reg.get(regTmp1));
          reg.set(regTmp5,  cons( reg.get(regTmp2), reg.get(regTmp4) ));
-         reg.set(regTmp6,  cons( sub_lambda,   reg.get(regTmp5) ));
+         reg.set(regTmp6,  cons( sub_lambda,       reg.get(regTmp5) ));
          reg.set(regTmp7,  cons( reg.get(regTmp6), reg.get(regTmp3) ));
          logrec("REWRITE OUTPUT: ",reg.get(regTmp7));
          reg.set(regArg0,  reg.get(regTmp7));
@@ -2191,19 +2180,19 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         reg.set(regTmp1,  car(reg.get(regArg0)));
-         reg.set(regTmp2,  cdr(reg.get(regArg0)));
-         if ( TYPE_CHAR != type(reg.get(regTmp1)) )
+         reg.set(regTmp0,  car(reg.get(regArg0)));
+         reg.set(regTmp1,  cdr(reg.get(regArg0)));
+         if ( TYPE_CHAR != type(reg.get(regTmp0)) )
          {
-            log("bogus: ",pp(reg.get(regTmp1)));
+            log("bogus: ",pp(reg.get(regTmp0)));
             raiseError(ERR_INTERNAL);
             break;
          }
-         reg.set(regIO,reg.get(regTmp1));
+         reg.set(regIO,reg.get(regTmp0));
          portPush(regArg1,sub_print_chars+0x1);
          break;
       case sub_print_chars+0x1:
-         reg.set(regArg0, reg.get(regTmp2));
+         reg.set(regArg0, reg.get(regTmp1));
          gosub(sub_print_chars,blk_tail_call);
          break;
 
@@ -2274,7 +2263,7 @@ public class JhwScm implements Firmware
          default:
             reg.set(regIO,reg.get(regArg0));
             reg.set(regRetval, UNSPECIFIED);
-            portPush(regArg1, blk_tail_call);  // TODO: clever or stupid?
+            portPush(regArg1, blk_tail_call); // clever or stupid: io and ret :)
             break;
          }
          break;
@@ -2298,7 +2287,7 @@ public class JhwScm implements Firmware
          {
             log("zero");
             reg.set(regIO,code(TYPE_CHAR,'0'));
-            portPush(regArg1,blk_tail_call); // TODO: clever or stupid?
+            portPush(regArg1,blk_tail_call); // clever or stupid: io and ret :)
          }
          else
          {
@@ -2362,7 +2351,7 @@ public class JhwScm implements Firmware
          restore(regArg1);      // restore port
          reg.set(regIO,code(TYPE_CHAR,')'));
          reg.set(regRetval,  UNSPECIFIED);
-         portPush(regArg1, blk_tail_call); // TODO: clever or stupid?
+         portPush(regArg1, blk_tail_call); // clever or stupid: io and ret :)
          break;
 
       case sub_print_list_elems:
@@ -3009,12 +2998,6 @@ public class JhwScm implements Firmware
    // where it would be more efficient to use 0, 1, 2, etc. I choose
    // not to to encourage this code to fail hard and fast.
 
-   // TODO: distinct from EOF, do we need an NO_INPUT to indicate when
-   // no input is ready, but the port isn't closed?
-   //
-   // No: my thinking now is we need to be able to suspend processing
-   // when there is no io but the ports are unclosed.
-
    private static final int NIL                 = TYPE_SENTINEL | 39;
 
    private static final int EOF                 = TYPE_SENTINEL | 97;
@@ -3459,9 +3442,8 @@ public class JhwScm implements Firmware
     * If the port is closed and empty, will return EOF.  Otherwise,
     * will return some TYPE_CHAR.
     * 
-    * TODO: This is a blocking call: will block if the port is empty
-    * but not closed. Upon completion, control continues at
-    * continuationOp.
+    * This call blocks while the port is empty but not closed. When
+    * input is ready, control continues at continuationOp.
     * 
     * On resume, the peeked value will be in regIO.
     * 
@@ -3671,7 +3653,8 @@ public class JhwScm implements Firmware
     * needed by the continuation, and to restore() those values in the
     * continuation.
     *
-    * TODO: is it of benefit to exploit regContinuation here?
+    * TODO: is it of benefit to exploit regContinuation here?  Would
+    * that not impose some stack manips on regPush() and regPeek()?
     */
    private void gosub ( final int nextOp, final int continuationOp )
    {
