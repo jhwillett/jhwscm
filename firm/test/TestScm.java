@@ -1213,8 +1213,34 @@ public class TestScm extends Util
          expect("(let ((x 1) (a 10) (x 2) (b 20)) 1)",SEMANTIC);
       }
 
+      // check apply
+      {
+         final Object[][] tests = { 
+            { "(define (f) 0)",                        ""        },
+            { "(f)",                                   "0"       },
+            { "f",                                     "???"     },
+            { "(apply f)",                             SEMANTIC  },
+            { "(apply 1 2)",                           SEMANTIC  },
+            { "(apply f 2)",                           SEMANTIC  },
+            { "(apply f '())",                         "0"       },
+            { "(apply (lambda (x) (* 3 x)) '(5))",     "15"      },
+            { "(apply (lambda (x y) (* x y)) '(5 7))", "35"      },
+            { "(apply '() '())",                       SEMANTIC  },
+            { "(apply '(a b) '())",                    SEMANTIC  },
+            { "(apply f 1)",                           SEMANTIC  },
+            { "(apply 2)",                             SEMANTIC  },
+            { "(apply (lambda (x y) (* x y)))",        SEMANTIC  },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
+      }
+
+      // TODO: expose eval
+
       // check lambda-syntax
-      if ( true )
+      if ( false )
       {
          final Object[][] tests = { 
             /*
@@ -1277,32 +1303,6 @@ public class TestScm extends Util
          metabatch(tests,batches);
          VERBOSE = false;
       }
-
-      // check apply
-      {
-         final Object[][] tests = { 
-            { "(define (f) 0)",                        ""        },
-            { "(f)",                                   "0"       },
-            { "f",                                     "???"     },
-            { "(apply f)",                             SEMANTIC  },
-            { "(apply 1 2)",                           SEMANTIC  },
-            { "(apply f 2)",                           SEMANTIC  },
-            { "(apply f '())",                         "0"       },
-            { "(apply (lambda (x) (* 3 x)) '(5))",     "15"      },
-            { "(apply (lambda (x y) (* x y)) '(5 7))", "35"      },
-            { "(apply '() '())",                       SEMANTIC  },
-            { "(apply '(a b) '())",                    SEMANTIC  },
-            { "(apply f 1)",                           SEMANTIC  },
-            { "(apply 2)",                             SEMANTIC  },
-            { "(apply (lambda (x y) (* x y)))",        SEMANTIC  },
-         };
-         final Batch[] batches = { 
-            REP_DEP,
-         };
-         metabatch(tests,batches);
-      }
-
-      // TODO: eval
 
 
       // Here's an interesting thing:

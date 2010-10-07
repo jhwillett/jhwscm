@@ -4,8 +4,8 @@ dd5db9453bfd2ba23a972b9ee766e302  base/src/Computer.java
 f537fb9bb618eacb59c8b29ba2603c62  base/src/Firmware.java
 744cbf0be7c2b9cac9abf7f2b207eda7  base/src/IOBuffer.java
 40273b61fc99fe81d17135f199732fb4  base/src/Machine.java
-250eaada9663cced79e89fea991d1600  base/src/Mem.java
 f7497a3b62920c170c848904242031c7  base/src/MemCached.java
+250eaada9663cced79e89fea991d1600  base/src/Mem.java
 cdadcd9158d707c17b3d82f6fa6c1d5a  base/src/MemPaged.java
 bb86a624d34e0475efc9e3f80f24eeaf  base/src/MemSimple.java
 78bc95037b457bef1857201e70cdcc59  base/src/MemStats.java
@@ -17,4 +17,4 @@ c854b5d0c0b488234f14973660b4e074  base/test/TestMem.java
 284afb8136984e30c4193f69f67b5680  base/test/TestUtil.java
 ff001567e73c45e7554d7937480cb61a  base/test/Util.java
 7bda7b8d641453c4421e69c1733f85f3  firm/src/JhwScm.java
-0396e1d8cf73d4a6f20b6f12625441f9  firm/test/TestScm.java
+ec299b87e41062825380634d4b9c741f  firm/test/TestScm.java
