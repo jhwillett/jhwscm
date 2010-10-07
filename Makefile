@@ -54,6 +54,11 @@ $(MODULES:%=$(DESTDIR)/build-%.ok): $(DESTDIR)/build-%.ok:
 	javac -cp $(CPT-$*) -d $(DESTDIR)/$*/test    $(TST-$*)
 	touch $@
 
+.PHONY: run
+run: $(DESTDIR)/build-shell.ok
+run:
+	java -cp $(CPT-shell) Shell
+
 .PHONY: rawtest $(MODULES:%=rawtest-%)
 rawtest: $(MODULES:%=rawtest-%)
 $(MODULES:%=rawtest-%): rawtest-%: $(DESTDIR)/build-%.ok
@@ -68,33 +73,29 @@ rawtest-firm:
 rawtest-shell:
 	java -cp $(CPT-shell) TestShell
 
-.PHONY: run
-run: $(DESTDIR)/build-shell.ok
-run:
-	java -cp $(CPT-shell) Shell
-
 .PHONY: test $(MODULES:%=test-%)
 test: $(MODULES:%=test-%)
 $(MODULES:%=test-%): test-%: $(DESTDIR)/test-%.ok
 $(MODULES:%=$(DESTDIR)/test-%.ok): $(DESTDIR)/test-%.ok: $(DESTDIR)/build-%.ok
 $(DESTDIR)/test-base.ok:
-	java -cp $(CPT-base) TestUtil     2>&1 | tee $(LOGDIR)/TestUtil.log
-	java -cp $(CPT-base) TestMem      2>&1 | tee $(LOGDIR)/TestMem.log
-	java -cp $(CPT-base) TestIOBuffer 2>&1 | tee $(LOGDIR)/TestIOBuffer.log
-	java -cp $(CPT-base) TestMachine  2>&1 | tee $(LOGDIR)/TestMachine.log
-	java -cp $(CPT-base) TestComputer 2>&1 | tee $(LOGDIR)/TestComputer.log
+	set -o pipefail ; java -cp $(CPT-base) TestUtil     2>&1 | tee $(LOGDIR)/TestUtil.log
+	set -o pipefail ; java -cp $(CPT-base) TestMem      2>&1 | tee $(LOGDIR)/TestMem.log
+	set -o pipefail ; java -cp $(CPT-base) TestIOBuffer 2>&1 | tee $(LOGDIR)/TestIOBuffer.log
+	set -o pipefail ; java -cp $(CPT-base) TestMachine  2>&1 | tee $(LOGDIR)/TestMachine.log
+	set -o pipefail ; java -cp $(CPT-base) TestComputer 2>&1 | tee $(LOGDIR)/TestComputer.log
 	touch $@
 $(DESTDIR)/test-firm.ok: 
-	java -cp $(CPT-firm) TestScm      2>&1 | tee $(LOGDIR)/TestScm.log
+	set -o pipefail ; java -cp $(CPT-firm) TestScm      2>&1 | tee $(LOGDIR)/TestScm.log
 	touch $@
 $(DESTDIR)/test-shell.ok: 
-	java -cp $(CPT-shell) TestShell   2>&1 | tee $(LOGDIR)/TestShell.log
+	set -o pipefail ; java -cp $(CPT-shell) TestShell   2>&1 | tee $(LOGDIR)/TestShell.log
 	touch $@
 
 test: $(LOGDIR)/md5.log
 $(LOGDIR)/md5.log: Makefile deps.mk
-$(LOGDIR)/md5.log: $(SRC-base) $(TST-base)
-$(LOGDIR)/md5.log: $(SRC-firm) $(TST-firm)
+$(LOGDIR)/md5.log: $(SRC-base)  $(TST-base)
+$(LOGDIR)/md5.log: $(SRC-firm)  $(TST-firm)
+$(LOGDIR)/md5.log: $(SRC-shell) $(TST-shell)
 $(LOGDIR)/md5.log:
 	@mkdir -p $(dir $@)
 	@cat /dev/null > $@.tmp
