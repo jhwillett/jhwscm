@@ -1503,52 +1503,40 @@ public class JhwScm implements Firmware
          //
          if ( NIL == reg.get(regArg1) )
          {
-            reg.set(regRetval, NIL);
+            reg.set(regRetval,NIL);
             returnsub();
             break;
          }
-         if ( TYPE_CELL != type(reg.get(regArg1)) )
-         {
-            // sub_apply also wants op in regArg0, but wants arg list
-            // in regArg1.
-            //
-            reg.set(regTmp0, cons(reg.get(regArg1),NIL));
-            reg.set(regArg1, reg.get(regTmp0));
-            gosub(sub_apply, blk_tail_call);
-            break;
-         }
-         reg.set(regTmp0, car(reg.get(regArg1)));    // car
-         switch (reg.get(regTmp0))
-         {
-         case IS_SYMBOL:
-         case IS_STRING:
-         case IS_PROCEDURE:
-         case IS_SPECIAL_FORM:
-            // sub_apply also wants op in regArg0, but wants arg list
-            // in regArg1.
-            //
-            reg.set(regTmp0, cons(reg.get(regArg1),NIL));
-            reg.set(regArg1, reg.get(regTmp0));
-            gosub(sub_apply, blk_tail_call);
-            break;
-         default:
-            reg.set(regTmp1, cdr(reg.get(regArg1))); // cdr
-            store(regArg0);                          // store op
-            store(regTmp1);                          // store cdr
-            //
-            // sub_apply also wants op in regArg0, but wants arg list
-            // in regArg1.
-            //
-            reg.set(regTmp2, cons(reg.get(regTmp0),NIL));
-            reg.set(regArg1, reg.get(regTmp2));
-            gosub(sub_apply, sub_maptree+0x1);
-            break;
-         }
+         store(regArg0);                          // store op
+         store(regArg1);                          // store arg
+         reg.set(regArg0,reg.get(regArg1));
+         gosub(sub_atom_p,sub_maptree+0x1);
          break;
       case sub_maptree+0x1:
-         restore(regArg1);                           // restore cdr
-         restore(regArg0);                           // restore op
-         store(regRetval);                           // blk_tail_call_m_cons
+         restore(regArg1);                        // restore arg
+         restore(regArg0);                        // restore op
+         if ( TRUE == reg.get(regRetval) )
+         {
+            // sub_apply also wants op in regArg0, but wants an arg
+            // list in regArg1.
+            //
+            reg.set(regTmp0, cons(reg.get(regArg1),NIL));
+            reg.set(regArg1, reg.get(regTmp0));
+            gosub(sub_apply, blk_tail_call);
+            break;
+         }
+         logrec("arg1:",reg.get(regArg1));
+         reg.set(regTmp0, car(reg.get(regArg1))); // car
+         reg.set(regTmp1, cdr(reg.get(regArg1))); // cdr
+         store(regArg0);                          // store op
+         store(regTmp1);                          // store cdr
+         reg.set(regArg1, reg.get(regTmp0));      // car
+         gosub(sub_maptree, sub_maptree+0x2);
+         break;
+      case sub_maptree+0x2:
+         restore(regArg1);                        // restore cdr
+         restore(regArg0);                        // restore op
+         store(regRetval);                        // feed blk_tail_call_m_cons
          gosub(sub_maptree, blk_tail_call_m_cons);
          break;
 
@@ -1556,8 +1544,11 @@ public class JhwScm implements Firmware
          // Returns TRUE if regArg0 is an atom, FALSE otherwise.
          // 
          // This engine implements several types, such as strings,
-         // symbols, procedures, and special forms, as lists.  These
-         // are still considered atoms.
+         // symbols, procedures, and special forms, as lists.  
+         //
+         // Despite this implementational peculiarity, these objects
+         // are still considered atoms at the Scheme level and for
+         // purposes of sub_atom_p.
          // 
          // A non-atom is either NIL or a cell which is not part of a
          // primitive type representation.

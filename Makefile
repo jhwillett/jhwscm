@@ -63,15 +63,15 @@ run:
 rawtest: $(MODULES:%=rawtest-%)
 $(MODULES:%=rawtest-%): rawtest-%: $(DESTDIR)/build-%.ok
 rawtest-base:
-	java -cp $(CPT-base) TestUtil
-	java -cp $(CPT-base) TestMem
-	java -cp $(CPT-base) TestIOBuffer
-	java -cp $(CPT-base) TestMachine
-	java -cp $(CPT-base) TestComputer
+	time java -cp $(CPT-base) TestUtil
+	time java -cp $(CPT-base) TestMem
+	time java -cp $(CPT-base) TestIOBuffer
+	time java -cp $(CPT-base) TestMachine
+	time java -cp $(CPT-base) TestComputer
 rawtest-firm:
-	java -cp $(CPT-firm) TestScm
+	time java -cp $(CPT-firm) TestScm
 rawtest-shell:
-	java -cp $(CPT-shell) TestShell
+	time java -cp $(CPT-shell) TestShell
 
 .PHONY: test $(MODULES:%=test-%)
 test: $(MODULES:%=test-%)

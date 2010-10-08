@@ -1,4 +1,4 @@
-fa02ac61d1eea45f4b8010a104dfbfc7  Makefile
+1be6c366502032edeb80b52a0e0ffbe4  Makefile
 66de9009d12a0ae8b866c3607dd7f875  deps.mk
 dd5db9453bfd2ba23a972b9ee766e302  base/src/Computer.java
 f537fb9bb618eacb59c8b29ba2603c62  base/src/Firmware.java
@@ -16,7 +16,7 @@ f718547d19030e77dadde08a08ce0ef2  base/test/TestComputer.java
 c854b5d0c0b488234f14973660b4e074  base/test/TestMem.java
 284afb8136984e30c4193f69f67b5680  base/test/TestUtil.java
 ff001567e73c45e7554d7937480cb61a  base/test/Util.java
-be6c138cc3a0c9a0e990485bfab3bdad  firm/src/JhwScm.java
-79577e53fc6ccbd883645d6b73c2e773  firm/test/TestScm.java
+c71725a9b0701a145c0fc3bb283af4b2  firm/src/JhwScm.java
+e7adbcacb1ae041469468e1c361ec9a0  firm/test/TestScm.java
 e5431ec443f1bfe679a3b787b41dbd24  shell/src/Shell.java
 c9df929ee85ff6b19a17e696c863b9b6  shell/test/TestShell.java

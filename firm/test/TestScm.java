@@ -1270,10 +1270,8 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
 
-      if ( false )
       {
          final Object[][] tests = { 
-            /*
             { "maptree",                                     null          },
             { "(maptree 1 '())",                             "()"          },
             { "(maptree 1 2)",                               SEMANTIC      },
@@ -1284,7 +1282,6 @@ public class TestScm extends Util
             { "(maptree (lambda (a) (+ 1 a)) '())",          "()"          },
             { "(maptree (lambda (a) (+ 1 a)) '(1))",         "(2)"         },
             { "(maptree (lambda (a) (+ 1 a)) '(1 2 3))",     "(2 3 4)"     },
-            */
             { "(maptree (lambda (a) (+ 1 a)) '((1) (2 3)))", "((2) (3 4))" },
             { "(maptree (lambda (a) (+ 1 a)) (cons 2 3))",   "(3 . 4)"     },
             { "(maptree (lambda (a) (+ 1 a)) 1)",            "2"           },
@@ -1292,9 +1289,7 @@ public class TestScm extends Util
          final Batch[] batches = { 
             REP_IND,
          };
-         VERBOSE = true;
          metabatch(tests,batches);
-         VERBOSE = false;
       }
 
       // check lambda-syntax
