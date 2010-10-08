@@ -1237,7 +1237,65 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
 
-      // TODO: expose eval
+      // check eval
+      if ( false )
+      {
+         // TODO: means we need to expose environments, and eval
+         final Object[][] tests = { 
+            { "(eval 0)",                              "0"       },
+            { "(eval '(+ 3 4))",                       "7"       },
+            { "(eval '(+ 3 x))",                       SEMANTIC  },
+            { "(define x 100)",                        ""        },
+            { "(eval '(+ 3 x))",                       "103"     },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
+      }
+
+      {
+         final Object[][] tests = { 
+            { "atom?",                     null         },
+            { "(atom? 1)",                "#t"          },
+            { "(atom? '())",              "#f"          },
+            { "(atom? (cons 1 2))",       "#f"          },
+            { "(atom? \"foo\")",          "#t"          },
+            { "(atom? (lambda () 10))",   "#t"          },
+            { "(atom? 'sym)",             "#t"          },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         metabatch(tests,batches);
+      }
+
+      if ( false )
+      {
+         final Object[][] tests = { 
+            /*
+            { "maptree",                                     null          },
+            { "(maptree 1 '())",                             "()"          },
+            { "(maptree 1 2)",                               SEMANTIC      },
+            { "(maptree (lambda (a) a) '())",                "()"          },
+            { "(maptree (lambda (a) a) 1)",                  "1"           },
+            { "(maptree (lambda (a) a) \"foo\")",            "\"foo\""     },
+            { "(maptree (lambda (a) a) cons)",               null          },
+            { "(maptree (lambda (a) (+ 1 a)) '())",          "()"          },
+            { "(maptree (lambda (a) (+ 1 a)) '(1))",         "(2)"         },
+            { "(maptree (lambda (a) (+ 1 a)) '(1 2 3))",     "(2 3 4)"     },
+            */
+            { "(maptree (lambda (a) (+ 1 a)) '((1) (2 3)))", "((2) (3 4))" },
+            { "(maptree (lambda (a) (+ 1 a)) (cons 2 3))",   "(3 . 4)"     },
+            { "(maptree (lambda (a) (+ 1 a)) 1)",            "2"           },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         VERBOSE = true;
+         metabatch(tests,batches);
+         VERBOSE = false;
+      }
 
       // check lambda-syntax
       if ( false )

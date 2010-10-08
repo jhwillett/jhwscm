@@ -1452,7 +1452,7 @@ public class JhwScm implements Firmware
          break;
 
       case sub_map1:
-         // Applies the unary operator in regArg0 to each element of
+         // Applies the unary procedure in regArg0 to each element of
          // the list in regArg1, and returns a list of the results in
          // order.
          //
@@ -1465,7 +1465,7 @@ public class JhwScm implements Firmware
          // I would prefer it if this sub_map1 worked with either/both
          // of builtins and user-defineds, and this way it does.
          //
-         // Called sub_map1 because it only handles unary operators.
+         // Called sub_map1 because it only handles unary procedures.
          // The real Scheme "map" is variadic, but that proved out of
          // scope here in the fundamental layer.  While sub_map1 is a
          // useful utility here below, a sub_mapN would be difficult
@@ -1490,6 +1490,105 @@ public class JhwScm implements Firmware
          restore(regArg0);                        // restore operator
          store(regRetval);                        // feed blk_tail_call_m_cons
          gosub(sub_map1,blk_tail_call_m_cons);
+         break;
+
+      case sub_maptree:
+         // Applies the unary procedure in regArg0 to each atom in the
+         // tree rooted regArg1, and returns a tree with the same
+         // structure as the input, with all the atomic leaves
+         // replaced by the procedure results.
+         //
+         // Walks depth-first, car before cdr, heavy recursion on the
+         // car and tail-recursive-mod-cons on the cdr.
+         //
+         if ( NIL == reg.get(regArg1) )
+         {
+            reg.set(regRetval, NIL);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg1)) )
+         {
+            // sub_apply also wants op in regArg0, but wants arg list
+            // in regArg1.
+            //
+            reg.set(regTmp0, cons(reg.get(regArg1),NIL));
+            reg.set(regArg1, reg.get(regTmp0));
+            gosub(sub_apply, blk_tail_call);
+            break;
+         }
+         reg.set(regTmp0, car(reg.get(regArg1)));    // car
+         switch (reg.get(regTmp0))
+         {
+         case IS_SYMBOL:
+         case IS_STRING:
+         case IS_PROCEDURE:
+         case IS_SPECIAL_FORM:
+            // sub_apply also wants op in regArg0, but wants arg list
+            // in regArg1.
+            //
+            reg.set(regTmp0, cons(reg.get(regArg1),NIL));
+            reg.set(regArg1, reg.get(regTmp0));
+            gosub(sub_apply, blk_tail_call);
+            break;
+         default:
+            reg.set(regTmp1, cdr(reg.get(regArg1))); // cdr
+            store(regArg0);                          // store op
+            store(regTmp1);                          // store cdr
+            //
+            // sub_apply also wants op in regArg0, but wants arg list
+            // in regArg1.
+            //
+            reg.set(regTmp2, cons(reg.get(regTmp0),NIL));
+            reg.set(regArg1, reg.get(regTmp2));
+            gosub(sub_apply, sub_maptree+0x1);
+            break;
+         }
+         break;
+      case sub_maptree+0x1:
+         restore(regArg1);                           // restore cdr
+         restore(regArg0);                           // restore op
+         store(regRetval);                           // blk_tail_call_m_cons
+         gosub(sub_maptree, blk_tail_call_m_cons);
+         break;
+
+      case sub_atom_p:
+         // Returns TRUE if regArg0 is an atom, FALSE otherwise.
+         // 
+         // This engine implements several types, such as strings,
+         // symbols, procedures, and special forms, as lists.  These
+         // are still considered atoms.
+         // 
+         // A non-atom is either NIL or a cell which is not part of a
+         // primitive type representation.
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval, FALSE);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            reg.set(regRetval, TRUE);
+            returnsub();
+            break;
+         }
+         reg.set(regTmp0, car(reg.get(regArg0)));    // car
+         switch (reg.get(regTmp0))
+         {
+         case IS_SYMBOL:
+         case IS_STRING:
+         case IS_PROCEDURE:
+         case IS_SPECIAL_FORM:
+            reg.set(regRetval, TRUE);
+            returnsub();
+            break;
+         default:
+            reg.set(regRetval, FALSE);
+            returnsub();
+            break;
+         }
          break;
 
       case sub_begin:
@@ -2426,13 +2525,11 @@ public class JhwScm implements Firmware
          break;
 
       case sub_add:
-         if ( TYPE_FIXINT != type(reg.get(regArg0)) )
+         if ( TYPE_FIXINT != type(reg.get(regArg0)) ||
+              TYPE_FIXINT != type(reg.get(regArg1)) )
          {
-            raiseError(ERR_SEMANTIC);
-            break;
-         }
-         if ( TYPE_FIXINT != type(reg.get(regArg1)) )
-         {
+            logrec("arg0:",reg.get(regArg0));
+            logrec("arg1:",reg.get(regArg1));
             raiseError(ERR_SEMANTIC);
             break;
          }
@@ -3127,6 +3224,8 @@ public class JhwScm implements Firmware
    private static final int sub_case_search      = TYPE_SUBS | A2 |  0x6410;
    private static final int sub_case_in_list_p   = TYPE_SUBP | A2 |  0x6420;
    private static final int sub_cond             = TYPE_SUBS | AX |  0x6500;
+   private static final int sub_atom_p           = TYPE_SUBP | A1 |  0x6600;
+
 
    private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
    private static final int sub_add0             = TYPE_SUBP | A0 |  0x7010;
@@ -3149,6 +3248,7 @@ public class JhwScm implements Firmware
    private static final int sub_lamsyn           = TYPE_SUBS | AX |  0x7910;
 
    private static final int sub_map1             = TYPE_SUBP | A2 |  0x8000;
+   private static final int sub_maptree          = TYPE_SUBP | A2 |  0x8100;
 
    private static final int sub_const_symbol     = TYPE_SUBP | A1 |  0x9000;
    private static final int sub_const_chars      = TYPE_SUBP | A1 |  0x9100;
@@ -3204,6 +3304,7 @@ public class JhwScm implements Firmware
       const_val[i] = sub_lambda;  const_str[i++] = "lambda";
       const_val[i] = sub_lamsyn;  const_str[i++] = "lambda-syntax";
       const_val[i] = sub_equal_p; const_str[i++] = "equal?";
+      const_val[i] = sub_atom_p;  const_str[i++] = "atom?";
       const_val[i] = sub_let;     const_str[i++] = "let";
       const_val[i] = sub_begin;   const_str[i++] = "begin";
       const_val[i] = sub_cond;    const_str[i++] = "cond";
@@ -3211,6 +3312,7 @@ public class JhwScm implements Firmware
       const_val[i] = sub_readv;   const_str[i++] = "read";
       const_val[i] = sub_printv;  const_str[i++] = "display";
       const_val[i] = sub_map1;    const_str[i++] = "map1";
+      const_val[i] = sub_maptree; const_str[i++] = "maptree";
       const_val[i] = sub_apply;   const_str[i++] = "apply";
       primitives_end = i;
 
@@ -3987,6 +4089,7 @@ public class JhwScm implements Firmware
          case sub_print_fixint:     buf.append("sub_print_fixint");     break;
          case sub_print_pos_fixint: buf.append("sub_print_pos_fixint"); break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
+         case sub_atom_p:           buf.append("sub_atom_p");           break;
          case sub_let:              buf.append("sub_let");              break;
          case sub_begin:            buf.append("sub_begin");            break;
          case sub_case:             buf.append("sub_case");             break;
@@ -4012,6 +4115,7 @@ public class JhwScm implements Firmware
          case sub_lambda:           buf.append("sub_lambda");           break;
          case sub_lamsyn:           buf.append("sub_lamsyn");           break;
          case sub_map1:             buf.append("sub_map1");             break;
+         case sub_maptree:          buf.append("sub_maptree");          break;
          case sub_const_symbol:     buf.append("sub_const_symbol");     break;
          case sub_const_chars:      buf.append("sub_const_chars");      break;
          case sub_const_val:        buf.append("sub_const_val");        break;
