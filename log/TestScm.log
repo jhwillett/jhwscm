@@ -1,36 +1,36 @@
 global:
-  numCycles:        712707
-  numCons:          709576
+  numCycles:        689556
+  numCons:          712575
   iobuf:            0
     numPeek:        19429
     numPop:         8233
     numPush:        8242
   iobuf:            1
     numPeek:        0
-    numPop:         2468
+    numPop:         2470
     numPush:        2470
-  reg.numSet:       6857669
-  reg.numGet:       12574778
+  reg.numSet:       6838280
+  reg.numGet:       12409321
   reg.maxAddr:      31
-  heap.numSet:      3859168
-  heap.numGet:      4621840
+  heap.numSet:      4176144
+  heap.numGet:      4944032
   heap.maxAddr:     6143
-  cache.numHits:    8528924
-  cache.numMisses:  279057
-  cache.numFlush:   241198
-  cache.numDrop:    37859
-  cache.numLoad:    288865
-  cacheTop.numSet:  5871156
-  cacheTop.numGet:  2946633
+  cache.numHits:    8396883
+  cache.numMisses:  299194
+  cache.numFlush:   261009
+  cache.numDrop:    38185
+  cache.numLoad:    309002
+  cacheTop.numSet:  5878314
+  cacheTop.numGet:  2827571
   cacheTop.maxAddr: 6143
-  reg   ops:        19432447
-  cache ops:        8817789
-  heap  ops:        8481008
-  reg   ops/cell:   626853.1290322581
-  cache ops/cell:   1435.420641380433
-  heap  ops/cell:   1380.5971023929676
-  ops   reg/cache:  2.2037777270469956
-  ops   cache/heap: 1.0397100203183396
+  reg   ops:        19247601
+  cache ops:        8705885
+  heap  ops:        9120176
+  reg   ops/cell:   620890.3548387097
+  cache ops/cell:   1417.2041347875631
+  heap  ops/cell:   1484.6452873188996
+  ops   reg/cache:  2.210872415613117
+  ops   cache/heap: 0.9545742319007878
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -38,8 +38,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9683177109487406
-  cache write/miss:          0.86433237653956
+  cache hit/op:              0.9655943708870103
+  cache write/miss:          0.872373777549015
 numExpects:     1042
   happy:        925
   unhappy:      117

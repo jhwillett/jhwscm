@@ -20,10 +20,9 @@
  * overly resource-hungry Scheme code to this class, this class is
  * responsible for handling it without raising a Java exception.
  *
- * Also, although I'm implementing the canoncial recursive language,
- * I'm avoiding recursive functions in the implementation: I would
- * like the resultant engine to us only a shallow stack of definite
- * size.
+ * Although I am implementing the canoncial recursive language, I am
+ * avoiding recursive methods in the implementation: the final engine
+ * should use a shallow Java stack of definite size.
  *
  * Why this draconian and even unweildy general contract which is
  * non-idomatic for Java? 
@@ -148,6 +147,24 @@ public class JhwScm implements Firmware
          // Initializes the machine and the environment, then
          // transfers to the top-level loop, sub_top.
          //
+         // We start with:
+         //
+         //   - no error condition
+         //   - an empty stack
+         //   - an empty free cell list
+         //   - the heap uninitialized
+         //
+         // Then we expand by:
+         //
+         //   - Contructing an environment frame which binds per
+         //     primitives constant table.
+         //
+         //   - Initializing the top level environment to contain just
+         //     that frame.
+         //
+         //   - Setting the current environment to the top level
+         //     environment.
+         //
          for ( int i = 0; i < reg.length(); i++ )
          {
             reg.set(i,UNSPECIFIED);
@@ -156,50 +173,56 @@ public class JhwScm implements Firmware
          reg.set(regError,     NIL);
          reg.set(regFreeCells, NIL);
          reg.set(regHeapTop,   code(TYPE_FIXINT,0));
-         reg.set(regEnv,       cons(NIL,NIL));
          reg.set(regArg0,      code(TYPE_FIXINT,primitives_start));
+         reg.set(regArg1,      code(TYPE_FIXINT,primitives_end));
          gosub(sub_prebind, sub_init+0x1);
          break;
       case sub_init+0x1:
-         reg.set(regTopEnv,    reg.get(regEnv));
+         reg.set(regTmp0,      cons(reg.get(regRetval),NIL));
+         reg.set(regTopEnv,    cons(IS_ENVIRONMENT,reg.get(regTmp0)));
+         reg.set(regEnv,       reg.get(regTopEnv));
          gosub(sub_top, blk_halt);
          break;
          
       case sub_prebind:
-         // Initializes the primitivemost environment. 
+         // Constructs and returns a new environment frame from the
+         // constant table.
          //
-         // Expects regArg0 to be a fixint specifying an entry in the
-         // const table.
-         // 
-         // Return value is UNSPECIFIED.
+         // Expects a start index in regArg0, and an end index in
+         // regArg1. Both are expected as TYPE_FIXINT.  Builds a frame
+         // from start through end-1 e.g. inclusive of start,
+         // exclusive of end.
          // 
          tmp0 = value_fixint(reg.get(regArg0));
-         if ( tmp0 >= primitives_end ) 
+         tmp1 = value_fixint(reg.get(regArg1));
+         if ( tmp0 >= tmp1 ) 
          {
-            reg.set(regRetval,UNSPECIFIED);
+            reg.set(regRetval,NIL);
             returnsub();
             break;
          }
-         store(regArg0);     // store const id
+         store(regArg0);     // store start
+         store(regArg1);     // store end
          gosub(sub_const_symbol,sub_prebind+0x1);
          break;
       case sub_prebind+0x1:
-         restore(regArg0);   // restore const id
-         store(regArg0);     // store const id INEFFICIENT
+         restore(regArg1);   // restore end
+         restore(regArg0);   // restore start
+         store(regArg0);     // store start     INEFFICIENT
+         store(regArg1);     // store end       INEFFICIENT
          store(regRetval);   // store symbol
          gosub(sub_const_val,sub_prebind+0x2);
          break;
       case sub_prebind+0x2:
          restore(regTmp0);   // restore symbol
-         restore(regArg0);   // restore const id INEFFICIENT
+         restore(regArg1);   // restore end
+         restore(regArg0);   // restore start
          reg.set(regTmp1, cons(reg.get(regTmp0),reg.get(regRetval))); 
-         reg.set(regTmp2, car(reg.get(regEnv))); 
-         reg.set(regTmp3, cons(reg.get(regTmp1),reg.get(regTmp2))); 
-         setcar(reg.get(regEnv),reg.get(regTmp3));
+         store(regTmp1);     // feed binding to blk_tail_call_m_cons
          tmp0 = value_fixint(reg.get(regArg0));
          tmp1 = tmp0 + 1;
          reg.set(regArg0,code(TYPE_FIXINT,tmp1));
-         gosub(sub_prebind,blk_tail_call);
+         gosub(sub_prebind,blk_tail_call_m_cons);
          break;
 
       case sub_const_symbol:
@@ -1012,10 +1035,16 @@ public class JhwScm implements Firmware
             break;
          case TYPE_CHAR:
          case TYPE_FIXINT:
-         case TYPE_SUBS:    // TODO: is this a valid decision?  Off-spec?
-         case TYPE_SUBP:    // TODO: is this a valid decision?  Off-spec?
             // these types are self-evaluating
-            reg.set(regRetval,  reg.get(regArg0));
+            reg.set(regRetval, reg.get(regArg0));
+            returnsub();
+            break;
+         case TYPE_SUBS:
+         case TYPE_SUBP:
+            // these types are self-evaluating
+            //
+            // TODO: is this a valid decision?  Off-spec?
+            reg.set(regRetval, reg.get(regArg0));
             returnsub();
             break;
          case TYPE_CELL:
@@ -1030,21 +1059,17 @@ public class JhwScm implements Firmware
             case IS_SYMBOL:
                // Lookup the symbol in the environment.
                //
-               //   reg.get(regArg0) already contains the symbol
-               //   reg.get(regArg1) already contains the env
+               // - regArg0 already contains the symbol
+               // - regArg1 already contains the env
                //
-               // TODO: w/ a different variant of sub_eval_look_env,
-               // could this be a tail call?  And I don't just mean
-               // making a new function that calls sub_eval_look_env
-               // that has our same continuation sub_eval+0x1... I
-               // mean something that tail-recurses all the way to the
-               // success-or-symbol-not-found logic.
-               gosub(sub_eval_look_env,sub_eval+0x1);
+               gosub(sub_look_env,sub_eval+0x1);
                break;
             default:
-               // Evaluate the operator: the type of the result
-               // will determine whether we evaluate the args prior
-               // to apply.
+               // Evaluate the operator.
+               //
+               // The type of the result will determine whether we
+               // evaluate the args prior to sub_apply.
+               //
                reg.set(regTmp0,cdr(reg.get(regArg0)));
                store(regTmp0);             // store the arg exprs
                store(regArg1);             // store the env
@@ -1079,8 +1104,8 @@ public class JhwScm implements Firmware
       case sub_eval+0x2:
          // following eval of the first elem
          //
-         // If it's a function, evaluate the args next, following
-         // up with apply.
+         // If it's a procedure, evaluate the args next, following up
+         // with apply.
          //
          // If it's a special form, don't evaluate the args, just
          // pass it off to apply.
@@ -1215,13 +1240,13 @@ public class JhwScm implements Firmware
          gosub(sub_eval_list,blk_tail_call_m_cons);
          break;
 
-      case sub_eval_look_env:
-         // Looks up the symbol in reg.get(regArg0) in the env in
-         // reg.get(regArg1).
+      case sub_look_env:
+         // Looks up the symbol in regArg0 in the env in regArg1.
          //
-         // Returns NIL if not found, else the binding of the
-         // symbol: a cell whose car is a symbol equivalent to the
-         // argument symbol, and whose cdr is the value.
+         // Returns NIL if not found, else the binding of the symbol:
+         // a cell whose car is a symbol equivalent to the argument
+         // symbol, and whose cdr is the value of that symbol in the
+         // env.
          //
          // Subsequent setcdrs on that cell change the value of the
          // symbol.
@@ -1229,89 +1254,144 @@ public class JhwScm implements Firmware
          // Finds the *first* binding in the *first* frame for the
          // symbol.
          //
-         // (define (sub_eval_look_env sym env)
-         //   (if (null? env) 
-         //       '()
-         //       (let ((bind (sub_eval_look_frame sym (car env))))
-         //         (if (null? bind) 
-         //             (sub_eval_look_env sym (cdr env))
-         //             bind))))
+         // An environment has the structure:
+         //
+         //   (IS_ENVIRONMENT frame frame frame ...)
+         //
+         // A frame has the structure:
+         //
+         //   ((sym . val) (sym . val) (sym . val) ...)
+         //
+         // (define (sub_look_env sym env)
+         //   (validate sym)
+         //   (validate env)
+         //   (sub_look_frames sym (cdr env)))
          //
          if ( true )
          {
-            logrec("sub_eval_look_env SYM",reg.get(regArg0));
-            log(   "sub_eval_look_env ENV ",pp(reg.get(regArg1)));
+            logrec("sub_look_env SYM",reg.get(regArg0));
+            //log(   "sub_look_env ENV ",pp(reg.get(regArg1)));
+            logrec("sub_look_env ENV",reg.get(regArg1));
          }
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            log("non-cell sym in sub_look_env: ",pp(reg.get(regArg0)));
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( IS_SYMBOL != car(reg.get(regArg0)) )
+         {
+            log("non-sym sym in sub_look_env: ",pp(reg.get(regArg0)));
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg1)) )
+         {
+            log("non-cell env in sub_look_env: ",pp(reg.get(regArg1)));
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( IS_ENVIRONMENT != car(reg.get(regArg1)) )
+         {
+            logrec("non-env env in sub_look_env: ",reg.get(regArg1));
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regArg1,cdr(reg.get(regArg1)));
+         gosub(sub_look_frames,blk_tail_call);
+         break;
+
+      case sub_look_frames:
+         // Looks up the symbol in regArg0 in the list of frames in
+         // regArg1.
+         //
+         // Returns NIL if not found, else the binding of the symbol.
+         //
+         // (define (sub_look_frames sym frames)
+         //     (if (null? frames) 
+         //       '()
+         //       (let ((bind (sub_look_frame sym (car frames))))
+         //         (if (null? bind) 
+         //             (sub_look_frames sym (cdr frames))
+         //             bind))))
+         //
+         logrec("sub_look_frames SYM:   ",reg.get(regArg0));
+         logrec("sub_look_frames FRAMES:",reg.get(regArg1));
          if ( NIL == reg.get(regArg1) )
          {
             log("empty env: symbol not found");
-            reg.set(regRetval,   NIL);
+            reg.set(regRetval, NIL);
             returnsub();
-            break;
          }
-         store(regArg0);
-         store(regArg1);
-         reg.set(regArg1,  car(reg.get(regArg1)));
-         gosub(sub_eval_look_frame,sub_eval_look_env+0x1);
-         break;
-      case sub_eval_look_env+0x1:
-         restore(regArg1);
-         restore(regArg0);
-         if ( NIL != reg.get(regRetval) )
+         else
          {
-            log("symbol found w/ bind: ",pp(reg.get(regRetval)));
-            returnsub();
-            break;
+            log("nonempty env: invoking sub_look_frame on first frame");
+            store(regArg0);                              // store symbol
+            store(regArg1);                              // store frames
+            reg.set(regArg1, car(reg.get(regArg1)));     // first frame
+            logrec("sub_look_frames FRAME: ",reg.get(regArg1));
+            gosub(sub_look_frame,sub_look_frames+0x1);
          }
-         reg.set(regArg1,  cdr(reg.get(regArg1)));
-         gosub(sub_eval_look_env,blk_tail_call);
+         break;
+      case sub_look_frames+0x1:
+         restore(regArg1);                               // restore frames
+         restore(regArg0);                               // restore symbol
+         if ( NIL == reg.get(regRetval) )
+         {
+            log("looping on rest frames");
+            reg.set(regArg1, cdr(reg.get(regArg1)));     // rest frames
+            gosub(sub_look_frames,blk_tail_call);
+         }
+         else
+         {
+            log("rereturning binding found by sub_look_frame");
+            returnsub();
+         }
          break;
 
-      case sub_eval_look_frame:
-         // Looks up the symbol in reg.get(regArg0) in the env
-         // frame in reg.get(regArg1).
+      case sub_look_frame:
+         // Looks up the symbol in regArg0 in the frame in regArg1.
          //
          // Returns NIL if not found, else the binding of the
-         // symbol: a cell whose car is a symbol equivalent to the
-         // argument symbol, and whose cdr is the value.
-         //
-         // Subsequent setcdrs on that cell change the value of the
          // symbol.
          //
-         // Finds the *first* binding in the frame for the symbol.
-         //
-         // (define (sub_eval_look_frame sym frame)
+         // (define (sub_look_frame sym frame)
          //   (if (null? frame) 
          //       '()
          //       (let ((s (car (car frame))))
          //         (if (equal? sym s) 
          //             (car frame)
-         //             (sub_eval_look_frame (cdr frame))))))
+         //             (sub_look_frame (cdr frame))))))
          //
-         logrec("sub_eval_look_frame SYM ",reg.get(regArg0));
+         logrec("sub_look_frame ARG SYM:  ",reg.get(regArg0));
+         logrec("sub_look_frame ARG FRAME:",reg.get(regArg1));
          if ( NIL == reg.get(regArg1) )
          {
-            reg.set(regRetval,  NIL);
+            log("empty frame: symbol not found");
+            reg.set(regRetval, NIL);
             returnsub();
             break;
          }
-         store(regArg0);
-         store(regArg1);
-         reg.set(regArg1,  car(car(reg.get(regArg1))));
-         logrec("sub_eval_look_frame CMP ",reg.get(regArg1));
-         gosub(sub_equal_p,sub_eval_look_frame+0x1);
+         store(regArg0);                                    // store symbol
+         store(regArg1);                                    // store frame
+         reg.set(regTmp0, car(reg.get(regArg1)));           // first binding
+         logrec("sub_look_frame BINDING:  ",reg.get(regTmp0));
+         reg.set(regArg1, car(reg.get(regTmp0)));           // binding's symbol
+         logrec("sub_look_frame BIND SYM: ",reg.get(regArg1));
+         gosub(sub_equal_p,sub_look_frame+0x1);
          break;
-      case sub_eval_look_frame+0x1:
-         restore(regArg1);
-         restore(regArg0);
+      case sub_look_frame+0x1:
+         restore(regArg1);                                  // restore frame
+         restore(regArg0);                                  // restore symbol
          if ( TRUE == reg.get(regRetval) )
          {
-            reg.set(regRetval,  car(reg.get(regArg1)));
+            reg.set(regRetval, car(reg.get(regArg1)));
             returnsub();
             break;
          }
-         reg.set(regArg1,  cdr(reg.get(regArg1)));
-         gosub(sub_eval_look_frame,blk_tail_call);
+         reg.set(regArg1, cdr(reg.get(regArg1)));
+         logrec("sub_look_frame RECURSE:  ",reg.get(regArg1));
+         gosub(sub_look_frame,blk_tail_call);
          break;
 
       case sub_equal_p:
@@ -1552,6 +1632,8 @@ public class JhwScm implements Firmware
          // 
          // A non-atom is either NIL or a cell which is not part of a
          // primitive type representation.
+         // 
+         // If we add
          //
          if ( NIL == reg.get(regArg0) )
          {
@@ -1582,9 +1664,17 @@ public class JhwScm implements Firmware
          }
          break;
 
+      case sub_top_env:
+         // Returns the top level environment.
+         //
+         reg.set(regRetval, reg.get(regTopEnv));
+         returnsub();
+         break;
+
       case sub_begin:
-         // Evaluates all its args, returning the result of the
-         // last.  If no args, returns UNSPECIFIED.
+         // Evaluates all its args in the current environment,
+         // returning the result of the last.  If no args, returns
+         // UNSPECIFIED.
          //
          if ( NIL == reg.get(regArg0) )
          {
@@ -1596,17 +1686,17 @@ public class JhwScm implements Firmware
          reg.set(regTmp1,  cdr(reg.get(regArg0)));
          reg.set(regArg0,  reg.get(regTmp0));
          reg.set(regArg1,  reg.get(regEnv));
-         reg.set(regTmp2,  UNSPECIFIED);
+         logrec("sub_begin expr: ",reg.get(regArg0));
+         logrec("sub_begin env:  ",reg.get(regArg1));
          if ( NIL == reg.get(regTmp1) )
          {
-            reg.set(regTmp2,  blk_tail_call);
+            gosub(sub_eval,blk_tail_call);
          }
          else
          {
             store(regTmp1);             // store rest exprs
-            reg.set(regTmp2,  sub_begin+0x1);
+            gosub(sub_eval,sub_begin+0x1);
          }
-         gosub(sub_eval,reg.get(regTmp2));
          break;
       case sub_begin+0x1:
          restore(regArg0);           // restore rest exprs
@@ -1996,35 +2086,34 @@ public class JhwScm implements Firmware
             logrec("sub_apply_user: args ",reg.get(regArg1));
          }
          store(regArg0);                                          // store op
-         reg.set(regArg0,  car(cdr(reg.get(regArg0))));
-         reg.set(regArg1,  reg.get(regArg1));
+         reg.set(regArg0, car(cdr(reg.get(regArg0))));
+         reg.set(regArg1, reg.get(regArg1));
          gosub(sub_zip,sub_apply_user+0x1);
          break;
       case sub_apply_user+0x1:
          restore(regArg0);                                        // restore op
-         reg.set(regTmp0,  reg.get(regRetval));                   // args frame
-         reg.set(regTmp1,  car(cdr(cdr(reg.get(regArg0)))));      // op body
-         reg.set(regTmp3,  car(cdr(cdr(cdr(reg.get(regArg0)))))); // op lex env
-         reg.set(regTmp2,  cons(reg.get(regTmp0),reg.get(regEnv)));// apply env
+         reg.set(regTmp0, reg.get(regRetval));                   // args frame
+         reg.set(regTmp1, car(cdr(cdr(reg.get(regArg0)))));      // op body
+
          logrec("sub_apply_user BODY   ",reg.get(regTmp1));
          logrec("sub_apply_user FRAME  ",reg.get(regTmp0));
 
-         if ( IS_SPECIAL_FORM == car(reg.get(regArg0)) )
-         {
-            // TODO: I'm still a bit confused about what is going on
-            // in these cases.
-            logrec("sub_apply_user: op   ",reg.get(regArg0));
-            logrec("sub_apply_user: frame",reg.get(regRetval));
-            logrec("sub_apply_user: begin",reg.get(regTmp1));
-            //raiseError(ERR_NOT_IMPL);
-            //break;
-         }
+         reg.set(regTmp3, cdr(reg.get(regArg0)));             
+         reg.set(regTmp3, cdr(reg.get(regTmp3)));
+         reg.set(regTmp3, cdr(reg.get(regTmp3)));
+         reg.set(regTmp3, car(reg.get(regTmp3)));                // op lex env
+         //reg.set(regTmp3, car(cdr(cdr(cdr(reg.get(regArg0))))));
 
-         // going w/ lexical frames
-         reg.set(regTmp2,  cons(reg.get(regTmp0),reg.get(regTmp3)));
+         logrec("sub_apply_user LEXENV ",reg.get(regTmp3));
 
-         reg.set(regArg0,  reg.get(regTmp1));
-         reg.set(regArg1,  reg.get(regTmp2));
+         reg.set(regTmp4, cdr(reg.get(regTmp3)));                // lex frames
+
+         logrec("sub_apply_user LEXFRM ",reg.get(regTmp4));
+
+         reg.set(regTmp4, cons(reg.get(regTmp0),reg.get(regTmp4)));// new frames
+         reg.set(regTmp5, cons(IS_ENVIRONMENT,reg.get(regTmp4)));  // new env
+
+         logrec("sub_apply_user NEWENV ",reg.get(regTmp5));
 
          //
          // At first glance, this env manip feels like it should be
@@ -2038,11 +2127,20 @@ public class JhwScm implements Firmware
          // where to find the lexical scope of a procedure or
          // special form.
          //
-         log("LEXICAL ENV PREPUSH:  ",pp(reg.get(regEnv)));
+         logrec("LEXICAL ENV PREPUSH:  ",reg.get(regEnv));
          store(regEnv);
-         reg.set(regEnv,  reg.get(regTmp2));
-         log("LEXICAL ENV POSTPUSH: ",pp(reg.get(regEnv)));
+         reg.set(regEnv, reg.get(regTmp5));
+         logrec("LEXICAL ENV POSTPUSH: ",reg.get(regEnv));
+
+         reg.set(regArg0, reg.get(regTmp1));
+
+         logrec("sub_apply_user ARG TO sub_begin: ",reg.get(regArg0));
          gosub(sub_begin, sub_apply_user+0x2);
+
+         if ( false )
+         {
+            raiseError(ERR_NOT_IMPL);
+         }
          break;
       case sub_apply_user+0x2:
          // I am so sad that pushing that env above means we cannot
@@ -2708,24 +2806,24 @@ public class JhwScm implements Firmware
          break;
 
       case sub_define:
-         // If a variable is bound in the current environment
-         // *frame*, changes it.  Else creates a new binding in the
-         // current *frame*.
+         // If a variable is bound in the first frame of the current
+         // environment, changes it.  Else creates a new binding in
+         // that frame.
          //
          // That is - at the top-level define creates or mutates a
-         // top-level binding, and an inner define creates or
-         // mutates an inner binding, but an inner define will not
-         // create or (most importantly) mutate a higher-level
-         // binding.
+         // top-level binding, and an inner define creates or mutates
+         // an inner binding, but an inner define will not create or
+         // mutate a higher-level binding.
          //
-         // Also - we have two forms of define, the one with a
-         // symbol arg which just defines a variable:
+         // sub_define has two forms. The simpler one takes two
+         // arguments, a symbol and a body:
          //
          //   (define x 1)
          //
-         // and the one with a list arg which is sugar:
+         // The compound, sugary form takes list in the first arg and
+         // defines a new procedure:
          //
-         //   (define (x) 1) equivalent to (define x (lambda () 1))
+         //   (define (x) 1) equiv. (define x (lambda () 1))
          //
          // sub_define is variadic.  The first form must have
          // exactly two args.  The second form must have at least
@@ -2800,27 +2898,42 @@ public class JhwScm implements Firmware
          restore(regTmp0);            // restore the symbol
          store(regTmp0);              // store the symbol INEFFICIENT
          store(regRetval);            // store the body's value
-         reg.set(regArg0, reg.get(regTmp0));     // lookup the binding
-         reg.set(regArg1, car(reg.get(regEnv))); // we need an env arg here!
-         gosub(sub_eval_look_frame,sub_define+0x2);
+         reg.set(regArg0, reg.get(regTmp0));     // the symbol
+         reg.set(regTmp1, cdr(reg.get(regEnv))); // env past IS_ENVIRONMENT
+         reg.set(regArg1, car(reg.get(regTmp1)));// first frame
+         logrec("sym:        ",reg.get(regArg0));
+         logrec("first frame:",reg.get(regArg1));
+         gosub(sub_look_frame,sub_define+0x2);
          break;
       case sub_define+0x2:
          restore(regTmp1);         // restore the body's value
          restore(regTmp0);         // restore the symbol
          if ( NIL == reg.get(regRetval) )
          {
-            // create a new binding               // we need an env arg here!
-            reg.set(regTmp1,  cons(reg.get(regTmp0),reg.get(regTmp1)));
-            reg.set(regTmp2,  cons(reg.get(regTmp1),car(reg.get(regEnv))));
-            setcar(reg.get(regEnv),reg.get(regTmp2));
-            log("define new binding");
-               
+            log("create a new binding");
+            logrec("sym:",reg.get(regTmp0));
+            logrec("val:",reg.get(regTmp1));
+
+            reg.set(regTmp2, cons(reg.get(regTmp0),reg.get(regTmp1))); // bind
+
+            logrec("binding:",reg.get(regTmp2));
+
+            reg.set(regTmp3, cdr(reg.get(regEnv))); // env past IS_ENVIRONMENT
+            reg.set(regTmp4, car(reg.get(regTmp3)));// first frame
+
+            logrec("first frame:",reg.get(regTmp4));
+
+            reg.set(regTmp5, cons(reg.get(regTmp2),reg.get(regTmp4)));
+
+            logrec("new frame:  ",reg.get(regTmp5));
+
+            setcar(reg.get(regTmp3),reg.get(regTmp5));// env past IS_ENVIRONMENT
          }
          else
          {
-            // change the existing binding
+            log("mutate existing binding");
+
             setcdr(reg.get(regRetval),reg.get(regTmp1));
-            log("define old binding");
          }
          //logrec("define B",reg.get(regEnv));
          reg.set(regRetval,  UNSPECIFIED);
@@ -2828,17 +2941,7 @@ public class JhwScm implements Firmware
          break;
 
       case sub_lambda:
-         // Some key decisions here.  
-         //
-         // To get lambda, gotta decide how to represent a
-         // function.  
-         //
-         // From stubbing out sub_eval and sub_apply, I already
-         // know it's gonna be a list whose 1st element is
-         // IS_PROCEDURE.
-         //
-         // We're gonna need an arg list, a body, and a lexical
-         // environment as well.  Let's just say that's it:
+         // Some key decisions here: how to represent a procedure:
          //
          //   '(IS_PROCEDURE arg-list body lexical-env)
          //
@@ -3095,6 +3198,7 @@ public class JhwScm implements Firmware
    private static final int IS_STRING           = TYPE_SENTINEL | 32;
    private static final int IS_PROCEDURE        = TYPE_SENTINEL | 83;
    private static final int IS_SPECIAL_FORM     = TYPE_SENTINEL | 54;
+   private static final int IS_ENVIRONMENT      = TYPE_SENTINEL | 26;
 
    private static final int TRUE                = TYPE_SENTINEL | 37;
    private static final int FALSE               = TYPE_SENTINEL | 91;
@@ -3186,10 +3290,29 @@ public class JhwScm implements Firmware
 
    private static final int sub_read_burn_space  = TYPE_SUBP | A1 |  0x2900;
 
-   private static final int sub_eval             = TYPE_SUBS | A2 |  0x3000;
-   private static final int sub_eval_look_env    = TYPE_SUBS | A2 |  0x3100;
-   private static final int sub_eval_look_frame  = TYPE_SUBS | A2 |  0x3110;
-   private static final int sub_eval_list        = TYPE_SUBS | A2 |  0x3200;
+   // TODO: sub_eval should be a procedure, but unless we make
+   // environment objects self-evaluating (which will involve some
+   // refactoring in a number of places) it won't fly.
+   //
+   // This only affects calls to eval-as-input-to-apply e.g. user
+   // level calls of eval.
+   //
+   // Yikes, but if it is a TYPE_SUBS, it also does not work:
+   //
+   //   (eval '(+ 3 4) (interaction-environment))
+   //
+   // yields:
+   //
+   //   (+ 3 4)
+   //
+   // B/c the sub_eval called from sub_top does not expand the quote
+   // on the first arg before applying eval to the arguments.
+   //
+   private static final int sub_eval             = TYPE_SUBP | A2 |  0x3000;
+   private static final int sub_look_env         = TYPE_SUBP | A2 |  0x3100;
+   private static final int sub_look_frames      = TYPE_SUBP | A2 |  0x3200;
+   private static final int sub_look_frame       = TYPE_SUBP | A2 |  0x3300;
+   private static final int sub_eval_list        = TYPE_SUBP | A2 |  0x3400;
 
    private static final int sub_apply            = TYPE_SUBP | A2 |  0x4000;
    private static final int sub_apply_builtin    = TYPE_SUBP | A2 |  0x4100;
@@ -3216,7 +3339,7 @@ public class JhwScm implements Firmware
    private static final int sub_case_in_list_p   = TYPE_SUBP | A2 |  0x6420;
    private static final int sub_cond             = TYPE_SUBS | AX |  0x6500;
    private static final int sub_atom_p           = TYPE_SUBP | A1 |  0x6600;
-
+   private static final int sub_top_env          = TYPE_SUBP | A0 |  0x6700;
 
    private static final int sub_add              = TYPE_SUBP | A2 |  0x7000;
    private static final int sub_add0             = TYPE_SUBP | A0 |  0x7010;
@@ -3278,33 +3401,65 @@ public class JhwScm implements Firmware
    {
       int i = 0;
       primitives_start = i;
+
+      // stuff I am certain is fundamental:
+      const_val[i] = sub_cons;    const_str[i++] = "cons";
+      const_val[i] = sub_car;     const_str[i++] = "car";
+      const_val[i] = sub_cdr;     const_str[i++] = "cdr";
+      const_val[i] = sub_if;      const_str[i++] = "if";
+      const_val[i] = sub_quote;   const_str[i++] = "quote";
+      const_val[i] = sub_lambda;  const_str[i++] = "lambda";
+      const_val[i] = sub_eval;    const_str[i++] = "eval";
+      const_val[i] = sub_apply;   const_str[i++] = "apply";
+
+      // TODO: R5RS (null? obj)
+      // TODO: R5RS (pair? obj)
+      // TODO: R5RS (procedure? obj)
+      // TODO: R5RS (string? obj)
+      // TODO: R5RS (boolean? obj)
+      // TODO: R5RS (symbol? obj)
+      // TODO: R5RS (number? obj)
+      // TODO: R5RS (port? obj)
+      // TODO: R5RS (char? obj)
+      // TODO: R5RS (eof-object? obj)
+      // TODO: R5RS (eqv? a b)
+
+      // stuff on whose fundamentality I am wavering:
+      //
+      // TODO: R5RS (input-port? obj) 
+      // TODO: R5RS (output-port? obj)
+      // TODO: R5RS (current-input-port)
+      // TODO: R5RS (current-output-port)
+      // TODO: R5RS (scheme-report-environment n)
+      // TODO: R5RS (null-environment n)
+      // TODO: R5RS (equal? a b)
+      // TODO: JHW  (primitive-environment)
+      // TODO: JHW  (minimal-environment)
+      //
+      const_val[i] = sub_readv;   const_str[i++] = "read";
+      const_val[i] = sub_printv;  const_str[i++] = "display";
+      const_val[i] = sub_define;  const_str[i++] = "define";
+      const_val[i] = sub_begin;   const_str[i++] = "begin";
+      const_val[i] = sub_lamsyn;  const_str[i++] = "lambda-syntax";
+      const_val[i] = sub_equal_p; const_str[i++] = "equal?";
       const_val[i] = sub_add;     const_str[i++] = "+";
       const_val[i] = sub_mul;     const_str[i++] = "*";
       const_val[i] = sub_sub;     const_str[i++] = "-";
       const_val[i] = sub_lt_p;    const_str[i++] = "<";
+      const_val[i] = sub_top_env; const_str[i++] = "interaction-environment";
+
+      // stuff I am certain is nonfundamental:
+      //
+      const_val[i] = sub_atom_p;  const_str[i++] = "atom?";
       const_val[i] = sub_add0;    const_str[i++] = "+0";
       const_val[i] = sub_add1;    const_str[i++] = "+1";
       const_val[i] = sub_add3;    const_str[i++] = "+3";
-      const_val[i] = sub_cons;    const_str[i++] = "cons";
-      const_val[i] = sub_car;     const_str[i++] = "car";
-      const_val[i] = sub_cdr;     const_str[i++] = "cdr";
       const_val[i] = sub_list;    const_str[i++] = "list";
-      const_val[i] = sub_if;      const_str[i++] = "if";
-      const_val[i] = sub_quote;   const_str[i++] = "quote";
-      const_val[i] = sub_define;  const_str[i++] = "define";
-      const_val[i] = sub_lambda;  const_str[i++] = "lambda";
-      const_val[i] = sub_lamsyn;  const_str[i++] = "lambda-syntax";
-      const_val[i] = sub_equal_p; const_str[i++] = "equal?";
-      const_val[i] = sub_atom_p;  const_str[i++] = "atom?";
       const_val[i] = sub_let;     const_str[i++] = "let";
-      const_val[i] = sub_begin;   const_str[i++] = "begin";
       const_val[i] = sub_cond;    const_str[i++] = "cond";
       const_val[i] = sub_case;    const_str[i++] = "case";
-      const_val[i] = sub_readv;   const_str[i++] = "read";
-      const_val[i] = sub_printv;  const_str[i++] = "display";
       const_val[i] = sub_map1;    const_str[i++] = "map1";
       const_val[i] = sub_maptree; const_str[i++] = "maptree";
-      const_val[i] = sub_apply;   const_str[i++] = "apply";
       primitives_end = i;
 
       const_true    = code(TYPE_FIXINT,i);
@@ -4016,6 +4171,7 @@ public class JhwScm implements Firmware
       case IS_SYMBOL:            return "IS_SYMBOL";
       case IS_PROCEDURE:         return "IS_PROCEDURE";
       case IS_SPECIAL_FORM:      return "IS_SPECIAL_FORM";
+      case IS_ENVIRONMENT:       return "IS_ENVIRONMENT";
       case TRUE:                 return "TRUE";
       case FALSE:                return "FALSE";
       case ERR_OOM:              return "ERR_OOM";
@@ -4063,8 +4219,9 @@ public class JhwScm implements Firmware
          case sub_read_burn_space:  buf.append("sub_read_burn_space");  break;
          case sub_eval:             buf.append("sub_eval");             break;
          case sub_eval_list:        buf.append("sub_eval_list");        break;
-         case sub_eval_look_env:    buf.append("sub_eval_look_env");    break;
-         case sub_eval_look_frame:  buf.append("sub_eval_look_frame");  break;
+         case sub_look_env:         buf.append("sub_look_env");         break;
+         case sub_look_frames:      buf.append("sub_look_frames");      break;
+         case sub_look_frame:       buf.append("sub_look_frame");       break;
          case sub_apply:            buf.append("sub_apply");            break;
          case sub_apply_builtin:    buf.append("sub_apply_builtin");    break;
          case sub_apply_user:       buf.append("sub_apply_user");       break;
@@ -4081,6 +4238,7 @@ public class JhwScm implements Firmware
          case sub_print_pos_fixint: buf.append("sub_print_pos_fixint"); break;
          case sub_equal_p:          buf.append("sub_equal_p");          break;
          case sub_atom_p:           buf.append("sub_atom_p");           break;
+         case sub_top_env:          buf.append("sub_top_env");          break;
          case sub_let:              buf.append("sub_let");              break;
          case sub_begin:            buf.append("sub_begin");            break;
          case sub_case:             buf.append("sub_case");             break;

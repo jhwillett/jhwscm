@@ -636,8 +636,8 @@ public class TestScm extends Util
       {
          final Object[][] tests = { 
             { "(define a)",                 SEMANTIC    },
-            { "(define a 100)",             ""          },
-            { "a",                          "100"       },
+            { "(define a 101)",             ""          },
+            { "a",                          "101"       },
             { "(define a 100)",             ""          },
             { "(define b   2)",             ""          },
             { "(+ a b)",                    "102"       },
@@ -676,7 +676,7 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
 
-      // defining functions
+      // defining procedures
       {
          final Object[][] tests = { 
             { "(lambda)",                     SEMANTIC },
@@ -709,11 +709,11 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
 
-      // ambition: nontrivial user-defined recursive function
+      // ambition: nontrivial user-defined recursive procedures
       // 
       // This one, Factorial, is good for playing w/ tail-recursion.
       // The naive form is not tail recursive and consumes O(n) stack
-      // space - but the tail-recursive function is super simple.
+      // space - but the tail-recursive procedure is super simple.
       //
       // TODO: demonstrate non-tail-recursive OOMs at a certain scale,
       // but its tail-recursive twin runs just fine to vastly larger
@@ -767,7 +767,7 @@ public class TestScm extends Util
       }
 
       {
-         // ambition: nontrivial user-defined recursive function
+         // ambition: nontrivial user-defined recursive procedure
          // 
          // This one, the Fibonacci Sequence, is not tail-recursive
          // and will eat O(n) stack space and runs in something awful
@@ -1022,7 +1022,7 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
       {
-         // Can we do it for an inner helper function?
+         // Can we do it for an inner helper procedure?
          final String fact = 
             "(define (fact n)"                                            +
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
@@ -1242,16 +1242,23 @@ public class TestScm extends Util
       {
          // TODO: means we need to expose environments, and eval
          final Object[][] tests = { 
-            { "(eval 0)",                              "0"       },
-            { "(eval '(+ 3 4))",                       "7"       },
-            { "(eval '(+ 3 x))",                       SEMANTIC  },
-            { "(define x 100)",                        ""        },
-            { "(eval '(+ 3 x))",                       "103"     },
+            { "(define env (interaction-environment))", ""        },
+            { "env",                                    "?e?"     },
+            { "(eval 0 env)",                           "0"       },
+            { "(eval '(+ 3 4) env)",                    "7"       },
+            { "(eval '(+ 3 x) env)",                    SEMANTIC  },
+            /*
+            { "(define x 100)",                         ""        },
+            { "(eval '(+ 3 x) env)",                    "103"     },
+            */
          };
          final Batch[] batches = { 
             REP_DEP,
          };
+         VERBOSE = true;
          metabatch(tests,batches);
+         VERBOSE = false;
+         if ( true ) return;
       }
 
       {
