@@ -1238,27 +1238,20 @@ public class TestScm extends Util
       }
 
       // check eval
-      if ( false )
       {
-         // TODO: means we need to expose environments, and eval
          final Object[][] tests = { 
             { "(define env (interaction-environment))", ""        },
-            { "env",                                    "?e?"     },
+            { "env",                                    "???"     },
             { "(eval 0 env)",                           "0"       },
             { "(eval '(+ 3 4) env)",                    "7"       },
             { "(eval '(+ 3 x) env)",                    SEMANTIC  },
-            /*
             { "(define x 100)",                         ""        },
             { "(eval '(+ 3 x) env)",                    "103"     },
-            */
          };
          final Batch[] batches = { 
             REP_DEP,
          };
-         VERBOSE = true;
          metabatch(tests,batches);
-         VERBOSE = false;
-         if ( true ) return;
       }
 
       {

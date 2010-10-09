@@ -1270,8 +1270,8 @@ public class JhwScm implements Firmware
          if ( true )
          {
             logrec("sub_look_env SYM",reg.get(regArg0));
-            //log(   "sub_look_env ENV ",pp(reg.get(regArg1)));
-            logrec("sub_look_env ENV",reg.get(regArg1));
+            log(   "sub_look_env ENV ",pp(reg.get(regArg1)));
+            //logrec("sub_look_env ENV",reg.get(regArg1));
          }
          if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
@@ -1316,7 +1316,7 @@ public class JhwScm implements Firmware
          //             bind))))
          //
          logrec("sub_look_frames SYM:   ",reg.get(regArg0));
-         logrec("sub_look_frames FRAMES:",reg.get(regArg1));
+         //logrec("sub_look_frames FRAMES:",reg.get(regArg1));
          if ( NIL == reg.get(regArg1) )
          {
             log("empty env: symbol not found");
@@ -1329,7 +1329,7 @@ public class JhwScm implements Firmware
             store(regArg0);                              // store symbol
             store(regArg1);                              // store frames
             reg.set(regArg1, car(reg.get(regArg1)));     // first frame
-            logrec("sub_look_frames FRAME: ",reg.get(regArg1));
+            //logrec("sub_look_frames FRAME: ",reg.get(regArg1));
             gosub(sub_look_frame,sub_look_frames+0x1);
          }
          break;
@@ -1364,7 +1364,7 @@ public class JhwScm implements Firmware
          //             (sub_look_frame (cdr frame))))))
          //
          logrec("sub_look_frame ARG SYM:  ",reg.get(regArg0));
-         logrec("sub_look_frame ARG FRAME:",reg.get(regArg1));
+         //logrec("sub_look_frame ARG FRAME:",reg.get(regArg1));
          if ( NIL == reg.get(regArg1) )
          {
             log("empty frame: symbol not found");
@@ -1375,9 +1375,9 @@ public class JhwScm implements Firmware
          store(regArg0);                                    // store symbol
          store(regArg1);                                    // store frame
          reg.set(regTmp0, car(reg.get(regArg1)));           // first binding
-         logrec("sub_look_frame BINDING:  ",reg.get(regTmp0));
+         //logrec("sub_look_frame BINDING:  ",reg.get(regTmp0));
          reg.set(regArg1, car(reg.get(regTmp0)));           // binding's symbol
-         logrec("sub_look_frame BIND SYM: ",reg.get(regArg1));
+         //logrec("sub_look_frame BIND SYM: ",reg.get(regArg1));
          gosub(sub_equal_p,sub_look_frame+0x1);
          break;
       case sub_look_frame+0x1:
@@ -1390,7 +1390,7 @@ public class JhwScm implements Firmware
             break;
          }
          reg.set(regArg1, cdr(reg.get(regArg1)));
-         logrec("sub_look_frame RECURSE:  ",reg.get(regArg1));
+         //logrec("sub_look_frame RECURSE:  ",reg.get(regArg1));
          gosub(sub_look_frame,blk_tail_call);
          break;
 
@@ -1686,8 +1686,8 @@ public class JhwScm implements Firmware
          reg.set(regTmp1,  cdr(reg.get(regArg0)));
          reg.set(regArg0,  reg.get(regTmp0));
          reg.set(regArg1,  reg.get(regEnv));
-         logrec("sub_begin expr: ",reg.get(regArg0));
-         logrec("sub_begin env:  ",reg.get(regArg1));
+         //logrec("sub_begin expr: ",reg.get(regArg0));
+         //logrec("sub_begin env:  ",reg.get(regArg1));
          if ( NIL == reg.get(regTmp1) )
          {
             gosub(sub_eval,blk_tail_call);
@@ -2096,7 +2096,7 @@ public class JhwScm implements Firmware
          reg.set(regTmp1, car(cdr(cdr(reg.get(regArg0)))));      // op body
 
          logrec("sub_apply_user BODY   ",reg.get(regTmp1));
-         logrec("sub_apply_user FRAME  ",reg.get(regTmp0));
+         //logrec("sub_apply_user FRAME  ",reg.get(regTmp0));
 
          reg.set(regTmp3, cdr(reg.get(regArg0)));             
          reg.set(regTmp3, cdr(reg.get(regTmp3)));
@@ -2104,16 +2104,16 @@ public class JhwScm implements Firmware
          reg.set(regTmp3, car(reg.get(regTmp3)));                // op lex env
          //reg.set(regTmp3, car(cdr(cdr(cdr(reg.get(regArg0))))));
 
-         logrec("sub_apply_user LEXENV ",reg.get(regTmp3));
+         //logrec("sub_apply_user LEXENV ",reg.get(regTmp3));
 
          reg.set(regTmp4, cdr(reg.get(regTmp3)));                // lex frames
 
-         logrec("sub_apply_user LEXFRM ",reg.get(regTmp4));
+         //logrec("sub_apply_user LEXFRM ",reg.get(regTmp4));
 
          reg.set(regTmp4, cons(reg.get(regTmp0),reg.get(regTmp4)));// new frames
          reg.set(regTmp5, cons(IS_ENVIRONMENT,reg.get(regTmp4)));  // new env
 
-         logrec("sub_apply_user NEWENV ",reg.get(regTmp5));
+         //logrec("sub_apply_user NEWENV ",reg.get(regTmp5));
 
          //
          // At first glance, this env manip feels like it should be
@@ -2127,14 +2127,14 @@ public class JhwScm implements Firmware
          // where to find the lexical scope of a procedure or
          // special form.
          //
-         logrec("LEXICAL ENV PREPUSH:  ",reg.get(regEnv));
+         //logrec("LEXICAL ENV PREPUSH:  ",reg.get(regEnv));
          store(regEnv);
          reg.set(regEnv, reg.get(regTmp5));
-         logrec("LEXICAL ENV POSTPUSH: ",reg.get(regEnv));
+         //logrec("LEXICAL ENV POSTPUSH: ",reg.get(regEnv));
 
          reg.set(regArg0, reg.get(regTmp1));
 
-         logrec("sub_apply_user ARG TO sub_begin: ",reg.get(regArg0));
+         //logrec("sub_apply_user ARG TO sub_begin: ",reg.get(regArg0));
          gosub(sub_begin, sub_apply_user+0x2);
 
          if ( false )
@@ -2147,9 +2147,9 @@ public class JhwScm implements Firmware
          // be tail recursive.  At least this that is not true on
          // every sub_eval.
          //
-         log("LEXICAL ENV PREPOP:  ",pp(reg.get(regEnv)));
+         //log("LEXICAL ENV PREPOP:  ",pp(reg.get(regEnv)));
          restore(regEnv);
-         log("LEXICAL ENV POSTPOP: ",pp(reg.get(regEnv)));
+         //log("LEXICAL ENV POSTPOP: ",pp(reg.get(regEnv)));
          returnsub();
          break;
 
@@ -2315,6 +2315,7 @@ public class JhwScm implements Firmware
                break;
             case IS_PROCEDURE:
             case IS_SPECIAL_FORM:
+            case IS_ENVIRONMENT:
                reg.set(regArg0, const_huh3);
                reg.set(regArg2, code(TYPE_FIXINT,0));
                gosub(sub_print_const,blk_tail_call);
