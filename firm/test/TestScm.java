@@ -1320,11 +1320,9 @@ public class TestScm extends Util
          final Object[][] tests = { 
             { "lambda-syntax",                                "?pm?"     },
             { "(lambda-syntax () 1)",                         "?um?"     },
-            /*
             { "((lambda-syntax () 1))",                       "1"        },
             { "((lambda-syntax (a) 1) 100)",                  "1"        },
             { "((lambda-syntax (a) 1) asdfasfd)",             "1"        },
-            */
             { "(define syn (lambda-syntax (a) 1))",           ""         },
             { "syn",                                          "?um?"     },
             /*
