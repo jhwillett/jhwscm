@@ -681,14 +681,14 @@ public class TestScm extends Util
          final Object[][] tests = { 
             { "(lambda)",                     SEMANTIC },
             { "(lambda ())",                  SEMANTIC },
-            { "(lambda () 1)",                "???"    },
+            { "(lambda () 1)",                "?up?"   },
             { "((lambda () 1))",              "1"      },
             { "((lambda () 1) 10)",           SEMANTIC },
-            { "(lambda (a) 1)",               "???"    },
+            { "(lambda (a) 1)",               "?up?"   },
             { "((lambda (a) 1) 10)",          "1"      },
             { "((lambda (a) 1))",             SEMANTIC },
             { "((lambda (a) 1) 10 20)",       SEMANTIC },
-            { "(lambda (a b) (* a b))",       "???"    },
+            { "(lambda (a b) (* a b))",       "?up?"   },
             { "((lambda (a) (* 3 a)) 13)",    "39"     },
             { "((lambda (a b) (* a b)) 13 5)","65"     },
          };
@@ -723,7 +723,7 @@ public class TestScm extends Util
             "(define (fact n) (if (< n 2) 1 (* n (fact (- n 1)))))";
          final Object[][] tests = { 
             { fact,                       ""          },
-            { "fact",                     "???"       },
+            { "fact",                     "?up?"      },
             { "(fact)",                   SEMANTIC    },
             { "(fact 1 1)",               SEMANTIC    },
             { "(fact 0)",                 "1"         },
@@ -748,8 +748,8 @@ public class TestScm extends Util
          final Object[][] tests = { 
             { fact,                       ""          },
             { help,                       ""          },// note, help 2nd ;)
-            { "fact",                     "???"       },
-            { "help",                     "???"       },
+            { "fact",                     "?up?"      },
+            { "help",                     "?up?"      },
             { "(fact -1)",                "1"         },
             { "(fact 0)",                 "1"         },
             { "(fact 1)",                 "1"         },
@@ -792,7 +792,7 @@ public class TestScm extends Util
             "(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))";
          final Object[][] tests = { 
             { fib,        ""     },
-            { "fib",      "???"  },
+            { "fib",      "?up?" },
             { "(fib 0)",  "0"    },
             { "(fib 1)",  "1"    },
             { "(fib 2)",  "1"    },
@@ -893,7 +893,7 @@ public class TestScm extends Util
             "    (help n 1)))";
          final Object[][] tests = { 
             { fact,        "",      },
-            { "fact",      "???",   },
+            { "fact",      "?up?",  },
             { "(fact -1)", "1",     },
             { "(fact 0)",  "1",     },
             { "(fact 1)",  "1",     },
@@ -998,16 +998,16 @@ public class TestScm extends Util
       // 
       {
          final Object[][] tests = { 
-            { "(lambda () (+ 1 2) 7)", "???" },
-            { "((lambda () (+ 1 2) 7))", "7" },
-            { "((lambda () (display (+ 1 2)) 7))", "37" },
+            { "(lambda () (+ 1 2) 7)",               "?up?"   },
+            { "((lambda () (+ 1 2) 7))",             "7"      },
+            { "((lambda () (display (+ 1 2)) 7))",   "37"     },
 
             // Are the nested-define defined symbols in scope of the
             // "real" body?
             //
             { "(define (a x) (define b 2) (+ x b))", ""       },
             { "(a 10)",                              "12"     },
-            { "a",                                   "???"    },
+            { "a",                                   "?up?"   },
             { "b",                                   SEMANTIC },
 
             // Can we do more than one?
@@ -1028,16 +1028,16 @@ public class TestScm extends Util
             "  (define (help n a) (if (< n 2) a (help (- n 1) (* n a))))" +
             "  (help n 1))";
          final Object[][] tests = { 
-            { fact,        ""    },
-            { "fact",      "???" },
-            { "(fact -1)", "1"   },
-            { "(fact 0)",  "1"   },
-            { "(fact 1)",  "1"   },
-            { "(fact 2)",  "2"   },
-            { "(fact 3)",  "6"   },
-            { "(fact 4)",  "24"  },
-            { "(fact 5)",  "120" },
-            { "(fact 6)",  "720" },
+            { fact,        ""     },
+            { "fact",      "?up?" },
+            { "(fact -1)", "1"    },
+            { "(fact 0)",  "1"    },
+            { "(fact 1)",  "1"    },
+            { "(fact 2)",  "2"    },
+            { "(fact 3)",  "6"    },
+            { "(fact 4)",  "24"   },
+            { "(fact 5)",  "120"  },
+            { "(fact 6)",  "720"  },
          };
          final Batch[] batches = { 
             REP_DEP,
@@ -1117,9 +1117,9 @@ public class TestScm extends Util
       {
          // What about closures?
          final Object[][] tests = { 
-            { "(define (f x) (lambda (y) (+ x y)))", ""    },
-            { "(f 10)",                              "???" },
-            { "((f 10) 7)",                          "17"  },
+            { "(define (f x) (lambda (y) (+ x y)))", ""     },
+            { "(f 10)",                              "?up?" },
+            { "((f 10) 7)",                          "17"   },
          };
          final Batch[] batches = { 
             REP_DEP,
@@ -1129,9 +1129,9 @@ public class TestScm extends Util
       {
          // What about closures?
          final Object[][] tests = { 
-            { "(define (f x) (define (h y) (+ x y)) h)", ""    },
-            { "(f 10)",                                  "???" },
-            { "((f 10) 7)",                              "17"  },
+            { "(define (f x) (define (h y) (+ x y)) h)", ""     },
+            { "(f 10)",                                  "?up?" },
+            { "((f 10) 7)",                              "17"   },
          };
          final Batch[] batches = { 
             REP_DEP,
@@ -1175,7 +1175,7 @@ public class TestScm extends Util
 
          final Object[][] tests = { 
             { "(define (f x) (+ x 10))", ""           },
-            { "f",                       "???"        },
+            { "f",                       "?up?"       },
             { "(f 13)",                  "23"         },
             { "(map1 f '())",            "()"         },
             { "(map1 f '(1 2 3))",       "(11 12 13)" },
@@ -1218,7 +1218,7 @@ public class TestScm extends Util
          final Object[][] tests = { 
             { "(define (f) 0)",                        ""        },
             { "(f)",                                   "0"       },
-            { "f",                                     "???"     },
+            { "f",                                     "?up?"    },
             { "(apply f)",                             SEMANTIC  },
             { "(apply 1 2)",                           SEMANTIC  },
             { "(apply f 2)",                           SEMANTIC  },
@@ -1241,12 +1241,34 @@ public class TestScm extends Util
       {
          final Object[][] tests = { 
             { "(define env (interaction-environment))", ""        },
-            { "env",                                    "???"     },
+            { "env",                                    "?env?"   },
+
             { "(eval 0 env)",                           "0"       },
             { "(eval '(+ 3 4) env)",                    "7"       },
             { "(eval '(+ 3 x) env)",                    SEMANTIC  },
+
+            // env points to not to some fixed unchanging snapshot,
+            // but to the active top-level environment, which can
+            // change on us
             { "(define x 100)",                         ""        },
             { "(eval '(+ 3 x) env)",                    "103"     },
+
+            // Procedures and special forms are self-evaluating, even
+            // the builtins.
+            { "cons",                                   "?pp?"    },
+            { "(eval cons env)",                        "?pp?"    },
+            { "(eval (eval cons env) env)",             "?pp?"    },
+            { "if",                                     "?pm?"    },
+            { "(eval if env)",                          "?pm?"    },
+            { "(eval (eval if env) env)",               "?pm?"    },
+            { "(define foo (lambda () 10))",            ""        },
+            { "foo",                                    "?up?"    },
+            { "(eval foo env)",                         "?up?"    },
+            { "(eval (eval foo env) env)",              "?up?"    },
+
+            // Environments are self-evaluating.
+            { "(eval env env)",                         "?env?"   },
+            { "(eval (eval env env) env)",              "?env?"   },
          };
          final Batch[] batches = { 
             REP_DEP,
@@ -1256,7 +1278,7 @@ public class TestScm extends Util
 
       {
          final Object[][] tests = { 
-            { "atom?",                     null         },
+            { "atom?",                    "?pp?"        },
             { "(atom? 1)",                "#t"          },
             { "(atom? '())",              "#f"          },
             { "(atom? (cons 1 2))",       "#f"          },
@@ -1296,14 +1318,13 @@ public class TestScm extends Util
       if ( false )
       {
          final Object[][] tests = { 
-            /*
             { "lambda-syntax",                                null       },
-            { "(lambda-syntax () 1)",                         "???"      },
+            { "(lambda-syntax () 1)",                         "?um?"     },
             { "((lambda-syntax () 1))",                       "1"        },
             { "((lambda-syntax (a) 1) 100)",                  "1"        },
             { "((lambda-syntax (a) 1) asdfasfd)",             "1"        },
             { "(define syn (lambda-syntax (a) 1))",           ""         },
-            { "syn",                                          "???"      },
+            { "syn",                                          "?um?"     },
             { "(syn)",                                        SEMANTIC   },
             { "(syn 1 2)",                                    SEMANTIC   },
             { "(syn 1)",                                      "1"        },
@@ -1316,7 +1337,6 @@ public class TestScm extends Util
             { "(syn asaf)",                                   SEMANTIC   },
             { "(define syn (lambda-syntax (a) (+ 1 2)))",     ""         },
             { "(syn asaf)",                                   "3"        },
-            */
 
             // TODO: When (eval) evaluates the return of (apply
             // special args), this breaks on ERR_INTERNAL trying to

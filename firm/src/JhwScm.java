@@ -1035,15 +1035,9 @@ public class JhwScm implements Firmware
             break;
          case TYPE_CHAR:
          case TYPE_FIXINT:
-            // these types are self-evaluating
-            reg.set(regRetval, reg.get(regArg0));
-            returnsub();
-            break;
          case TYPE_SUBS:
          case TYPE_SUBP:
             // these types are self-evaluating
-            //
-            // TODO: is this a valid decision?  Off-spec?
             reg.set(regRetval, reg.get(regArg0));
             returnsub();
             break;
@@ -1052,8 +1046,11 @@ public class JhwScm implements Firmware
             switch (tmp0)
             {
             case IS_STRING:
-               // Strings are self-evaluating.
-               reg.set(regRetval,  reg.get(regArg0));
+            case IS_PROCEDURE:
+            case IS_SPECIAL_FORM:
+            case IS_ENVIRONMENT:
+               // these types are self-evaluating
+               reg.set(regRetval, reg.get(regArg0));
                returnsub();
                break;
             case IS_SYMBOL:
@@ -1110,9 +1107,9 @@ public class JhwScm implements Firmware
          // If it's a special form, don't evaluate the args, just
          // pass it off to apply.
          //
-         restore(regTmp1);         // restore the env
-         restore(regTmp0);         // restore the arg exprs
-         reg.set(regTmp2,  reg.get(regRetval));    // value of the operator
+         restore(regTmp1);                      // restore the env
+         restore(regTmp0);                      // restore the arg exprs
+         reg.set(regTmp2,  reg.get(regRetval)); // value of the operator
          tmp0 = type(reg.get(regTmp2));
          if ( TYPE_SUBP == tmp0 || 
               TYPE_CELL == tmp0 && IS_PROCEDURE == car(reg.get(regTmp2)) )
@@ -1120,7 +1117,7 @@ public class JhwScm implements Firmware
             // procedure: evaluate the args and then apply op to
             // args values
             // 
-            store(regTmp2);           // store value of the operator
+            store(regTmp2);                     // store operator
             reg.set(regArg0,  reg.get(regTmp0));
             reg.set(regArg1,  reg.get(regTmp1));
             gosub(sub_eval_list,sub_eval+0x3);
@@ -1136,7 +1133,13 @@ public class JhwScm implements Firmware
          else if ( TYPE_CELL == tmp0 && 
                    IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
          {
-            raiseError(ERR_NOT_IMPL);
+            // special: apply op directly to args exprs, and
+            // afterwards evaluate the results.
+            //
+            store(regTmp1);                     // store the env
+            reg.set(regArg0, reg.get(regTmp2));
+            reg.set(regArg1, reg.get(regTmp0));
+            gosub(sub_apply_special,sub_eval+0x04);
          }
          else
          {
@@ -1147,30 +1150,17 @@ public class JhwScm implements Firmware
          break;
       case sub_eval+0x3:
          // following eval of the args
-         restore(regArg0);      // restore value of the operator
+         restore(regArg0);                      // restore operator
          reg.set(regArg1,  reg.get(regRetval)); // restore list of args
          gosub(sub_apply,blk_tail_call);
          break;
       case sub_eval+0x4:
          // following apply of a special form
+         //
          logrec("apply special form result:",reg.get(regRetval));
-         reg.set(regArg0,  reg.get(regRetval));
-         restore(regArg1);                     // restore the env
-         if ( true )
-         {
-            // See lambda-syntax trials in TestScm.java.
-            //
-            // what the unit tests expect: ??? sub_apply ended up
-            // evaluating it via sub_begin?!?
-            //
-            // TODO: wtf does apply evaluate the stuff?
-            returnsub();
-         }
-         else
-         {
-            // what this should really do to be a syntax
-            gosub(sub_eval,blk_tail_call);
-         }
+         reg.set(regArg0, reg.get(regRetval));
+         restore(regArg1);                      // restore the env
+         gosub(sub_eval,blk_tail_call);
          break;
 
       case sub_eval_list:
@@ -1902,11 +1892,11 @@ public class JhwScm implements Firmware
          break; 
 
       case sub_apply:
-         // Applies the op in reg.get(regArg0) to the args in
-         // reg.get(regArg1), and return the results.
+         // Applies the op in regArg0 to the args in the list in
+         // regArg1, and returns the results.
          //
          logrec("sub_apply op:  ",reg.get(regArg0));
-         logrec("sub_apply args:",reg.get(regArg1));
+         //logrec("sub_apply args:",reg.get(regArg1));
          switch (type(reg.get(regArg0)))
          {
          case TYPE_SUBP:
@@ -2271,12 +2261,12 @@ public class JhwScm implements Firmware
             //
             // In the mean time, this is sufficient to meet spec.
             //
-            reg.set(regArg0, const_huhPuh);
+            reg.set(regArg0, const_huhPP);
             reg.set(regArg2, code(TYPE_FIXINT,0));
             gosub(sub_print_const,blk_tail_call);
             break;
          case TYPE_SUBS:
-            reg.set(regArg0, const_huhSuh);
+            reg.set(regArg0, const_huhPM);
             reg.set(regArg2, code(TYPE_FIXINT,0));
             gosub(sub_print_const,blk_tail_call);
             break;
@@ -2294,9 +2284,17 @@ public class JhwScm implements Firmware
                gosub(sub_print_chars,blk_tail_call);
                break;
             case IS_PROCEDURE:
+               reg.set(regArg0, const_huhUP);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
+               break;
             case IS_SPECIAL_FORM:
+               reg.set(regArg0, const_huhUM);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
+               break;
             case IS_ENVIRONMENT:
-               reg.set(regArg0, const_huh3);
+               reg.set(regArg0, const_huhENV);
                reg.set(regArg2, code(TYPE_FIXINT,0));
                gosub(sub_print_const,blk_tail_call);
                break;
@@ -2883,7 +2881,7 @@ public class JhwScm implements Firmware
          reg.set(regTmp1, cdr(reg.get(regEnv))); // env past IS_ENVIRONMENT
          reg.set(regArg1, car(reg.get(regTmp1)));// first frame
          logrec("sym:        ",reg.get(regArg0));
-         logrec("first frame:",reg.get(regArg1));
+         //logrec("first frame:",reg.get(regArg1));
          gosub(sub_look_frame,sub_define+0x2);
          break;
       case sub_define+0x2:
@@ -2893,20 +2891,20 @@ public class JhwScm implements Firmware
          {
             log("create a new binding");
             logrec("sym:",reg.get(regTmp0));
-            logrec("val:",reg.get(regTmp1));
+            //logrec("val:",reg.get(regTmp1));
 
             reg.set(regTmp2, cons(reg.get(regTmp0),reg.get(regTmp1))); // bind
 
-            logrec("binding:",reg.get(regTmp2));
+            //logrec("binding:",reg.get(regTmp2));
 
             reg.set(regTmp3, cdr(reg.get(regEnv))); // env past IS_ENVIRONMENT
             reg.set(regTmp4, car(reg.get(regTmp3)));// first frame
 
-            logrec("first frame:",reg.get(regTmp4));
+            //logrec("first frame:",reg.get(regTmp4));
 
             reg.set(regTmp5, cons(reg.get(regTmp2),reg.get(regTmp4)));
 
-            logrec("new frame:  ",reg.get(regTmp5));
+            //logrec("new frame:  ",reg.get(regTmp5));
 
             setcar(reg.get(regTmp3),reg.get(regTmp5));// env past IS_ENVIRONMENT
          }
@@ -3179,6 +3177,7 @@ public class JhwScm implements Firmware
 
    private static final int EOF                 = TYPE_SENTINEL | 97;
    private static final int UNSPECIFIED         = TYPE_SENTINEL | 65;
+
    private static final int IS_SYMBOL           = TYPE_SENTINEL | 79;
    private static final int IS_STRING           = TYPE_SENTINEL | 32;
    private static final int IS_PROCEDURE        = TYPE_SENTINEL | 83;
@@ -3302,6 +3301,7 @@ public class JhwScm implements Firmware
    private static final int sub_apply            = TYPE_SUBP | A2 |  0x4000;
    private static final int sub_apply_builtin    = TYPE_SUBP | A2 |  0x4100;
    private static final int sub_apply_user       = TYPE_SUBP | A2 |  0x4200;
+   private static final int sub_apply_special    = TYPE_SUBP | A2 |  0x4300;
 
    private static final int sub_printv           = TYPE_SUBP | AX |  0x5000;
    private static final int sub_print            = TYPE_SUBP | A2 |  0x5010;
@@ -3379,9 +3379,11 @@ public class JhwScm implements Firmware
    private static final int      const_newline;
    private static final int      const_prechar;
    private static final int      const_space;
-   private static final int      const_huh3;
-   private static final int      const_huhPuh;
-   private static final int      const_huhSuh;
+   private static final int      const_huhPP;
+   private static final int      const_huhPM;
+   private static final int      const_huhUP;
+   private static final int      const_huhUM;
+   private static final int      const_huhENV;
    static 
    {
       int i = 0;
@@ -3462,14 +3464,20 @@ public class JhwScm implements Firmware
       const_space   = code(TYPE_FIXINT,i);
       const_val[i]  = UNSPECIFIED;          const_str[i++] = "space";
 
-      const_huh3    = code(TYPE_FIXINT,i);
-      const_val[i]  = UNSPECIFIED;          const_str[i++] = "???";
+      const_huhPP   = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?pp?";
 
-      const_huhPuh  = code(TYPE_FIXINT,i);
-      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?p?";
+      const_huhPM   = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?pm?";
 
-      const_huhSuh  = code(TYPE_FIXINT,i);
-      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?s?";
+      const_huhUP   = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?up?";
+
+      const_huhUM   = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?um?";
+
+      const_huhENV  = code(TYPE_FIXINT,i);
+      const_val[i]  = UNSPECIFIED;          const_str[i++] = "?env?";
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -4210,6 +4218,7 @@ public class JhwScm implements Firmware
          case sub_apply:            buf.append("sub_apply");            break;
          case sub_apply_builtin:    buf.append("sub_apply_builtin");    break;
          case sub_apply_user:       buf.append("sub_apply_user");       break;
+         case sub_apply_special:    buf.append("sub_apply_special");    break;
          case sub_printv:           buf.append("sub_printv");           break;
          case sub_print:            buf.append("sub_print");            break;
          case sub_print_list:       buf.append("sub_print_list");       break;
