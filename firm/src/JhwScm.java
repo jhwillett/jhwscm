@@ -1124,48 +1124,26 @@ public class JhwScm implements Firmware
             reg.set(regArg0,  reg.get(regTmp0));
             reg.set(regArg1,  reg.get(regTmp1));
             gosub(sub_eval_list,sub_eval+0x3);
-            break;
          }
-         if ( TYPE_SUBS == tmp0 )
+         else if ( TYPE_SUBS == tmp0 )
          {
             // special: apply op directly to args exprs
             //
             reg.set(regArg0, reg.get(regTmp2));
             reg.set(regArg1, reg.get(regTmp0));
             gosub(sub_apply,blk_tail_call);
-            break;
          }
-         if ( TYPE_CELL == tmp0 && IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
+         else if ( TYPE_CELL == tmp0 && 
+                   IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
          {
-            // special: apply op directly to args exprs
-            //
-            // TODO: Inconsistency?  I made my TYPE_SUBS responsible
-            // for making their own calls back to sub_eval, but I seem
-            // to be heading in a direction where the IS_SPECIAL_FORM
-            // get sub_eval called for them, building on the idea of
-            // syntaxes.  Perhaps they should be unified: and perhaps
-            // the various TYPE_SUBS would get simpler if they enjoyed
-            // this same treatment.  Maybe not: perhaps they may not
-            // always get called via (eval)??????
-            //
-            // Hmm, things like sub_if make sense that way, but
-            // sub_lambda does not...
-            //
-            //
-            logrec("SP regArg0:",reg.get(regArg0));
-            //logrec("SP regArg1:",reg.get(regArg1));
-            logrec("SP regTmp0:",reg.get(regTmp0));
-            //logrec("SP regTmp1:",reg.get(regTmp1));
-            logrec("SP regTmp2:",reg.get(regTmp2));
-            store(regTmp1);                    // store the env
-            reg.set(regArg0,  reg.get(regTmp2));
-            reg.set(regArg1,  reg.get(regTmp0));
-            gosub(sub_apply,sub_eval+0x4);
-            break;
+            raiseError(ERR_NOT_IMPL);
          }
-         // We get here, for instance, evaluating the expr (1).
-         logrec("non-operator in sub_eval: ",tmp0);
-         raiseError(ERR_SEMANTIC);
+         else
+         {
+            // We get here, for instance, evaluating the expr (1).
+            logrec("non-operator in sub_eval: ",tmp0);
+            raiseError(ERR_SEMANTIC);
+         }
          break;
       case sub_eval+0x3:
          // following eval of the args
@@ -1942,7 +1920,7 @@ public class JhwScm implements Firmware
                gosub(sub_apply_user,blk_tail_call);
                break;
             case IS_SPECIAL_FORM:
-               gosub(sub_apply_user,blk_tail_call);
+               raiseError(ERR_NOT_IMPL);
                break;
             default:
                raiseError(ERR_SEMANTIC);
@@ -2084,6 +2062,8 @@ public class JhwScm implements Firmware
          {
             logrec("sub_apply_user: op   ",reg.get(regArg0));
             logrec("sub_apply_user: args ",reg.get(regArg1));
+            raiseError(ERR_NOT_IMPL);
+            break;
          }
          store(regArg0);                                          // store op
          reg.set(regArg0, car(cdr(reg.get(regArg0))));
@@ -2984,6 +2964,10 @@ public class JhwScm implements Firmware
       case sub_lamsyn:
          // Precisely as sub_lambda, but produces a closure tagged
          // with IS_SPECIAL_FORM instead of with IS_PROCEDURE.
+         //
+         // The implementation is a kludge: we let sub_lambda do the
+         // heavy lifting as an implementation back-end, then doctor
+         // the results.
          //
          gosub(sub_lambda,sub_lamsyn+0x01);
          break;
