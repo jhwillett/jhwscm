@@ -2233,7 +2233,10 @@ public class JhwScm implements Firmware
 
          logrec("sub_apply_special ENV    ",reg.get(regTmp3));
 
-         raiseError(ERR_NOT_IMPL);
+         reg.set(regArg0,sub_exp_sym_special);
+         reg.set(regArg1,reg.get(regTmp1));
+         reg.set(regArg2,reg.get(regTmp3));
+         gosub(sub_maptree2ta,blk_tail_call);
          break;
 
       case sub_exp_sym_special:
