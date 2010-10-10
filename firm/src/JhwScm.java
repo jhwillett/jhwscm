@@ -2234,55 +2234,29 @@ public class JhwScm implements Firmware
          logrec("sub_apply_special ENV    ",reg.get(regTmp3));
 
          raiseError(ERR_NOT_IMPL);
-         if ( true ) break;
-
-         reg.set(regTmp3, cdr(reg.get(regArg0)));             
-         reg.set(regTmp3, cdr(reg.get(regTmp3)));
-         reg.set(regTmp3, cdr(reg.get(regTmp3)));
-         reg.set(regTmp3, car(reg.get(regTmp3)));                // op lex env
-         //reg.set(regTmp3, car(cdr(cdr(cdr(reg.get(regArg0))))));
-
-         //logrec("sub_apply_special LEXENV ",reg.get(regTmp3));
-
-         reg.set(regTmp4, cdr(reg.get(regTmp3)));                // lex frames
-
-         //logrec("sub_apply_special LEXFRM ",reg.get(regTmp4));
-
-         reg.set(regTmp4, cons(reg.get(regTmp0),reg.get(regTmp4)));// new frames
-         reg.set(regTmp5, cons(IS_ENVIRONMENT,reg.get(regTmp4)));  // new env
-
-         //logrec("sub_apply_special NEWENV ",reg.get(regTmp5));
-
-         //
-         // At first glance, this env manip feels like it should be
-         // the job of sub_eval. After all, sub_eval gets an
-         // environment arg, and sub_apply does not.
-         //
-         // After deeper soul searching, this is not true.  We
-         // certainly would not want (eval) to push/pop the env on
-         // *every* call, but only sub_apply_special and sub_let know
-         // what the new frames are, and only sub_apply_special knows
-         // where to find the lexical scope of a procedure or
-         // special form.
-         //
-         //logrec("LEXICAL ENV PREPUSH:  ",reg.get(regEnv));
-         store(regEnv);
-         reg.set(regEnv, reg.get(regTmp5));
-         //logrec("LEXICAL ENV POSTPUSH: ",reg.get(regEnv));
-
-         reg.set(regArg0, reg.get(regTmp1));
-
-         //logrec("sub_apply_special ARG TO sub_begin: ",reg.get(regArg0));
-         gosub(sub_begin, sub_apply_special+0x2);
          break;
-      case sub_apply_special+0x2:
-         // I am so sad that pushing that env above means we cannot
-         // be tail recursive.  At least this that is not true on
-         // every sub_eval.
+
+      case sub_exp_sym_special:
+         // Looks up the symbol in regArg0 in the environment in
+         // regArg1.
          //
-         //log("LEXICAL ENV PREPOP:  ",pp(reg.get(regEnv)));
-         restore(regEnv);
-         //log("LEXICAL ENV POSTPOP: ",pp(reg.get(regEnv)));
+         // If found, returns the bound value.
+         //
+         // If not found, returns the symbol itself.
+         //
+         store(regArg0);                              // store symbol
+         gosub(sub_look_env,sub_exp_sym_special+0x1);
+         break;
+      case sub_exp_sym_special+0x1:
+         store(regArg0);                              // restore symbol
+         if ( NIL == reg.get(regRetval) )
+         {
+            reg.set(regRetval,reg.get(regArg0));
+         }
+         else
+         {
+            reg.set(regRetval,cdr(reg.get(regRetval)));
+         }
          returnsub();
          break;
 
@@ -3465,6 +3439,7 @@ public class JhwScm implements Firmware
    private static final int sub_apply_builtin    = TYPE_SUBP | A2 |  0x4100;
    private static final int sub_apply_user       = TYPE_SUBP | A2 |  0x4200;
    private static final int sub_apply_special    = TYPE_SUBP | A2 |  0x4300;
+   private static final int sub_exp_sym_special  = TYPE_SUBP | A2 |  0x4400;
 
    private static final int sub_printv           = TYPE_SUBP | AX |  0x5000;
    private static final int sub_print            = TYPE_SUBP | A2 |  0x5010;
@@ -4384,6 +4359,7 @@ public class JhwScm implements Firmware
          case sub_apply_builtin:    buf.append("sub_apply_builtin");    break;
          case sub_apply_user:       buf.append("sub_apply_user");       break;
          case sub_apply_special:    buf.append("sub_apply_special");    break;
+         case sub_exp_sym_special:  buf.append("sub_exp_sym_special"); break;
          case sub_printv:           buf.append("sub_printv");           break;
          case sub_print:            buf.append("sub_print");            break;
          case sub_print_list:       buf.append("sub_print_list");       break;
