@@ -1314,17 +1314,41 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
 
+      {
+         final Object[][] tests = { 
+            { "maptree2ta",                              null          },
+            { "(maptree2ta)",                            SEMANTIC      },
+            { "(maptree2ta 1)",                          SEMANTIC      },
+            { "(maptree2ta 1 2)",                        SEMANTIC      },
+            { "(maptree2ta 1 2 3)",                      SEMANTIC      },
+            { "(maptree2ta 1 '() 3)",                    "()"          },
+            { "(maptree2ta 1 '(2))",                     SEMANTIC      },
+            { "(define f (lambda (a) 1))",               ""            },
+            { "f",                                       "?up?"        },
+            { "(maptree2ta f '() 2)",                    "()"          },
+            { "(maptree2ta f 1 2)",                      SEMANTIC      },
+            { "(maptree2ta f '(1) 2)",                   SEMANTIC      },
+            { "(define f (lambda (a b) (+ a b)))",       ""            },
+            { "(maptree2ta f 1 2)",                      "3"           },
+            { "(maptree2ta f '(1) 2)",                   "(3)"         },
+            { "(maptree2ta f (cons 7 9) 2)",             "(9 . 11)"    },
+            { "(maptree2ta f (cons 7 9) 2)",             "(9 . 11)"    },
+         };
+         final Batch[] batches = { 
+            REP_DEP,
+         };
+         metabatch(tests,batches);
+      }
+
       // check lambda-syntax
-      if ( true )
+      if ( false )
       {
          final Object[][] tests = { 
             { "lambda-syntax",                                "?pm?"     },
             { "(lambda-syntax () 1)",                         "?um?"     },
-            /*
             { "((lambda-syntax () 1))",                       "1"        },
             { "((lambda-syntax (a) 1) 100)",                  "1"        },
             { "((lambda-syntax (a) 1) asdfasfd)",             "1"        },
-            */
             { "(define syn (lambda-syntax (a) 1))",           ""         },
             { "syn",                                          "?um?"     },
             /*
@@ -1382,6 +1406,7 @@ public class TestScm extends Util
          final Batch[] batches = { 
             REP_DEP,
          };
+         VERBOSE = true;
          metabatch(tests,batches);
          VERBOSE = false;
       }

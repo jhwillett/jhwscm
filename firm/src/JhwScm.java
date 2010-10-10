@@ -1095,7 +1095,7 @@ public class JhwScm implements Firmware
             raiseError(ERR_INTERNAL);
             break;
          }
-         reg.set(regRetval,  cdr(reg.get(regRetval)));
+         reg.set(regRetval, cdr(reg.get(regRetval)));
          returnsub();
          break;
       case sub_eval+0x2:
@@ -1128,7 +1128,7 @@ public class JhwScm implements Firmware
             //
             reg.set(regArg0, reg.get(regTmp2));
             reg.set(regArg1, reg.get(regTmp0));
-            gosub(sub_apply,blk_tail_call);
+            gosub(sub_apply_builtin, blk_tail_call);
          }
          else if ( TYPE_CELL == tmp0 && 
                    IS_SPECIAL_FORM == car(reg.get(regTmp2)) )
@@ -1206,6 +1206,38 @@ public class JhwScm implements Firmware
          restore(regArg0);          // the rest of the list
          store(regRetval);             // feed blk_tail_call_m_cons
          gosub(sub_eval_list,blk_tail_call_m_cons);
+         break;
+
+      case sub_begin:
+         // Evaluates all its args in the current environment,
+         // returning the result of the last.  If no args, returns
+         // UNSPECIFIED.
+         //
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval,  UNSPECIFIED);
+            returnsub();
+            break;
+         }
+         reg.set(regTmp0,  car(reg.get(regArg0)));
+         reg.set(regTmp1,  cdr(reg.get(regArg0)));
+         reg.set(regArg0,  reg.get(regTmp0));
+         reg.set(regArg1,  reg.get(regEnv));
+         //logrec("sub_begin expr: ",reg.get(regArg0));
+         //logrec("sub_begin env:  ",reg.get(regArg1));
+         if ( NIL == reg.get(regTmp1) )
+         {
+            gosub(sub_eval,blk_tail_call);
+         }
+         else
+         {
+            store(regTmp1);             // store rest exprs
+            gosub(sub_eval,sub_begin+0x1);
+         }
+         break;
+      case sub_begin+0x1:
+         restore(regArg0);           // restore rest exprs
+         gosub(sub_begin,blk_tail_call);
          break;
 
       case sub_look_env:
@@ -1588,6 +1620,66 @@ public class JhwScm implements Firmware
          gosub(sub_maptree, blk_tail_call_m_cons);
          break;
 
+      case sub_maptree2ta:
+         // Applies the binary procedure in regArg0 to each atom in
+         // the tree rooted regArg1, with second arg as per regArg2.
+         //
+         // Returns a tree with the same structure as the input, with
+         // all the atomic leaves replaced by the procedure results.
+         //
+         // Walks depth-first, car before cdr, heavy recursion on the
+         // car and tail-recursive-mod-cons on the cdr.
+         //
+         // E.g.:
+         //
+         //   (define f (lambda (a b) (+ a b)))
+         //   (maptree2ta f 1 2)                  ==> 3
+         //   (maptree2ta f '(1) 2)               ==> (3)
+         //   (maptree2ta f (cons 7 9) 2)         ==> (9 . 11)
+         //
+         if ( NIL == reg.get(regArg1) )
+         {
+            reg.set(regRetval,NIL);
+            returnsub();
+            break;
+         }
+         store(regArg0);                          // store op
+         store(regArg1);                          // store arg tree
+         store(regArg2);                          // store arg extra
+         reg.set(regArg0,reg.get(regArg1));
+         gosub(sub_atom_p,sub_maptree2ta+0x1);
+         break;
+      case sub_maptree2ta+0x1:
+         restore(regArg2);                        // restore arg extra
+         restore(regArg1);                        // restore arg tree
+         restore(regArg0);                        // restore op
+         if ( TRUE == reg.get(regRetval) )
+         {
+            // sub_apply also wants op in regArg0, but wants an arg
+            // list in regArg1.
+            //
+            reg.set(regTmp0, cons(reg.get(regArg2),NIL));
+            reg.set(regArg1, cons(reg.get(regArg1),reg.get(regTmp0)));
+            gosub(sub_apply, blk_tail_call);
+            break;
+         }
+         logrec("arg1:",reg.get(regArg1));
+         reg.set(regTmp0, car(reg.get(regArg1))); // car subtree
+         reg.set(regTmp1, cdr(reg.get(regArg1))); // cdr subtree
+         store(regArg0);                          // store op
+         store(regTmp1);                          // store cdr subtree
+         store(regArg2);                          // store arg extra
+         reg.set(regArg1, reg.get(regTmp0));      // car subtree
+         gosub(sub_maptree2ta, sub_maptree2ta+0x2);
+         break;
+      case sub_maptree2ta+0x2:
+         restore(regArg2);                        // restore arg extra
+         restore(regArg1);                        // restore cdr subtree
+         restore(regArg0);                        // restore op
+         store(regRetval);                        // feed blk_tail_call_m_cons
+         gosub(sub_maptree2ta, blk_tail_call_m_cons);
+         break;
+
       case sub_atom_p:
          // Returns TRUE if regArg0 is an atom, FALSE otherwise.
          // 
@@ -1637,38 +1729,6 @@ public class JhwScm implements Firmware
          //
          reg.set(regRetval, reg.get(regTopEnv));
          returnsub();
-         break;
-
-      case sub_begin:
-         // Evaluates all its args in the current environment,
-         // returning the result of the last.  If no args, returns
-         // UNSPECIFIED.
-         //
-         if ( NIL == reg.get(regArg0) )
-         {
-            reg.set(regRetval,  UNSPECIFIED);
-            returnsub();
-            break;
-         }
-         reg.set(regTmp0,  car(reg.get(regArg0)));
-         reg.set(regTmp1,  cdr(reg.get(regArg0)));
-         reg.set(regArg0,  reg.get(regTmp0));
-         reg.set(regArg1,  reg.get(regEnv));
-         //logrec("sub_begin expr: ",reg.get(regArg0));
-         //logrec("sub_begin env:  ",reg.get(regArg1));
-         if ( NIL == reg.get(regTmp1) )
-         {
-            gosub(sub_eval,blk_tail_call);
-         }
-         else
-         {
-            store(regTmp1);             // store rest exprs
-            gosub(sub_eval,sub_begin+0x1);
-         }
-         break;
-      case sub_begin+0x1:
-         restore(regArg0);           // restore rest exprs
-         gosub(sub_begin,blk_tail_call);
          break;
 
       case sub_cond:
@@ -1900,17 +1960,16 @@ public class JhwScm implements Firmware
          switch (type(reg.get(regArg0)))
          {
          case TYPE_SUBP:
-         case TYPE_SUBS:
             gosub(sub_apply_builtin,blk_tail_call);
+            break;
+         case TYPE_SUBS:
+            raiseError(ERR_SEMANTIC); // ????
             break;
          case TYPE_CELL:
             switch (car(reg.get(regArg0)))
             {
             case IS_PROCEDURE:
                gosub(sub_apply_user,blk_tail_call);
-               break;
-            case IS_SPECIAL_FORM:
-               raiseError(ERR_NOT_IMPL);
                break;
             default:
                raiseError(ERR_SEMANTIC);
@@ -2034,8 +2093,7 @@ public class JhwScm implements Firmware
             raiseError(ERR_SEMANTIC);
             break;
          }
-         if ( IS_PROCEDURE    != car(reg.get(regArg0)) &&
-              IS_SPECIAL_FORM != car(reg.get(regArg0)) )
+         if ( IS_PROCEDURE != car(reg.get(regArg0)) )
          {
             log("bogus proc not procedure or special");
             raiseError(ERR_SEMANTIC);
@@ -2048,20 +2106,13 @@ public class JhwScm implements Firmware
             raiseError(ERR_SEMANTIC);
             break;
          }
-         if ( IS_SPECIAL_FORM == car(reg.get(regArg0)) )
-         {
-            logrec("sub_apply_user: op   ",reg.get(regArg0));
-            logrec("sub_apply_user: args ",reg.get(regArg1));
-            raiseError(ERR_NOT_IMPL);
-            break;
-         }
          store(regArg0);                                          // store op
          reg.set(regArg0, car(cdr(reg.get(regArg0))));
          reg.set(regArg1, reg.get(regArg1));
          gosub(sub_zip,sub_apply_user+0x1);
          break;
       case sub_apply_user+0x1:
-         restore(regArg0);                                        // restore op
+         restore(regArg0);                                       // restore op
          reg.set(regTmp0, reg.get(regRetval));                   // args frame
          reg.set(regTmp1, car(cdr(cdr(reg.get(regArg0)))));      // op body
 
@@ -2106,13 +2157,125 @@ public class JhwScm implements Firmware
 
          //logrec("sub_apply_user ARG TO sub_begin: ",reg.get(regArg0));
          gosub(sub_begin, sub_apply_user+0x2);
-
-         if ( false )
-         {
-            raiseError(ERR_NOT_IMPL);
-         }
          break;
       case sub_apply_user+0x2:
+         // I am so sad that pushing that env above means we cannot
+         // be tail recursive.  At least this that is not true on
+         // every sub_eval.
+         //
+         //log("LEXICAL ENV PREPOP:  ",pp(reg.get(regEnv)));
+         restore(regEnv);
+         //log("LEXICAL ENV POSTPOP: ",pp(reg.get(regEnv)));
+         returnsub();
+         break;
+
+      case sub_apply_special:
+         // Applies a user-defined special form.
+         //
+         // Expects an IS_SPECIAL_FORM in regArg0, and a list of
+         // argument expressions in regArg1.
+         //
+         // As sub_apply_user, we construct an env frame with the
+         // positional params bound to their corresponding args.
+         // However, rather than extend the current env and evaluate
+         // the body, instead we walk the body and expand any symbols
+         // with their bindings in the constructed frame.
+         //
+         // That is, during expansion the special form's environment
+         // is *only* the frame of bound arguments, and rather than
+         // evaluating we just substitute.
+         //
+         // Any symbols which are unbound are left as they are.
+         //
+         // This gives us our hygienic macros.
+         //
+         // The internal representation of a user-defined special form
+         // is:
+         //
+         //   '(IS_SPECIAL_FORM arg-list body lexical-env)
+         //
+         logrec("sub_apply_special OP:   ",reg.get(regArg0));
+         logrec("sub_apply_special ARGS: ",reg.get(regArg1));
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            log("bogus special form not cell");
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( IS_SPECIAL_FORM != car(reg.get(regArg0)) )
+         {
+            log("bogus proc not special form");
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         if ( NIL       != reg.get(regArg1) &&
+              TYPE_CELL != type(reg.get(regArg1)) )
+         {
+            log("bogus arg list");
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         store(regArg0);                                         // store op
+         reg.set(regArg0, car(cdr(reg.get(regArg0))));
+         reg.set(regArg1, reg.get(regArg1));
+         gosub(sub_zip,sub_apply_special+0x1);
+         break;
+      case sub_apply_special+0x1:
+         restore(regArg0);                                       // restore op
+         reg.set(regTmp0, reg.get(regRetval));                   // args frame
+         reg.set(regTmp1, car(cdr(cdr(reg.get(regArg0)))));      // op body
+
+         logrec("sub_apply_special BODY   ",reg.get(regTmp1));
+         logrec("sub_apply_special FRAME  ",reg.get(regTmp0));
+
+         reg.set(regTmp2, cons(reg.get(regTmp0),NIL));
+         reg.set(regTmp3, cons(IS_ENVIRONMENT,reg.get(regTmp2)));// syntax env
+
+         logrec("sub_apply_special ENV    ",reg.get(regTmp3));
+
+         raiseError(ERR_NOT_IMPL);
+         if ( true ) break;
+
+         reg.set(regTmp3, cdr(reg.get(regArg0)));             
+         reg.set(regTmp3, cdr(reg.get(regTmp3)));
+         reg.set(regTmp3, cdr(reg.get(regTmp3)));
+         reg.set(regTmp3, car(reg.get(regTmp3)));                // op lex env
+         //reg.set(regTmp3, car(cdr(cdr(cdr(reg.get(regArg0))))));
+
+         //logrec("sub_apply_special LEXENV ",reg.get(regTmp3));
+
+         reg.set(regTmp4, cdr(reg.get(regTmp3)));                // lex frames
+
+         //logrec("sub_apply_special LEXFRM ",reg.get(regTmp4));
+
+         reg.set(regTmp4, cons(reg.get(regTmp0),reg.get(regTmp4)));// new frames
+         reg.set(regTmp5, cons(IS_ENVIRONMENT,reg.get(regTmp4)));  // new env
+
+         //logrec("sub_apply_special NEWENV ",reg.get(regTmp5));
+
+         //
+         // At first glance, this env manip feels like it should be
+         // the job of sub_eval. After all, sub_eval gets an
+         // environment arg, and sub_apply does not.
+         //
+         // After deeper soul searching, this is not true.  We
+         // certainly would not want (eval) to push/pop the env on
+         // *every* call, but only sub_apply_special and sub_let know
+         // what the new frames are, and only sub_apply_special knows
+         // where to find the lexical scope of a procedure or
+         // special form.
+         //
+         //logrec("LEXICAL ENV PREPUSH:  ",reg.get(regEnv));
+         store(regEnv);
+         reg.set(regEnv, reg.get(regTmp5));
+         //logrec("LEXICAL ENV POSTPUSH: ",reg.get(regEnv));
+
+         reg.set(regArg0, reg.get(regTmp1));
+
+         //logrec("sub_apply_special ARG TO sub_begin: ",reg.get(regArg0));
+         gosub(sub_begin, sub_apply_special+0x2);
+         break;
+      case sub_apply_special+0x2:
          // I am so sad that pushing that env above means we cannot
          // be tail recursive.  At least this that is not true on
          // every sub_eval.
@@ -3348,6 +3511,7 @@ public class JhwScm implements Firmware
 
    private static final int sub_map1             = TYPE_SUBP | A2 |  0x8000;
    private static final int sub_maptree          = TYPE_SUBP | A2 |  0x8100;
+   private static final int sub_maptree2ta       = TYPE_SUBP | A3 |  0x8200;
 
    private static final int sub_const_symbol     = TYPE_SUBP | A1 |  0x9000;
    private static final int sub_const_chars      = TYPE_SUBP | A1 |  0x9100;
@@ -3447,6 +3611,7 @@ public class JhwScm implements Firmware
       const_val[i] = sub_case;    const_str[i++] = "case";
       const_val[i] = sub_map1;    const_str[i++] = "map1";
       const_val[i] = sub_maptree; const_str[i++] = "maptree";
+      const_val[i] = sub_maptree2ta; const_str[i++] = "maptree2ta";
       primitives_end = i;
 
       const_true    = code(TYPE_FIXINT,i);
@@ -4259,6 +4424,7 @@ public class JhwScm implements Firmware
          case sub_lamsyn:           buf.append("sub_lamsyn");           break;
          case sub_map1:             buf.append("sub_map1");             break;
          case sub_maptree:          buf.append("sub_maptree");          break;
+         case sub_maptree2ta:       buf.append("sub_maptree2ta");       break;
          case sub_const_symbol:     buf.append("sub_const_symbol");     break;
          case sub_const_chars:      buf.append("sub_const_chars");      break;
          case sub_const_val:        buf.append("sub_const_val");        break;
