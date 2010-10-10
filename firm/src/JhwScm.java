@@ -1160,7 +1160,7 @@ public class JhwScm implements Firmware
          logrec("apply special form result:",reg.get(regRetval));
          reg.set(regArg0, reg.get(regRetval));
          restore(regArg1);                      // restore the env
-         gosub(sub_eval,blk_tail_call);
+         gosub(sub_begin,blk_tail_call);
          break;
 
       case sub_eval_list:
@@ -1243,6 +1243,8 @@ public class JhwScm implements Firmware
       case sub_look_env:
          // Looks up the symbol in regArg0 in the env in regArg1.
          //
+         // Returns NIL if regArg0 is not a symbol.
+         //
          // Returns NIL if not found, else the binding of the symbol:
          // a cell whose car is a symbol equivalent to the argument
          // symbol, and whose cdr is the value of that symbol in the
@@ -1276,13 +1278,15 @@ public class JhwScm implements Firmware
          if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
             log("non-cell sym in sub_look_env: ",pp(reg.get(regArg0)));
-            raiseError(ERR_SEMANTIC);
+            reg.set(regRetval,NIL);
+            returnsub();
             break;
          }
          if ( IS_SYMBOL != car(reg.get(regArg0)) )
          {
             log("non-sym sym in sub_look_env: ",pp(reg.get(regArg0)));
-            raiseError(ERR_SEMANTIC);
+            reg.set(regRetval,NIL);
+            returnsub();
             break;
          }
          if ( TYPE_CELL != type(reg.get(regArg1)) )
@@ -1637,6 +1641,7 @@ public class JhwScm implements Firmware
          //   (maptree2ta f '(1) 2)               ==> (3)
          //   (maptree2ta f (cons 7 9) 2)         ==> (9 . 11)
          //
+         logrec("arg1 tree:",reg.get(regArg1));
          if ( NIL == reg.get(regArg1) )
          {
             reg.set(regRetval,NIL);
@@ -2251,7 +2256,7 @@ public class JhwScm implements Firmware
          gosub(sub_look_env,sub_exp_sym_special+0x1);
          break;
       case sub_exp_sym_special+0x1:
-         store(regArg0);                              // restore symbol
+         restore(regArg0);                            // restore symbol
          if ( NIL == reg.get(regRetval) )
          {
             reg.set(regRetval,reg.get(regArg0));
@@ -3414,24 +3419,6 @@ public class JhwScm implements Firmware
 
    private static final int sub_read_burn_space  = TYPE_SUBP | A1 |  0x2900;
 
-   // TODO: sub_eval should be a procedure, but unless we make
-   // environment objects self-evaluating (which will involve some
-   // refactoring in a number of places) it won't fly.
-   //
-   // This only affects calls to eval-as-input-to-apply e.g. user
-   // level calls of eval.
-   //
-   // Yikes, but if it is a TYPE_SUBS, it also does not work:
-   //
-   //   (eval '(+ 3 4) (interaction-environment))
-   //
-   // yields:
-   //
-   //   (+ 3 4)
-   //
-   // B/c the sub_eval called from sub_top does not expand the quote
-   // on the first arg before applying eval to the arguments.
-   //
    private static final int sub_eval             = TYPE_SUBP | A2 |  0x3000;
    private static final int sub_look_env         = TYPE_SUBP | A2 |  0x3100;
    private static final int sub_look_frames      = TYPE_SUBP | A2 |  0x3200;

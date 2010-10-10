@@ -1341,17 +1341,17 @@ public class TestScm extends Util
       }
 
       // check lambda-syntax
-      if ( false )
       {
          final Object[][] tests = { 
             { "lambda-syntax",                                "?pm?"     },
             { "(lambda-syntax () 1)",                         "?um?"     },
+
             { "((lambda-syntax () 1))",                       "1"        },
+
             { "((lambda-syntax (a) 1) 100)",                  "1"        },
             { "((lambda-syntax (a) 1) asdfasfd)",             "1"        },
             { "(define syn (lambda-syntax (a) 1))",           ""         },
             { "syn",                                          "?um?"     },
-            /*
             { "(syn)",                                        SEMANTIC   },
             { "(syn 1 2)",                                    SEMANTIC   },
             { "(syn 1)",                                      "1"        },
@@ -1360,55 +1360,25 @@ public class TestScm extends Util
             { "(syn asaf)",                                   "1"        },
             { "(syn (+ 19 (cons x y)))",                      "1"        },
             { "(syn asaf)",                                   "1"        },
-            */
             { "(define syn (lambda        (a) (+ 1 2)))",     ""         },
             { "(syn asaf)",                                   SEMANTIC   },
             { "(define syn (lambda-syntax (a) (+ 1 2)))",     ""         },
-            /*
             { "(syn asaf)",                                   "3"        },
-            */
-
-            // TODO: When (eval) evaluates the return of (apply
-            // special args), this breaks on ERR_INTERNAL trying to
-            // eval UNSPECIFIED.
-            //
-            /*
-            { "(define syn (lambda-syntax (a) (display a)))", ""         },
-            { "(syn asaf)",                                   "asaf"     },
-            { "(syn (+ 1 ()))",                               "(+ 1 ())" },
-            */
 
             // Can I make my own (if), including special formedness?
             //
-            // TODO: When (eval) does *not* evaluate the return of
-            // (apply special args), this breaks by printing (+ 4 5)
-            // instead of 9.
-            //
-            /*
             { "(define myif (lambda-syntax (a b c) (if a b c)))", ""       },
             { "(+ 2 '())",                                        SEMANTIC },
+            { "(+ 4 5)",                                          "9"      },
             { "(myif #f (+ 2 '()) (+ 4 5))",                      "9"      },
             { "(myif #t (+ 4 5) (+ 2 '()))",                      "9"      },
-            */
-
-            // TODO: clearly we need to break up sub_apply - separate
-            // out the binding of parameters to arguments in a lexical
-            // frame from the part of sub_apply which metacirculates
-            // back to sub_eval, so that we can use the binding part
-            // but use different evaluation semantics for the bound
-            // result.
-            //
-            // At a coarse level, this means maybe a sub_apply_syntax
-            // distinct from the current sub_apply (which could be
-            // renamed sub_apply_procedure) is needed: but 90%+ of
-            // their complexity will be in common.
+            { "(myif #t (+ 2 '()) (+ 4 5))",                      SEMANTIC },
+            { "(myif #f (+ 4 5) (+ 2 '()))",                      SEMANTIC },
          };
          final Batch[] batches = { 
             REP_DEP,
          };
-         VERBOSE = true;
          metabatch(tests,batches);
-         VERBOSE = false;
       }
 
       reportGlobal();
@@ -1657,7 +1627,7 @@ public class TestScm extends Util
          }
       }
       
-      if ( VERBOSE )
+      if ( VERBOSE && false )
       {
          log("FINISHING OUT:");
          log("  dcode:             " + dcode);
