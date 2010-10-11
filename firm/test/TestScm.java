@@ -523,16 +523,57 @@ public class TestScm extends Util
          };
          metabatch(tests,batches);
       }
-      if ( false )
+
+      // dipping my toes into quasiquote and friends
       {
-         // See the quote-quote-quote discussion in DIARY.txt.
-         //
-         // TODO: the quoted-quote question, and how to print it
-         expect("''9",      "(quote 9)");
-         expect("'''9",     "(quote (quote 9))");
-         expect(" ' ' ' 9 ","(quote (quote 9))");
+         final Object[][] tests = { 
+            { "`()",                          "()"           },
+            { "`(1 2)",                       "(1 2)"        },
+            { "`(a b)",                       "(a b)"        },
+            { "(+ 1 `())",                    SEMANTIC       },
+            { "`9",                           "9"            },
+            { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
+            { "`(1 ,(+ 2 3))",                "(1 5)"        },
+
+            { "(quasiquote ())",                    "()"           },
+            { "(quasiquote (1 2))",                 "(1 2)"        },
+            { "(quasiquote (a b))",                 "(a b)"        },
+            { "(+ 1 (quasiquote ()))",              SEMANTIC       },
+            { "(quasiquote 9)",                     "9"            },
+            { "(quasiquote (1 (+ 2 3)))",           "(1 (+ 2 3))"  },
+            { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
+
+            { "``(1 2)",                       "(quasiquote (1 2))"           },
+            { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
+
+            { "`(1 ,@(list 2 3))",             "(1 2 3)"     },
+            { "`(1 ,(list 2 3))",              "(1 (2 3))"   },
+            { "`(1 ,@(list 2 3) 4)",           "(1 2 3 4)"   },
+            { "`(1 ,(list 2 3) 4)",            "(1 (2 3) 4)" },
+
+            { "`(1 ,@2)",                      "(1 . 2)"     },
+            { "`(1 ,@2 3)",                    LEXICAL       }, // or SEMANTIC?
+
+            { "``(1 ,@2)",  
+              "(quasiquote (1 (unquote-splicing 2)))" },
+            { "``(1 ,@(list 2 3) ,4)", 
+              "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  },
+
+            { "``,,1",   "(quasiquote (unquote 1))"                        },
+            { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         if ( false )
+         {
+            VERBOSE = true;
+            metabatch(tests,batches);
+            VERBOSE = false;
+         }
       }
 
+      // Some basic predicates
       {
          final Object[][] tests = { 
             { "(equal? 10  10)",              "#t"     },
