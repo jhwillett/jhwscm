@@ -464,6 +464,19 @@ public class JhwScm implements Firmware
             portPop(regArg0);
             gosub(sub_read,sub_read+0x3);
             break;
+         case '`':
+            portPop(regArg0);
+            gosub(sub_read,sub_read+0x4);
+            break;
+         case ',':
+            // To disambiguate unquote and unquote-splicing, we check
+            // whether the very next character is an ampersand.
+            //
+            // The portPeek() here feeds that logic in sub_read+0x5.
+            //
+            portPop(regArg0);
+            portPeek(regArg0,sub_read+0x5);
+            break;
          case '"':
             log("string literal");
             gosub(sub_read_string,blk_tail_call);
@@ -478,7 +491,7 @@ public class JhwScm implements Firmware
          }
          break;
       case sub_read+0x3:
-         // after single quote
+         // after read following regular quote
          //
          // Note: by leveraging sub_quote in this way, putting the
          // literal value sub_quote at the head of a constructed
@@ -494,8 +507,46 @@ public class JhwScm implements Firmware
          // It's a syntax rewrite, nothing more, and sub_read can
          // stay simple and let the rest of the system handle it.
          //
-         reg.set(regTmp0,    cons(reg.get(regRetval),NIL));
-         reg.set(regRetval,  cons(sub_quote,reg.get(regTmp0)));
+         reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
+         reg.set(regRetval, cons(sub_quote,reg.get(regTmp0)));
+         returnsub();
+         break;
+      case sub_read+0x4:
+         // after read following backtick quote
+         //
+         reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
+         reg.set(regRetval, cons(sub_quasiquote,reg.get(regTmp0)));
+         returnsub();
+         break;
+      case sub_read+0x5:
+         // after portPeek() following comma
+         //
+         // I've checked w/ Guile: ",@" means unquote-splicing.  ", @"
+         // means "(unquote @)", so clearly we're in good company
+         // demanding the ampersand be the very next character.
+         //
+         if ( code(TYPE_CHAR,'@') == reg.get(regIO) )
+         {
+            portPop(regArg0);
+            gosub(sub_read,sub_read+0x6);
+         }
+         else
+         {
+            gosub(sub_read,sub_read+0x7);
+         }
+         break;
+      case sub_read+0x6:
+         // after read following comma and ampersand
+         //
+         reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
+         reg.set(regRetval, cons(sub_unquote_splicing,reg.get(regTmp0)));
+         returnsub();
+         break;
+      case sub_read+0x7:
+         // after read following comma without ampersand
+         //
+         reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
+         reg.set(regRetval, cons(sub_unquote,reg.get(regTmp0)));
          returnsub();
          break;
 
@@ -2411,7 +2462,24 @@ public class JhwScm implements Firmware
             gosub(sub_print_const,blk_tail_call);
             break;
          case TYPE_SUBS:
-            reg.set(regArg0, const_huhPM);
+            switch (reg.get(regArg0))
+            {
+            case sub_quote:
+               reg.set(regArg0, const_quote);
+               break;
+            case sub_quasiquote:
+               reg.set(regArg0, const_quasiquote);
+               break;
+            case sub_unquote:
+               reg.set(regArg0, const_unquote);
+               break;
+            case sub_unquote_splicing:
+               reg.set(regArg0, const_unquote_splicing);
+               break;
+            default:
+               reg.set(regArg0, const_huhPM);
+               break;
+            }
             reg.set(regArg2, code(TYPE_FIXINT,0));
             gosub(sub_print_const,blk_tail_call);
             break;
@@ -3470,6 +3538,9 @@ public class JhwScm implements Firmware
 
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
+   private static final int sub_quasiquote       = TYPE_SUBS | A1 |  0x7710;
+   private static final int sub_unquote          = TYPE_SUBS | A1 |  0x7720;
+   private static final int sub_unquote_splicing = TYPE_SUBS | A1 |  0x7730;
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
    private static final int sub_lamsyn           = TYPE_SUBS | AX |  0x7910;
@@ -3513,6 +3584,10 @@ public class JhwScm implements Firmware
    private static final int      const_huhUP;
    private static final int      const_huhUM;
    private static final int      const_huhENV;
+   private static final int      const_quote;
+   private static final int      const_quasiquote;
+   private static final int      const_unquote;
+   private static final int      const_unquote_splicing;
    static 
    {
       int i = 0;
@@ -3552,6 +3627,11 @@ public class JhwScm implements Firmware
       // TODO: JHW  (primitive-environment)
       // TODO: JHW  (minimal-environment)
       //
+
+      const_val[i] = sub_quasiquote;       const_str[i++] = "quasiquote";
+      const_val[i] = sub_unquote;          const_str[i++] = "unquote";
+      const_val[i] = sub_unquote_splicing; const_str[i++] = "unquote-splicing";
+
       const_val[i] = sub_readv;   const_str[i++] = "read";
       const_val[i] = sub_printv;  const_str[i++] = "display";
       const_val[i] = sub_define;  const_str[i++] = "define";
@@ -3608,6 +3688,23 @@ public class JhwScm implements Firmware
 
       const_huhENV  = code(TYPE_FIXINT,i);
       const_val[i]  = UNSPECIFIED;          const_str[i++] = "?env?";
+
+      const_quote            = code(TYPE_FIXINT,i);
+      const_val[i]           = UNSPECIFIED;
+      const_str[i++]         = "quote";
+
+      const_quasiquote       = code(TYPE_FIXINT,i);
+      const_val[i]           = UNSPECIFIED;
+      const_str[i++]         = "quasiquote";
+
+      const_unquote          = code(TYPE_FIXINT,i);
+      const_val[i]           = UNSPECIFIED;
+      const_str[i++]         = "unquote";
+
+      const_unquote_splicing = code(TYPE_FIXINT,i);
+      const_val[i]           = UNSPECIFIED;          
+      const_str[i++]         = "unquote-splicing";
+
    }
 
    ////////////////////////////////////////////////////////////////////
@@ -4385,6 +4482,9 @@ public class JhwScm implements Firmware
          case sub_list:             buf.append("sub_list");             break;
          case sub_if:               buf.append("sub_if");               break;
          case sub_quote:            buf.append("sub_quote");            break;
+         case sub_quasiquote:       buf.append("sub_quasiquote");       break;
+         case sub_unquote:          buf.append("sub_unquote");          break;
+         case sub_unquote_splicing: buf.append("sub_unquote_splicing"); break;
          case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
          case sub_lamsyn:           buf.append("sub_lamsyn");           break;

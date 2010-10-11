@@ -526,10 +526,22 @@ public class TestScm extends Util
 
       // dipping my toes into quasiquote and friends
       {
+         final Object[][] tests_happy = { 
+            // test read and print, isolated from eval by quote
+            { "''1",         "(quote 1)"                               },
+            { "'`1",         "(quasiquote 1)"                          },
+            { "'`(1 2)",     "(quasiquote (1 2))"                      },
+            { "'`(1 ,2)",    "(quasiquote (1 (unquote 2)))"            },
+            { "'`(1 ,@2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
+         };
          final Object[][] tests = { 
+         };
+         final Object[][] tests_unready = {
+            // test simple cases of quasiquote are like quote
             { "`()",                          "()"           },
             { "`(1 2)",                       "(1 2)"        },
             { "`(a b)",                       "(a b)"        },
+
             { "(+ 1 `())",                    SEMANTIC       },
             { "`9",                           "9"            },
             { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
@@ -565,8 +577,9 @@ public class TestScm extends Util
          final Batch[] batches = { 
             REP_IND,
          };
-         if ( false )
+         if ( true )
          {
+            metabatch(tests_happy,batches);
             VERBOSE = true;
             metabatch(tests,batches);
             VERBOSE = false;
