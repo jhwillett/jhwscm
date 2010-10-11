@@ -2968,8 +2968,23 @@ public class JhwScm implements Firmware
          //
          // I totally get off on it!
          //
-         reg.set(regRetval,  reg.get(regArg0));
+         reg.set(regRetval, reg.get(regArg0));
          returnsub();
+         break;
+
+      case sub_quasiquote:
+         // TODO: this is bogus, to make this just like sub_quote
+         //raiseError(ERR_NOT_IMPL);
+         reg.set(regRetval, reg.get(regArg0));
+         returnsub();
+         break;
+
+      case sub_unquote:
+         raiseError(ERR_NOT_IMPL);
+         break;
+
+      case sub_unquote_splicing:
+         raiseError(ERR_NOT_IMPL);
          break;
 
       case sub_if:
@@ -3704,7 +3719,6 @@ public class JhwScm implements Firmware
       const_unquote_splicing = code(TYPE_FIXINT,i);
       const_val[i]           = UNSPECIFIED;          
       const_str[i++]         = "unquote-splicing";
-
    }
 
    ////////////////////////////////////////////////////////////////////

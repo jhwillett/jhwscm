@@ -535,18 +535,21 @@ public class TestScm extends Util
             { "'`(1 ,@2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
          };
          final Object[][] tests = { 
-         };
-         final Object[][] tests_unready = {
             // test simple cases of quasiquote are like quote
+            { "`9",                           "9"            },
             { "`()",                          "()"           },
             { "`(1 2)",                       "(1 2)"        },
             { "`(a b)",                       "(a b)"        },
-
             { "(+ 1 `())",                    SEMANTIC       },
-            { "`9",                           "9"            },
             { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
+         };
+         final Object[][] tests_unready = {
+
+            // simple cases of quasiquote with unquote
+            { "`(1 ,2)",                      "(1 2)"        },
             { "`(1 ,(+ 2 3))",                "(1 5)"        },
 
+            // long-name forms
             { "(quasiquote ())",                    "()"           },
             { "(quasiquote (1 2))",                 "(1 2)"        },
             { "(quasiquote (a b))",                 "(a b)"        },
@@ -555,9 +558,11 @@ public class TestScm extends Util
             { "(quasiquote (1 (+ 2 3)))",           "(1 (+ 2 3))"  },
             { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
 
+            // recursy version of the quote-quote- question:
             { "``(1 2)",                       "(quasiquote (1 2))"           },
             { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
 
+            // meaningful unquote-splicing
             { "`(1 ,@(list 2 3))",             "(1 2 3)"     },
             { "`(1 ,(list 2 3))",              "(1 (2 3))"   },
             { "`(1 ,@(list 2 3) 4)",           "(1 2 3 4)"   },
