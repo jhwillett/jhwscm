@@ -571,22 +571,26 @@ public class TestScm extends Util
             // simple cases of quasiquote with unquote
             { "`,1",                                "1"            },
 
+            { "`(1 ,2)",                            "(1 2)"        },
+            { "`(1 ,(+ 2 3))",                      "(1 5)"        },
+
          };
          final Object[][] tests = { 
 
          };
          final Object[][] tests_unready = {
 
-            { ",1",                            SEMANTIC       },
-            { "(quasiquote (unquote 2 3))",    SEMANTIC       },
-
-
-            { "`(1 ,2)",                            "(1 2)"        },
-            { "`(1 ,(+ 2 3))",                      "(1 5)"        },
-            { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
-
             { "``,,1",   "(quasiquote (unquote 1))"                        },
             { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
+
+            { "(quasiquote (unquote 1))",           "1"            },
+            { "(quasiquote (unquote 2 3))",         SEMANTIC       },
+            { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
+
+
+            // gives me an ERR_INTERNAL, not a semantic error....
+            { ",1",                                 SEMANTIC       },
+
 
             // recursy version of the quote-quote- question:
             { "``(1 2)",                       "(quasiquote (1 2))"           },
