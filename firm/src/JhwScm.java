@@ -3041,6 +3041,7 @@ public class JhwScm implements Firmware
             break;
          }
          reg.set(regTmp0,car(reg.get(regArg0)));
+         reg.set(regTmp1,cdr(reg.get(regArg0)));
          if ( sub_quasiquote == reg.get(regTmp0) )
          {
             logrec("quasiquote:      ",reg.get(regTmp0));
@@ -3048,8 +3049,38 @@ public class JhwScm implements Firmware
          }
          else if ( UNQUOTE == reg.get(regTmp0) )
          {
-            logrec("unquote:         ",reg.get(regTmp0));
-            raiseError(ERR_NOT_IMPL);
+            if ( TYPE_CELL != type(reg.get(regTmp1)) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            reg.set(regTmp2,car(reg.get(regTmp1)));
+            reg.set(regTmp3,cdr(reg.get(regTmp1)));
+            if ( NIL != reg.get(regTmp3) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            if ( 0 == value_fixint(reg.get(regArg1)) )
+            {
+               logrec("unquote eval:    ",reg.get(regTmp1));
+               reg.set(regArg0,reg.get(regTmp2));
+               reg.set(regArg1,reg.get(regEnv));
+               gosub(sub_eval,blk_tail_call);
+            }
+            else if ( DEBUG && 0 > value_fixint(reg.get(regArg1)) )
+            {
+               raiseError(ERR_INTERNAL);
+            }
+            else
+            {
+               logrec("unquote noeval:  ",reg.get(regTmp1));
+               reg.set(regArg0,reg.get(regTmp2));
+               reg.set(regArg1, 
+                       code(TYPE_FIXINT,value_fixint(reg.get(regArg1)) - 1));
+               gosub(sub_quasiquote_rec,blk_tail_call);
+            }
+            break;
          }
          else if ( UNQUOTE_SPLICING == reg.get(regTmp0) )
          {
@@ -3058,7 +3089,6 @@ public class JhwScm implements Firmware
          }
          else
          {
-            reg.set(regTmp1,cdr(reg.get(regArg0)));
             logrec("plain first:     ",reg.get(regTmp0));
             logrec("plain rest:      ",reg.get(regTmp1));
             logrec("plain depth:     ",reg.get(regArg1));

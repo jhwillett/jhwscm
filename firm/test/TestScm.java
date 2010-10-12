@@ -568,15 +568,19 @@ public class TestScm extends Util
             { "(quasiquote 9)",                     "9"            },
             { "(quasiquote (1 (+ 2 3)))",           "(1 (+ 2 3))"  },
 
+            // simple cases of quasiquote with unquote
+            { "`,1",                                "1"            },
+
          };
          final Object[][] tests = { 
 
          };
          final Object[][] tests_unready = {
 
-            // simple cases of quasiquote with unquote
-            { "`,1",                                "1"            },
-            { ",1",                                 SEMANTIC       },
+            { ",1",                            SEMANTIC       },
+            { "(quasiquote (unquote 2 3))",    SEMANTIC       },
+
+
             { "`(1 ,2)",                            "(1 2)"        },
             { "`(1 ,(+ 2 3))",                      "(1 5)"        },
             { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
@@ -587,7 +591,6 @@ public class TestScm extends Util
             // recursy version of the quote-quote- question:
             { "``(1 2)",                       "(quasiquote (1 2))"           },
             { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
-
 
             // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
 
