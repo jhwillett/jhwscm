@@ -542,12 +542,19 @@ public class TestScm extends Util
             { "`(a b)",                       "(a b)"        },
             { "(+ 1 `())",                    SEMANTIC       },
             { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
+
+            // recursy version of the quote-quote- question:
+            { "``(1 2)",                       "(quasiquote (1 2))"           },
+            { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
          };
          final Object[][] tests_unready = {
 
             // simple cases of quasiquote with unquote
             { "`(1 ,2)",                      "(1 2)"        },
             { "`(1 ,(+ 2 3))",                "(1 5)"        },
+
+            { "``,,1",   "(quasiquote (unquote 1))"                        },
+            { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
 
             // long-name forms
             { "(quasiquote ())",                    "()"           },
@@ -557,10 +564,6 @@ public class TestScm extends Util
             { "(quasiquote 9)",                     "9"            },
             { "(quasiquote (1 (+ 2 3)))",           "(1 (+ 2 3))"  },
             { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
-
-            // recursy version of the quote-quote- question:
-            { "``(1 2)",                       "(quasiquote (1 2))"           },
-            { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
 
             // meaningful unquote-splicing
             { "`(1 ,@(list 2 3))",             "(1 2 3)"     },
@@ -576,8 +579,16 @@ public class TestScm extends Util
             { "``(1 ,@(list 2 3) ,4)", 
               "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  },
 
-            { "``,,1",   "(quasiquote (unquote 1))"                        },
-            { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
+            // probing nesting per R5RS sec 4.2.6:
+            //
+            { 
+               "`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)",
+               "(a (quasiquote (b (unquote (+ 1 2)) (unquote (foo 4 d)) e)) f)"
+            },
+            {
+               "(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))",
+               "(a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)"
+            },
          };
          final Batch[] batches = { 
             REP_IND,
@@ -585,7 +596,7 @@ public class TestScm extends Util
          if ( true )
          {
             metabatch(tests_happy,batches);
-            VERBOSE = true;
+            //VERBOSE = true;
             metabatch(tests,batches);
             VERBOSE = false;
          }
