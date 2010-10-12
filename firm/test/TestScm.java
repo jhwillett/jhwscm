@@ -554,44 +554,43 @@ public class TestScm extends Util
             { "`9",                           "9"            },
             { "`()",                          "()"           },
             { "(+ 1 `())",                    SEMANTIC       },
-
-            { "(quasiquote)",                 SEMANTIC       },
-         };
-         final Object[][] tests = { 
-
-         };
-         final Object[][] tests_unready = {
-
             { "`(1 2)",                       "(1 2)"        },
-
-
             { "`(a b)",                       "(a b)"        },
             { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
 
-            // recursy version of the quote-quote- question:
-            { "``(1 2)",                       "(quasiquote (1 2))"           },
-            { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
-
-            // simple cases of quasiquote with unquote
-            { "`,1",                          "1"            },
-            { ",1",                           SEMANTIC       },
-            { "`(1 ,2)",                      "(1 2)"        },
-            { "`(1 ,(+ 2 3))",                "(1 5)"        },
-
-            { "``,,1",   "(quasiquote (unquote 1))"                        },
-            { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
-
-            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
-
-
             // long-name forms
+            { "(quasiquote)",                       SEMANTIC       },
+            { "(quasiquote 1 2)",                   SEMANTIC       },
             { "(quasiquote ())",                    "()"           },
             { "(quasiquote (1 2))",                 "(1 2)"        },
             { "(quasiquote (a b))",                 "(a b)"        },
             { "(+ 1 (quasiquote ()))",              SEMANTIC       },
             { "(quasiquote 9)",                     "9"            },
             { "(quasiquote (1 (+ 2 3)))",           "(1 (+ 2 3))"  },
+
+         };
+         final Object[][] tests = { 
+
+         };
+         final Object[][] tests_unready = {
+
+            // simple cases of quasiquote with unquote
+            { "`,1",                                "1"            },
+            { ",1",                                 SEMANTIC       },
+            { "`(1 ,2)",                            "(1 2)"        },
+            { "`(1 ,(+ 2 3))",                      "(1 5)"        },
             { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
+
+            { "``,,1",   "(quasiquote (unquote 1))"                        },
+            { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
+
+            // recursy version of the quote-quote- question:
+            { "``(1 2)",                       "(quasiquote (1 2))"           },
+            { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
+
+
+            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
+
 
             // meaningful unquote-splicing
             { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },

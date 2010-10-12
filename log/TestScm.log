@@ -1,36 +1,36 @@
 global:
-  numCycles:        837497
-  numCons:          870100
+  numCycles:        846875
+  numCons:          879767
   iobuf:            0
-    numPeek:        22438
-    numPop:         9498
-    numPush:        9507
+    numPeek:        22801
+    numPop:         9648
+    numPush:        9657
   iobuf:            1
     numPeek:        0
-    numPop:         2864
-    numPush:        2864
-  reg.numSet:       7993587
-  reg.numGet:       14604937
+    numPop:         2909
+    numPush:        2909
+  reg.numSet:       8090189
+  reg.numGet:       14769428
   reg.maxAddr:      31
-  heap.numSet:      4548880
-  heap.numGet:      5501984
+  heap.numSet:      4623664
+  heap.numGet:      5581456
   heap.maxAddr:     6143
-  cache.numHits:    9571478
-  cache.numMisses:  333682
-  cache.numFlush:   284305
-  cache.numDrop:    49377
-  cache.numLoad:    343874
-  cacheTop.numSet:  6494151
-  cacheTop.numGet:  3421201
+  cache.numHits:    9690203
+  cache.numMisses:  338489
+  cache.numFlush:   288979
+  cache.numDrop:    49510
+  cache.numLoad:    348841
+  cacheTop.numSet:  6584161
+  cacheTop.numGet:  3454883
   cacheTop.maxAddr: 6143
-  reg   ops:        22598524
-  cache ops:        9915352
-  heap  ops:        10050864
-  reg   ops/cell:   728984.6451612903
-  cache ops/cell:   1614.0895328015627
-  heap  ops/cell:   1636.14911281133
-  ops   reg/cache:  2.279144905798604
-  ops   cache/heap: 0.9865173780084976
+  reg   ops:        22859617
+  cache ops:        10039044
+  heap  ops:        10205120
+  reg   ops/cell:   737407.0
+  cache ops/cell:   1634.2249715122905
+  heap  ops/cell:   1661.2599706983558
+  ops   reg/cache:  2.27707110358317
+  ops   cache/heap: 0.9837262080210718
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -38,13 +38,13 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9663123059092432
-  cache write/miss:          0.8520237831228535
-numExpects:     1125
-  happy:        986
-  unhappy:      139
+  cache hit/op:              0.9662479414065164
+  cache write/miss:          0.8537323221729509
+numExpects:     1135
+  happy:        994
+  unhappy:      141
 numBatches:     139
 numMetaBatches: 53
-numScms:        637
+numScms:        647
 numScmNoEvals:  128
-numScmFulls:    509
+numScmFulls:    519

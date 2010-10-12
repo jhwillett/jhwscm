@@ -3026,63 +3026,57 @@ public class JhwScm implements Firmware
          // unquote-syntax to sentinels which are understood by
          // sub_quasiquote.
          //
-         if ( NIL == reg.get(regArg0) )
-         {
-            raiseError(ERR_SEMANTIC); // or ERR_LEXICAL, or ERR_SYNTAX?
-            break;
-         }
          reg.set(regArg1, code(TYPE_FIXINT,0));
          gosub(sub_quasiquote_rec, blk_tail_call);
          break;
 
       case sub_quasiquote_rec:
-         logrec("regArg0: ",reg.get(regArg0));
-         logrec("regArg1: ",reg.get(regArg1));
-         if ( NIL == reg.get(regArg0) )
-         {
-            reg.set(regRetval,NIL);
-            returnsub();
-            break;
-         }
+         logrec("regArg0:         ",reg.get(regArg0));
+         logrec("regArg1:         ",reg.get(regArg1));
          if ( TYPE_CELL != type(reg.get(regArg0)) )
          {
-            raiseError(ERR_SEMANTIC);
+            logrec("noncell:         ",reg.get(regTmp0));
+            reg.set(regRetval,reg.get(regArg0));
+            returnsub();
             break;
          }
          reg.set(regTmp0,car(reg.get(regArg0)));
-         reg.set(regTmp1,cdr(reg.get(regArg0)));
-         if ( TYPE_CELL != type(reg.get(regTmp0)) )
-         {
-            logrec("noncell:    ",reg.get(regTmp0));
-            reg.set(regRetval,reg.get(regTmp0));
-            returnsub();
-            break;
-         }
-         reg.set(regTmp2,car(reg.get(regTmp0)));
          if ( sub_quasiquote == reg.get(regTmp0) )
          {
-            logrec("quasiquote: ",reg.get(regTmp0));
+            logrec("quasiquote:      ",reg.get(regTmp0));
             raiseError(ERR_NOT_IMPL);
-            break;
          }
          else if ( UNQUOTE == reg.get(regTmp0) )
          {
-            logrec("unquote:    ",reg.get(regTmp0));
+            logrec("unquote:         ",reg.get(regTmp0));
             raiseError(ERR_NOT_IMPL);
-            break;
          }
          else if ( UNQUOTE_SPLICING == reg.get(regTmp0) )
          {
-            logrec("unquote-spl:",reg.get(regTmp0));
+            logrec("unquote-spl:     ",reg.get(regTmp0));
             raiseError(ERR_NOT_IMPL);
-            break;
          }
          else
          {
-            logrec("plain:      ",reg.get(regTmp0));
-            store(regTmp0);
+            reg.set(regTmp1,cdr(reg.get(regArg0)));
+            logrec("plain first:     ",reg.get(regTmp0));
+            logrec("plain rest:      ",reg.get(regTmp1));
+            logrec("plain depth:     ",reg.get(regArg1));
+            store(regTmp1);                          // store rest
+            store(regArg1);                          // store depth
+            reg.set(regArg0,reg.get(regTmp0));
+            // keep same regArg1 for recursion depth
+            gosub(sub_quasiquote_rec,sub_quasiquote_rec+0x1);
          }
-         reg.set(regArg0,reg.get(regTmp1));
+         break;
+      case sub_quasiquote_rec+0x1:
+         // after plain recursion
+         restore(regArg1);                          // restore depth
+         restore(regArg0);                          // restore rest
+         logrec("postplain first: ",reg.get(regRetval));
+         logrec("postplain rest:  ",reg.get(regArg0));
+         logrec("postplain depth: ",reg.get(regArg1));
+         store(regRetval);                          // feed blk_tail_call_m_cons
          gosub(sub_quasiquote_rec,blk_tail_call_m_cons);
          break;
 
@@ -3655,7 +3649,7 @@ public class JhwScm implements Firmware
 
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
-   private static final int sub_quasiquote       = TYPE_SUBS | AX |  0x7710;
+   private static final int sub_quasiquote       = TYPE_SUBS | A1 |  0x7710;
    private static final int sub_quasiquote_rec   = TYPE_SUBS | A2 |  0x7720;
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
