@@ -110,7 +110,6 @@ public class JhwScm implements Firmware
       final Mem reg = mach.reg;
       reg.set(regError,   NIL);
       reg.set(regStack,   NIL);
-      reg.set(regQQDepth, code(TYPE_FIXINT,0));
       reg.set(regEnv,     reg.get(regTopEnv));
       gosub(sub_top, blk_halt);
       if ( DEBUG ) scmDepth = 1; // 1 b/c sub_top called from sub_init
@@ -175,7 +174,6 @@ public class JhwScm implements Firmware
          reg.set(regError,     NIL);
          reg.set(regFreeCells, NIL);
          reg.set(regHeapTop,   code(TYPE_FIXINT,0));
-         reg.set(regQQDepth,   code(TYPE_FIXINT,0));
          reg.set(regArg0,      code(TYPE_FIXINT,primitives_start));
          reg.set(regArg1,      code(TYPE_FIXINT,primitives_end));
          gosub(sub_prebind, sub_init+0x1);
@@ -562,14 +560,14 @@ public class JhwScm implements Firmware
             break;
          }
          reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
-         reg.set(regRetval, cons(sub_unquote_splicing,reg.get(regTmp0)));
+         reg.set(regRetval, cons(UNQUOTE_SPLICING,reg.get(regTmp0)));
          returnsub();
          break;
       case sub_read+0x7:
          // after read following comma without ampersand
          //
          reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
-         reg.set(regRetval, cons(sub_unquote,reg.get(regTmp0)));
+         reg.set(regRetval, cons(UNQUOTE,reg.get(regTmp0)));
          returnsub();
          break;
 
@@ -2461,6 +2459,16 @@ public class JhwScm implements Firmware
                reg.set(regArg2, code(TYPE_FIXINT,0));
                gosub(sub_print_const,blk_tail_call);
                break;
+            case UNQUOTE:
+               reg.set(regArg0, const_unquote);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
+               break;
+            case UNQUOTE_SPLICING:
+               reg.set(regArg0, const_unquote_splicing);
+               reg.set(regArg2, code(TYPE_FIXINT,0));
+               gosub(sub_print_const,blk_tail_call);
+               break;
             default:
                log("bogus sentinel: ",pp(reg.get(regArg0)));
                raiseError(ERR_INTERNAL);
@@ -2492,12 +2500,6 @@ public class JhwScm implements Firmware
                break;
             case sub_quasiquote:
                reg.set(regArg0, const_quasiquote);
-               break;
-            case sub_unquote:
-               reg.set(regArg0, const_unquote);
-               break;
-            case sub_unquote_splicing:
-               reg.set(regArg0, const_unquote_splicing);
                break;
             default:
                reg.set(regArg0, const_huhPM);
@@ -3000,18 +3002,37 @@ public class JhwScm implements Firmware
          // it treats the topmost layer of unquote or unquote-splicing
          // found in its args: they are evaluated.
          //
-         // TODO: sub_unquote and sub_unquote_splicing are more like
-         // sentinels than opcodes here.  Do something about that?
+         // Guile's default top-level environment binds complains
+         // about invalid syntax when you enter "quasiquote", and
+         // unbound symbol when you enter either "unquote" or
+         // "unquote-syntax".
          //
-         if ( false )
-         {
-            // TODO: this is bogus, to make this just like sub_quote
-            reg.set(regRetval, reg.get(regArg0));
-            returnsub();
-            break;
-         }
-         logrec("regArg0:    ",reg.get(regArg0));
-         logrec("regQQDepth: ",reg.get(regQQDepth));
+         // So in Guile quasiquote is a syntax, and unquote and
+         // unquote-syntax are keywords within that syntax.  They are
+         // bindable symbols, and work as expected ouside of
+         // quasiquote expressions.
+         //
+         // Trying to define "define", "lambda", or "quasiquote" all
+         // result in:
+         //
+         //   ERROR: cannot define keyword at top level define
+         //
+         // So... I do not have a clear vision for a full syntax +
+         // keyword subsystem yet - and hand-implementing quasiquote
+         // is part of how I am learning how to get there.
+         //
+         // For now, I make quasiquote bound to this TYPE_SUBS
+         // sub_quasiquote, and I bind each of unquote and
+         // unquote-syntax to sentinels which are understood by
+         // sub_quasiquote.
+         //
+         reg.set(regArg1, code(TYPE_FIXINT,0));
+         gosub(sub_quasiquote_rec, blk_tail_call);
+         break;
+
+      case sub_quasiquote_rec:
+         logrec("regArg0: ",reg.get(regArg0));
+         logrec("regArg1: ",reg.get(regArg1));
          if ( NIL == reg.get(regArg0) )
          {
             reg.set(regRetval,NIL);
@@ -3033,19 +3054,19 @@ public class JhwScm implements Firmware
             break;
          }
          reg.set(regTmp2,car(reg.get(regTmp0)));
-         if ( sub_quasiquote == type(reg.get(regTmp0)) )
+         if ( sub_quasiquote == reg.get(regTmp0) )
          {
             logrec("quasiquote: ",reg.get(regTmp0));
             raiseError(ERR_NOT_IMPL);
             break;
          }
-         else if ( sub_unquote == type(reg.get(regTmp0)) )
+         else if ( UNQUOTE == reg.get(regTmp0) )
          {
             logrec("unquote:    ",reg.get(regTmp0));
             raiseError(ERR_NOT_IMPL);
             break;
          }
-         else if ( sub_unquote_splicing == type(reg.get(regTmp0)) )
+         else if ( UNQUOTE_SPLICING == reg.get(regTmp0) )
          {
             logrec("unquote-spl:",reg.get(regTmp0));
             raiseError(ERR_NOT_IMPL);
@@ -3058,16 +3079,6 @@ public class JhwScm implements Firmware
          }
          reg.set(regArg0,reg.get(regTmp1));
          gosub(sub_quasiquote,blk_tail_call_m_cons);
-         break;
-
-      case sub_unquote:
-         log("regQQDepth: ",pp(reg.get(regQQDepth)));
-         raiseError(ERR_NOT_IMPL);
-         break;
-
-      case sub_unquote_splicing:
-         log("regQQDepth: ",pp(reg.get(regQQDepth)));
-         raiseError(ERR_NOT_IMPL);
          break;
 
       case sub_if:
@@ -3504,6 +3515,9 @@ public class JhwScm implements Firmware
    private static final int ERR_SEMANTIC        = TYPE_SENTINEL |  7;
    private static final int ERR_NOT_IMPL        = TYPE_SENTINEL | 87;
 
+   private static final int UNQUOTE             = TYPE_SENTINEL | 33;
+   private static final int UNQUOTE_SPLICING    = TYPE_SENTINEL | 44;
+
    private static final int regFreeCells        =   0; // unused cells
 
    private static final int regStack            =   1; // the runtime stack
@@ -3516,7 +3530,7 @@ public class JhwScm implements Firmware
    private static final int regTopEnv           =   6; // list of env frames
    private static final int regEnv              =   7; // list of env frames
 
-   private static final int regQQDepth          =   8; // fixint depth of qq
+   private static final int regUNUSED           =   8;
 
    private static final int regRetval           =   9; // return value
 
@@ -3637,8 +3651,7 @@ public class JhwScm implements Firmware
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
    private static final int sub_quasiquote       = TYPE_SUBS | AX |  0x7710;
-   private static final int sub_unquote          = TYPE_SUBS | A1 |  0x7720;
-   private static final int sub_unquote_splicing = TYPE_SUBS | A1 |  0x7730;
+   private static final int sub_quasiquote_rec   = TYPE_SUBS | A2 |  0x7720;
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
    private static final int sub_lamsyn           = TYPE_SUBS | AX |  0x7910;
@@ -3727,8 +3740,8 @@ public class JhwScm implements Firmware
       //
 
       const_val[i] = sub_quasiquote;       const_str[i++] = "quasiquote";
-      const_val[i] = sub_unquote;          const_str[i++] = "unquote";
-      const_val[i] = sub_unquote_splicing; const_str[i++] = "unquote-splicing";
+      const_val[i] = UNQUOTE;              const_str[i++] = "unquote";
+      const_val[i] = UNQUOTE_SPLICING;     const_str[i++] = "unquote-splicing";
 
       const_val[i] = sub_readv;   const_str[i++] = "read";
       const_val[i] = sub_printv;  const_str[i++] = "display";
@@ -4491,6 +4504,8 @@ public class JhwScm implements Firmware
       case IS_ENVIRONMENT:       return "IS_ENVIRONMENT";
       case TRUE:                 return "TRUE";
       case FALSE:                return "FALSE";
+      case UNQUOTE:              return "UNQUOTE";
+      case UNQUOTE_SPLICING:     return "UNQUOTE_SPLICING";
       case ERR_OOM:              return "ERR_OOM";
       case ERR_INTERNAL:         return "ERR_INTERNAL";
       case ERR_LEXICAL:          return "ERR_LEXICAL";
@@ -4580,8 +4595,7 @@ public class JhwScm implements Firmware
          case sub_if:               buf.append("sub_if");               break;
          case sub_quote:            buf.append("sub_quote");            break;
          case sub_quasiquote:       buf.append("sub_quasiquote");       break;
-         case sub_unquote:          buf.append("sub_unquote");          break;
-         case sub_unquote_splicing: buf.append("sub_unquote_splicing"); break;
+         case sub_quasiquote_rec:   buf.append("sub_quasiquote_rec");   break;
          case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
          case sub_lamsyn:           buf.append("sub_lamsyn");           break;

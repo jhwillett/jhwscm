@@ -553,14 +553,15 @@ public class TestScm extends Util
             // test simple cases of quasiquote are like quote
             { "`9",                           "9"            },
             { "`()",                          "()"           },
-
             { "(+ 1 `())",                    SEMANTIC       },
+
          };
          final Object[][] tests = { 
          };
          final Object[][] tests_unready = {
 
             { "`(1 2)",                       "(1 2)"        },
+
             { "`(a b)",                       "(a b)"        },
             { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
 

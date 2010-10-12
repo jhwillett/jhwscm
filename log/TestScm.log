@@ -1,5 +1,5 @@
 global:
-  numCycles:        836566
+  numCycles:        836569
   numCons:          869146
   iobuf:            0
     numPeek:        22418
@@ -9,8 +9,8 @@ global:
     numPeek:        0
     numPop:         2864
     numPush:        2864
-  reg.numSet:       7984803
-  reg.numGet:       14588727
+  reg.numSet:       7984035
+  reg.numGet:       14588736
   reg.maxAddr:      31
   heap.numSet:      4541456
   heap.numGet:      5494144
@@ -23,13 +23,13 @@ global:
   cacheTop.numSet:  6485185
   cacheTop.numGet:  3417876
   cacheTop.maxAddr: 6143
-  reg   ops:        22573530
+  reg   ops:        22572771
   cache ops:        9903061
   heap  ops:        10035600
-  reg   ops/cell:   728178.3870967742
+  reg   ops/cell:   728153.9032258064
   cache ops/cell:   1612.088718867003
   heap  ops/cell:   1633.6643333875957
-  ops   reg/cache:  2.279449758009165
+  ops   reg/cache:  2.2793731150398853
   ops   cache/heap: 0.9867931165052414
   ALG:                       4
   LINE_SIZE:                 16
