@@ -3017,15 +3017,20 @@ public class JhwScm implements Firmware
          //
          //   ERROR: cannot define keyword at top level define
          //
-         // So... I do not have a clear vision for a full syntax +
-         // keyword subsystem yet - and hand-implementing quasiquote
-         // is part of how I am learning how to get there.
+         // So... Presently I do not have a clear vision for a syntax
+         // subsystem supporting keywords - and hand-implementing
+         // quasiquote is part of how I am learning how to get there.
          //
          // For now, I make quasiquote bound to this TYPE_SUBS
          // sub_quasiquote, and I bind each of unquote and
          // unquote-syntax to sentinels which are understood by
          // sub_quasiquote.
          //
+         if ( NIL == reg.get(regArg0) )
+         {
+            raiseError(ERR_SEMANTIC); // or ERR_LEXICAL, or ERR_SYNTAX?
+            break;
+         }
          reg.set(regArg1, code(TYPE_FIXINT,0));
          gosub(sub_quasiquote_rec, blk_tail_call);
          break;
@@ -3078,7 +3083,7 @@ public class JhwScm implements Firmware
             store(regTmp0);
          }
          reg.set(regArg0,reg.get(regTmp1));
-         gosub(sub_quasiquote,blk_tail_call_m_cons);
+         gosub(sub_quasiquote_rec,blk_tail_call_m_cons);
          break;
 
       case sub_if:

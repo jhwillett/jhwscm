@@ -555,12 +555,15 @@ public class TestScm extends Util
             { "`()",                          "()"           },
             { "(+ 1 `())",                    SEMANTIC       },
 
+            { "(quasiquote)",                 SEMANTIC       },
          };
          final Object[][] tests = { 
+
          };
          final Object[][] tests_unready = {
 
             { "`(1 2)",                       "(1 2)"        },
+
 
             { "`(a b)",                       "(a b)"        },
             { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
