@@ -554,15 +554,14 @@ public class TestScm extends Util
             { "`9",                           "9"            },
             { "`()",                          "()"           },
 
+            { "(+ 1 `())",                    SEMANTIC       },
          };
          final Object[][] tests = { 
-
          };
          final Object[][] tests_unready = {
 
             { "`(1 2)",                       "(1 2)"        },
             { "`(a b)",                       "(a b)"        },
-            { "(+ 1 `())",                    SEMANTIC       },
             { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
 
             // recursy version of the quote-quote- question:
@@ -1743,14 +1742,27 @@ public class TestScm extends Util
          scm.clear();
       }
 
-      assertEquals("drive failure on \"" + expr + "\":",
-                   expected_dcode,
-                   dcode);
-      if ( null != expected_output )
+      if ( Firmware.ERROR_COMPLETE == dcode )
       {
-         assertEquals("result failure on \"" + expr + "\":",
-                      expected_output,
-                      out.toString());
+         if ( expected_dcode != dcode )
+         {
+            fail("expected code " + 
+                 expected_dcode + 
+                 " on expr \"" + expr + "\"" +
+                 ", but succeeded with output \"" + out + "\"");
+         }
+         else if ( null != expected_output )
+         {
+            assertEquals("result failure on \"" + expr + "\":",
+                         expected_output,
+                         out.toString());
+         }
+      }
+      else
+      {
+         assertEquals("drive failure on \"" + expr + "\":",
+                      expected_dcode,
+                      dcode);
       }
    }
 
