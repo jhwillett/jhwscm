@@ -108,9 +108,10 @@ public class JhwScm implements Firmware
       log("clear: ");
       if ( DEBUG ) javaDepth = 1;
       final Mem reg = mach.reg;
-      reg.set(regError, NIL);
-      reg.set(regStack, NIL);
-      reg.set(regEnv,   reg.get(regTopEnv));
+      reg.set(regError,   NIL);
+      reg.set(regStack,   NIL);
+      reg.set(regQQDepth, code(TYPE_FIXINT,0));
+      reg.set(regEnv,     reg.get(regTopEnv));
       gosub(sub_top, blk_halt);
       if ( DEBUG ) scmDepth = 1; // 1 b/c sub_top called from sub_init
    }
@@ -151,6 +152,7 @@ public class JhwScm implements Firmware
          //
          //   - no error condition
          //   - an empty stack
+         //   - no quasiquote depth
          //   - an empty free cell list
          //   - the heap uninitialized
          //
@@ -173,6 +175,7 @@ public class JhwScm implements Firmware
          reg.set(regError,     NIL);
          reg.set(regFreeCells, NIL);
          reg.set(regHeapTop,   code(TYPE_FIXINT,0));
+         reg.set(regQQDepth,   code(TYPE_FIXINT,0));
          reg.set(regArg0,      code(TYPE_FIXINT,primitives_start));
          reg.set(regArg1,      code(TYPE_FIXINT,primitives_end));
          gosub(sub_prebind, sub_init+0x1);
@@ -507,6 +510,11 @@ public class JhwScm implements Firmware
          // It's a syntax rewrite, nothing more, and sub_read can
          // stay simple and let the rest of the system handle it.
          //
+         if ( EOF == reg.get(regRetval) )
+         {
+            raiseError(ERR_LEXICAL);
+            break;
+         }
          reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
          reg.set(regRetval, cons(sub_quote,reg.get(regTmp0)));
          returnsub();
@@ -514,6 +522,11 @@ public class JhwScm implements Firmware
       case sub_read+0x4:
          // after read following backtick quote
          //
+         if ( EOF == reg.get(regRetval) )
+         {
+            raiseError(ERR_LEXICAL);
+            break;
+         }
          reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
          reg.set(regRetval, cons(sub_quasiquote,reg.get(regTmp0)));
          returnsub();
@@ -525,6 +538,11 @@ public class JhwScm implements Firmware
          // means "(unquote @)", so clearly we're in good company
          // demanding the ampersand be the very next character.
          //
+         if ( EOF == reg.get(regIO) )
+         {
+            raiseError(ERR_LEXICAL);
+            break;
+         }
          if ( code(TYPE_CHAR,'@') == reg.get(regIO) )
          {
             portPop(regArg0);
@@ -538,6 +556,11 @@ public class JhwScm implements Firmware
       case sub_read+0x6:
          // after read following comma and ampersand
          //
+         if ( EOF == reg.get(regRetval) )
+         {
+            raiseError(ERR_LEXICAL);
+            break;
+         }
          reg.set(regTmp0,   cons(reg.get(regRetval),NIL));
          reg.set(regRetval, cons(sub_unquote_splicing,reg.get(regTmp0)));
          returnsub();
@@ -2973,17 +2996,77 @@ public class JhwScm implements Firmware
          break;
 
       case sub_quasiquote:
-         // TODO: this is bogus, to make this just like sub_quote
-         //raiseError(ERR_NOT_IMPL);
-         reg.set(regRetval, reg.get(regArg0));
-         returnsub();
+         // The quasiquote operator.  Like sub_quote, except for how
+         // it treats the topmost layer of unquote or unquote-splicing
+         // found in its args: they are evaluated.
+         //
+         // TODO: sub_unquote and sub_unquote_splicing are more like
+         // sentinels than opcodes here.  Do something about that?
+         //
+         if ( false )
+         {
+            // TODO: this is bogus, to make this just like sub_quote
+            reg.set(regRetval, reg.get(regArg0));
+            returnsub();
+            break;
+         }
+         logrec("regArg0:    ",reg.get(regArg0));
+         logrec("regQQDepth: ",reg.get(regQQDepth));
+         if ( NIL == reg.get(regArg0) )
+         {
+            reg.set(regRetval,NIL);
+            returnsub();
+            break;
+         }
+         if ( TYPE_CELL != type(reg.get(regArg0)) )
+         {
+            raiseError(ERR_SEMANTIC);
+            break;
+         }
+         reg.set(regTmp0,car(reg.get(regArg0)));
+         reg.set(regTmp1,cdr(reg.get(regArg0)));
+         if ( TYPE_CELL != type(reg.get(regTmp0)) )
+         {
+            logrec("noncell:    ",reg.get(regTmp0));
+            reg.set(regRetval,reg.get(regTmp0));
+            returnsub();
+            break;
+         }
+         reg.set(regTmp2,car(reg.get(regTmp0)));
+         if ( sub_quasiquote == type(reg.get(regTmp0)) )
+         {
+            logrec("quasiquote: ",reg.get(regTmp0));
+            raiseError(ERR_NOT_IMPL);
+            break;
+         }
+         else if ( sub_unquote == type(reg.get(regTmp0)) )
+         {
+            logrec("unquote:    ",reg.get(regTmp0));
+            raiseError(ERR_NOT_IMPL);
+            break;
+         }
+         else if ( sub_unquote_splicing == type(reg.get(regTmp0)) )
+         {
+            logrec("unquote-spl:",reg.get(regTmp0));
+            raiseError(ERR_NOT_IMPL);
+            break;
+         }
+         else
+         {
+            logrec("plain:      ",reg.get(regTmp0));
+            store(regTmp0);
+         }
+         reg.set(regArg0,reg.get(regTmp1));
+         gosub(sub_quasiquote,blk_tail_call_m_cons);
          break;
 
       case sub_unquote:
+         log("regQQDepth: ",pp(reg.get(regQQDepth)));
          raiseError(ERR_NOT_IMPL);
          break;
 
       case sub_unquote_splicing:
+         log("regQQDepth: ",pp(reg.get(regQQDepth)));
          raiseError(ERR_NOT_IMPL);
          break;
 
@@ -3433,7 +3516,7 @@ public class JhwScm implements Firmware
    private static final int regTopEnv           =   6; // list of env frames
    private static final int regEnv              =   7; // list of env frames
 
-   private static final int regUNUSED           =   8;
+   private static final int regQQDepth          =   8; // fixint depth of qq
 
    private static final int regRetval           =   9; // return value
 
@@ -3553,7 +3636,7 @@ public class JhwScm implements Firmware
 
    private static final int sub_if               = TYPE_SUBS | A3 |  0x7600;
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
-   private static final int sub_quasiquote       = TYPE_SUBS | A1 |  0x7710;
+   private static final int sub_quasiquote       = TYPE_SUBS | AX |  0x7710;
    private static final int sub_unquote          = TYPE_SUBS | A1 |  0x7720;
    private static final int sub_unquote_splicing = TYPE_SUBS | A1 |  0x7730;
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;

@@ -517,6 +517,7 @@ public class TestScm extends Util
             { "'(a b)",                       "(a b)"  },
             { "(+ 1 '())",                    SEMANTIC },
             { "'9",                           "9"      },
+            { "'",                            LEXICAL  },
          };
          final Batch[] batches = { 
             REP_IND,
@@ -533,11 +534,32 @@ public class TestScm extends Util
             { "'`(1 2)",     "(quasiquote (1 2))"                      },
             { "'`(1 ,2)",    "(quasiquote (1 (unquote 2)))"            },
             { "'`(1 ,@2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
-         };
-         final Object[][] tests = { 
+
+            { "' ' 1",          "(quote 1)"                               },
+            { "' ` 1",          "(quasiquote 1)"                          },
+            { "' ` (1 2)",      "(quasiquote (1 2))"                      },
+            { "' ` (1 , 2)",    "(quasiquote (1 (unquote 2)))"            },
+            { "' ` (1 ,@ 2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
+
+
+            { "`",                           LEXICAL                   },
+            { "`,",                          LEXICAL                   },
+            { "`,@",                         LEXICAL                   },
+            { ",",                           LEXICAL                   },
+            { ",@",                          LEXICAL                   },
+
+            { "' ` (1 , @ 2 3)", "(quasiquote (1 (unquote @) 2 3))" },
+
             // test simple cases of quasiquote are like quote
             { "`9",                           "9"            },
             { "`()",                          "()"           },
+
+         };
+         final Object[][] tests = { 
+
+         };
+         final Object[][] tests_unready = {
+
             { "`(1 2)",                       "(1 2)"        },
             { "`(a b)",                       "(a b)"        },
             { "(+ 1 `())",                    SEMANTIC       },
@@ -546,15 +568,18 @@ public class TestScm extends Util
             // recursy version of the quote-quote- question:
             { "``(1 2)",                       "(quasiquote (1 2))"           },
             { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
-         };
-         final Object[][] tests_unready = {
 
             // simple cases of quasiquote with unquote
+            { "`,1",                          "1"            },
+            { ",1",                           SEMANTIC       },
             { "`(1 ,2)",                      "(1 2)"        },
             { "`(1 ,(+ 2 3))",                "(1 5)"        },
 
             { "``,,1",   "(quasiquote (unquote 1))"                        },
             { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
+
+            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
+
 
             // long-name forms
             { "(quasiquote ())",                    "()"           },
@@ -566,13 +591,15 @@ public class TestScm extends Util
             { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
 
             // meaningful unquote-splicing
+            { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },
+            { "`(,@(list 2 3))",               "(list 1 2)"  },
             { "`(1 ,@(list 2 3))",             "(1 2 3)"     },
             { "`(1 ,(list 2 3))",              "(1 (2 3))"   },
             { "`(1 ,@(list 2 3) 4)",           "(1 2 3 4)"   },
             { "`(1 ,(list 2 3) 4)",            "(1 (2 3) 4)" },
 
             { "`(1 ,@2)",                      "(1 . 2)"     },
-            { "`(1 ,@2 3)",                    LEXICAL       }, // or SEMANTIC?
+            { "`(1 ,@2 3)",                    SEMANTIC      },
 
             { "``(1 ,@2)",  
               "(quasiquote (1 (unquote-splicing 2)))" },
@@ -596,7 +623,7 @@ public class TestScm extends Util
          if ( true )
          {
             metabatch(tests_happy,batches);
-            //VERBOSE = true;
+            VERBOSE = true;
             metabatch(tests,batches);
             VERBOSE = false;
          }
