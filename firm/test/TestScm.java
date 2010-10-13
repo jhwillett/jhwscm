@@ -1340,11 +1340,7 @@ public class TestScm extends Util
             { ",@1",                                SEMANTIC       },
             { ",@(list 2 3)",                       SEMANTIC       },
 
-         };
-         final Object[][] tests = { 
-         };
-         final Object[][] tests_unready = {
-
+            // some supressed-recursion unquote-splicing
             { 
                "``(1 ,@2)",  
               "(quasiquote (1 (unquote-splicing 2)))" 
@@ -1354,9 +1350,13 @@ public class TestScm extends Util
                "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  
             },
 
+         };
+         final Object[][] tests = { 
+         };
+         final Object[][] tests_unready = {
+
             // meaningful unquote-splicing
-            { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },
-            { "`(,@(list 2 3))",               "(list 1 2)"  },
+            { "`(,@(list 2 3))",               "(2 3)"       },
             { "`(1 ,@(list 2 3))",             "(1 2 3)"     },
             { "`(1 ,(list 2 3))",              "(1 (2 3))"   },
             { "`(1 ,@(list 2 3) 4)",           "(1 2 3 4)"   },
@@ -1368,7 +1368,8 @@ public class TestScm extends Util
             { "` (1 ,@ 2 3)",                  SEMANTIC      },
             { "` (1 ,@2 3)",                   SEMANTIC      },
 
-            { "` (1 , @ 2 3)", "(1 #<macro! @> 2 3)" }, // per guile
+            { "`,@(list 2 3)", "(unquote-splicing (list 1 2)" }, // per guile
+            { "` (1 , @ 2 3)", "(1 #<macro! @> 2 3)"          }, // per guile
 
             // full-name forms
             { "(quasiquote (unquote 1))",                        "1"         },
