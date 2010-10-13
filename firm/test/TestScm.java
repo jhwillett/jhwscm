@@ -1342,10 +1342,17 @@ public class TestScm extends Util
 
          };
          final Object[][] tests = { 
-
-
          };
          final Object[][] tests_unready = {
+
+            { 
+               "``(1 ,@2)",  
+              "(quasiquote (1 (unquote-splicing 2)))" 
+            },
+            { 
+               "``(1 ,@(list 2 3) ,4)", 
+               "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  
+            },
 
             // meaningful unquote-splicing
             { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },
@@ -1362,11 +1369,6 @@ public class TestScm extends Util
             { "` (1 ,@2 3)",                   SEMANTIC      },
 
             { "` (1 , @ 2 3)", "(1 #<macro! @> 2 3)" }, // per guile
-
-            { "``(1 ,@2)",  
-              "(quasiquote (1 (unquote-splicing 2)))" },
-            { "``(1 ,@(list 2 3) ,4)", 
-              "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  },
 
             // full-name forms
             { "(quasiquote (unquote 1))",                        "1"         },

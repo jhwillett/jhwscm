@@ -3107,14 +3107,7 @@ public class JhwScm implements Firmware
                reg.set(regArg0,reg.get(regTmp2));
                reg.set(regArg1, 
                        code(TYPE_FIXINT,value_fixint(reg.get(regArg1)) - 1));
-               if ( false )
-               {
-                  raiseError(ERR_NOT_IMPL);
-               }
-               else
-               {
-                  gosub(sub_quasiquote_rec,sub_quasiquote_rec+0x3);
-               }
+               gosub(sub_quasiquote_rec,sub_quasiquote_rec+0x3);
             }
          }
          else if ( UNQUOTE_SPLICING == reg.get(regTmp0) )
