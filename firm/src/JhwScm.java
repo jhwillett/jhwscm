@@ -3062,14 +3062,7 @@ public class JhwScm implements Firmware
                     code(TYPE_FIXINT,value_fixint(reg.get(regArg1)) + 1));
             logrec("  regArg0:       ",reg.get(regArg0));
             logrec("  regArg1:       ",reg.get(regArg1));
-            if ( false )
-            {
-               raiseError(ERR_NOT_IMPL);
-            }
-            else
-            {
-               gosub(sub_quasiquote_rec,sub_quasiquote_rec+0x2);
-            }
+            gosub(sub_quasiquote_rec,sub_quasiquote_rec+0x2);
          }
          else if ( UNQUOTE == reg.get(regTmp0) )
          {
@@ -3102,7 +3095,14 @@ public class JhwScm implements Firmware
                reg.set(regArg0,reg.get(regTmp2));
                reg.set(regArg1, 
                        code(TYPE_FIXINT,value_fixint(reg.get(regArg1)) - 1));
-               gosub(sub_quasiquote_rec,blk_tail_call);
+               if ( false )
+               {
+                  raiseError(ERR_NOT_IMPL);
+               }
+               else
+               {
+                  gosub(sub_quasiquote_rec,sub_quasiquote_rec+0x3);
+               }
             }
          }
          else if ( UNQUOTE_SPLICING == reg.get(regTmp0) )
@@ -3136,6 +3136,13 @@ public class JhwScm implements Firmware
          // after recursing into another sub_quasiquote expression
          reg.set(regTmp0,cons(reg.get(regRetval),NIL));
          reg.set(regTmp1,cons(sub_quasiquote,reg.get(regTmp0)));
+         reg.set(regRetval,reg.get(regTmp1));
+         returnsub();
+         break;
+      case sub_quasiquote_rec+0x3:
+         // after recursing into a sub_unquote expression when depth > 0
+         reg.set(regTmp0,cons(reg.get(regRetval),NIL));
+         reg.set(regTmp1,cons(UNQUOTE,reg.get(regTmp0)));
          reg.set(regRetval,reg.get(regTmp1));
          returnsub();
          break;

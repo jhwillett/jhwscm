@@ -576,11 +576,10 @@ public class TestScm extends Util
 
             // recursy versions of the quote-quote- question:
             { "``(1 2)",  "(quasiquote (1 2))"           },
+            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
 
          };
          final Object[][] tests = { 
-
-            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
 
          };
          final Object[][] tests_unready = {
