@@ -3112,8 +3112,32 @@ public class JhwScm implements Firmware
          }
          else if ( UNQUOTE_SPLICING == reg.get(regTmp0) )
          {
-            logrec("unquote-spl:     ",reg.get(regTmp0));
-            raiseError(ERR_NOT_IMPL);
+            if ( TYPE_CELL != type(reg.get(regTmp1)) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            reg.set(regTmp2,car(reg.get(regTmp1)));
+            reg.set(regTmp3,cdr(reg.get(regTmp1)));
+            if ( NIL != reg.get(regTmp3) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            if ( 0 == value_fixint(reg.get(regArg1)) )
+            {
+               logrec("unquote-splicing eval:    ",reg.get(regTmp1));
+               raiseError(ERR_NOT_IMPL);
+            }
+            else if ( DEBUG && 0 > value_fixint(reg.get(regArg1)) )
+            {
+               raiseError(ERR_INTERNAL);
+            }
+            else
+            {
+               logrec("unquote-splicing noeval:  ",reg.get(regTmp1));
+               raiseError(ERR_NOT_IMPL);
+            }
          }
          else
          {
