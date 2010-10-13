@@ -580,10 +580,11 @@ public class TestScm extends Util
          };
          final Object[][] tests = { 
 
+            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
+
          };
          final Object[][] tests_unready = {
 
-            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
             { "``,,1",    "(quasiquote (unquote 1))"                        },
             { "```,,1",   "(quasiquote (quasiquote (unquote (unquote 1))))" },
 
