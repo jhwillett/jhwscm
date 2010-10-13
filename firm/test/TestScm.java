@@ -574,14 +574,30 @@ public class TestScm extends Util
             { "`(1 ,2)",                            "(1 2)"        },
             { "`(1 ,(+ 2 3))",                      "(1 5)"        },
 
+            // recursy versions of the quote-quote- question:
+            { "``(1 2)",  "(quasiquote (1 2))"           },
+
          };
          final Object[][] tests = { 
 
          };
          final Object[][] tests_unready = {
 
-            { "``,,1",   "(quasiquote (unquote 1))"                        },
-            { "```,,1",  "(quasiquote (quasiquote (unquote (unquote 1))))" },
+            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
+            { "``,,1",    "(quasiquote (unquote 1))"                        },
+            { "```,,1",   "(quasiquote (quasiquote (unquote (unquote 1))))" },
+
+            // probing nesting per R5RS sec 4.2.6:
+            //
+            { 
+               "`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)",
+               "(a (quasiquote (b (unquote (+ 1 2)) (unquote (foo 4 d)) e)) f)"
+            },
+            {
+               "(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))",
+               "(a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)"
+            },
+
 
             { "(quasiquote (unquote 1))",           "1"            },
             { "(quasiquote (unquote 2 3))",         SEMANTIC       },
@@ -591,10 +607,6 @@ public class TestScm extends Util
             // gives me an ERR_INTERNAL, not a semantic error....
             { ",1",                                 SEMANTIC       },
 
-
-            // recursy version of the quote-quote- question:
-            { "``(1 2)",                       "(quasiquote (1 2))"           },
-            { "``(1 ,2)",                      "(quasiquote (1 (unquote 2)))" },
 
             // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
 
@@ -615,16 +627,6 @@ public class TestScm extends Util
             { "``(1 ,@(list 2 3) ,4)", 
               "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  },
 
-            // probing nesting per R5RS sec 4.2.6:
-            //
-            { 
-               "`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)",
-               "(a (quasiquote (b (unquote (+ 1 2)) (unquote (foo 4 d)) e)) f)"
-            },
-            {
-               "(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))",
-               "(a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)"
-            },
          };
          final Batch[] batches = { 
             REP_IND,

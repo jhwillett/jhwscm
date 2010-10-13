@@ -3044,8 +3044,32 @@ public class JhwScm implements Firmware
          reg.set(regTmp1,cdr(reg.get(regArg0)));
          if ( sub_quasiquote == reg.get(regTmp0) )
          {
-            logrec("quasiquote:      ",reg.get(regTmp0));
-            raiseError(ERR_NOT_IMPL);
+            if ( TYPE_CELL != type(reg.get(regTmp1)) )
+            {
+               raiseError(ERR_INTERNAL);
+               break;
+            }
+            reg.set(regTmp2,car(reg.get(regTmp1)));
+            reg.set(regTmp3,cdr(reg.get(regTmp1)));
+            if ( NIL != reg.get(regTmp3) )
+            {
+               raiseError(ERR_SEMANTIC);
+               break;
+            }
+            logrec("requasiquote:    ",reg.get(regTmp1));
+            reg.set(regArg0,reg.get(regTmp2));
+            reg.set(regArg1, 
+                    code(TYPE_FIXINT,value_fixint(reg.get(regArg1)) + 1));
+            logrec("  regArg0:       ",reg.get(regArg0));
+            logrec("  regArg1:       ",reg.get(regArg1));
+            if ( false )
+            {
+               raiseError(ERR_NOT_IMPL);
+            }
+            else
+            {
+               gosub(sub_quasiquote_rec,sub_quasiquote_rec+0x2);
+            }
          }
          else if ( UNQUOTE == reg.get(regTmp0) )
          {
@@ -3080,7 +3104,6 @@ public class JhwScm implements Firmware
                        code(TYPE_FIXINT,value_fixint(reg.get(regArg1)) - 1));
                gosub(sub_quasiquote_rec,blk_tail_call);
             }
-            break;
          }
          else if ( UNQUOTE_SPLICING == reg.get(regTmp0) )
          {
@@ -3108,6 +3131,13 @@ public class JhwScm implements Firmware
          logrec("postplain depth: ",reg.get(regArg1));
          store(regRetval);                          // feed blk_tail_call_m_cons
          gosub(sub_quasiquote_rec,blk_tail_call_m_cons);
+         break;
+      case sub_quasiquote_rec+0x2:
+         // after recursing into another sub_quasiquote expression
+         reg.set(regTmp0,cons(reg.get(regRetval),NIL));
+         reg.set(regTmp1,cons(sub_quasiquote,reg.get(regTmp0)));
+         reg.set(regRetval,reg.get(regTmp1));
+         returnsub();
          break;
 
       case sub_if:
