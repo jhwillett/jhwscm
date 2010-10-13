@@ -525,121 +525,6 @@ public class TestScm extends Util
          metabatch(tests,batches);
       }
 
-      // dipping my toes into quasiquote and friends
-      {
-         final Object[][] tests_happy = { 
-            // test read and print, isolated from eval by quote
-            { "''1",         "(quote 1)"                               },
-            { "'`1",         "(quasiquote 1)"                          },
-            { "'`(1 2)",     "(quasiquote (1 2))"                      },
-            { "'`(1 ,2)",    "(quasiquote (1 (unquote 2)))"            },
-            { "'`(1 ,@2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
-
-            { "' ' 1",          "(quote 1)"                               },
-            { "' ` 1",          "(quasiquote 1)"                          },
-            { "' ` (1 2)",      "(quasiquote (1 2))"                      },
-            { "' ` (1 , 2)",    "(quasiquote (1 (unquote 2)))"            },
-            { "' ` (1 ,@ 2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
-
-
-            { "`",                           LEXICAL                   },
-            { "`,",                          LEXICAL                   },
-            { "`,@",                         LEXICAL                   },
-            { ",",                           LEXICAL                   },
-            { ",@",                          LEXICAL                   },
-
-            { "' ` (1 , @ 2 3)", "(quasiquote (1 (unquote @) 2 3))" },
-
-            // test simple cases of quasiquote are like quote
-            { "`9",                           "9"            },
-            { "`()",                          "()"           },
-            { "(+ 1 `())",                    SEMANTIC       },
-            { "`(1 2)",                       "(1 2)"        },
-            { "`(a b)",                       "(a b)"        },
-            { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
-
-            // long-name forms
-            { "(quasiquote)",                       SEMANTIC       },
-            { "(quasiquote 1 2)",                   SEMANTIC       },
-            { "(quasiquote ())",                    "()"           },
-            { "(quasiquote (1 2))",                 "(1 2)"        },
-            { "(quasiquote (a b))",                 "(a b)"        },
-            { "(+ 1 (quasiquote ()))",              SEMANTIC       },
-            { "(quasiquote 9)",                     "9"            },
-            { "(quasiquote (1 (+ 2 3)))",           "(1 (+ 2 3))"  },
-
-            // simple cases of quasiquote with unquote
-            { "`,1",                                "1"            },
-
-            { "`(1 ,2)",                            "(1 2)"        },
-            { "`(1 ,(+ 2 3))",                      "(1 5)"        },
-
-            // recursy versions of the quote-quote- question:
-            { "``(1 2)",  "(quasiquote (1 2))"           },
-            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
-
-         };
-         final Object[][] tests = { 
-
-         };
-         final Object[][] tests_unready = {
-
-            { "``,,1",    "(quasiquote (unquote 1))"                        },
-            { "```,,1",   "(quasiquote (quasiquote (unquote (unquote 1))))" },
-
-            // probing nesting per R5RS sec 4.2.6:
-            //
-            { 
-               "`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)",
-               "(a (quasiquote (b (unquote (+ 1 2)) (unquote (foo 4 d)) e)) f)"
-            },
-            {
-               "(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))",
-               "(a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)"
-            },
-
-
-            { "(quasiquote (unquote 1))",           "1"            },
-            { "(quasiquote (unquote 2 3))",         SEMANTIC       },
-            { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
-
-
-            // gives me an ERR_INTERNAL, not a semantic error....
-            { ",1",                                 SEMANTIC       },
-
-
-            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
-
-
-            // meaningful unquote-splicing
-            { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },
-            { "`(,@(list 2 3))",               "(list 1 2)"  },
-            { "`(1 ,@(list 2 3))",             "(1 2 3)"     },
-            { "`(1 ,(list 2 3))",              "(1 (2 3))"   },
-            { "`(1 ,@(list 2 3) 4)",           "(1 2 3 4)"   },
-            { "`(1 ,(list 2 3) 4)",            "(1 (2 3) 4)" },
-
-            { "`(1 ,@2)",                      "(1 . 2)"     },
-            { "`(1 ,@2 3)",                    SEMANTIC      },
-
-            { "``(1 ,@2)",  
-              "(quasiquote (1 (unquote-splicing 2)))" },
-            { "``(1 ,@(list 2 3) ,4)", 
-              "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  },
-
-         };
-         final Batch[] batches = { 
-            REP_IND,
-         };
-         if ( true )
-         {
-            metabatch(tests_happy,batches);
-            VERBOSE = true;
-            metabatch(tests,batches);
-            VERBOSE = false;
-         }
-      }
-
       // Some basic predicates
       {
          final Object[][] tests = { 
@@ -1382,6 +1267,121 @@ public class TestScm extends Util
             REP_DEP,
          };
          metabatch(tests,batches);
+      }
+
+      // dipping my toes into quasiquote and friends
+      {
+         final Object[][] tests_happy = { 
+            // test read and print, isolated from eval by quote
+            { "''1",         "(quote 1)"                               },
+            { "'`1",         "(quasiquote 1)"                          },
+            { "'`(1 2)",     "(quasiquote (1 2))"                      },
+            { "'`(1 ,2)",    "(quasiquote (1 (unquote 2)))"            },
+            { "'`(1 ,@2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
+
+            { "' ' 1",          "(quote 1)"                               },
+            { "' ` 1",          "(quasiquote 1)"                          },
+            { "' ` (1 2)",      "(quasiquote (1 2))"                      },
+            { "' ` (1 , 2)",    "(quasiquote (1 (unquote 2)))"            },
+            { "' ` (1 ,@ 2 3)", "(quasiquote (1 (unquote-splicing 2) 3))" },
+
+
+            { "`",                           LEXICAL                   },
+            { "`,",                          LEXICAL                   },
+            { "`,@",                         LEXICAL                   },
+            { ",",                           LEXICAL                   },
+            { ",@",                          LEXICAL                   },
+
+            { "' ` (1 , @ 2 3)", "(quasiquote (1 (unquote @) 2 3))" },
+
+            // test simple cases of quasiquote are like quote
+            { "`9",                           "9"            },
+            { "`()",                          "()"           },
+            { "(+ 1 `())",                    SEMANTIC       },
+            { "`(1 2)",                       "(1 2)"        },
+            { "`(a b)",                       "(a b)"        },
+            { "`(1 (+ 2 3))",                 "(1 (+ 2 3))"  },
+
+            // long-name forms
+            { "(quasiquote)",                       SEMANTIC       },
+            { "(quasiquote 1 2)",                   SEMANTIC       },
+            { "(quasiquote ())",                    "()"           },
+            { "(quasiquote (1 2))",                 "(1 2)"        },
+            { "(quasiquote (a b))",                 "(a b)"        },
+            { "(+ 1 (quasiquote ()))",              SEMANTIC       },
+            { "(quasiquote 9)",                     "9"            },
+            { "(quasiquote (1 (+ 2 3)))",           "(1 (+ 2 3))"  },
+
+            // simple cases of quasiquote with unquote
+            { "`,1",                                "1"            },
+
+            { "`(1 ,2)",                            "(1 2)"        },
+            { "`(1 ,(+ 2 3))",                      "(1 5)"        },
+
+            // recursy versions of the quote-quote- question:
+            { "``(1 2)",  "(quasiquote (1 2))"           },
+            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
+
+         };
+         final Object[][] tests = { 
+
+         };
+         final Object[][] tests_unready = {
+
+            { "``,,1",    "(quasiquote (unquote 1))"                        },
+            { "```,,1",   "(quasiquote (quasiquote (unquote (unquote 1))))" },
+
+            // probing nesting per R5RS sec 4.2.6:
+            //
+            { 
+               "`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)",
+               "(a (quasiquote (b (unquote (+ 1 2)) (unquote (foo 4 d)) e)) f)"
+            },
+            {
+               "(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))",
+               "(a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)"
+            },
+
+
+            { "(quasiquote (unquote 1))",           "1"            },
+            { "(quasiquote (unquote 2 3))",         SEMANTIC       },
+            { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
+
+
+            // gives me an ERR_INTERNAL, not a semantic error....
+            { ",1",                                 SEMANTIC       },
+
+
+            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
+
+
+            // meaningful unquote-splicing
+            { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },
+            { "`(,@(list 2 3))",               "(list 1 2)"  },
+            { "`(1 ,@(list 2 3))",             "(1 2 3)"     },
+            { "`(1 ,(list 2 3))",              "(1 (2 3))"   },
+            { "`(1 ,@(list 2 3) 4)",           "(1 2 3 4)"   },
+            { "`(1 ,(list 2 3) 4)",            "(1 (2 3) 4)" },
+
+            { "`(1 ,@2)",                      "(1 . 2)"     },
+            { "`(1 ,@2 3)",                    SEMANTIC      },
+
+            { "``(1 ,@2)",  
+              "(quasiquote (1 (unquote-splicing 2)))" },
+            { "``(1 ,@(list 2 3) ,4)", 
+              "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  },
+
+         };
+         final Batch[] batches = { 
+            REP_IND,
+         };
+         if ( true )
+         {
+            metabatch(tests_happy,batches);
+            VERBOSE = true;
+            metabatch(tests,batches);
+            VERBOSE = false;
+         }
       }
 
       {
