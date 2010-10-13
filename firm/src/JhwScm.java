@@ -1096,7 +1096,19 @@ public class JhwScm implements Firmware
             case NIL:
                // The empty list is not self-evaluating.
                //
-               // Covers expressions like "()" and "(())"..
+               // Covers expressions like "()" and "(())".
+               raiseError(ERR_SEMANTIC);
+               break;
+            case UNQUOTE:
+               // A naked unquote is bogus.
+               //
+               // Covers expressions like ",1".
+               raiseError(ERR_SEMANTIC);
+               break;
+            case UNQUOTE_SPLICING:
+               // A naked unquote-splicing is bogus.
+               //
+               // Covers expressions like ",@(list 1 2)".
                raiseError(ERR_SEMANTIC);
                break;
             default:

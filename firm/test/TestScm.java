@@ -1335,13 +1335,17 @@ public class TestScm extends Util
                "(a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)"
             },
 
+            // some misuses
+            { ",1",                                 SEMANTIC       },
+            { ",@1",                                SEMANTIC       },
+            { ",@(list 2 3)",                       SEMANTIC       },
+
          };
          final Object[][] tests = { 
+
+
          };
          final Object[][] tests_unready = {
-
-            // gives me an ERR_INTERNAL, not a semantic error....
-            { ",1",                                 SEMANTIC       },
 
             // meaningful unquote-splicing
             { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },
@@ -1351,12 +1355,13 @@ public class TestScm extends Util
             { "`(1 ,@(list 2 3) 4)",           "(1 2 3 4)"   },
             { "`(1 ,(list 2 3) 4)",            "(1 (2 3) 4)" },
 
+            { "`(,@2)",                        "2"           },
             { "`(1 ,@2)",                      "(1 . 2)"     },
             { "`(1 ,@2 3)",                    SEMANTIC      },
-            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
-            // { "` (1 ,@ 2 3)", LEXICAL }, // TODO: what to expect?
-            // { "` (1 ,@2 3)", LEXICAL }, // TODO: what to expect?
-            // { "` (1 ,@2 3)", LEXICAL }, // TODO: what to expect?
+            { "` (1 ,@ 2 3)",                  SEMANTIC      },
+            { "` (1 ,@2 3)",                   SEMANTIC      },
+
+            { "` (1 , @ 2 3)", "(1 #<macro! @> 2 3)" }, // per guile
 
             { "``(1 ,@2)",  
               "(quasiquote (1 (unquote-splicing 2)))" },
