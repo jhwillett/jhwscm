@@ -10,7 +10,7 @@ global:
     numPop:         3155
     numPush:        3155
   reg.numSet:       8206076
-  reg.numGet:       14966477
+  reg.numGet:       14966414
   reg.maxAddr:      31
   heap.numSet:      4709040
   heap.numGet:      5672112
@@ -23,13 +23,13 @@ global:
   cacheTop.numSet:  6691637
   cacheTop.numGet:  3494200
   cacheTop.maxAddr: 6143
-  reg   ops:        23172553
+  reg   ops:        23172490
   cache ops:        10185837
   heap  ops:        10381152
-  reg   ops/cell:   747501.7096774194
+  reg   ops/cell:   747499.6774193548
   cache ops/cell:   1658.1209506755656
   heap  ops/cell:   1689.915676379619
-  ops   reg/cache:  2.2749777951483026
+  ops   reg/cache:  2.2749716100895783
   ops   cache/heap: 0.9811856140821366
   ALG:                       4
   LINE_SIZE:                 16
