@@ -1319,15 +1319,8 @@ public class TestScm extends Util
             { "`(1 ,(+ 2 3))",                      "(1 5)"        },
 
             // recursy versions of the quote-quote- question:
-            { "``(1 2)",  "(quasiquote (1 2))"           },
-            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))" },
-
-         };
-         final Object[][] tests = { 
-
-         };
-         final Object[][] tests_unready = {
-
+            { "``(1 2)",  "(quasiquote (1 2))"                              },
+            { "``(1 ,2)", "(quasiquote (1 (unquote 2)))"                    },
             { "``,,1",    "(quasiquote (unquote 1))"                        },
             { "```,,1",   "(quasiquote (quasiquote (unquote (unquote 1))))" },
 
@@ -1342,18 +1335,13 @@ public class TestScm extends Util
                "(a (quasiquote (b (unquote x) (unquote (quote y)) d)) e)"
             },
 
-
-            { "(quasiquote (unquote 1))",           "1"            },
-            { "(quasiquote (unquote 2 3))",         SEMANTIC       },
-            { "(quasiquote (1 (unquote (+ 2 3))))", "(1 5)"        },
-
+         };
+         final Object[][] tests = { 
+         };
+         final Object[][] tests_unready = {
 
             // gives me an ERR_INTERNAL, not a semantic error....
             { ",1",                                 SEMANTIC       },
-
-
-            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
-
 
             // meaningful unquote-splicing
             { "`,@(list 2 3)",                 "(unquote-splicing (list 1 2)" },
@@ -1365,11 +1353,21 @@ public class TestScm extends Util
 
             { "`(1 ,@2)",                      "(1 . 2)"     },
             { "`(1 ,@2 3)",                    SEMANTIC      },
+            // { "` (1 , @ 2 3)", LEXICAL }, // TODO: what to expect?
+            // { "` (1 ,@ 2 3)", LEXICAL }, // TODO: what to expect?
+            // { "` (1 ,@2 3)", LEXICAL }, // TODO: what to expect?
+            // { "` (1 ,@2 3)", LEXICAL }, // TODO: what to expect?
 
             { "``(1 ,@2)",  
               "(quasiquote (1 (unquote-splicing 2)))" },
             { "``(1 ,@(list 2 3) ,4)", 
               "(quasiquote (1 (unquote-splicing (list 2 3)) (unquote 4)))"  },
+
+            // full-name forms
+            { "(quasiquote (unquote 1))",                        "1"         },
+            { "(quasiquote (unquote 2 3))",                      SEMANTIC    },
+            { "(quasiquote (1 (unquote (+ 2 3))))",              "(1 5)"     },
+            { "(quasiquote 1 (unquote-splicing (list 2 3)) 3)",  "(1 2 3 4)" },
 
          };
          final Batch[] batches = { 
