@@ -3039,7 +3039,11 @@ public class JhwScm implements Firmware
          // sub_quasiquote.
          //
          reg.set(regArg1, code(TYPE_FIXINT,0));
-         gosub(sub_quasiquote_rec, blk_tail_call);
+         gosub(sub_quasiquote_rec, sub_quasiquote+0x1);
+         break;
+      case sub_quasiquote+0x1:
+         reg.set(regArg0, reg.get(regRetval));
+         gosub(sub_quasiquote_spl, blk_tail_call);
          break;
 
       case sub_quasiquote_rec:
@@ -3108,7 +3112,9 @@ public class JhwScm implements Firmware
                if ( 0 == value_fixint(reg.get(regArg1)) )
                {
                   logrec("unquote-splicing eval:    ",reg.get(regTmp1));
-                  raiseError(ERR_NOT_IMPL);
+                  reg.set(regArg0,reg.get(regTmp2));
+                  reg.set(regArg1,reg.get(regEnv));
+                  gosub(sub_eval,sub_quasiquote_rec+0x5);
                }
                else
                {
@@ -3162,6 +3168,24 @@ public class JhwScm implements Firmware
          reg.set(regTmp0,cons(reg.get(regRetval),NIL));
          reg.set(regTmp1,cons(UNQUOTE_SPLICING,reg.get(regTmp0)));
          reg.set(regRetval,reg.get(regTmp1));
+         returnsub();
+         break;
+      case sub_quasiquote_rec+0x5:
+         // after recursing into an active unquote-splicing expression
+         reg.set(regTmp0,cons(reg.get(regRetval),NIL));
+         reg.set(regTmp1,cons(SPLICE_ME,reg.get(regTmp0)));
+         reg.set(regRetval,reg.get(regTmp1));
+         returnsub();
+         break;
+
+      case sub_quasiquote_spl:
+         // Walks the tree in regArg0 and splices any SPLICE_ME tags.
+         //
+         if ( false )
+         {
+            raiseError(ERR_NOT_IMPL);
+         }
+         reg.set(regRetval,reg.get(regArg0));
          returnsub();
          break;
 
@@ -3601,6 +3625,7 @@ public class JhwScm implements Firmware
 
    private static final int UNQUOTE             = TYPE_SENTINEL | 33;
    private static final int UNQUOTE_SPLICING    = TYPE_SENTINEL | 44;
+   private static final int SPLICE_ME           = TYPE_SENTINEL | 55;
 
    private static final int regFreeCells        =   0; // unused cells
 
@@ -3736,6 +3761,7 @@ public class JhwScm implements Firmware
    private static final int sub_quote            = TYPE_SUBS | A1 |  0x7700;
    private static final int sub_quasiquote       = TYPE_SUBS | A1 |  0x7710;
    private static final int sub_quasiquote_rec   = TYPE_SUBS | A2 |  0x7720;
+   private static final int sub_quasiquote_spl   = TYPE_SUBS | A2 |  0x7730;
    private static final int sub_define           = TYPE_SUBS | AX |  0x7800;
    private static final int sub_lambda           = TYPE_SUBS | AX |  0x7900;
    private static final int sub_lamsyn           = TYPE_SUBS | AX |  0x7910;
@@ -4590,6 +4616,7 @@ public class JhwScm implements Firmware
       case FALSE:                return "FALSE";
       case UNQUOTE:              return "UNQUOTE";
       case UNQUOTE_SPLICING:     return "UNQUOTE_SPLICING";
+      case SPLICE_ME:            return "SPLICE_ME";
       case ERR_OOM:              return "ERR_OOM";
       case ERR_INTERNAL:         return "ERR_INTERNAL";
       case ERR_LEXICAL:          return "ERR_LEXICAL";
@@ -4680,6 +4707,7 @@ public class JhwScm implements Firmware
          case sub_quote:            buf.append("sub_quote");            break;
          case sub_quasiquote:       buf.append("sub_quasiquote");       break;
          case sub_quasiquote_rec:   buf.append("sub_quasiquote_rec");   break;
+         case sub_quasiquote_spl:   buf.append("sub_quasiquote_spl");   break;
          case sub_define:           buf.append("sub_define");           break;
          case sub_lambda:           buf.append("sub_lambda");           break;
          case sub_lamsyn:           buf.append("sub_lamsyn");           break;

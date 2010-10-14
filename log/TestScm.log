@@ -1,6 +1,6 @@
 global:
-  numCycles:        860566
-  numCons:          893107
+  numCycles:        860601
+  numCons:          893126
   iobuf:            0
     numPeek:        23365
     numPop:         9844
@@ -9,28 +9,28 @@ global:
     numPeek:        0
     numPop:         3250
     numPush:        3250
-  reg.numSet:       8225666
-  reg.numGet:       14999894
+  reg.numSet:       8225831
+  reg.numGet:       15000221
   reg.maxAddr:      31
-  heap.numSet:      4723584
-  heap.numGet:      5687376
+  heap.numSet:      4723616
+  heap.numGet:      5687408
   heap.maxAddr:     6143
-  cache.numHits:    9854494
-  cache.numMisses:  344885
-  cache.numFlush:   295224
+  cache.numHits:    9854625
+  cache.numMisses:  344887
+  cache.numFlush:   295226
   cache.numDrop:    49661
-  cache.numLoad:    355461
-  cacheTop.numSet:  6709439
-  cacheTop.numGet:  3500516
+  cache.numLoad:    355463
+  cacheTop.numSet:  6709496
+  cacheTop.numGet:  3500592
   cacheTop.maxAddr: 6143
-  reg   ops:        23225560
-  cache ops:        10209955
-  heap  ops:        10410960
-  reg   ops/cell:   749211.6129032258
-  cache ops/cell:   1662.0470454175484
-  heap  ops/cell:   1694.7680286504965
-  ops   reg/cache:  2.2747955304406338
-  ops   cache/heap: 0.9806929428217955
+  reg   ops:        23226052
+  cache ops:        10210088
+  heap  ops:        10411024
+  reg   ops/cell:   749227.4838709678
+  cache ops/cell:   1662.0686960768355
+  heap  ops/cell:   1694.7784470128602
+  ops   reg/cache:  2.2748140858335404
+  ops   cache/heap: 0.980699689098786
   ALG:                       4
   LINE_SIZE:                 16
   LINE_COUNT:                16
@@ -38,8 +38,8 @@ global:
   CLEVER_TAIL_CALL_MOD_CONS: true
   CLEVER_STACK_RECYCLING:    true
   CLEVER_STACK_RECYCLING:    true
-  cache hit/op:              0.9661856864030643
-  cache write/miss:          0.8560070748220421
+  cache hit/op:              0.9661859312484754
+  cache write/miss:          0.856007909837135
 numExpects:     1149
   happy:        1005
   unhappy:      144
