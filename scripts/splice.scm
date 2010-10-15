@@ -3,18 +3,24 @@
 
 ;; Figuring out how to do splicing, as per unquote-splice.
 
+(newline)
 (define (exhibit func expr expect)
+  (display 'expr)
+  (display "   ")
   (display expr)
   (newline)
-  (display 'exp)
+  (display 'expect)
   (display " ")
   (display expect)
   (newline)
   (let ((v (func expr)))
     (display 'got)
-    (display " ")
+    (display "    ")
     (display v)
-    (newline)))
+    (newline)
+    (display (if (equal? expect v) 'happy 'unhappy))
+    (newline))
+  (newline))
 
 (define bad-splice 'failure-bad-splice)
 
