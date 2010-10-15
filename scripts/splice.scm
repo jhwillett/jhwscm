@@ -10,28 +10,44 @@
   (display " ")
   (display expect)
   (newline)
-  (display 'got)
-  (display " ")
-  (display (func expr))
-  (newline))
+  (let ((v (func expr)))
+    (display 'got)
+    (display " ")
+    (display v)
+    (newline)))
 
 (define bad-splice 'failure-bad-splice)
 
 (define (splice expr)
+  ;;(display 'a) (newline)
+  ;;(display expr) (newline)
   (if (not (pair? expr))
       expr
       (let ((head (car expr))
             (rest (cdr expr)))
+        ;;(display 'b) (newline)
+        ;;(display head) (newline)
+        ;;(display rest) (newline)
         (if (eq? 'spliceme head)
             bad-splice
             (if (not (pair? head))
                 (cons (splice head) (splice rest))
                 (let ((headfirst (car head)))
+                  ;;(display 'c) (newline)
+                  ;;(display headfirst) (newline)
                   (if (not (eq? 'spliceme headfirst))
-                      (cons (splice head) (splice rest))
-                      (append (car (cdr head)) (splice rest)))))))))
-
-
+                      (begin
+                        ;;(display 'c1) (newline)
+                        (cons (splice head) (splice rest))
+                        )
+                      (let ((headexpr (car (cdr head))))
+                        (begin
+                          ;;(display 'c2) (newline)
+                          ;;(display headexpr) (newline)
+                          ;;(display 'c2x) (newline)
+                          (if (not (pair? headexpr))
+                              bad-splice
+                              (append headexpr (splice rest))))))))))))
 
 (exhibit splice '(1 (spliceme (2 3)))      '(1 2 3)      )
 (exhibit splice '(1 (spliceme (2 3)) 4)    '(1 2 3 4)    )
