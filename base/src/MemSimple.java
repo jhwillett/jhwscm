@@ -4,9 +4,8 @@
  * A simple implementation of Mem.  Words are implemented as a
  * fixed-size Java int[].
  *
- * @author Jesse H. Willett
- * @copyright (c) 2010 Jesse H. Willett
- * All rights reserved.
+ * Copyright (C) 2010,2021 Jesse H. Willett
+ * MIT License (see jhwscm/LICENSE.txt)
  */
 
 public class MemSimple implements Mem

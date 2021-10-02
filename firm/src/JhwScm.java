@@ -35,9 +35,8 @@
  * without depending on features of the easy language which won't be
  * available down below.
  *
- * @author Jesse H. Willett
- * @copyright (c) 2010 Jesse H. Willett
- * All rights reserved.
+ * Copyright (C) 2010,2021 Jesse H. Willett
+ * MIT License (see jhwscm/LICENSE.txt)
  */
 
 public class JhwScm implements Firmware

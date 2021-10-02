@@ -1,3 +1,8 @@
+#
+# jhwscm/deps.mk
+#
+# Copyright (C) 2010,2021 Jesse H. Willett
+# MIT License (see jhwscm/LICENSE.txt)
 
 FILES := $(shell ls -1 deps/*.url | sed 's:^deps/\(.*\).url$$:\1:g' )
 JARS  := $(filter %.jar,$(FILES))

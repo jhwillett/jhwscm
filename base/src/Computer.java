@@ -3,9 +3,8 @@
  *
  * A Machine plus the Firmware loaded upon it!
  *
- * @author Jesse H. Willett
- * @copyright (c) 2010 Jesse H. Willett
- * All rights reserved.
+ * Copyright (C) 2010,2021 Jesse H. Willett
+ * MIT License (see jhwscm/LICENSE.txt)
  */
 
 public class Computer
