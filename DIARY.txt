@@ -1,4 +1,5 @@
-
+Copyright (C) 2010,2021 Jesse H. Willett
+MIT License (see jhwscm/LICENSE.txt)
 
 Keeping a dev diary, I'd like to track the design-decision journal
 style.
