@@ -44,9 +44,8 @@
  * changing most lines in those tests.  Maybe after that's done, I'll
  * go back and make this a utility class instead of a parent.
  *
- * @author Jesse H. Willett
- * @copyright (c) 2010 Jesse H. Willett
- * All rights reserved.
+ * Copyright (C) 2010,2021 Jesse H. Willett
+ * MIT License (see jhwscm/LICENSE.txt)
  */
 
 public class Util
