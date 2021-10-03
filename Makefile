@@ -99,7 +99,7 @@ $(LOGDIR)/md5.log: $(SRC-shell) $(TST-shell)
 $(LOGDIR)/md5.log:
 	@mkdir -p $(dir $@)
 	@cat /dev/null > $@.tmp
-	md5sum $^ > $@.tmp
+	echo $^ | tr ' ' '\n' | sort | xargs md5sum > $@.tmp
 	@mv $@.tmp $@
 
 COBERTURA_HOME       := external/cobertura-1.9.4.1
